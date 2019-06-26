@@ -1,0 +1,6 @@
+#服务相关配置
+graphql:
+  port: 8011
+  jwt_signkey: "NORMAL"
+account:
+  port: 8012
