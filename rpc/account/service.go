@@ -48,5 +48,7 @@ func NewAccountService(addr string, port int) {
 	}
 	grpcServer := grpc.NewServer()
 	pb.RegisterAccountServer(grpcServer, &User{})
-	grpcServer.Serve(lis)
+	if err = grpcServer.Serve(lis); err != nil {
+		log.Fatalf("new grpcserver failed: %v", err)
+	}
 }

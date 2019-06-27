@@ -5,6 +5,7 @@ import (
 	"changweiba-backend/rpc/account"
 	"flag"
 	"fmt"
+	"github.com/astaxie/beego/logs"
 	"os"
 	"runtime"
 )
@@ -18,5 +19,6 @@ func main() {
 	flag.Parse()
 	fmt.Println("Current execute directory is:", *execDir)
 	conf.InitConfig(*execDir)
+	logs.Info("account service port:", conf.Cfg.Account.Port)
 	account.NewAccountService("localhost", conf.Cfg.Account.Port)
 }

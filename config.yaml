@@ -1,4 +1,5 @@
 #服务相关配置
+debug: true
 graphql:
   port: 8011
   jwt_signkey: "NORMAL"
