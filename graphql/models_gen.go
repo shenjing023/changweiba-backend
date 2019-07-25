@@ -69,7 +69,7 @@ type Post struct {
 	// 最后回复时间
 	LastAt string `json:"last_at"`
 	// 帖子回复的数量
-	Reply    int        `json:"reply"`
+	ReplyNum int        `json:"reply_num"`
 	Status   PostStatus `json:"status"`
 	Comments []*Comment `json:"comments"`
 }
@@ -96,9 +96,9 @@ type ReportUser struct {
 }
 
 type User struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Password string `json:"password"`
+	ID       *string `json:"id"`
+	Name     string  `json:"name"`
+	Password string  `json:"password"`
 	// 头像
 	Avatar string `json:"avatar"`
 	// 状态

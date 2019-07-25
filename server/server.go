@@ -8,11 +8,11 @@ import (
 	"os"
 )
 
-const defaultPort = "8080"
+const defaultPort = ":8088"
 
 // Defining the Playground handler
 func playgroundHandler() gin.HandlerFunc {
-	h := handler.Playground("GraphQL", "/query")
+	h := handler.Playground("GraphQL", "/graphql")
 
 	return func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)
@@ -50,5 +50,5 @@ func main() {
 	//r.Use(jwt.JWTMiddleware())
 	r.POST("/graphql", graphqlHandler())
 	r.GET("/", playgroundHandler())
-	r.Run()
+	r.Run(port)
 }
