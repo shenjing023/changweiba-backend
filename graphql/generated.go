@@ -648,7 +648,7 @@ input EditPost{
 
 type Mutation{
     """用户注册"""
-    registerUser(input: NewUser!): User
+    registerUser(input: NewUser!): User!
     """登陆"""
     loginUser(input: NewUser!): ID!
     editUser(input: EditUser!): ID!
@@ -660,7 +660,7 @@ type Mutation{
     editPost(input: EditPost!): ID!
 }`},
 	&ast.Source{Name: "schema/user.graphql", Input: `type User{
-    id: ID
+    id: ID!
     name: String!
     password: String!
     """头像"""
@@ -1117,12 +1117,15 @@ func (ec *executionContext) _Mutation_registerUser(ctx context.Context, field gr
 		return ec.resolvers.Mutation().RegisterUser(rctx, args["input"].(NewUser))
 	})
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUser2ᚖchangweibaᚑbackendᚋgraphqlᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖchangweibaᚑbackendᚋgraphqlᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_loginUser(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -1918,12 +1921,15 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 		return obj.ID, nil
 	})
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_name(ctx context.Context, field graphql.CollectedField, obj *User) graphql.Marshaler {
@@ -3294,6 +3300,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "registerUser":
 			out.Values[i] = ec._Mutation_registerUser(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "loginUser":
 			out.Values[i] = ec._Mutation_loginUser(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -3526,6 +3535,9 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = graphql.MarshalString("User")
 		case "id":
 			out.Values[i] = ec._User_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "name":
 			out.Values[i] = ec._User_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -4331,29 +4343,6 @@ func (ec *executionContext) marshalOComment2ᚕᚖchangweibaᚑbackendᚋgraphql
 	}
 	wg.Wait()
 	return ret
-}
-
-func (ec *executionContext) unmarshalOID2string(ctx context.Context, v interface{}) (string, error) {
-	return graphql.UnmarshalID(v)
-}
-
-func (ec *executionContext) marshalOID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	return graphql.MarshalID(v)
-}
-
-func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalOID2string(ctx, v)
-	return &res, err
-}
-
-func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec.marshalOID2string(ctx, sel, *v)
 }
 
 func (ec *executionContext) unmarshalOInt2int(ctx context.Context, v interface{}) (int, error) {

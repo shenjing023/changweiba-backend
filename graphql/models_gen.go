@@ -96,9 +96,9 @@ type ReportUser struct {
 }
 
 type User struct {
-	ID       *string `json:"id"`
-	Name     string  `json:"name"`
-	Password string  `json:"password"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
 	// 头像
 	Avatar string `json:"avatar"`
 	// 状态

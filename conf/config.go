@@ -38,6 +38,9 @@ type LoggerConfig struct {
 var Cfg *YamlConf
 
 func InitConfig(executeDir string) {
+	if Cfg!=nil{
+		return
+	}
 	//加载配置文件
 	file, err := ioutil.ReadFile(executeDir + "/config.yaml")
 	if err != nil {
