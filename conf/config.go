@@ -18,6 +18,15 @@ type YamlConf struct {
 	Account struct {
 		Port int `yaml:"port"`
 	} `yaml:"account,omitempty"`
+	DB struct{
+		Host string	`yaml:"host"`
+		Port int	`yaml:"port"`
+		User string	`yaml:"user"`
+		Passwd string	`yaml:"passwd"`
+		Dbname string	`yaml:"dbname"`
+		MaxIdleConns int	`yaml:"max_idle_conns,omitempty"`
+		MaxOpenConns int	`yaml:"max_open_conns,omitempty"`
+	} `yaml:"db"`
 }
 
 //beego日志配置结构体

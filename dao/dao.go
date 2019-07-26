@@ -1,18 +1,21 @@
 package dao
 
 import (
+	"changweiba-backend/conf"
+	"fmt"
+	"github.com/astaxie/beego/logs"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
-	"changweiba-backend/conf"
 	"os"
-	"github.com/astaxie/beego/logs"
 )
 
 var dbEngine *xorm.Engine
 
-func init(){
+func Init(){
 	var err error
-	dbEngine, err = xorm.NewEngine("mysql", "root:123@/test?charset=utf8")
+	dataSourceName:=fmt.Sprintf("%s:%s@%s:%s/%s",conf.Cfg.DB.User,conf.Cfg.DB.Passwd,conf.Cfg.DB.Host, 
+		conf.Cfg.DB.Port,conf.Cfg.DB.Dbname)
+	dbEngine, err = xorm.NewEngine("mysql", dataSourceName)
 	if err!=nil{
 		os.Exit(1)
 		logs.Error(err.Error())

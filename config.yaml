@@ -5,3 +5,12 @@ graphql:
   jwt_signkey: "NORMAL"
 account:
   port: 8012
+db:
+  host: "10.0.0.1"
+  port: 3306
+  user: "user"
+  passwd: "passwd"
+  dbname: "db"
+  max_idle_conns: 10
+  max_open_conns: 10
+  
