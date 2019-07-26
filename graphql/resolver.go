@@ -26,6 +26,7 @@ func (r *Resolver) Post() PostResolver {
 type mutationResolver struct{ *Resolver }
 
 func (r *mutationResolver) RegisterUser(ctx context.Context, input NewUser) (*User, error) {
+	
 	return &User{
 		ID:       "asda",
 		Name:     input.Name,

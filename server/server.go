@@ -4,11 +4,18 @@ import (
 	"changweiba-backend/graphql"
 	"context"
 	"github.com/99designs/gqlgen/handler"
+	"github.com/astaxie/beego/logs"
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
+	"log"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 const defaultPort = ":8088"
+var accountConn *grpc.ClientConn
 
 // Defining the Playground handler
 func playgroundHandler() gin.HandlerFunc {
@@ -39,6 +46,8 @@ func GinContextToContextMiddleware() gin.HandlerFunc {
 }
 
 func main() {
+	initRpcConnection()
+	registerSignalHandler()
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
@@ -51,4 +60,36 @@ func main() {
 	r.POST("/graphql", graphqlHandler())
 	r.GET("/", playgroundHandler())
 	r.Run(port)
+}
+
+func initRpcConnection(){
+	var err error
+	accountConn,err=grpc.Dial("localhost:9112",grpc.WithInsecure())
+	if err!=nil{
+		log.Fatal("fail to dial: %+v",err)
+	}
+}
+
+func registerSignalHandler() {
+	go func() {
+		c := make(chan os.Signal)
+		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+		for {
+			sig := <-c
+			logs.Info("Signal %d received", sig)
+			switch sig {
+			case syscall.SIGINT, syscall.SIGTERM:
+				exitServer()
+				time.Sleep(time.Second)
+				os.Exit(0)
+			}
+		}
+	}()
+}
+
+func exitServer(){
+	//关闭rpc连接
+	if accountConn!=nil{
+		accountConn.Close()
+	}
 }

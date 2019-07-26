@@ -26,6 +26,7 @@ type YamlConf struct {
 		Dbname string	`yaml:"dbname"`
 		MaxIdleConns int	`yaml:"max_idle_conns,omitempty"`
 		MaxOpenConns int	`yaml:"max_open_conns,omitempty"`
+		LogFile string
 	} `yaml:"db"`
 }
 
@@ -61,6 +62,7 @@ func InitConfig(executeDir string) {
 		fmt.Println("Read yaml config file error:", err.Error())
 		os.Exit(1)
 	}
+	Cfg.DB.LogFile=executeDir+"/log/sql.log"
 
 	//日志配置
 	var logConf = LoggerConfig{

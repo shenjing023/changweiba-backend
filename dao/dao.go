@@ -17,7 +17,19 @@ func Init(){
 		conf.Cfg.DB.Port,conf.Cfg.DB.Dbname)
 	dbEngine, err = xorm.NewEngine("mysql", dataSourceName)
 	if err!=nil{
-		os.Exit(1)
 		logs.Error(err.Error())
+		os.Exit(1)
 	}
+	if conf.Cfg.DB.MaxIdleConns>0{
+		dbEngine.SetMaxIdleConns(conf.Cfg.DB.MaxIdleConns)
+	}
+	if conf.Cfg.DB.MaxOpenConns>0{
+		dbEngine.SetMaxOpenConns(conf.Cfg.DB.MaxOpenConns)
+	}
+	//日志
+	if conf.Cfg.Debug{
+		dbEngine.ShowSQL(true)
+	}
+	f,_:=os.Create(conf.Cfg.DB.LogFile)
+	dbEngine.SetLogger(xorm.NewSimpleLogger(f))
 }
