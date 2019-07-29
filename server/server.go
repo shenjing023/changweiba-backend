@@ -7,7 +7,6 @@ import (
 	"github.com/astaxie/beego/logs"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -46,7 +45,7 @@ func GinContextToContextMiddleware() gin.HandlerFunc {
 }
 
 func main() {
-	initRpcConnection()
+	graphql.InitRPCConnection()
 	registerSignalHandler()
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -62,13 +61,6 @@ func main() {
 	r.Run(port)
 }
 
-func initRpcConnection(){
-	var err error
-	accountConn,err=grpc.Dial("localhost:9112",grpc.WithInsecure())
-	if err!=nil{
-		log.Fatal("fail to dial: %+v",err)
-	}
-}
 
 func registerSignalHandler() {
 	go func() {
@@ -79,7 +71,7 @@ func registerSignalHandler() {
 			logs.Info("Signal %d received", sig)
 			switch sig {
 			case syscall.SIGINT, syscall.SIGTERM:
-				exitServer()
+				graphql.StopRPCConnection()
 				time.Sleep(time.Second)
 				os.Exit(0)
 			}
@@ -87,9 +79,4 @@ func registerSignalHandler() {
 	}()
 }
 
-func exitServer(){
-	//关闭rpc连接
-	if accountConn!=nil{
-		accountConn.Close()
-	}
-}
+

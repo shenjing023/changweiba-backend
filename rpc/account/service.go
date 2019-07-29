@@ -3,6 +3,7 @@
 package account
 
 import (
+	"changweiba-backend/dao"
 	pb "changweiba-backend/rpc/account/pb"
 	"context"
 	"errors"
@@ -24,6 +25,7 @@ func (u *User) RegisterUser(ctx context.Context, ur *pb.NewUserRequest) (*pb.Use
 	if valid, err := u.checkNewUser(ur); !valid {
 		return nil, err
 	}
+	dao.DbEngine
 
 	return &pb.User{Id: "1334"}, nil
 }
@@ -33,8 +35,8 @@ func (u *User) EditUser(ctx context.Context, pbUser *pb.User) (*pb.User, error) 
 }
 
 func (u *User) checkNewUser(ur *pb.NewUserRequest) (bool, error) {
-	if len(strings.TrimSpace(ur.User.Name)) == 0 {
-		return false, errors.New("user name can not empty")
+	if len(strings.TrimSpace(ur.User.Name)) == 0 || len(strings.TrimSpace(ur.User.Password))==0{
+		return false, errors.New("user name or password can not be empty")
 	}
 	//检查该ip下的账号
 	fmt.Println(ur.Ip)

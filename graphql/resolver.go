@@ -3,13 +3,34 @@
 package graphql
 
 import (
+	"changweiba-backend/graphql/user"
 	"context"
+	"google.golang.org/grpc"
+	"log"
 ) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
+
+//rpc连接
+var accountConn *grpc.ClientConn
+
+func InitRPCConnection(){
+	var err error
+	accountConn,err=grpc.Dial("localhost:9112",grpc.WithInsecure())
+	if err!=nil{
+		log.Fatal("fail to accountRPC dial: %+v",err)
+	}
+}
+
+//关闭rpc连接
+func StopRPCConnection(){
+	if accountConn!=nil{
+		accountConn.Close()
+	}
+}
 
 type Resolver struct{}
 
 func (r *Resolver) Mutation() MutationResolver {
-	return &mutationResolver{r}
+	return &mutationResolver{Resolver:r}
 }
 func (r *Resolver) Query() QueryResolver {
 	return &queryResolver{r}
@@ -23,15 +44,14 @@ func (r *Resolver) Post() PostResolver {
 	return &postResolver{r}
 }
 
-type mutationResolver struct{ *Resolver }
+type mutationResolver struct{
+	*Resolver
+	myUserResolver *user.MyUserResolver
+}
 
 func (r *mutationResolver) RegisterUser(ctx context.Context, input NewUser) (*User, error) {
 	
-	return &User{
-		ID:       "asda",
-		Name:     input.Name,
-		Password: input.Password,
-	}, nil
+	return r.myUserResolver.RegisterUser(ctx,input,accountConn)
 }
 func (r *mutationResolver) LoginUser(ctx context.Context, input NewUser) (string, error) {
 	panic("not implemented")

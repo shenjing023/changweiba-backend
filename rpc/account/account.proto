@@ -12,6 +12,7 @@ message User {
     string banned_reason = 7;
     int64 create_time = 8;
     int64 last_update=9;
+    string role=10;
 }
 
 message UserRequest {
