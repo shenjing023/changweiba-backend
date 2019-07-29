@@ -28,6 +28,7 @@ type YamlConf struct {
 		MaxOpenConns int	`yaml:"max_open_conns,omitempty"`
 		LogFile string
 	} `yaml:"db"`
+	SignKey string	`yaml:"sign_key"`
 }
 
 //beego日志配置结构体
