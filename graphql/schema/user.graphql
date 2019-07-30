@@ -1,0 +1,47 @@
+type User{
+    id: ID!
+    name: String!
+    password: String!
+    """头像"""
+    avatar: String!
+    """状态"""
+    status: UserStatus!
+    """用户角色"""
+    role: UserRole!
+    """当前分数"""
+    score: Int!
+    """被封原因"""
+    banned_reason: String!
+    posts: [Post!]!
+}
+
+enum UserStatus{
+    NORMAL
+    BANNED
+}
+
+enum UserRole{
+    NORMAL
+    ADMIN
+}
+
+input NewUser{
+    name: String!
+    password: String!
+}
+
+input EditUser{
+    id: ID!
+    name: String
+    password: String
+    avatar: String
+    status: UserStatus
+    role: UserRole
+    score: Int
+}
+
+input ReportUser{
+    user_id: ID!
+    reported_user_id: ID!
+    reason: String!
+}

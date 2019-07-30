@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package accountpb;
+
+message User {
+    int64 id = 1;
+    string name = 2;
+    string password = 3;
+    string avatar = 4;
+    string status = 5;
+    int32 score = 6;
+    string banned_reason = 7;
+    int64 create_time = 8;
+    int64 last_update=9;
+    string role=10;
+}
+
+message UserRequest {
+    int64 id = 1;
+}
+
+message NewUserRequest {
+    User user = 1;
+    string ip = 2;
+}
+
+message NewUserResponse {
+    int64 id=1;
+}
+
+service Account {
+    rpc GetUser (UserRequest) returns (User) {
+    }
+    rpc RegisterUser (NewUserRequest) returns (NewUserResponse) {
+    }
+    rpc EditUser (User) returns (User) {
+    }
+}

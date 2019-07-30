@@ -1,0 +1,18 @@
+type Query {
+    """获取用户信息"""
+    user(userId:ID!):User!
+}
+
+type Mutation{
+    """用户注册"""
+    registerUser(input: NewUser!): String!
+    """登陆"""
+    loginUser(input: NewUser!): ID!
+    editUser(input: EditUser!): ID!
+    reportUser(input: ReportUser!): ID!
+
+    newPost(input: NewPost!): ID!
+    newComment(input: NewComment!): ID!
+    newReply(input: NewReply!): ID!
+    editPost(input: EditPost!): ID!
+}

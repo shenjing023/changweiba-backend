@@ -1,0 +1,76 @@
+type Post{
+    id: ID!
+    user: User
+    topic: String!
+    create_at: String!
+    """最后回复时间"""
+    last_at: String!
+    """帖子回复的数量"""
+    reply_num: Int!
+    status: PostStatus!
+    comments: [Comment!]
+}
+
+type Comment{
+    id: ID!
+    user: User
+    post_id: ID!
+    content: String!
+    create_at: String!
+    """第几楼"""
+    floor: Int!
+    status: PostStatus!
+    replies: [Reply!]
+}
+
+type Reply{
+    id: ID!
+    user: User
+    post_id: ID!
+    comment_id: ID!
+    content: String!
+    create_at: String!
+    """回复谁"""
+    reply_user_id: ID!
+    """楼中楼的第几楼"""
+    floor: Int!
+    """回复类型"""
+    type: ReplyType!
+}
+
+enum PostStatus{
+    NORMAL
+    BANNED
+}
+
+enum ReplyType{
+    REPLYCOMMENT
+    REPLYFLOOR
+}
+
+input NewPost{
+    user_id: ID!
+    topic: String!
+    content: String!
+}
+
+input NewComment{
+    user_id: ID!
+    post_id: ID!
+    content: String!
+}
+
+input NewReply{
+    user_id: ID!
+    post_id: ID!
+    comment_id: ID!
+    content: String!
+    reply_user_id: ID!
+    type: ReplyType!
+}
+
+input EditPost{
+    id: ID!
+    status: PostStatus!
+}
+
