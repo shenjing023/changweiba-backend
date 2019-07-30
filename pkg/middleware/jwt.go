@@ -14,16 +14,16 @@ import (
 
 // 一些常量
 var (
-	TokenExpired     error  = errors.New("Token is expired")
-	TokenNotValidYet error  = errors.New("Token not active yet")
-	TokenMalformed   error  = errors.New("That's not even a token")
-	TokenInvalid     error  = errors.New("Couldn't handle this token:")
-	SignKey          string = "NORMAL" //服务器保存
+	TokenExpired     = errors.New("Token is expired")
+	TokenNotValidYet = errors.New("Token not active yet")
+	TokenMalformed   = errors.New("That's not even a token")
+	TokenInvalid     = errors.New("Couldn't handle this token:")
+	SignKey          = "NORMAL" //服务器保存
 )
 
 type options struct {
 	signingMethod jwtgo.SigningMethod
-	signingKey    interface{}
+	signingKey    string
 	keyfunc       jwtgo.Keyfunc
 	expired       int
 	tokenType     string
@@ -31,7 +31,7 @@ type options struct {
 }
 
 type CustomClaims struct {
-	attachment interface{}
+	Attachment interface{} `json:"attachment"`
 	jwtgo.StandardClaims
 }
 
@@ -48,7 +48,7 @@ type JWTToken struct {
 }
 
 var defaultOptions = options{
-	signingMethod: jwtgo.SigningMethodES256,
+	signingMethod: jwtgo.SigningMethodHS256,
 	signingKey:    SignKey,
 	keyfunc: func(t *jwtgo.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwtgo.SigningMethodHMAC); !ok {
@@ -79,18 +79,24 @@ func SetSigningMethod(method jwtgo.SigningMethod) Option {
 }
 
 // SetSigningKey 设定签名key
-func SetSigningKey(key interface{}) Option {
+func SetSigningKey(key string) Option {
 	return func(o *options) {
 		o.signingKey = key
+		o.keyfunc= func(t *jwtgo.Token) (interface{}, error) {
+			if _, ok := t.Method.(*jwtgo.SigningMethodHMAC); !ok {
+				return nil, TokenInvalid
+			}
+			return []byte(key), nil
+		}
 	}
 }
 
 // SetKeyfunc 设定验证key的回调函数
-func SetKeyfunc(keyFunc jwtgo.Keyfunc) Option {
-	return func(o *options) {
-		o.keyfunc = keyFunc
-	}
-}
+//func SetKeyFunc(keyFunc jwtgo.Keyfunc) Option {
+//	return func(o *options) {
+//		o.keyfunc = keyFunc
+//	}
+//}
 
 // SetExpired 设定令牌过期时长(单位秒，默认3600)
 func SetExpired(expired int) Option {
@@ -103,7 +109,7 @@ func (j *JWTAuth) GenerateToken(attachment interface{}) (*JWTToken, error) {
 	now := time.Now()
 	expiresAt := now.Add(time.Duration(j.opts.expired) * time.Second).Unix()
 	claims := CustomClaims{
-		attachment: attachment,
+		Attachment: attachment,
 		StandardClaims: jwtgo.StandardClaims{
 			NotBefore: now.Unix(),
 			IssuedAt:  now.Unix(),
@@ -112,7 +118,7 @@ func (j *JWTAuth) GenerateToken(attachment interface{}) (*JWTToken, error) {
 	}
 
 	token := jwtgo.NewWithClaims(j.opts.signingMethod, claims)
-	tokenString, err := token.SignedString(j.opts.signingKey)
+	tokenString, err := token.SignedString([]byte(j.opts.signingKey))
 	if err != nil {
 		return nil, err
 	}
@@ -126,6 +132,7 @@ func (j *JWTAuth) GenerateToken(attachment interface{}) (*JWTToken, error) {
 func (j *JWTAuth) ParseToken(tokenString string) (interface{}, error) {
 	token, err := jwtgo.ParseWithClaims(tokenString, &CustomClaims{}, j.opts.keyfunc)
 	if err != nil {
+		fmt.Printf("%+v",err)
 		if ve, ok := err.(*jwtgo.ValidationError); ok {
 			if ve.Errors&jwtgo.ValidationErrorMalformed != 0 {
 				return nil, TokenMalformed
@@ -141,7 +148,7 @@ func (j *JWTAuth) ParseToken(tokenString string) (interface{}, error) {
 	}
 
 	if claims, ok := token.Claims.(*CustomClaims); ok {
-		return claims.attachment, nil
+		return claims.Attachment, nil
 	}
 	return TokenInvalid, nil
 }
@@ -158,7 +165,7 @@ func (j *JWTAuth) RefreshToken(tokenString string) (*JWTToken, error) {
 	if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
 		jwtgo.TimeFunc = time.Now
 		claims.StandardClaims.ExpiresAt = time.Now().Add(1 * time.Hour).Unix()
-		return j.GenerateToken(claims.attachment)
+		return j.GenerateToken(claims.Attachment)
 	}
 	return nil, TokenInvalid
 }

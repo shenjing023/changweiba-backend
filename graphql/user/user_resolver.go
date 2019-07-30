@@ -33,7 +33,7 @@ func (u *MyUserResolver) RegisterUser(ctx context.Context,input models.NewUser,c
 	}
 	//生成jwt
 	jwt:=middleware.NewJWT(
-		//middleware.SetSigningKey("changweiba"), 
+		middleware.SetSigningKey("changweiba"),
 		)
 	token,err:=jwt.GenerateToken(r.Id)
 	if err!=nil{
@@ -43,6 +43,9 @@ func (u *MyUserResolver) RegisterUser(ctx context.Context,input models.NewUser,c
 	return token.AccessToken, nil
 }
 
-func (u *MyUserResolver) LoginUser(ctx context.Context,input models.NewUser) (string,error){
-	panic("not implemented")
+func (u *MyUserResolver) LoginUser(ctx context.Context,input models.NewUser,conn *grpc.ClientConn) (string,error){
+	client:=pb.NewAccountClient(conn)
+	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
+	defer cancel()
+	
 }
