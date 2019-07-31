@@ -19,10 +19,8 @@ func Register() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	u := pb.NewUserRequest{
-		User: &pb.User{
-			Name:     "asda",
-			Password: "asdad",
-		},
+		Name:     "asda",
+		Password: "asdad",
 		Ip: "122",
 	}
 	c, err := client.RegisterUser(ctx, &u)

@@ -3,10 +3,12 @@
 package graphql
 
 import (
+	"changweiba-backend/conf"
 	"changweiba-backend/graphql/generated"
 	"changweiba-backend/graphql/models"
 	"changweiba-backend/graphql/user"
 	"context"
+	"fmt"
 	"google.golang.org/grpc"
 	"log"
 ) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
@@ -16,7 +18,7 @@ var accountConn *grpc.ClientConn
 
 func InitRPCConnection(){
 	var err error
-	accountConn,err=grpc.Dial("localhost:8012",grpc.WithInsecure())
+	accountConn,err=grpc.Dial(fmt.Sprintf("localhost:%d",conf.Cfg.Account.Port),grpc.WithInsecure())
 	if err!=nil{
 		log.Fatal("fail to accountRPC dial: %+v",err)
 	}
@@ -59,7 +61,7 @@ func (r *mutationResolver) RegisterUser(ctx context.Context, input models.NewUse
 	return r.myUserResolver.RegisterUser(ctx,input,accountConn)
 }
 func (r *mutationResolver) LoginUser(ctx context.Context, input models.NewUser) (string, error) {
-	panic("not implemented")
+	return r.myUserResolver.LoginUser(ctx,input,accountConn)
 }
 func (r *mutationResolver) EditUser(ctx context.Context, input models.EditUser) (string, error) {
 	panic("not implemented")

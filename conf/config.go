@@ -29,6 +29,7 @@ type YamlConf struct {
 		LogFile string
 	} `yaml:"db"`
 	SignKey string	`yaml:"sign_key"`
+	Salt string	`yaml:"salt"`
 }
 
 //beego日志配置结构体
@@ -48,17 +49,17 @@ type LoggerConfig struct {
 
 var Cfg *YamlConf
 
+func init(){
+	Cfg=new(YamlConf)
+}
+
 func InitConfig(executeDir string) {
-	if Cfg!=nil{
-		return
-	}
 	//加载配置文件
 	file, err := ioutil.ReadFile(executeDir + "/config.yaml")
 	if err != nil {
 		fmt.Println("Open config file error:", err.Error())
 		os.Exit(1)
 	}
-	Cfg = new(YamlConf)
 	if err = yaml.Unmarshal(file, Cfg); err != nil {
 		fmt.Println("Read yaml config file error:", err.Error())
 		os.Exit(1)

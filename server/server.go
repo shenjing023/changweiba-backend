@@ -1,9 +1,12 @@
 package main
 
 import (
+	"changweiba-backend/conf"
 	"changweiba-backend/graphql"
 	"changweiba-backend/graphql/generated"
 	"context"
+	"flag"
+	"fmt"
 	"github.com/99designs/gqlgen/handler"
 	"github.com/astaxie/beego/logs"
 	"github.com/gin-gonic/gin"
@@ -46,6 +49,12 @@ func GinContextToContextMiddleware() gin.HandlerFunc {
 }
 
 func main() {
+	//命令行解析
+	pwd, _ := os.Getwd()
+	execDir := flag.String("d", pwd, "execute directory")
+	flag.Parse()
+	fmt.Println("Current execute directory is:", *execDir)
+	conf.InitConfig(*execDir)
 	graphql.InitRPCConnection()
 	registerSignalHandler()
 	port := os.Getenv("PORT")

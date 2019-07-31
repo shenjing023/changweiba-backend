@@ -2,11 +2,13 @@ package dao
 
 import (
 	"changweiba-backend/conf"
+	"errors"
 	"fmt"
 	"github.com/astaxie/beego/logs"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
 	"math/big"
+	"math/rand"
 	"net"
 	"os"
 	"time"
@@ -37,20 +39,24 @@ func Init(){
 	//日志
 	f,err:=os.Create(conf.Cfg.DB.LogFile)
 	if err!=nil{
-		logs.Error(err.Error())
+		logs.Error("create sql file failed:",err.Error())
+	} else{
+		dbEngine.SetLogger(xorm.NewSimpleLogger(f))
+		dbEngine.ShowSQL(true)	//不能忽略
 	}
-	dbEngine.SetLogger(xorm.NewSimpleLogger(f))
-	dbEngine.ShowSQL(true)	//不能忽略
+	
 }
 
-func InsertUser(userName,password,ip string) (int64,error){
+func InsertUser(userName,password,ip,avatar string) (int64,error){
 	now:=time.Now().Unix()
+	
 	user:=User{
 		Name:userName,
 		Password:password,
 		Ip:InetAtoi(ip),
 		CreateTime:now,
 		LastUpdate:now,
+		Avatar:avatar,
 	}
 	_,err:=dbEngine.InsertOne(&user)
 	if err!=nil{
@@ -58,6 +64,29 @@ func InsertUser(userName,password,ip string) (int64,error){
 	}
 	//spew.Dump(user)
 	return user.Id,nil
+}
+
+func GetUser(user *User)(bool,error){
+	has,err:=dbEngine.Get(user)
+	if err!=nil{
+		return false, err
+	}
+	return has,nil
+}
+
+//随机获取一个头像url
+func GetRandomAvatar() (url string,err error){
+	var avatars []Avatar
+	if err=dbEngine.Cols("url").Find(&avatars);err!=nil{
+		return 
+	}
+	if len(avatars)==0{
+		return "",errors.New("there are no avatar data in db")
+	}
+	seed := rand.New(rand.NewSource(time.Now().UnixNano()))
+	index:=seed.Intn(len(avatars))
+	url=avatars[index].Url
+	return 
 }
 
 //ip地址int->string相互转换

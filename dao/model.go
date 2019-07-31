@@ -13,3 +13,9 @@ type User struct {
 	Role int
 	Ip int64
 }
+
+type Avatar struct {
+	Id int64
+	Url string
+	Status int
+}

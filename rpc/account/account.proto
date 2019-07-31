@@ -20,19 +20,32 @@ message UserRequest {
 }
 
 message NewUserRequest {
-    User user = 1;
-    string ip = 2;
+    string name=1;
+    string password=2;
+    string ip = 3;
 }
 
 message NewUserResponse {
     int64 id=1;
 }
 
+message LoginRequest{
+    string name=1;
+    string password=2;
+}
+
+message LoginResponse{
+    int64 id=1;
+}
+
+
 service Account {
-    rpc GetUser (UserRequest) returns (User) {
+    rpc GetUser (User) returns (User) {
     }
     rpc RegisterUser (NewUserRequest) returns (NewUserResponse) {
     }
     rpc EditUser (User) returns (User) {
+    }
+    rpc Login(LoginRequest) returns (LoginResponse){
     }
 }
