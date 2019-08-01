@@ -2,11 +2,12 @@ package dao
 
 import (
 	"changweiba-backend/conf"
-	"errors"
 	"fmt"
 	"github.com/astaxie/beego/logs"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"math/big"
 	"math/rand"
 	"net"
@@ -48,8 +49,19 @@ func Init(){
 }
 
 func InsertUser(userName,password,ip,avatar string) (int64,error){
-	now:=time.Now().Unix()
+	//先检查name是否存在
+	u:=User{
+		Name:userName,
+	}
+	has,err:=GetUser(&u)
+	if err!=nil{
+		return 0, err
+	}
+	if has{
+		return 0,status.Error(codes.AlreadyExists,"this user has already exists")
+	}
 	
+	now:=time.Now().Unix()
 	user:=User{
 		Name:userName,
 		Password:password,
@@ -58,9 +70,9 @@ func InsertUser(userName,password,ip,avatar string) (int64,error){
 		LastUpdate:now,
 		Avatar:avatar,
 	}
-	_,err:=dbEngine.InsertOne(&user)
+	_,err=dbEngine.InsertOne(&user)
 	if err!=nil{
-		return 0,err
+		return 0,status.Error(codes.Internal,err.Error())
 	}
 	//spew.Dump(user)
 	return user.Id,nil
@@ -69,7 +81,7 @@ func InsertUser(userName,password,ip,avatar string) (int64,error){
 func GetUser(user *User)(bool,error){
 	has,err:=dbEngine.Get(user)
 	if err!=nil{
-		return false, err
+		return false, status.Error(codes.Internal,err.Error())
 	}
 	return has,nil
 }
@@ -78,10 +90,10 @@ func GetUser(user *User)(bool,error){
 func GetRandomAvatar() (url string,err error){
 	var avatars []Avatar
 	if err=dbEngine.Cols("url").Find(&avatars);err!=nil{
-		return 
+		return "",status.Error(codes.Internal,err.Error())
 	}
 	if len(avatars)==0{
-		return "",errors.New("there are no avatar data in db")
+		return "",status.Error(codes.Internal,"there are no avatar data in db")
 	}
 	seed := rand.New(rand.NewSource(time.Now().UnixNano()))
 	index:=seed.Intn(len(avatars))

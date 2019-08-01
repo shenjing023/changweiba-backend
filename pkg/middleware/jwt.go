@@ -173,12 +173,15 @@ func (j *JWTAuth) RefreshToken(tokenString string) (*JWTToken, error) {
 // JWTAuth 中间件，检查token
 func JWTMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		//spew.Dump(c.Params)
 		a, err := ioutil.ReadAll(c.Request.Body)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
+		fmt.Println(string(a))
 		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(a)) // 关键点
-
+		
+		
 		token := c.Request.Header.Get("token")
 		if token == "" {
 			c.JSON(http.StatusOK, gin.H{
@@ -188,9 +191,9 @@ func JWTMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-
+		
 		log.Print("get token: ", token)
-
+		
 		j := NewJWT()
 		// parseToken 解析token包含的信息
 		claims, err := j.ParseToken(token)
@@ -210,7 +213,7 @@ func JWTMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		// 继续交由下一个路由处理,并将解析出的信息传递下去
+		//继续交由下一个路由处理,并将解析出的信息传递下去
 		c.Set("claims", claims)
 	}
 }

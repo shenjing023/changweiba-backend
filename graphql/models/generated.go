@@ -26,7 +26,7 @@ type EditPost struct {
 }
 
 type EditUser struct {
-	ID       string      `json:"id"`
+	ID       int         `json:"id"`
 	Name     *string     `json:"name"`
 	Password *string     `json:"password"`
 	Avatar   *string     `json:"avatar"`
@@ -90,13 +90,13 @@ type Reply struct {
 }
 
 type ReportUser struct {
-	UserID         string `json:"user_id"`
+	UserID         int    `json:"user_id"`
 	ReportedUserID string `json:"reported_user_id"`
 	Reason         string `json:"reason"`
 }
 
 type User struct {
-	ID       string `json:"id"`
+	ID       int    `json:"id"`
 	Name     string `json:"name"`
 	Password string `json:"password"`
 	// 头像

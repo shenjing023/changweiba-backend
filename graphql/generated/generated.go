@@ -79,7 +79,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		User func(childComplexity int, userID string) int
+		User func(childComplexity int, userID int) int
 	}
 
 	Reply struct {
@@ -121,7 +121,7 @@ type PostResolver interface {
 	Comments(ctx context.Context, obj *models.Post) ([]*models.Comment, error)
 }
 type QueryResolver interface {
-	User(ctx context.Context, userID string) (*models.User, error)
+	User(ctx context.Context, userID int) (*models.User, error)
 }
 type UserResolver interface {
 	Posts(ctx context.Context, obj *models.User) ([]*models.Post, error)
@@ -360,7 +360,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.User(childComplexity, args["userId"].(string)), true
+		return e.complexity.Query.User(childComplexity, args["userId"].(int)), true
 
 	case "Reply.comment_id":
 		if e.complexity.Reply.CommentID == nil {
@@ -644,14 +644,14 @@ input EditPost{
 `},
 	&ast.Source{Name: "schema/schema.graphql", Input: `type Query {
     """获取用户信息"""
-    user(userId:ID!):User!
+    user(userId:Int!):User!
 }
 
 type Mutation{
     """用户注册"""
     registerUser(input: NewUser!): String!
     """登陆"""
-    loginUser(input: NewUser!): ID!
+    loginUser(input: NewUser!): String!
     editUser(input: EditUser!): ID!
     reportUser(input: ReportUser!): ID!
 
@@ -661,7 +661,7 @@ type Mutation{
     editPost(input: EditPost!): ID!
 }`},
 	&ast.Source{Name: "schema/user.graphql", Input: `type User{
-    id: ID!
+    id: Int!
     name: String!
     password: String!
     """头像"""
@@ -693,7 +693,7 @@ input NewUser{
 }
 
 input EditUser{
-    id: ID!
+    id: Int!
     name: String
     password: String
     avatar: String
@@ -703,7 +703,7 @@ input EditUser{
 }
 
 input ReportUser{
-    user_id: ID!
+    user_id: Int!
     reported_user_id: ID!
     reason: String!
 }`},
@@ -842,9 +842,9 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_user_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 int
 	if tmp, ok := rawArgs["userId"]; ok {
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1160,7 +1160,7 @@ func (ec *executionContext) _Mutation_loginUser(ctx context.Context, field graph
 	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_editUser(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -1597,7 +1597,7 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().User(rctx, args["userId"].(string))
+		return ec.resolvers.Query().User(rctx, args["userId"].(int))
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -1927,10 +1927,10 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_name(ctx context.Context, field graphql.CollectedField, obj *models.User) graphql.Marshaler {
@@ -3012,7 +3012,7 @@ func (ec *executionContext) unmarshalInputEditUser(ctx context.Context, v interf
 		switch k {
 		case "id":
 			var err error
-			it.ID, err = ec.unmarshalNID2string(ctx, v)
+			it.ID, err = ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3198,7 +3198,7 @@ func (ec *executionContext) unmarshalInputReportUser(ctx context.Context, v inte
 		switch k {
 		case "user_id":
 			var err error
-			it.UserID, err = ec.unmarshalNID2string(ctx, v)
+			it.UserID, err = ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}

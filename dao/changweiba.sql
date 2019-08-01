@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
  */
 DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
-    `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '用户id',
+    `id` int(11) UNSIGNED NOT NULL DEFAULT 10000 AUTO_INCREMENT COMMENT '用户id',
     `name` varchar(20) NOT NULL UNIQUE COMMENT '名称',
     `password` varchar(32) NOT NULL COMMENT '密码',
     `avatar` varchar(255) NOT NULL COMMENT '头像',

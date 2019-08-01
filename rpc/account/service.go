@@ -13,6 +13,8 @@ import (
 	"github.com/astaxie/beego/logs"
 	"golang.org/x/crypto/scrypt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"log"
 	"net"
 	"strings"
@@ -64,25 +66,26 @@ func (u *User) GetUser(ctx context.Context, ur *pb.User) (*pb.User, error) {
 }
 
 func (u *User) RegisterUser(ctx context.Context, ur *pb.NewUserRequest) (*pb.NewUserResponse, error) {
-	if valid, err := u.checkNewUser(ur); !valid {
-		return nil, err
+	msg, _ := u.checkNewUser(ur)
+	if len(msg)!=0{
+		return nil,status.Error(codes.InvalidArgument,msg)
 	}
 	
 	password,err:=u.encryptPassword(ur.Password)
 	if err!=nil{
 		logs.Error("generate crypto password error:",err.Error())
-		return nil, errors.New(ServiceError)
+		return nil, status.Error(codes.Internal,ServiceError)
 	}
 	//头像url
 	avatar,err:=dao.GetRandomAvatar()
 	if err!=nil{
 		logs.Error("get random avatar error:",err.Error())
-		return nil, errors.New(ServiceError)
+		return nil, status.Error(codes.Internal,ServiceError)
 	}
 	id,err:=dao.InsertUser(ur.Name,password,ur.Ip,avatar)
 	if err!=nil{
 		logs.Error("insert user error:",err.Error())
-		return nil, errors.New(ServiceError)
+		return nil, err
 	}
 	return &pb.NewUserResponse{
 		Id:id,
@@ -100,7 +103,7 @@ func (u *User) Login(ctx context.Context,param *pb.LoginRequest) (*pb.LoginRespo
 	has,err:=dao.GetUser(dbUser)
 	if err!=nil{
 		logs.Error("get user by name error:",err.Error())
-		return nil,errors.New(ServiceError)
+		return nil,status.Error(codes.Internal,ServiceError)
 	}
 	if has{
 		dbPassword:=dbUser.Password
@@ -110,20 +113,20 @@ func (u *User) Login(ctx context.Context,param *pb.LoginRequest) (*pb.LoginRespo
 				Id:dbUser.Id,
 			}, nil
 		} else{
-			return nil,errors.New("密码错误")
+			return nil,status.Error(codes.InvalidArgument,"密码错误")
 		}
 	} else{
-		return nil,errors.New("用户名错误")
+		return nil,status.Error(codes.InvalidArgument,"用户名错误")
 	}
 }
 
-func (u *User) checkNewUser(ur *pb.NewUserRequest) (bool, error) {
+func (u *User) checkNewUser(ur *pb.NewUserRequest) (string, error) {
 	if len(strings.TrimSpace(ur.Name)) == 0 || len(strings.TrimSpace(ur.Password))==0{
-		return false, errors.New("user name or password can not be empty")
+		return "user name or password can not be empty",nil
 	}
 	//检查该ip下的账号
 	fmt.Println(ur.Ip)
-	return true, nil
+	return "", nil
 }
 
 //密码加盐加密

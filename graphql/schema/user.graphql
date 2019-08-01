@@ -1,5 +1,5 @@
 type User{
-    id: ID!
+    id: Int!
     name: String!
     password: String!
     """头像"""
@@ -31,7 +31,7 @@ input NewUser{
 }
 
 input EditUser{
-    id: ID!
+    id: Int!
     name: String
     password: String
     avatar: String
@@ -41,7 +41,7 @@ input EditUser{
 }
 
 input ReportUser{
-    user_id: ID!
+    user_id: Int!
     reported_user_id: ID!
     reason: String!
 }

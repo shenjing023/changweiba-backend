@@ -3,6 +3,7 @@
 package graphql
 
 import (
+	"changweiba-backend/common"
 	"changweiba-backend/conf"
 	"changweiba-backend/graphql/generated"
 	"changweiba-backend/graphql/models"
@@ -40,7 +41,10 @@ func (r *Resolver) Mutation() generated.MutationResolver {
 	}
 }
 func (r *Resolver) Query() generated.QueryResolver {
-	return &queryResolver{r}
+	return &queryResolver{
+		Resolver:r,
+		myUserResolver:&user.MyUserResolver{},
+	}
 }
 
 func (r *Resolver) User() generated.UserResolver {
@@ -57,7 +61,9 @@ type mutationResolver struct{
 }
 
 func (r *mutationResolver) RegisterUser(ctx context.Context, input models.NewUser) (string, error) {
-	
+	if _,err:=common.GinContextFromContext(ctx);err!=nil{
+		return "", err
+	}
 	return r.myUserResolver.RegisterUser(ctx,input,accountConn)
 }
 func (r *mutationResolver) LoginUser(ctx context.Context, input models.NewUser) (string, error) {
@@ -82,10 +88,13 @@ func (r *mutationResolver) EditPost(ctx context.Context, input models.EditPost) 
 	panic("not implemented")
 }
 
-type queryResolver struct{ *Resolver }
+type queryResolver struct{
+	*Resolver
+	myUserResolver *user.MyUserResolver
+}
 
-func (r *queryResolver) User(ctx context.Context, userID string) (*models.User, error) {
-	panic("not implemented")
+func (r *queryResolver) User(ctx context.Context, userID int) (*models.User, error) {
+	return r.myUserResolver.GetUser(ctx,userID,accountConn)
 }
 
 type userResolver struct {

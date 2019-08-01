@@ -1,10 +1,10 @@
 package main
 
 import (
+	"changweiba-backend/common"
 	"changweiba-backend/conf"
 	"changweiba-backend/graphql"
 	"changweiba-backend/graphql/generated"
-	"context"
 	"flag"
 	"fmt"
 	"github.com/99designs/gqlgen/handler"
@@ -40,13 +40,6 @@ func graphqlHandler() gin.HandlerFunc {
 	}
 }
 
-func GinContextToContextMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		ctx := context.WithValue(c.Request.Context(), "GinContextKey", c)
-		c.Request = c.Request.WithContext(ctx)
-		c.Next()
-	}
-}
 
 func main() {
 	//命令行解析
@@ -64,10 +57,21 @@ func main() {
 
 	// Setting up Gin
 	r := gin.Default()
-	r.Use(GinContextToContextMiddleware())
-	//r.Use(jwt.JWTMiddleware())
-	r.POST("/graphql", graphqlHandler())
+	au:=r.Group("/auth")
+	au.Use(common.GinContextToContextMiddleware())
+	{
+		au.POST("/",graphqlHandler())
+	}
+	authorized :=r.Group("/")
+	authorized.Use(middleware.JWTMiddleware())
+	authorized.Use(common.GinContextToContextMiddleware())
+	{
+		authorized.POST("/graphql",graphqlHandler())
+	}
+	
+	//r.POST("/graphql", graphqlHandler())
 	r.GET("/", playgroundHandler())
+	
 	r.Run(port)
 }
 

@@ -1,13 +1,13 @@
 type Query {
     """获取用户信息"""
-    user(userId:ID!):User!
+    user(userId:Int!):User!
 }
 
 type Mutation{
     """用户注册"""
     registerUser(input: NewUser!): String!
     """登陆"""
-    loginUser(input: NewUser!): ID!
+    loginUser(input: NewUser!): String!
     editUser(input: EditUser!): ID!
     reportUser(input: ReportUser!): ID!
 
