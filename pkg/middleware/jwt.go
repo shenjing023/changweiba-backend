@@ -2,12 +2,17 @@ package middleware
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/astaxie/beego/logs"
+
+	//"github.com/davecgh/go-spew/spew"
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/vektah/gqlparser/ast"
+	"github.com/vektah/gqlparser/parser"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
 )
@@ -17,9 +22,24 @@ var (
 	TokenExpired     = errors.New("Token is expired")
 	TokenNotValidYet = errors.New("Token not active yet")
 	TokenMalformed   = errors.New("That's not even a token")
-	TokenInvalid     = errors.New("Couldn't handle this token:")
+	TokenInvalid     = errors.New("Couldn't handle this token")
 	SignKey          = "NORMAL" //服务器保存
 )
+
+type postParams struct {
+	Query         string                 `json:"query"`
+	OperationName string                 `json:"operationName"`
+	Variables     map[string]interface{} `json:"variables"`
+}
+
+func systemError(ctx *gin.Context){
+	ctx.JSON(http.StatusOK,gin.H{
+		"code":-1,
+		"msg":"system error",
+	})
+	ctx.Abort()
+	return
+}
 
 type options struct {
 	signingMethod jwtgo.SigningMethod
@@ -132,7 +152,6 @@ func (j *JWTAuth) GenerateToken(attachment interface{}) (*JWTToken, error) {
 func (j *JWTAuth) ParseToken(tokenString string) (interface{}, error) {
 	token, err := jwtgo.ParseWithClaims(tokenString, &CustomClaims{}, j.opts.keyfunc)
 	if err != nil {
-		fmt.Printf("%+v",err)
 		if ve, ok := err.(*jwtgo.ValidationError); ok {
 			if ve.Errors&jwtgo.ValidationErrorMalformed != 0 {
 				return nil, TokenMalformed
@@ -171,19 +190,51 @@ func (j *JWTAuth) RefreshToken(tokenString string) (*JWTToken, error) {
 }
 
 // JWTAuth 中间件，检查token
-func JWTMiddleware() gin.HandlerFunc {
+func JWTMiddleware(signKey string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//spew.Dump(c.Params)
-		a, err := ioutil.ReadAll(c.Request.Body)
-		if err != nil {
-			fmt.Println(err.Error())
+		if c.Request.Method=="GET"{
+			return
 		}
-		fmt.Println(string(a))
-		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(a)) // 关键点
+		body, err := ioutil.ReadAll(c.Request.Body)
+		if err != nil {
+			logs.Error("read request body error:",err.Error())
+			systemError(c)
+		}
+		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body)) // 关键点,不能去掉
 		
-		
+		//解析query
+		var flag =false	//访问路径是否需要过滤token的标记
+		var param postParams
+		err=json.Unmarshal(body,&param)
+		if err!=nil{
+			logs.Error(fmt.Sprintf("unmarshal post param error:%s, body: %s",err.Error(),string(body)))
+			systemError(c)
+		}
+
+		//陷进，不能是doc,err:= 目前还不知原因
+		doc,err_:=parser.ParseQuery(&ast.Source{Input:param.Query})
+		//spew.Dump(err)
+		if err_ != nil {
+			logs.Error(fmt.Sprintf("parse query error:%+v",err_))
+			systemError(c)
+		}
+		ops:=doc.Operations
+		for _,v:=range ops{
+			for _,k:=range v.SelectionSet{
+				if tmp,ok:=k.(*ast.Field);ok{
+					if tmp.Name!="registerUser" && tmp.Name!="loginUser" && tmp.Name!="posts"{
+						flag=true
+						break
+					}
+				} else{
+					logs.Error("selection change to ast.Field error")
+					systemError(c)
+				}
+			}
+		}
+
 		token := c.Request.Header.Get("token")
-		if token == "" {
+		if token == "" && flag{
 			c.JSON(http.StatusOK, gin.H{
 				"status": -1,
 				"msg":    "请求未携带token，无权限访问",
@@ -192,28 +243,29 @@ func JWTMiddleware() gin.HandlerFunc {
 			return
 		}
 		
-		log.Print("get token: ", token)
-		
-		j := NewJWT()
-		// parseToken 解析token包含的信息
-		claims, err := j.ParseToken(token)
-		if err != nil {
-			if err == TokenExpired {
+		if flag{
+			j := NewJWT(SetSigningKey(signKey))
+			// parseToken 解析token包含的信息
+			claims, err := j.ParseToken(token)
+			if err != nil {
+				logs.Error("parse token failed:",err.Error())
+				if err == TokenExpired {
+					c.JSON(http.StatusOK, gin.H{
+						"status": -1,
+						"msg":    "授权已过期",
+					})
+					c.Abort()
+					return
+				}
 				c.JSON(http.StatusOK, gin.H{
 					"status": -1,
-					"msg":    "授权已过期",
+					"msg":    "token无效",
 				})
 				c.Abort()
 				return
 			}
-			c.JSON(http.StatusOK, gin.H{
-				"status": -1,
-				"msg":    err.Error(),
-			})
-			c.Abort()
-			return
+			//继续交由下一个路由处理,并将解析出的信息传递下去
+			c.Set("claims", claims)
 		}
-		//继续交由下一个路由处理,并将解析出的信息传递下去
-		c.Set("claims", claims)
 	}
 }

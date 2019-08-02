@@ -95,6 +95,7 @@ func (u *MyUserResolver) LoginUser(ctx context.Context,input models.NewUser,conn
 }
 
 func (u *MyUserResolver) GetUser(ctx context.Context,userId int,conn *grpc.ClientConn) (*models.User,error){
+	
 	client:=pb.NewAccountClient(conn)
 	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
 	defer cancel()

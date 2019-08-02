@@ -35,5 +35,51 @@ CREATE TABLE `avatar` (
     PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT = 6 CHARACTER SET =utf8 COLLATE = utf8_general_ci COMMENT = '默认头像表' ROW_FORMAT = Compact;
 
+/*
+    帖子表
+ */
+DROP TABLE IF EXISTS `post`;
+CREATE TABLE `post` (
+    `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '自增id',
+    `user_id` int(11) UNSIGNED NOT NULL COMMENT '用户id',
+    `topic` varchar(255) NOT NULL COMMENT '帖子标题',
+    `create_time` int(11) NOT NULL COMMENT '创建时间',
+    `last_update` int(11) NOT NULL COMMENT '最后更新时间',
+    `reply_num` int(11) NOT NULL DEFAULT 0 COMMENT '帖子回复数量',
+    `status` tinyint(1) NOT NULL DEFAULT 0 COMMENT '状态,(0正常1删除)',
+    PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT = 6 CHARACTER SET =utf8 COLLATE = utf8_general_ci COMMENT = '帖子表' ROW_FORMAT = Compact;
+
+/*
+    评论表
+ */
+DROP TABLE ID EXISTS `comment`;
+CREATE TABLE `comment` (
+    `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '自增id',
+    `user_id` int(11) UNSIGNED NOT NULL COMMENT '用户id',
+    `post_id` int(11) UNSIGNED NOT NULL COMMENT '帖子id',
+    `content` varchar(1024) NOT NULL COMMENT '评论内容',
+    `create_time` int(11) NOT NULL COMMENT '创建时间',
+    `floor` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '第几楼',
+    `status` tinyint(1) NOT NULL DEFAULT 0 '状态,(0正常1删除)',
+) ENGINE=InnoDB AUTO_INCREMENT = 6 CHARACTER SET =utf8 COLLATE = utf8_general_ci COMMENT = '评论表' ROW_FORMAT = Compact;
+
+/*
+    回复表
+ */
+DROP TABLE ID EXISTS `reply`;
+CREATE TABLE `reply` (
+    `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '自增id',
+    `user_id` int(11) UNSIGNED NOT NULL COMMENT '用户id',
+    `post_id` int(11) UNSIGNED NOT NULL COMMENT '帖子id',
+    `comment_id` int(11) UNSIGNED NOT NULL COMMENT '评论id',
+    `content` varchar(1024) NOT NULL COMMENT '评论内容',
+    `reply_user_id` int(11) UNSIGNED NOT NULL COMMENT '回复谁',
+    `create_time` int(11) NOT NULL COMMENT '创建时间',
+    `floor` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '楼中楼第几楼',
+    `status` tinyint(1) NOT NULL DEFAULT 0 '状态,(0正常1删除)',
+    `type` tinyint(1) NOT NULL DEFAULT 0 '回复类型',
+) ENGINE=InnoDB AUTO_INCREMENT = 6 CHARACTER SET =utf8 COLLATE = utf8_general_ci COMMENT = '回复表' ROW_FORMAT = Compact;
+
 
 SET FOREIGN_KEY_CHECKS = 1;

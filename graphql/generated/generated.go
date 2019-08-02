@@ -90,6 +90,7 @@ type ComplexityRoot struct {
 		ID          func(childComplexity int) int
 		PostID      func(childComplexity int) int
 		ReplyUserID func(childComplexity int) int
+		Status      func(childComplexity int) int
 		Type        func(childComplexity int) int
 		User        func(childComplexity int) int
 	}
@@ -411,6 +412,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Reply.ReplyUserID(childComplexity), true
 
+	case "Reply.status":
+		if e.complexity.Reply.Status == nil {
+			break
+		}
+
+		return e.complexity.Reply.Status(childComplexity), true
+
 	case "Reply.type":
 		if e.complexity.Reply.Type == nil {
 			break
@@ -603,6 +611,7 @@ type Reply{
     floor: Int!
     """回复类型"""
     type: ReplyType!
+    status: PostStatus!
 }
 
 enum PostStatus{
@@ -1904,6 +1913,33 @@ func (ec *executionContext) _Reply_type(ctx context.Context, field graphql.Colle
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNReplyType2changweibaᚑbackendᚋgraphqlᚋmodelsᚐReplyType(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Reply_status(ctx context.Context, field graphql.CollectedField, obj *models.Reply) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object:   "Reply",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(models.PostStatus)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPostStatus2changweibaᚑbackendᚋgraphqlᚋmodelsᚐPostStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *models.User) graphql.Marshaler {
@@ -3509,6 +3545,11 @@ func (ec *executionContext) _Reply(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "type":
 			out.Values[i] = ec._Reply_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "status":
+			out.Values[i] = ec._Reply_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

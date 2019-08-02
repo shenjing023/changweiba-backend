@@ -86,7 +86,8 @@ type Reply struct {
 	// 楼中楼的第几楼
 	Floor int `json:"floor"`
 	// 回复类型
-	Type ReplyType `json:"type"`
+	Type   ReplyType  `json:"type"`
+	Status PostStatus `json:"status"`
 }
 
 type ReportUser struct {

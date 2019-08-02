@@ -36,6 +36,7 @@ type Reply{
     floor: Int!
     """回复类型"""
     type: ReplyType!
+    status: PostStatus!
 }
 
 enum PostStatus{
