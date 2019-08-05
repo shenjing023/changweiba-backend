@@ -39,9 +39,9 @@ func (u *User) GetUser(ctx context.Context, ur *pb.User) (*pb.User, error) {
 		return nil,errors.New(ServiceError)
 	}
 	if has{
-		status,role:="NORMAL","NORMAL"
+		status_,role:="NORMAL","NORMAL"
 		if dbUser.Status==1{
-			status="BANNED"
+			status_="BANNED"
 		}
 		if dbUser.Role==1{
 			role="ADMIN"
@@ -51,7 +51,7 @@ func (u *User) GetUser(ctx context.Context, ur *pb.User) (*pb.User, error) {
 			Name:dbUser.Name,
 			Password:dbUser.Password,
 			Avatar:dbUser.Avatar,
-			Status:status,
+			Status:status_,
 			Score:dbUser.Score,
 			BannedReason:dbUser.BannedReason,
 			CreateTime:dbUser.CreateTime,

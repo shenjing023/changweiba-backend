@@ -2,6 +2,11 @@ syntax = "proto3";
 
 package postpb;
 
+enum Status{
+    NORMAL=0;
+    DELETE=1;
+}
+
 message Post {
     int64 id = 1;
     int64 user_id = 2;
@@ -9,7 +14,7 @@ message Post {
     int64 create_time = 4;
     int64 last_update = 5;
     int32 reply_num = 6;
-    string status = 7;
+    Status status = 7;
 }
 
 message Comment {
@@ -19,7 +24,7 @@ message Comment {
     string content = 4;
     int64 create_time = 5;
     int32 floor = 6;
-    string status = 7;
+    Status status = 7;
 }
 
 message Reply {
@@ -31,13 +36,24 @@ message Reply {
     int64 create_time = 6;
     int64 reply_user_id = 7;
     int32 floor = 8;
-    string type = 9;
+    Status type = 9;
+
+    enum ReplyType{ //回复的类型
+        Floor=0;    //回复楼中楼
+        Comment=1;  //回复评论
+    }
+
+    ReplyType reply_type=10;
 }
 
 message NewPostRequest {
-    string user_id = 1;
+    int64 user_id = 1;
     string topic = 2;
     string content = 3;
+}
+
+message NewPostResponse {
+    int64 post_id=1;
 }
 
 message NewCommentRequest {
@@ -95,4 +111,8 @@ message CommentRequest {
 message CommentResponse {
     string id = 1;
     repeated Reply replies = 2;
+}
+
+service Post{
+    rpc
 }
