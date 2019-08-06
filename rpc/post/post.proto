@@ -7,6 +7,11 @@ enum Status{
     DELETE=1;
 }
 
+enum ReplyType{ //回复的类型
+    FloorType=0;    //回复楼中楼
+    CommentType=1;  //回复评论
+}
+
 message Post {
     int64 id = 1;
     int64 user_id = 2;
@@ -37,12 +42,6 @@ message Reply {
     int64 reply_user_id = 7;
     int32 floor = 8;
     Status type = 9;
-
-    enum ReplyType{ //回复的类型
-        Floor=0;    //回复楼中楼
-        Comment=1;  //回复评论
-    }
-
     ReplyType reply_type=10;
 }
 
@@ -57,18 +56,26 @@ message NewPostResponse {
 }
 
 message NewCommentRequest {
-    string user_id = 1;
-    string post_id = 2;
+    int64 user_id = 1;
+    int64 post_id = 2;
     string content = 3;
 }
 
+message NewCommentResponse{
+    int64 comment_id=1;
+}
+
 message NewReplyRequest {
-    string user_id = 1;
-    string post_id = 2;
-    string comment_id = 3;
+    int64 user_id = 1;
+    int64 post_id = 2;
+    int64 comment_id = 3;
     string content = 4;
-    string reply_user_id = 5;
-    string type = 6;
+    int64 reply_user_id = 5;
+    ReplyType type = 6;
+}
+
+message NewReplyResponse{
+    int64 reply_id=1;
 }
 
 message EditPostRequest {
@@ -113,6 +120,8 @@ message CommentResponse {
     repeated Reply replies = 2;
 }
 
-service Post{
-    rpc
+service PostService{
+    rpc NewPost(NewPostRequest) returns(NewPostResponse){}
+    rpc NewComment(NewCommentRequest) returns(NewCommentResponse){}
+    rpc NewReply(NewReplyRequest) returns(NewReplyResponse){}
 }

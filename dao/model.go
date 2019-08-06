@@ -19,3 +19,35 @@ type Avatar struct {
 	Url string
 	Status int
 }
+
+type Post struct {
+	Id int64
+	UserId int64
+	Topic string
+	CreateTime int64
+	LastUpdate int64
+	ReplyNum int
+	Status int
+}
+
+type Comment struct {
+	Id int64
+	UserId int64
+	PostId int64
+	Content string
+	CreateTime int64
+	Floor int32
+	Status int
+}
+
+type Reply struct {
+	Id int64
+	UserId int64
+	PostId int64
+	CommentId int64
+	Content string
+	CreateTime int64
+	ReplyUserId int64
+	Floor int32
+	Type int
+}
