@@ -76,11 +76,10 @@ CREATE TABLE `reply` (
     `post_id` int(11) UNSIGNED NOT NULL COMMENT '帖子id',
     `comment_id` int(11) UNSIGNED NOT NULL COMMENT '评论id',
     `content` varchar(1024) NOT NULL COMMENT '评论内容',
-    `reply_user_id` int(11) UNSIGNED NOT NULL COMMENT '回复谁',
+    `parent_id` int(11) UNSIGNED NOT NULL COMMENT '回复哪个的id',
     `create_time` int(11) NOT NULL COMMENT '创建时间',
     `floor` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '楼中楼第几楼',
     `status` tinyint(1) NOT NULL DEFAULT 0 COMMENT '状态,(0正常1删除)',
-    `type` tinyint(1) NOT NULL DEFAULT 0 COMMENT '回复类型',
     PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT = 0 CHARACTER SET =utf8 COLLATE = utf8_general_ci COMMENT = '回复表' ROW_FORMAT = Compact;
 

@@ -1,5 +1,5 @@
 type Post{
-    id: ID!
+    id: Int!
     user: User
     topic: String!
     create_at: String!
@@ -7,71 +7,64 @@ type Post{
     last_at: String!
     """帖子回复的数量"""
     reply_num: Int!
-    status: PostStatus!
+    status: Status!
     comments: [Comment!]
 }
 
 type Comment{
-    id: ID!
+    id: Int!
     user: User
-    post_id: ID!
+    post_id: Int!
     content: String!
     create_at: String!
     """第几楼"""
     floor: Int!
-    status: PostStatus!
+    status: Status!
     replies: [Reply!]
 }
 
 type Reply{
-    id: ID!
+    id: Int!
     user: User
-    post_id: ID!
-    comment_id: ID!
+    post_id: Int!
+    comment_id: Int!
     content: String!
     create_at: String!
-    """回复谁"""
-    reply_user_id: ID!
+    """父回复"""
+    parent: Reply!
     """楼中楼的第几楼"""
     floor: Int!
-    """回复类型"""
-    type: ReplyType!
-    status: PostStatus!
+    status: Status!
 }
 
-enum PostStatus{
+enum Status{
     NORMAL
     BANNED
 }
 
-enum ReplyType{
-    REPLYCOMMENT
-    REPLYFLOOR
-}
 
 input NewPost{
-    user_id: ID!
+    user_id: Int!
     topic: String!
     content: String!
 }
 
 input NewComment{
-    user_id: ID!
-    post_id: ID!
+    user_id: Int!
+    post_id: Int!
     content: String!
 }
 
 input NewReply{
-    user_id: ID!
-    post_id: ID!
-    comment_id: ID!
+    user_id: Int!
+    post_id: Int!
+    comment_id: Int!
     content: String!
-    reply_user_id: ID!
-    type: ReplyType!
+    parent_id: Int!
 }
 
 input EditPost{
-    id: ID!
-    status: PostStatus!
+    id: Int!
+    status: Status!
 }
 

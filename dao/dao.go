@@ -101,6 +101,39 @@ func GetRandomAvatar() (url string,err error){
 	return 
 }
 
+func InsertPost(userId int64,topic string) (int64,error){
+	now:=time.Now().Unix()
+	post:=Post{
+		UserId:     userId,
+		Topic:      topic,
+		CreateTime: now,
+		LastUpdate: now,
+		ReplyNum:   0,
+		Status:     0,
+	}
+	_,err:=dbEngine.InsertOne(&post)
+	if err!=nil{
+		return 0,err
+	}
+	return post.Id,nil
+}
+
+func InsertComment(userId int64,postId int64,content string) (int64,error){
+	now:=time.Now().Unix()
+	comment:=Comment{
+		UserId:     userId,
+		PostId:     postId,
+		Content:    content,
+		CreateTime: now,
+		Status:     0,
+	}
+	_,err:=dbEngine.InsertOne(&comment)
+	if err!=nil{
+		return 0,err
+	}
+	return comment.Id,nil
+}
+
 //ip地址int->string相互转换
 func InetAtoi(ip string) int64{
 	ret := big.NewInt(0)
