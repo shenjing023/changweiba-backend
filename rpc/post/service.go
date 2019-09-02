@@ -53,8 +53,76 @@ func (p *Post) NewComment(ctx context.Context,cr *pb.NewCommentRequest) (*pb.New
 	}, nil
 }
 
-func (p *Post) NewReply(ctx context.Context,request *pb.NewReplyRequest) (*pb.NewReplyResponse,error){
+func (p *Post) NewReply(ctx context.Context,rr *pb.NewReplyRequest) (*pb.NewReplyResponse,error){
+	if len(strings.TrimSpace(rr.Content))==0{
+		return nil,status.Error(codes.InvalidArgument,"comment content can not be empty")
+	}
+	replyId,err:=dao.InsertReply(rr.UserId,rr.PostId,rr.CommentId,rr.ParentId,rr.Content)
+	if err!=nil{
+		logs.Error("insert reply error: ",err.Error())
+		return nil,status.Error(codes.Internal,"post service system error")
+	}
+	return &pb.NewReplyResponse{
+		ReplyId:replyId,
+	}, nil
+}
 
+func (p *Post) DeletePost(ctx context.Context,dr *pb.DeleteRequest) (*pb.DeleteResponse,error){
+	err:=dao.DeletePost(dr.Id)
+	if err!=nil{
+		logs.Error("delete post error: ",err.Error())
+		return nil,status.Error(codes.Internal,"post service system error")
+	}
+	return &pb.DeleteResponse{
+		Success:true,
+	}, nil
+}
+
+func (p *Post) DeleteComment(ctx context.Context,dr *pb.DeleteRequest) (*pb.DeleteResponse,error){
+	err:=dao.DeleteComment(dr.Id)
+	if err!=nil{
+		logs.Error("delete comment error: ",err.Error())
+		return nil,status.Error(codes.Internal,"post service system error")
+	}
+	return &pb.DeleteResponse{
+		Success:true,
+	}, nil
+}
+
+func (p *Post) DeleteReply(ctx context.Context,dr *pb.DeleteRequest) (*pb.DeleteResponse,error){
+	err:=dao.DeleteReply(dr.Id)
+	if err!=nil{
+		logs.Error("delete reply error: ",err.Error())
+		return nil,status.Error(codes.Internal,"post service system error")
+	}
+	return &pb.DeleteResponse{
+		Success:true,
+	}, nil
+}
+
+func (p *Post) GetPost(ctx context.Context,pr *pb.PostRequest) (*pb.PostResponse,error){
+	dbPost:=&dao.Post{
+		Id:pr.Id,
+	}
+	has,err:=dao.GetPost(dbPost)
+	if err!=nil{
+		logs.Error("get user error:",err.Error())
+		return nil,status.Error(codes.Internal,"post service system error")
+	}
+	if has{
+		pbPost:=&pb.PostResponse{
+			Post:&pb.Post{
+				Id:dbPost.Id,
+				UserId:dbPost.UserId,
+				Topic:dbPost.Topic,
+				CreateTime:dbPost.CreateTime,
+				LastUpdate:dbPost.LastUpdate,
+				ReplyNum:dbPost.ReplyNum,
+				Status:dbPost.Status,
+			},
+		}
+		return pbPost,nil
+	}
 }
 
 func NewPostService(addr string,port int){

@@ -12,10 +12,16 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"strconv"
+	"sync"
 	"time"
 )
 
-var dbEngine *xorm.Engine
+var (
+	dbEngine *xorm.Engine
+	commentMutex sync.Mutex
+	replyMutex sync.Mutex
+)
 
 func Init(){
 	var err error
@@ -119,6 +125,15 @@ func InsertPost(userId int64,topic string) (int64,error){
 }
 
 func InsertComment(userId int64,postId int64,content string) (int64,error){
+	commentMutex.Lock()
+	defer commentMutex.Unlock()
+	//先获取楼层数
+	sql:="SELECT count(*) AS total FROM comment WHERE post_id=?"
+	results,err:=dbEngine.Query(sql,postId)
+	floor,err:=strconv.Atoi(string(results[0]["total"]))
+	if err!=nil{
+		return 0, err
+	}
 	now:=time.Now().Unix()
 	comment:=Comment{
 		UserId:     userId,
@@ -126,12 +141,67 @@ func InsertComment(userId int64,postId int64,content string) (int64,error){
 		Content:    content,
 		CreateTime: now,
 		Status:     0,
+		Floor:floor+1,
 	}
-	_,err:=dbEngine.InsertOne(&comment)
+	_,err=dbEngine.InsertOne(&comment)
 	if err!=nil{
 		return 0,err
 	}
 	return comment.Id,nil
+}
+
+func InsertReply(userId,postId,commentId,parentId int64,content string) (int64,error){
+	replyMutex.Lock()
+	defer replyMutex.Unlock()
+	//先获取楼层数
+	sql:="SELECT count(*) AS total FROM reply WHERE comment_id=?"
+	results,err:=dbEngine.Query(sql,commentId)
+	floor,err:=strconv.Atoi(string(results[0]["total"]))
+	if err!=nil{
+		return 0, err
+	}
+	now:=time.Now().Unix()
+	reply:=Reply{
+		UserId:userId,
+		PostId:postId,
+		Content:content,
+		ParentId:parentId,
+		CommentId:commentId,
+		CreateTime:now,
+		Status:0,
+		Floor:floor,
+	}
+	_,err=dbEngine.InsertOne(&reply)
+	if err!=nil{
+		return 0, err
+	}
+	return reply.Id,nil
+}
+
+func DeletePost(postId int64) error{
+	sql:="UPDATE post SET status=0 WHERE id=?"
+	_,err:=dbEngine.Exec(sql,postId)
+	return err
+}
+
+func DeleteComment(commentId int64) error{
+	sql:="UPDATE comment SET status=0 WHERE id=?"
+	_,err:=dbEngine.Exec(sql,commentId)
+	return err
+}
+
+func DeleteReply(replyId int64) error{
+	sql:="UPDATE reply SET status=0 WHERE id=?"
+	_,err:=dbEngine.Exec(sql,replyId)
+	return err
+}
+
+func GetPost(post *Post) (bool,error){
+	has,err:=dbEngine.Get(post)
+	if err!=nil{
+		return false, status.Error(codes.Internal,err.Error())
+	}
+	return has,nil
 }
 
 //ip地址int->string相互转换

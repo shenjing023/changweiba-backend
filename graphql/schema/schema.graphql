@@ -1,6 +1,14 @@
 type Query {
     """获取用户信息"""
     user(userId:Int!):User!
+    """获取帖子详情"""
+    post(postId:Int!):Post!
+    """获取帖子list"""
+    posts(page:Int!,pageSize:Int!):[Post!]!
+    """获取评论"""
+    comment(commentId:Int!):Comment!
+    """获取回复"""
+    reply(replyId:Int!):Reply!
 }
 
 type Mutation{
@@ -9,10 +17,12 @@ type Mutation{
     """登陆"""
     loginUser(input: NewUser!): String!
     editUser(input: EditUser!): ID!
+    """举报用户"""
     reportUser(input: ReportUser!): ID!
 
     newPost(input: NewPost!): ID!
     newComment(input: NewComment!): ID!
     newReply(input: NewReply!): ID!
-    editPost(input: EditPost!): ID!
+    """删除帖子"""
+    deletePost(input: Int!): ID!
 }

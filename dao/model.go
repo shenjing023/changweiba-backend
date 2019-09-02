@@ -6,7 +6,7 @@ type User struct {
 	Password string
 	Avatar string
 	Status int
-	Score int32
+	Score int64
 	BannedReason string
 	CreateTime int64
 	LastUpdate int64
@@ -26,7 +26,7 @@ type Post struct {
 	Topic string
 	CreateTime int64
 	LastUpdate int64
-	ReplyNum int
+	ReplyNum int64
 	Status int
 }
 
@@ -36,7 +36,7 @@ type Comment struct {
 	PostId int64
 	Content string
 	CreateTime int64
-	Floor int32
+	Floor int
 	Status int
 }
 
@@ -47,7 +47,7 @@ type Reply struct {
 	CommentId int64
 	Content string
 	CreateTime int64
-	ReplyUserId int64
-	Floor int32
-	Type int
+	ParentId int64
+	Floor int
+	Status int
 }

@@ -8,8 +8,6 @@ import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
-	codes "google.golang.org/grpc/codes"
-	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -49,38 +47,13 @@ func (Status) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_e114ad14deab1dd1, []int{0}
 }
 
-type ReplyType int32
-
-const (
-	ReplyType_FloorType   ReplyType = 0
-	ReplyType_CommentType ReplyType = 1
-)
-
-var ReplyType_name = map[int32]string{
-	0: "FloorType",
-	1: "CommentType",
-}
-
-var ReplyType_value = map[string]int32{
-	"FloorType":   0,
-	"CommentType": 1,
-}
-
-func (x ReplyType) String() string {
-	return proto.EnumName(ReplyType_name, int32(x))
-}
-
-func (ReplyType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_e114ad14deab1dd1, []int{1}
-}
-
 type Post struct {
 	Id                   int64    `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	UserId               int64    `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Topic                string   `protobuf:"bytes,3,opt,name=topic,proto3" json:"topic,omitempty"`
 	CreateTime           int64    `protobuf:"varint,4,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	LastUpdate           int64    `protobuf:"varint,5,opt,name=last_update,json=lastUpdate,proto3" json:"last_update,omitempty"`
-	ReplyNum             int32    `protobuf:"varint,6,opt,name=reply_num,json=replyNum,proto3" json:"reply_num,omitempty"`
+	ReplyNum             int64    `protobuf:"varint,6,opt,name=reply_num,json=replyNum,proto3" json:"reply_num,omitempty"`
 	Status               Status   `protobuf:"varint,7,opt,name=status,proto3,enum=postpb.Status" json:"status,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -147,7 +120,7 @@ func (m *Post) GetLastUpdate() int64 {
 	return 0
 }
 
-func (m *Post) GetReplyNum() int32 {
+func (m *Post) GetReplyNum() int64 {
 	if m != nil {
 		return m.ReplyNum
 	}
@@ -249,19 +222,18 @@ func (m *Comment) GetStatus() Status {
 }
 
 type Reply struct {
-	Id                   int64     `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	UserId               int64     `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	PostId               int64     `protobuf:"varint,3,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
-	CommentId            int64     `protobuf:"varint,4,opt,name=comment_id,json=commentId,proto3" json:"comment_id,omitempty"`
-	Content              string    `protobuf:"bytes,5,opt,name=content,proto3" json:"content,omitempty"`
-	CreateTime           int64     `protobuf:"varint,6,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
-	ReplyUserId          int64     `protobuf:"varint,7,opt,name=reply_user_id,json=replyUserId,proto3" json:"reply_user_id,omitempty"`
-	Floor                int32     `protobuf:"varint,8,opt,name=floor,proto3" json:"floor,omitempty"`
-	Type                 Status    `protobuf:"varint,9,opt,name=type,proto3,enum=postpb.Status" json:"type,omitempty"`
-	ReplyType            ReplyType `protobuf:"varint,10,opt,name=reply_type,json=replyType,proto3,enum=postpb.ReplyType" json:"reply_type,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
+	Id                   int64    `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	UserId               int64    `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	PostId               int64    `protobuf:"varint,3,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
+	CommentId            int64    `protobuf:"varint,4,opt,name=comment_id,json=commentId,proto3" json:"comment_id,omitempty"`
+	Content              string   `protobuf:"bytes,5,opt,name=content,proto3" json:"content,omitempty"`
+	CreateTime           int64    `protobuf:"varint,6,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	ParentId             int64    `protobuf:"varint,7,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
+	Floor                int32    `protobuf:"varint,8,opt,name=floor,proto3" json:"floor,omitempty"`
+	Status               Status   `protobuf:"varint,9,opt,name=status,proto3,enum=postpb.Status" json:"status,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *Reply) Reset()         { *m = Reply{} }
@@ -331,9 +303,9 @@ func (m *Reply) GetCreateTime() int64 {
 	return 0
 }
 
-func (m *Reply) GetReplyUserId() int64 {
+func (m *Reply) GetParentId() int64 {
 	if m != nil {
-		return m.ReplyUserId
+		return m.ParentId
 	}
 	return 0
 }
@@ -345,18 +317,11 @@ func (m *Reply) GetFloor() int32 {
 	return 0
 }
 
-func (m *Reply) GetType() Status {
+func (m *Reply) GetStatus() Status {
 	if m != nil {
-		return m.Type
+		return m.Status
 	}
 	return Status_NORMAL
-}
-
-func (m *Reply) GetReplyType() ReplyType {
-	if m != nil {
-		return m.ReplyType
-	}
-	return ReplyType_FloorType
 }
 
 type NewPostRequest struct {
@@ -548,15 +513,14 @@ func (m *NewCommentResponse) GetCommentId() int64 {
 }
 
 type NewReplyRequest struct {
-	UserId               int64     `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	PostId               int64     `protobuf:"varint,2,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
-	CommentId            int64     `protobuf:"varint,3,opt,name=comment_id,json=commentId,proto3" json:"comment_id,omitempty"`
-	Content              string    `protobuf:"bytes,4,opt,name=content,proto3" json:"content,omitempty"`
-	ReplyUserId          int64     `protobuf:"varint,5,opt,name=reply_user_id,json=replyUserId,proto3" json:"reply_user_id,omitempty"`
-	Type                 ReplyType `protobuf:"varint,6,opt,name=type,proto3,enum=postpb.ReplyType" json:"type,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
+	UserId               int64    `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	PostId               int64    `protobuf:"varint,2,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
+	CommentId            int64    `protobuf:"varint,3,opt,name=comment_id,json=commentId,proto3" json:"comment_id,omitempty"`
+	Content              string   `protobuf:"bytes,4,opt,name=content,proto3" json:"content,omitempty"`
+	ParentId             int64    `protobuf:"varint,5,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *NewReplyRequest) Reset()         { *m = NewReplyRequest{} }
@@ -612,18 +576,11 @@ func (m *NewReplyRequest) GetContent() string {
 	return ""
 }
 
-func (m *NewReplyRequest) GetReplyUserId() int64 {
+func (m *NewReplyRequest) GetParentId() int64 {
 	if m != nil {
-		return m.ReplyUserId
+		return m.ParentId
 	}
 	return 0
-}
-
-func (m *NewReplyRequest) GetType() ReplyType {
-	if m != nil {
-		return m.Type
-	}
-	return ReplyType_FloorType
 }
 
 type NewReplyResponse struct {
@@ -665,110 +622,86 @@ func (m *NewReplyResponse) GetReplyId() int64 {
 	return 0
 }
 
-type EditPostRequest struct {
-	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Status               string   `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
-	UserId               string   `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+type DeleteRequest struct {
+	Id                   int64    `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *EditPostRequest) Reset()         { *m = EditPostRequest{} }
-func (m *EditPostRequest) String() string { return proto.CompactTextString(m) }
-func (*EditPostRequest) ProtoMessage()    {}
-func (*EditPostRequest) Descriptor() ([]byte, []int) {
+func (m *DeleteRequest) Reset()         { *m = DeleteRequest{} }
+func (m *DeleteRequest) String() string { return proto.CompactTextString(m) }
+func (*DeleteRequest) ProtoMessage()    {}
+func (*DeleteRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e114ad14deab1dd1, []int{9}
 }
 
-func (m *EditPostRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_EditPostRequest.Unmarshal(m, b)
+func (m *DeleteRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DeleteRequest.Unmarshal(m, b)
 }
-func (m *EditPostRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_EditPostRequest.Marshal(b, m, deterministic)
+func (m *DeleteRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DeleteRequest.Marshal(b, m, deterministic)
 }
-func (m *EditPostRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EditPostRequest.Merge(m, src)
+func (m *DeleteRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeleteRequest.Merge(m, src)
 }
-func (m *EditPostRequest) XXX_Size() int {
-	return xxx_messageInfo_EditPostRequest.Size(m)
+func (m *DeleteRequest) XXX_Size() int {
+	return xxx_messageInfo_DeleteRequest.Size(m)
 }
-func (m *EditPostRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_EditPostRequest.DiscardUnknown(m)
+func (m *DeleteRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeleteRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_EditPostRequest proto.InternalMessageInfo
+var xxx_messageInfo_DeleteRequest proto.InternalMessageInfo
 
-func (m *EditPostRequest) GetId() string {
+func (m *DeleteRequest) GetId() int64 {
 	if m != nil {
 		return m.Id
 	}
-	return ""
+	return 0
 }
 
-func (m *EditPostRequest) GetStatus() string {
-	if m != nil {
-		return m.Status
-	}
-	return ""
-}
-
-func (m *EditPostRequest) GetUserId() string {
-	if m != nil {
-		return m.UserId
-	}
-	return ""
-}
-
-type DeleteCommentRequest struct {
-	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	UserId               string   `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+type DeleteResponse struct {
+	Success              bool     `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *DeleteCommentRequest) Reset()         { *m = DeleteCommentRequest{} }
-func (m *DeleteCommentRequest) String() string { return proto.CompactTextString(m) }
-func (*DeleteCommentRequest) ProtoMessage()    {}
-func (*DeleteCommentRequest) Descriptor() ([]byte, []int) {
+func (m *DeleteResponse) Reset()         { *m = DeleteResponse{} }
+func (m *DeleteResponse) String() string { return proto.CompactTextString(m) }
+func (*DeleteResponse) ProtoMessage()    {}
+func (*DeleteResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e114ad14deab1dd1, []int{10}
 }
 
-func (m *DeleteCommentRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_DeleteCommentRequest.Unmarshal(m, b)
+func (m *DeleteResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DeleteResponse.Unmarshal(m, b)
 }
-func (m *DeleteCommentRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_DeleteCommentRequest.Marshal(b, m, deterministic)
+func (m *DeleteResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DeleteResponse.Marshal(b, m, deterministic)
 }
-func (m *DeleteCommentRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DeleteCommentRequest.Merge(m, src)
+func (m *DeleteResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeleteResponse.Merge(m, src)
 }
-func (m *DeleteCommentRequest) XXX_Size() int {
-	return xxx_messageInfo_DeleteCommentRequest.Size(m)
+func (m *DeleteResponse) XXX_Size() int {
+	return xxx_messageInfo_DeleteResponse.Size(m)
 }
-func (m *DeleteCommentRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_DeleteCommentRequest.DiscardUnknown(m)
+func (m *DeleteResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeleteResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_DeleteCommentRequest proto.InternalMessageInfo
+var xxx_messageInfo_DeleteResponse proto.InternalMessageInfo
 
-func (m *DeleteCommentRequest) GetId() string {
+func (m *DeleteResponse) GetSuccess() bool {
 	if m != nil {
-		return m.Id
+		return m.Success
 	}
-	return ""
-}
-
-func (m *DeleteCommentRequest) GetUserId() string {
-	if m != nil {
-		return m.UserId
-	}
-	return ""
+	return false
 }
 
 type PostRequest struct {
-	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id                   int64    `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Offset               int32    `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
 	Limit                int32    `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -801,11 +734,11 @@ func (m *PostRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_PostRequest proto.InternalMessageInfo
 
-func (m *PostRequest) GetId() string {
+func (m *PostRequest) GetId() int64 {
 	if m != nil {
 		return m.Id
 	}
-	return ""
+	return 0
 }
 
 func (m *PostRequest) GetOffset() int32 {
@@ -823,11 +756,10 @@ func (m *PostRequest) GetLimit() int32 {
 }
 
 type PostResponse struct {
-	Post                 *Post      `protobuf:"bytes,1,opt,name=post,proto3" json:"post,omitempty"`
-	Comments             []*Comment `protobuf:"bytes,2,rep,name=comments,proto3" json:"comments,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
-	XXX_unrecognized     []byte     `json:"-"`
-	XXX_sizecache        int32      `json:"-"`
+	Post                 *Post    `protobuf:"bytes,1,opt,name=post,proto3" json:"post,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *PostResponse) Reset()         { *m = PostResponse{} }
@@ -858,13 +790,6 @@ var xxx_messageInfo_PostResponse proto.InternalMessageInfo
 func (m *PostResponse) GetPost() *Post {
 	if m != nil {
 		return m.Post
-	}
-	return nil
-}
-
-func (m *PostResponse) GetComments() []*Comment {
-	if m != nil {
-		return m.Comments
 	}
 	return nil
 }
@@ -956,7 +881,7 @@ func (m *PostsResponse) GetPosts() []*Post {
 }
 
 type CommentRequest struct {
-	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id                   int64    `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Offset               int32    `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
 	Limit                int32    `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -989,11 +914,11 @@ func (m *CommentRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_CommentRequest proto.InternalMessageInfo
 
-func (m *CommentRequest) GetId() string {
+func (m *CommentRequest) GetId() int64 {
 	if m != nil {
 		return m.Id
 	}
-	return ""
+	return 0
 }
 
 func (m *CommentRequest) GetOffset() int32 {
@@ -1011,8 +936,7 @@ func (m *CommentRequest) GetLimit() int32 {
 }
 
 type CommentResponse struct {
-	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Replies              []*Reply `protobuf:"bytes,2,rep,name=replies,proto3" json:"replies,omitempty"`
+	Comment              *Comment `protobuf:"bytes,1,opt,name=comment,proto3" json:"comment,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1043,23 +967,93 @@ func (m *CommentResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_CommentResponse proto.InternalMessageInfo
 
-func (m *CommentResponse) GetId() string {
+func (m *CommentResponse) GetComment() *Comment {
+	if m != nil {
+		return m.Comment
+	}
+	return nil
+}
+
+type ReplyRequest struct {
+	Id                   int64    `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ReplyRequest) Reset()         { *m = ReplyRequest{} }
+func (m *ReplyRequest) String() string { return proto.CompactTextString(m) }
+func (*ReplyRequest) ProtoMessage()    {}
+func (*ReplyRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e114ad14deab1dd1, []int{17}
+}
+
+func (m *ReplyRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReplyRequest.Unmarshal(m, b)
+}
+func (m *ReplyRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReplyRequest.Marshal(b, m, deterministic)
+}
+func (m *ReplyRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyRequest.Merge(m, src)
+}
+func (m *ReplyRequest) XXX_Size() int {
+	return xxx_messageInfo_ReplyRequest.Size(m)
+}
+func (m *ReplyRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReplyRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ReplyRequest proto.InternalMessageInfo
+
+func (m *ReplyRequest) GetId() int64 {
 	if m != nil {
 		return m.Id
 	}
-	return ""
+	return 0
 }
 
-func (m *CommentResponse) GetReplies() []*Reply {
+type ReplyResponse struct {
+	Reply                *Reply   `protobuf:"bytes,1,opt,name=reply,proto3" json:"reply,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ReplyResponse) Reset()         { *m = ReplyResponse{} }
+func (m *ReplyResponse) String() string { return proto.CompactTextString(m) }
+func (*ReplyResponse) ProtoMessage()    {}
+func (*ReplyResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e114ad14deab1dd1, []int{18}
+}
+
+func (m *ReplyResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReplyResponse.Unmarshal(m, b)
+}
+func (m *ReplyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReplyResponse.Marshal(b, m, deterministic)
+}
+func (m *ReplyResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyResponse.Merge(m, src)
+}
+func (m *ReplyResponse) XXX_Size() int {
+	return xxx_messageInfo_ReplyResponse.Size(m)
+}
+func (m *ReplyResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReplyResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ReplyResponse proto.InternalMessageInfo
+
+func (m *ReplyResponse) GetReply() *Reply {
 	if m != nil {
-		return m.Replies
+		return m.Reply
 	}
 	return nil
 }
 
 func init() {
 	proto.RegisterEnum("postpb.Status", Status_name, Status_value)
-	proto.RegisterEnum("postpb.ReplyType", ReplyType_name, ReplyType_value)
 	proto.RegisterType((*Post)(nil), "postpb.Post")
 	proto.RegisterType((*Comment)(nil), "postpb.Comment")
 	proto.RegisterType((*Reply)(nil), "postpb.Reply")
@@ -1069,68 +1063,71 @@ func init() {
 	proto.RegisterType((*NewCommentResponse)(nil), "postpb.NewCommentResponse")
 	proto.RegisterType((*NewReplyRequest)(nil), "postpb.NewReplyRequest")
 	proto.RegisterType((*NewReplyResponse)(nil), "postpb.NewReplyResponse")
-	proto.RegisterType((*EditPostRequest)(nil), "postpb.EditPostRequest")
-	proto.RegisterType((*DeleteCommentRequest)(nil), "postpb.DeleteCommentRequest")
+	proto.RegisterType((*DeleteRequest)(nil), "postpb.DeleteRequest")
+	proto.RegisterType((*DeleteResponse)(nil), "postpb.DeleteResponse")
 	proto.RegisterType((*PostRequest)(nil), "postpb.PostRequest")
 	proto.RegisterType((*PostResponse)(nil), "postpb.PostResponse")
 	proto.RegisterType((*PostsRequest)(nil), "postpb.PostsRequest")
 	proto.RegisterType((*PostsResponse)(nil), "postpb.PostsResponse")
 	proto.RegisterType((*CommentRequest)(nil), "postpb.CommentRequest")
 	proto.RegisterType((*CommentResponse)(nil), "postpb.CommentResponse")
+	proto.RegisterType((*ReplyRequest)(nil), "postpb.ReplyRequest")
+	proto.RegisterType((*ReplyResponse)(nil), "postpb.ReplyResponse")
 }
 
 func init() { proto.RegisterFile("post.proto", fileDescriptor_e114ad14deab1dd1) }
 
 var fileDescriptor_e114ad14deab1dd1 = []byte{
-	// 758 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x56, 0x5d, 0x6b, 0xd3, 0x50,
-	0x18, 0xde, 0x49, 0x9a, 0xa4, 0x79, 0xbb, 0x7e, 0xec, 0x30, 0xb6, 0xac, 0x22, 0x96, 0x03, 0x6a,
-	0xd9, 0x70, 0x48, 0x77, 0x3b, 0x18, 0xe2, 0x2a, 0x4c, 0x67, 0x95, 0x6c, 0xbb, 0xf0, 0x42, 0x4a,
-	0xd7, 0x9c, 0x41, 0xa0, 0x69, 0x62, 0x73, 0xea, 0xd8, 0xef, 0xf2, 0x2f, 0x08, 0xde, 0x78, 0xe7,
-	0x1f, 0x92, 0xf3, 0x91, 0xe6, 0x24, 0xed, 0x56, 0x15, 0xef, 0xf2, 0x7e, 0xf4, 0x3d, 0xcf, 0xf3,
-	0xbc, 0xcf, 0x39, 0x14, 0x20, 0x89, 0x53, 0x76, 0x98, 0xcc, 0x62, 0x16, 0x63, 0x9b, 0x7f, 0x27,
-	0xd7, 0xe4, 0x27, 0x82, 0xca, 0xc7, 0x38, 0x65, 0xb8, 0x01, 0x46, 0x18, 0x78, 0xa8, 0x83, 0xba,
-	0xa6, 0x6f, 0x84, 0x01, 0xde, 0x05, 0x67, 0x9e, 0xd2, 0xd9, 0x30, 0x0c, 0x3c, 0x43, 0x24, 0x6d,
-	0x1e, 0x9e, 0x05, 0x78, 0x1b, 0x2c, 0x16, 0x27, 0xe1, 0xd8, 0x33, 0x3b, 0xa8, 0xeb, 0xfa, 0x32,
-	0xc0, 0x4f, 0xa0, 0x36, 0x9e, 0xd1, 0x11, 0xa3, 0x43, 0x16, 0x46, 0xd4, 0xab, 0x88, 0x9f, 0x80,
-	0x4c, 0x5d, 0x86, 0x11, 0xe5, 0x0d, 0x93, 0x51, 0xca, 0x86, 0xf3, 0x24, 0x18, 0x31, 0xea, 0x59,
-	0xb2, 0x81, 0xa7, 0xae, 0x44, 0x06, 0x3f, 0x02, 0x77, 0x46, 0x93, 0xc9, 0xdd, 0x70, 0x3a, 0x8f,
-	0x3c, 0xbb, 0x83, 0xba, 0x96, 0x5f, 0x15, 0x89, 0xc1, 0x3c, 0xc2, 0xcf, 0xc0, 0x4e, 0xd9, 0x88,
-	0xcd, 0x53, 0xcf, 0xe9, 0xa0, 0x6e, 0xa3, 0xd7, 0x38, 0x94, 0xf8, 0x0f, 0x2f, 0x44, 0xd6, 0x57,
-	0x55, 0xf2, 0x1d, 0x81, 0xf3, 0x3a, 0x8e, 0x22, 0x3a, 0xfd, 0x0b, 0x46, 0xbb, 0xe0, 0xf0, 0x69,
-	0xbc, 0x60, 0xca, 0x02, 0x0f, 0xcf, 0x02, 0xec, 0x81, 0x33, 0x8e, 0xa7, 0x8c, 0x4e, 0x99, 0x20,
-	0xe4, 0xfa, 0x59, 0x58, 0xa6, 0x6b, 0x2d, 0xd1, 0xdd, 0x06, 0xeb, 0x66, 0x12, 0xc7, 0x33, 0xc5,
-	0x44, 0x06, 0x7f, 0x4c, 0xe3, 0x9b, 0x01, 0x96, 0xcf, 0xb9, 0xff, 0x07, 0x12, 0x8f, 0x01, 0xc6,
-	0x52, 0x11, 0x5e, 0x93, 0x8b, 0x71, 0x55, 0xa6, 0xc8, 0xd1, 0x7a, 0x90, 0xa3, 0xbd, 0xc4, 0x91,
-	0x40, 0x5d, 0x6e, 0x2c, 0x43, 0xe4, 0x88, 0x96, 0x9a, 0x48, 0x5e, 0x2d, 0xdc, 0x22, 0x75, 0xa8,
-	0xea, 0x3a, 0x10, 0xa8, 0xb0, 0xbb, 0x84, 0x7a, 0xee, 0x4a, 0x15, 0x44, 0x0d, 0xbf, 0x04, 0x90,
-	0xd3, 0x45, 0x27, 0x88, 0xce, 0xad, 0xac, 0x53, 0x88, 0x73, 0x79, 0x97, 0x50, 0x5f, 0x9a, 0x86,
-	0x7f, 0x92, 0x4f, 0xd0, 0x18, 0xd0, 0x5b, 0xee, 0x66, 0x9f, 0x7e, 0x99, 0xd3, 0x94, 0xe9, 0x6a,
-	0xa1, 0xd5, 0x26, 0x36, 0x74, 0x13, 0x6b, 0x5a, 0x98, 0x05, 0x2d, 0xc8, 0x3e, 0x34, 0x17, 0xa3,
-	0xd3, 0x24, 0x9e, 0xa6, 0x54, 0x17, 0x1c, 0xe9, 0x82, 0x93, 0x21, 0x6c, 0x0d, 0xe8, 0xad, 0x72,
-	0xe1, 0x5a, 0x24, 0xda, 0x18, 0xe3, 0x3e, 0xf3, 0x95, 0xc0, 0x1c, 0x01, 0xd6, 0x0f, 0x50, 0x78,
-	0x8a, 0x7b, 0x46, 0xa5, 0x3d, 0x93, 0x1f, 0x48, 0x50, 0x10, 0xc2, 0xfd, 0x3b, 0xa8, 0xe2, 0x21,
-	0xe6, 0x03, 0x66, 0x2a, 0x5d, 0x98, 0x25, 0xaf, 0x58, 0xcb, 0x5e, 0x79, 0xaa, 0x5c, 0x61, 0xdf,
-	0xb7, 0x6b, 0x51, 0x26, 0x2f, 0xa0, 0x95, 0x13, 0x51, 0xe4, 0xf7, 0x40, 0xbe, 0x15, 0x39, 0x15,
-	0x47, 0xc4, 0x67, 0x01, 0xf1, 0xa1, 0xd9, 0x0f, 0x42, 0xa6, 0xdb, 0x22, 0xbf, 0x54, 0xae, 0xb8,
-	0x54, 0x3b, 0x8b, 0x6b, 0x29, 0xed, 0xa0, 0x22, 0x5d, 0x1f, 0xb9, 0x02, 0xa5, 0x0f, 0x39, 0x81,
-	0xed, 0x53, 0x3a, 0xa1, 0x8c, 0x96, 0xb6, 0x5c, 0x1e, 0x5c, 0xba, 0xad, 0xf9, 0x80, 0x77, 0x50,
-	0x5b, 0x03, 0x28, 0xbe, 0xb9, 0x49, 0xa9, 0x5c, 0xbd, 0xe5, 0xab, 0x88, 0xdb, 0x76, 0x12, 0x46,
-	0xa1, 0x54, 0xd7, 0xf2, 0x65, 0x40, 0x3e, 0xc3, 0x66, 0xc1, 0x99, 0x1d, 0xa8, 0x70, 0xe9, 0xc4,
-	0xbc, 0x5a, 0x6f, 0x33, 0xd3, 0x51, 0xf4, 0x88, 0x0a, 0x3e, 0x80, 0xaa, 0x5a, 0x1a, 0xa7, 0x6c,
-	0x76, 0x6b, 0xbd, 0x66, 0xd6, 0x95, 0x31, 0x5a, 0x34, 0x90, 0x63, 0x39, 0x3e, 0xcd, 0xc0, 0xe6,
-	0xe0, 0xd0, 0x6a, 0x70, 0x86, 0x0e, 0xee, 0x08, 0xea, 0xea, 0xd7, 0x0a, 0x1d, 0x01, 0x8b, 0x1f,
-	0x95, 0x7a, 0x48, 0x1c, 0x5c, 0x84, 0x27, 0x4b, 0x64, 0x00, 0x8d, 0x35, 0xca, 0xe6, 0x20, 0x8c,
-	0xd5, 0x20, 0x4c, 0x1d, 0xc4, 0x5b, 0x68, 0x96, 0xaf, 0x4b, 0x79, 0xe0, 0x73, 0x10, 0x8e, 0x09,
-	0x69, 0xa6, 0x48, 0xbd, 0xe0, 0x3f, 0x3f, 0xab, 0xee, 0x77, 0xc0, 0x96, 0xef, 0x14, 0x06, 0xb0,
-	0x07, 0x1f, 0xfc, 0xf7, 0xaf, 0xce, 0x5b, 0x1b, 0xfc, 0xfb, 0xb4, 0x7f, 0xde, 0xbf, 0xec, 0xb7,
-	0xd0, 0xfe, 0x01, 0xb8, 0x0b, 0xcf, 0xe2, 0x3a, 0xb8, 0x6f, 0xf8, 0x9b, 0xc7, 0x83, 0xd6, 0x06,
-	0x6e, 0x42, 0x4d, 0x21, 0x11, 0x09, 0xd4, 0xfb, 0x85, 0xa4, 0x15, 0x2e, 0xe8, 0xec, 0x6b, 0x38,
-	0xa6, 0xf8, 0x18, 0x1c, 0xf5, 0xd2, 0xe0, 0x9d, 0x0c, 0x41, 0xf1, 0x55, 0x6b, 0xef, 0x2e, 0xe5,
-	0x25, 0x27, 0xb2, 0x81, 0xfb, 0x00, 0xf9, 0xd3, 0x80, 0xf7, 0xb4, 0xc6, 0xa2, 0x9e, 0xed, 0xf6,
-	0xaa, 0xd2, 0x62, 0xcc, 0x09, 0x54, 0xb3, 0x2b, 0x86, 0xf5, 0xd3, 0xf4, 0xd7, 0xa3, 0xed, 0x2d,
-	0x17, 0xb2, 0x01, 0xd7, 0xb6, 0xf8, 0x97, 0x71, 0xf4, 0x3b, 0x00, 0x00, 0xff, 0xff, 0x8a, 0xf0,
-	0xf7, 0x4c, 0x73, 0x08, 0x00, 0x00,
+	// 773 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x56, 0x5d, 0x6b, 0x13, 0x4b,
+	0x18, 0xee, 0x26, 0xd9, 0xdd, 0xe4, 0x4d, 0x93, 0xf6, 0xcc, 0x49, 0xd3, 0x6d, 0xca, 0x39, 0x0d,
+	0x73, 0xe0, 0x50, 0x0b, 0x16, 0x69, 0x45, 0x10, 0xea, 0x17, 0x36, 0x94, 0x62, 0x8d, 0xb2, 0xad,
+	0x17, 0x5e, 0x85, 0x34, 0x99, 0xc2, 0x42, 0x36, 0xbb, 0xee, 0xcc, 0x5a, 0xfc, 0x29, 0xfe, 0x1f,
+	0x2f, 0xbc, 0xf0, 0x37, 0x89, 0xcc, 0x57, 0x32, 0xb3, 0x49, 0xab, 0x15, 0xef, 0xf2, 0x7e, 0x3f,
+	0xcf, 0xfb, 0x3e, 0xb3, 0x04, 0x20, 0x4d, 0x28, 0xdb, 0x4f, 0xb3, 0x84, 0x25, 0xc8, 0xe3, 0xbf,
+	0xd3, 0x4b, 0xfc, 0xcd, 0x81, 0xca, 0xdb, 0x84, 0x32, 0xd4, 0x84, 0x52, 0x34, 0x0e, 0x9c, 0xae,
+	0xb3, 0x5b, 0x0e, 0x4b, 0xd1, 0x18, 0x6d, 0x82, 0x9f, 0x53, 0x92, 0x0d, 0xa2, 0x71, 0x50, 0x12,
+	0x4e, 0x8f, 0x9b, 0xa7, 0x63, 0xd4, 0x02, 0x97, 0x25, 0x69, 0x34, 0x0a, 0xca, 0x5d, 0x67, 0xb7,
+	0x16, 0x4a, 0x03, 0xed, 0x40, 0x7d, 0x94, 0x91, 0x21, 0x23, 0x03, 0x16, 0xc5, 0x24, 0xa8, 0x88,
+	0x12, 0x90, 0xae, 0x8b, 0x28, 0x26, 0x3c, 0x61, 0x32, 0xa4, 0x6c, 0x90, 0xa7, 0xe3, 0x21, 0x23,
+	0x81, 0x2b, 0x13, 0xb8, 0xeb, 0x9d, 0xf0, 0xa0, 0x6d, 0xa8, 0x65, 0x24, 0x9d, 0x7c, 0x1a, 0x4c,
+	0xf3, 0x38, 0xf0, 0x44, 0xb8, 0x2a, 0x1c, 0xfd, 0x3c, 0x46, 0xff, 0x83, 0x47, 0xd9, 0x90, 0xe5,
+	0x34, 0xf0, 0xbb, 0xce, 0x6e, 0xf3, 0xa0, 0xb9, 0x2f, 0xf1, 0xef, 0x9f, 0x0b, 0x6f, 0xa8, 0xa2,
+	0xf8, 0x8b, 0x03, 0xfe, 0xcb, 0x24, 0x8e, 0xc9, 0xf4, 0x0e, 0x8c, 0x36, 0xc1, 0xe7, 0xdd, 0x78,
+	0xa0, 0x2c, 0x03, 0xdc, 0x3c, 0x1d, 0xa3, 0x00, 0xfc, 0x51, 0x32, 0x65, 0x64, 0xca, 0x04, 0xa1,
+	0x5a, 0xa8, 0xcd, 0x22, 0x5d, 0x77, 0x81, 0x6e, 0x0b, 0xdc, 0xab, 0x49, 0x92, 0x64, 0x82, 0x89,
+	0x1b, 0x4a, 0xe3, 0x97, 0x69, 0x7c, 0x77, 0xc0, 0x0d, 0x39, 0xf7, 0x3f, 0x40, 0xe2, 0x1f, 0x80,
+	0x91, 0xdc, 0x08, 0x8f, 0xc9, 0xc3, 0xd4, 0x94, 0xc7, 0xe6, 0xe8, 0xde, 0xca, 0xd1, 0x5b, 0xe0,
+	0xb8, 0x0d, 0xb5, 0x74, 0x98, 0xa9, 0xc6, 0xbe, 0xbc, 0x98, 0x74, 0x48, 0x99, 0xc8, 0x05, 0x54,
+	0x97, 0x2f, 0xa0, 0x76, 0xeb, 0x02, 0xde, 0x43, 0xb3, 0x4f, 0xae, 0xb9, 0x30, 0x43, 0xf2, 0x21,
+	0x27, 0x94, 0x99, 0xc4, 0x9d, 0xe5, 0x7a, 0x2c, 0x99, 0x7a, 0x34, 0x68, 0x95, 0x2d, 0x5a, 0x78,
+	0x0f, 0xd6, 0x66, 0xad, 0x69, 0x9a, 0x4c, 0x29, 0x31, 0x77, 0xe7, 0x98, 0xbb, 0xc3, 0x03, 0xf8,
+	0xab, 0x4f, 0xae, 0x95, 0xa0, 0x7e, 0x8a, 0xc4, 0x68, 0x53, 0xba, 0x49, 0x47, 0x05, 0x30, 0x87,
+	0x80, 0xcc, 0x01, 0x0a, 0x8f, 0x7d, 0x32, 0xa7, 0x70, 0x32, 0xfc, 0xd9, 0x11, 0x14, 0x84, 0x40,
+	0x7e, 0x1f, 0x94, 0x3d, 0xa4, 0x7c, 0x8b, 0x2e, 0x0a, 0xda, 0xb7, 0xce, 0xee, 0xda, 0x67, 0xc7,
+	0xf7, 0x61, 0x7d, 0x0e, 0x4d, 0xd1, 0xd9, 0x02, 0xf9, 0x90, 0xe7, 0xe0, 0x7c, 0x61, 0x9f, 0x8e,
+	0xf1, 0x0e, 0x34, 0x8e, 0xc9, 0x84, 0x30, 0xa2, 0x79, 0x14, 0xf4, 0x8e, 0xf7, 0xa0, 0xa9, 0x13,
+	0x54, 0xb7, 0x00, 0x7c, 0x9a, 0x8f, 0x46, 0x84, 0x52, 0x91, 0x56, 0x0d, 0xb5, 0x89, 0x5f, 0x41,
+	0xdd, 0x54, 0x4c, 0xf1, 0xe9, 0xb4, 0xc1, 0x4b, 0xae, 0xae, 0x28, 0x91, 0x47, 0x70, 0x43, 0x65,
+	0x71, 0x01, 0x4d, 0xa2, 0x38, 0x92, 0x3c, 0xdd, 0x50, 0x1a, 0xf8, 0x01, 0xac, 0x5a, 0x1a, 0xe9,
+	0x42, 0x85, 0x2f, 0x4e, 0xf4, 0xab, 0x1f, 0xac, 0x6a, 0xdd, 0x8a, 0x1c, 0x11, 0xc1, 0x47, 0xb2,
+	0x82, 0xea, 0xf9, 0xf3, 0x79, 0xce, 0xf2, 0x79, 0x25, 0x73, 0xde, 0x21, 0x34, 0x54, 0xb5, 0x1a,
+	0x88, 0xc1, 0xe5, 0x6d, 0x39, 0xcb, 0xf2, 0xc2, 0x44, 0x19, 0xc2, 0x7d, 0x68, 0x16, 0xc4, 0x79,
+	0x33, 0xe9, 0xd2, 0x72, 0x10, 0x65, 0x13, 0xc4, 0x11, 0xac, 0x15, 0xb5, 0x78, 0x8f, 0xeb, 0x40,
+	0xb8, 0x14, 0xf5, 0x35, 0x0d, 0x44, 0x67, 0xea, 0x38, 0xfe, 0x17, 0x56, 0x2d, 0x4d, 0x16, 0x6f,
+	0xf9, 0x10, 0x1a, 0xb6, 0x30, 0xfe, 0x03, 0x57, 0x08, 0x41, 0x75, 0x6e, 0xe8, 0xce, 0x32, 0x4b,
+	0xc6, 0xf6, 0xba, 0xe0, 0xc9, 0x8f, 0x03, 0x02, 0xf0, 0xfa, 0x6f, 0xc2, 0xd7, 0x2f, 0xce, 0xd6,
+	0x57, 0xf8, 0xef, 0xe3, 0xde, 0x59, 0xef, 0xa2, 0xb7, 0xee, 0x1c, 0x7c, 0xad, 0xc8, 0xc3, 0x9f,
+	0x93, 0xec, 0x63, 0x34, 0x22, 0xe8, 0x08, 0x7c, 0xf5, 0xc2, 0x51, 0x5b, 0xb7, 0xb4, 0xbf, 0x26,
+	0x9d, 0xcd, 0x05, 0xbf, 0x84, 0x84, 0x57, 0x50, 0x0f, 0x60, 0xfe, 0x24, 0xd1, 0x96, 0x91, 0x68,
+	0xaf, 0xba, 0xd3, 0x59, 0x16, 0x9a, 0xb5, 0x79, 0x06, 0x55, 0xfd, 0x10, 0x90, 0x39, 0xcd, 0xdc,
+	0x50, 0x27, 0x58, 0x0c, 0xcc, 0x1a, 0x3c, 0x01, 0x90, 0xca, 0x17, 0x44, 0x36, 0x74, 0xa6, 0xf5,
+	0x5c, 0x3a, 0xed, 0xa2, 0x7b, 0x56, 0xfe, 0x5c, 0xbf, 0x2c, 0xcd, 0xe4, 0xce, 0x1d, 0x9e, 0x42,
+	0x5d, 0xfb, 0x38, 0x89, 0x3b, 0xd7, 0x3f, 0x02, 0xff, 0x84, 0x30, 0x81, 0xfe, 0x6f, 0x4b, 0xbc,
+	0xaa, 0xb2, 0x65, 0x3b, 0x8d, 0xcd, 0xc1, 0x09, 0x61, 0x1a, 0x76, 0xbb, 0x28, 0xb7, 0xe2, 0x05,
+	0x17, 0x57, 0xff, 0x18, 0xaa, 0x27, 0x84, 0x49, 0xd4, 0x2d, 0x5b, 0x53, 0xaa, 0x78, 0xa3, 0xe0,
+	0xd5, 0xa5, 0x97, 0x9e, 0xf8, 0x77, 0x74, 0xf8, 0x23, 0x00, 0x00, 0xff, 0xff, 0xba, 0xb1, 0x32,
+	0x41, 0x2b, 0x09, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1148,6 +1145,12 @@ type PostServiceClient interface {
 	NewPost(ctx context.Context, in *NewPostRequest, opts ...grpc.CallOption) (*NewPostResponse, error)
 	NewComment(ctx context.Context, in *NewCommentRequest, opts ...grpc.CallOption) (*NewCommentResponse, error)
 	NewReply(ctx context.Context, in *NewReplyRequest, opts ...grpc.CallOption) (*NewReplyResponse, error)
+	DeletePost(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	DeleteComment(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	DeleteReply(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	GetPost(ctx context.Context, in *PostRequest, opts ...grpc.CallOption) (*PostResponse, error)
+	GetComment(ctx context.Context, in *CommentRequest, opts ...grpc.CallOption) (*CommentResponse, error)
+	GetReply(ctx context.Context, in *ReplyRequest, opts ...grpc.CallOption) (*ReplyResponse, error)
 }
 
 type postServiceClient struct {
@@ -1185,25 +1188,71 @@ func (c *postServiceClient) NewReply(ctx context.Context, in *NewReplyRequest, o
 	return out, nil
 }
 
+func (c *postServiceClient) DeletePost(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+	out := new(DeleteResponse)
+	err := c.cc.Invoke(ctx, "/postpb.PostService/DeletePost", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postServiceClient) DeleteComment(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+	out := new(DeleteResponse)
+	err := c.cc.Invoke(ctx, "/postpb.PostService/DeleteComment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postServiceClient) DeleteReply(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+	out := new(DeleteResponse)
+	err := c.cc.Invoke(ctx, "/postpb.PostService/DeleteReply", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postServiceClient) GetPost(ctx context.Context, in *PostRequest, opts ...grpc.CallOption) (*PostResponse, error) {
+	out := new(PostResponse)
+	err := c.cc.Invoke(ctx, "/postpb.PostService/GetPost", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postServiceClient) GetComment(ctx context.Context, in *CommentRequest, opts ...grpc.CallOption) (*CommentResponse, error) {
+	out := new(CommentResponse)
+	err := c.cc.Invoke(ctx, "/postpb.PostService/GetComment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postServiceClient) GetReply(ctx context.Context, in *ReplyRequest, opts ...grpc.CallOption) (*ReplyResponse, error) {
+	out := new(ReplyResponse)
+	err := c.cc.Invoke(ctx, "/postpb.PostService/GetReply", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PostServiceServer is the server API for PostService service.
 type PostServiceServer interface {
 	NewPost(context.Context, *NewPostRequest) (*NewPostResponse, error)
 	NewComment(context.Context, *NewCommentRequest) (*NewCommentResponse, error)
 	NewReply(context.Context, *NewReplyRequest) (*NewReplyResponse, error)
-}
-
-// UnimplementedPostServiceServer can be embedded to have forward compatible implementations.
-type UnimplementedPostServiceServer struct {
-}
-
-func (*UnimplementedPostServiceServer) NewPost(ctx context.Context, req *NewPostRequest) (*NewPostResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NewPost not implemented")
-}
-func (*UnimplementedPostServiceServer) NewComment(ctx context.Context, req *NewCommentRequest) (*NewCommentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NewComment not implemented")
-}
-func (*UnimplementedPostServiceServer) NewReply(ctx context.Context, req *NewReplyRequest) (*NewReplyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NewReply not implemented")
+	DeletePost(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	DeleteComment(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	DeleteReply(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	GetPost(context.Context, *PostRequest) (*PostResponse, error)
+	GetComment(context.Context, *CommentRequest) (*CommentResponse, error)
+	GetReply(context.Context, *ReplyRequest) (*ReplyResponse, error)
 }
 
 func RegisterPostServiceServer(s *grpc.Server, srv PostServiceServer) {
@@ -1264,6 +1313,114 @@ func _PostService_NewReply_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PostService_DeletePost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).DeletePost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/postpb.PostService/DeletePost",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).DeletePost(ctx, req.(*DeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PostService_DeleteComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).DeleteComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/postpb.PostService/DeleteComment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).DeleteComment(ctx, req.(*DeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PostService_DeleteReply_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).DeleteReply(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/postpb.PostService/DeleteReply",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).DeleteReply(ctx, req.(*DeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PostService_GetPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).GetPost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/postpb.PostService/GetPost",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).GetPost(ctx, req.(*PostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PostService_GetComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).GetComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/postpb.PostService/GetComment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).GetComment(ctx, req.(*CommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PostService_GetReply_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReplyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).GetReply(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/postpb.PostService/GetReply",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).GetReply(ctx, req.(*ReplyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _PostService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "postpb.PostService",
 	HandlerType: (*PostServiceServer)(nil),
@@ -1279,6 +1436,30 @@ var _PostService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "NewReply",
 			Handler:    _PostService_NewReply_Handler,
+		},
+		{
+			MethodName: "DeletePost",
+			Handler:    _PostService_DeletePost_Handler,
+		},
+		{
+			MethodName: "DeleteComment",
+			Handler:    _PostService_DeleteComment_Handler,
+		},
+		{
+			MethodName: "DeleteReply",
+			Handler:    _PostService_DeleteReply_Handler,
+		},
+		{
+			MethodName: "GetPost",
+			Handler:    _PostService_GetPost_Handler,
+		},
+		{
+			MethodName: "GetComment",
+			Handler:    _PostService_GetComment_Handler,
+		},
+		{
+			MethodName: "GetReply",
+			Handler:    _PostService_GetReply_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

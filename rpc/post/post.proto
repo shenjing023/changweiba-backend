@@ -13,7 +13,7 @@ message Post {
     string topic = 3;
     int64 create_time = 4;
     int64 last_update = 5;
-    int32 reply_num = 6;
+    int64 reply_num = 6;
     Status status = 7;
 }
 
@@ -36,7 +36,7 @@ message Reply {
     int64 create_time = 6;
     int64 parent_id = 7;
     int32 floor = 8;
-    Status type = 9;
+    Status status = 9;
 }
 
 message NewPostRequest {
@@ -71,15 +71,12 @@ message NewReplyResponse{
     int64 reply_id=1;
 }
 
-message EditPostRequest {
-    string id = 1;
-    string status = 2;
-    string user_id = 3;
+message DeleteRequest {
+    int64 id = 1;
 }
 
-message DeleteCommentRequest {
-    string id = 1;
-    string user_id = 2;
+message DeleteResponse {
+    bool success=1;
 }
 
 message PostRequest {
@@ -90,7 +87,6 @@ message PostRequest {
 
 message PostResponse {
     Post post = 1;
-    repeated Comment comments = 2;
 }
 
 message PostsRequest {
@@ -109,17 +105,28 @@ message CommentRequest {
 }
 
 message CommentResponse {
-    int64 id = 1;
-    repeated Reply replies = 2;
+    Comment comment = 1;
 }
 
 message ReplyRequest{
     int64 id=1;
 }
 
+message ReplyResponse{
+    Reply reply=1;
+}
+
+
+
 
 service PostService{
     rpc NewPost(NewPostRequest) returns(NewPostResponse){}
     rpc NewComment(NewCommentRequest) returns(NewCommentResponse){}
     rpc NewReply(NewReplyRequest) returns(NewReplyResponse){}
+    rpc DeletePost(DeleteRequest) returns(DeleteResponse){}
+    rpc DeleteComment(DeleteRequest) returns(DeleteResponse){}
+    rpc DeleteReply(DeleteRequest) returns(DeleteResponse){}
+    rpc GetPost(PostRequest) returns(PostResponse){}
+    rpc GetComment(CommentRequest) returns(CommentResponse){}
+    rpc GetReply(ReplyRequest) returns(ReplyResponse){}
 }

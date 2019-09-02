@@ -63,8 +63,9 @@ input NewReply{
     parent_id: Int!
 }
 
-input EditPost{
+input DeletePost{
     id: Int!
-    status: Status!
 }
+
+
 
