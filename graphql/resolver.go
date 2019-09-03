@@ -7,6 +7,7 @@ import (
 	"changweiba-backend/conf"
 	"changweiba-backend/graphql/generated"
 	"changweiba-backend/graphql/models"
+	"changweiba-backend/graphql/post"
 	"changweiba-backend/graphql/user"
 	"context"
 	"fmt"
@@ -15,13 +16,20 @@ import (
 ) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
 //rpc连接
-var accountConn *grpc.ClientConn
+var (
+	accountConn *grpc.ClientConn
+	postConn *grpc.ClientConn
+)
 
 func InitRPCConnection(){
 	var err error
 	accountConn,err=grpc.Dial(fmt.Sprintf("localhost:%d",conf.Cfg.Account.Port),grpc.WithInsecure())
 	if err!=nil{
 		log.Fatal("fail to accountRPC dial: %+v",err)
+	}
+	postConn,err=grpc.Dial(fmt.Sprintf("localhost:%d",conf.Cfg.Post.Port),grpc.WithInsecure())
+	if err!=nil{
+		log.Fatal("fail to postRPC dial: %+v",err)
 	}
 }
 
@@ -48,7 +56,10 @@ func (r *Resolver) Query() generated.QueryResolver {
 }
 
 func (r *Resolver) User() generated.UserResolver {
-	return &userResolver{r}
+	return &userResolver{
+		Resolver:r,
+		myPostResolver:&post.MyPostResolver{},
+	}
 }
 
 func (r *Resolver) Post() generated.PostResolver {
@@ -72,36 +83,63 @@ func (r *mutationResolver) LoginUser(ctx context.Context, input models.NewUser) 
 func (r *mutationResolver) EditUser(ctx context.Context, input models.EditUser) (string, error) {
 	panic("not implemented")
 }
-func (r *mutationResolver) ReportUser(ctx context.Context, input models.ReportUser) (string, error) {
+func (r *mutationResolver) ReportUser(ctx context.Context, input models.ReportUser) (bool, error) {
 	panic("not implemented")
 }
-func (r *mutationResolver) NewPost(ctx context.Context, input models.NewPost) (string, error) {
+func (r *mutationResolver) NewPost(ctx context.Context, input models.NewPost) (int, error) {
 	panic("not implemented")
 }
-func (r *mutationResolver) NewComment(ctx context.Context, input models.NewComment) (string, error) {
+func (r *mutationResolver) NewComment(ctx context.Context, input models.NewComment) (int, error) {
 	panic("not implemented")
 }
-func (r *mutationResolver) NewReply(ctx context.Context, input models.NewReply) (string, error) {
+func (r *mutationResolver) NewReply(ctx context.Context, input models.NewReply) (int, error) {
 	panic("not implemented")
 }
-func (r *mutationResolver) EditPost(ctx context.Context, input models.EditPost) (string, error) {
+func (r *mutationResolver) DeletePost(ctx context.Context, input int) (bool, error) {
 	panic("not implemented")
 }
 
 type queryResolver struct{
 	*Resolver
 	myUserResolver *user.MyUserResolver
+	myPostResolver *post.MyPostResolver
 }
 
 func (r *queryResolver) User(ctx context.Context, userID int) (*models.User, error) {
 	return r.myUserResolver.GetUser(ctx,userID,accountConn)
 }
 
-type userResolver struct {
-	*Resolver
+func (r *queryResolver) Post(ctx context.Context, postID int) (*models.Post, error){
+	return r.myPostResolver.GetPost(ctx,postID,postConn)
 }
 
-func (r *userResolver) Posts(ctx context.Context, obj *models.User) ([]*models.Post, error) {
+func (r *queryResolver) Posts(ctx context.Context, page int, pageSize int) ([]*models.Post, error){
+	panic("not implemented")
+}
+
+func (r *queryResolver) Comment(ctx context.Context, commentID int) (*models.Comment, error){
+	panic("not implemented")
+}
+
+func (r *queryResolver) Reply(ctx context.Context, replyID int) (*models.Reply, error){
+	panic("not implemented")
+}
+
+type userResolver struct {
+	*Resolver
+	myPostResolver *post.MyPostResolver
+}
+
+func (r *userResolver) Posts(ctx context.Context, obj *models.User, page int, pageSize int) ([]*models.Post, error) {
+	panic("not implemented")
+}
+
+func (r *userResolver) Comments(ctx context.Context, obj *models.User, page int, pageSize int) ([]*models.Comment, 
+	error){
+	panic("not implemented")
+}
+
+func (r *userResolver) Replies(ctx context.Context, obj *models.User, page int, pageSize int) ([]*models.Reply, error){
 	panic("not implemented")
 }
 
@@ -109,6 +147,6 @@ type postResolver struct {
 	*Resolver
 }
 
-func (r *postResolver) Comments(ctx context.Context, obj *models.Post) ([]*models.Comment, error) {
+func (r *postResolver) Comments(ctx context.Context, obj *models.Post, page int, pageSize int) ([]*models.Comment, error) {
 	panic("not implemented")
 }

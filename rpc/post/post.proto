@@ -13,7 +13,7 @@ message Post {
     string topic = 3;
     int64 create_time = 4;
     int64 last_update = 5;
-    int64 reply_num = 6;
+    int32 reply_num = 6;
     Status status = 7;
 }
 

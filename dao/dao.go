@@ -141,12 +141,13 @@ func InsertComment(userId int64,postId int64,content string) (int64,error){
 		Content:    content,
 		CreateTime: now,
 		Status:     0,
-		Floor:floor+1,
+		Floor:int32(floor+1),
 	}
 	_,err=dbEngine.InsertOne(&comment)
 	if err!=nil{
 		return 0,err
 	}
+	go increasePostReplyNum(postId)
 	return comment.Id,nil
 }
 
@@ -169,35 +170,82 @@ func InsertReply(userId,postId,commentId,parentId int64,content string) (int64,e
 		CommentId:commentId,
 		CreateTime:now,
 		Status:0,
-		Floor:floor,
+		Floor:int32(floor),
 	}
 	_,err=dbEngine.InsertOne(&reply)
 	if err!=nil{
 		return 0, err
 	}
+	go increasePostReplyNum(postId)
 	return reply.Id,nil
+}
+
+//帖子回复数+1
+func increasePostReplyNum(postId int64){
+	sql:="UPDATE post SET reply_num=reply_num+1 WHERE id=?"
+	dbEngine.Exec(sql,postId)
+}
+
+func decreasePostReplyNum(postId int64){
+	sql:="UPDATE post SET reply_num=reply_num-1 WHERE id=?"
+	dbEngine.Exec(sql,postId)
 }
 
 func DeletePost(postId int64) error{
 	sql:="UPDATE post SET status=0 WHERE id=?"
 	_,err:=dbEngine.Exec(sql,postId)
+	if err==nil{
+		go decreasePostReplyNum(postId)
+	}
 	return err
 }
 
 func DeleteComment(commentId int64) error{
 	sql:="UPDATE comment SET status=0 WHERE id=?"
 	_,err:=dbEngine.Exec(sql,commentId)
+	if err==nil{
+		go func() {
+			sql="SELECT post_id FROM comment WHERE id=?"
+			results,_:=dbEngine.Query(sql,commentId)
+			postId,_:=strconv.ParseInt(string(results[0]["post_id"]),10,64)
+			go decreasePostReplyNum(postId)
+		}()
+	}
 	return err
 }
 
 func DeleteReply(replyId int64) error{
 	sql:="UPDATE reply SET status=0 WHERE id=?"
 	_,err:=dbEngine.Exec(sql,replyId)
+	if err==nil{
+		go func() {
+			sql="SELECT post_id FROM reply WHERE id=?"
+			results,_:=dbEngine.Query(sql,replyId)
+			postId,_:=strconv.ParseInt(string(results[0]["post_id"]),10,64)
+			go decreasePostReplyNum(postId)
+		}()
+	}
 	return err
 }
 
 func GetPost(post *Post) (bool,error){
 	has,err:=dbEngine.Get(post)
+	if err!=nil{
+		return false, status.Error(codes.Internal,err.Error())
+	}
+	return has,nil
+}
+
+func GetComment(comment *Comment) (bool,error){
+	has,err:=dbEngine.Get(comment)
+	if err!=nil{
+		return false, status.Error(codes.Internal,err.Error())
+	}
+	return has,nil
+}
+
+func GetReply(reply *Reply) (bool,error){
+	has,err:=dbEngine.Get(reply)
 	if err!=nil{
 		return false, status.Error(codes.Internal,err.Error())
 	}

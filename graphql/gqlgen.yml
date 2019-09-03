@@ -20,3 +20,11 @@ models:
     fields:
       posts:
         resolver: true
+      comments:
+        resolver: true
+      replies:
+        resolver: true
+  Comment:
+    fields:
+      replies:
+        resolver: true

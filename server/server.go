@@ -34,7 +34,10 @@ func playgroundHandler() gin.HandlerFunc {
 func graphqlHandler() gin.HandlerFunc {
 	// NewExecutableSchema and Config are in the generated.go file
 	// Resolver is in the resolver.go file
-	h := handler.GraphQL(generated.NewExecutableSchema(generated.Config{Resolvers: &graphql.Resolver{}}))
+	h := handler.GraphQL(
+		generated.NewExecutableSchema(generated.Config{Resolvers: &graphql.Resolver{}}),
+		handler.ComplexityLimit(3),
+		)
 
 	return func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)

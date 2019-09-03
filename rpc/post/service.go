@@ -106,7 +106,7 @@ func (p *Post) GetPost(ctx context.Context,pr *pb.PostRequest) (*pb.PostResponse
 	}
 	has,err:=dao.GetPost(dbPost)
 	if err!=nil{
-		logs.Error("get user error:",err.Error())
+		logs.Error("get post error:",err.Error())
 		return nil,status.Error(codes.Internal,"post service system error")
 	}
 	if has{
@@ -118,10 +118,71 @@ func (p *Post) GetPost(ctx context.Context,pr *pb.PostRequest) (*pb.PostResponse
 				CreateTime:dbPost.CreateTime,
 				LastUpdate:dbPost.LastUpdate,
 				ReplyNum:dbPost.ReplyNum,
-				Status:dbPost.Status,
+				Status:pb.Status(dbPost.Status),
 			},
 		}
 		return pbPost,nil
+	} else{
+		logs.Info("get post failed: post is not exist")
+		return &pb.PostResponse{}, nil
+	}
+}
+
+func (p *Post) GetComment(ctx context.Context,cr *pb.CommentRequest) (*pb.CommentResponse,error){
+	dbComment:=&dao.Comment{
+		Id:cr.Id,
+	}
+	has,err:=dao.GetComment(dbComment)
+	if err!=nil{
+		logs.Error("get comment error:",err.Error())
+		return nil,status.Error(codes.Internal,"post service system error")
+	}
+	if has{
+		pbComment:=&pb.CommentResponse{
+			Comment:&pb.Comment{
+				Id:dbComment.Id,
+				UserId:dbComment.UserId,
+				PostId:dbComment.PostId,
+				Content:dbComment.Content,
+				CreateTime:dbComment.CreateTime,
+				Floor:int32(dbComment.Floor),
+				Status:pb.Status(dbComment.Status),
+			},
+		}
+		return pbComment,nil
+	} else{
+		logs.Info("get comment failed: comment is not exist")
+		return &pb.CommentResponse{}, nil
+	}
+}
+
+func (p *Post) GetReply(ctx context.Context,rr *pb.ReplyRequest) (*pb.ReplyResponse,error){
+	dbReply:=&dao.Reply{
+		Id:rr.Id,
+	}
+	has,err:=dao.GetReply(dbReply)
+	if err!=nil{
+		logs.Error("get reply error:",err.Error())
+		return nil,status.Error(codes.Internal,"post service system error")
+	}
+	if has{
+		pbReply:=&pb.ReplyResponse{
+			Reply:&pb.Reply{
+				Id:dbReply.Id,
+				UserId:dbReply.UserId,
+				PostId:dbReply.PostId,
+				CommentId:dbReply.CommentId,
+				Content:dbReply.Content,
+				CreateTime:dbReply.CreateTime,
+				ParentId:dbReply.ParentId,
+				Floor:int32(dbReply.Floor),
+				Status:pb.Status(dbReply.Status),
+			},
+		}
+		return pbReply,nil
+	} else{
+		logs.Info("get reply failed: reply is not exist")
+		return &pb.ReplyResponse{}, nil
 	}
 }
 

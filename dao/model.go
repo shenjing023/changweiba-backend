@@ -5,19 +5,19 @@ type User struct {
 	Name string
 	Password string
 	Avatar string
-	Status int
-	Score int64
+	Status int32
+	Score int32
 	BannedReason string
 	CreateTime int64
 	LastUpdate int64
-	Role int
+	Role int32
 	Ip int64
 }
 
 type Avatar struct {
 	Id int64
 	Url string
-	Status int
+	Status int32
 }
 
 type Post struct {
@@ -26,8 +26,8 @@ type Post struct {
 	Topic string
 	CreateTime int64
 	LastUpdate int64
-	ReplyNum int64
-	Status int
+	ReplyNum int32
+	Status int32
 }
 
 type Comment struct {
@@ -36,8 +36,8 @@ type Comment struct {
 	PostId int64
 	Content string
 	CreateTime int64
-	Floor int
-	Status int
+	Floor int32
+	Status int32
 }
 
 type Reply struct {
@@ -48,6 +48,6 @@ type Reply struct {
 	Content string
 	CreateTime int64
 	ParentId int64
-	Floor int
-	Status int
+	Floor int32
+	Status int32
 }

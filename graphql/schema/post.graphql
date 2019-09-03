@@ -1,26 +1,26 @@
 type Post{
     id: Int!
-    user: User
+    user: User!
     topic: String!
-    create_at: String!
+    create_at: Int!
     """最后回复时间"""
-    last_at: String!
+    last_at: Int!
     """帖子回复的数量"""
     reply_num: Int!
     status: Status!
-    comments: [Comment!]
+    comments(page:Int!,page_size:Int!): [Comment!]
 }
 
 type Comment{
     id: Int!
-    user: User
+    user: User!
     post_id: Int!
     content: String!
-    create_at: String!
+    create_at: Int!
     """第几楼"""
     floor: Int!
     status: Status!
-    replies: [Reply!]
+    replies(page:Int!,page_size:Int!): [Reply!]
 }
 
 type Reply{
@@ -29,7 +29,7 @@ type Reply{
     post_id: Int!
     comment_id: Int!
     content: String!
-    create_at: String!
+    create_at: Int!
     """父回复"""
     parent: Reply!
     """楼中楼的第几楼"""

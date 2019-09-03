@@ -18,6 +18,9 @@ type YamlConf struct {
 	Account struct {
 		Port int `yaml:"port"`
 	} `yaml:"account,omitempty"`
+	Post struct{
+		Port int `yaml:"port"`
+	} `yaml:"post,omitempty"`
 	DB struct{
 		Host string	`yaml:"host"`
 		Port int	`yaml:"port"`

@@ -9,20 +9,19 @@ import (
 )
 
 type Comment struct {
-	ID       string `json:"id"`
+	ID       int    `json:"id"`
 	User     *User  `json:"user"`
-	PostID   string `json:"post_id"`
+	PostID   int    `json:"post_id"`
 	Content  string `json:"content"`
-	CreateAt string `json:"create_at"`
+	CreateAt int    `json:"create_at"`
 	// 第几楼
-	Floor   int        `json:"floor"`
-	Status  PostStatus `json:"status"`
-	Replies []*Reply   `json:"replies"`
+	Floor   int      `json:"floor"`
+	Status  Status   `json:"status"`
+	Replies []*Reply `json:"replies"`
 }
 
-type EditPost struct {
-	ID     string     `json:"id"`
-	Status PostStatus `json:"status"`
+type DeletePost struct {
+	ID int `json:"id"`
 }
 
 type EditUser struct {
@@ -36,24 +35,23 @@ type EditUser struct {
 }
 
 type NewComment struct {
-	UserID  string `json:"user_id"`
-	PostID  string `json:"post_id"`
+	UserID  int    `json:"user_id"`
+	PostID  int    `json:"post_id"`
 	Content string `json:"content"`
 }
 
 type NewPost struct {
-	UserID  string `json:"user_id"`
+	UserID  int    `json:"user_id"`
 	Topic   string `json:"topic"`
 	Content string `json:"content"`
 }
 
 type NewReply struct {
-	UserID      string    `json:"user_id"`
-	PostID      string    `json:"post_id"`
-	CommentID   string    `json:"comment_id"`
-	Content     string    `json:"content"`
-	ReplyUserID string    `json:"reply_user_id"`
-	Type        ReplyType `json:"type"`
+	UserID    int    `json:"user_id"`
+	PostID    int    `json:"post_id"`
+	CommentID int    `json:"comment_id"`
+	Content   string `json:"content"`
+	ParentID  int    `json:"parent_id"`
 }
 
 type NewUser struct {
@@ -62,32 +60,30 @@ type NewUser struct {
 }
 
 type Post struct {
-	ID       string `json:"id"`
+	ID       int    `json:"id"`
 	User     *User  `json:"user"`
 	Topic    string `json:"topic"`
-	CreateAt string `json:"create_at"`
+	CreateAt int    `json:"create_at"`
 	// 最后回复时间
-	LastAt string `json:"last_at"`
+	LastAt int `json:"last_at"`
 	// 帖子回复的数量
 	ReplyNum int        `json:"reply_num"`
-	Status   PostStatus `json:"status"`
+	Status   Status     `json:"status"`
 	Comments []*Comment `json:"comments"`
 }
 
 type Reply struct {
-	ID        string `json:"id"`
+	ID        int    `json:"id"`
 	User      *User  `json:"user"`
-	PostID    string `json:"post_id"`
-	CommentID string `json:"comment_id"`
+	PostID    int    `json:"post_id"`
+	CommentID int    `json:"comment_id"`
 	Content   string `json:"content"`
-	CreateAt  string `json:"create_at"`
-	// 回复谁
-	ReplyUserID string `json:"reply_user_id"`
+	CreateAt  int    `json:"create_at"`
+	// 父回复
+	Parent *Reply `json:"parent"`
 	// 楼中楼的第几楼
-	Floor int `json:"floor"`
-	// 回复类型
-	Type   ReplyType  `json:"type"`
-	Status PostStatus `json:"status"`
+	Floor  int    `json:"floor"`
+	Status Status `json:"status"`
 }
 
 type ReportUser struct {
@@ -109,89 +105,50 @@ type User struct {
 	// 当前分数
 	Score int `json:"score"`
 	// 被封原因
-	BannedReason string  `json:"banned_reason"`
-	Posts        []*Post `json:"posts"`
+	BannedReason string     `json:"banned_reason"`
+	Posts        []*Post    `json:"posts"`
+	Comments     []*Comment `json:"comments"`
+	Replies      []*Reply   `json:"replies"`
 }
 
-type PostStatus string
+type Status string
 
 const (
-	PostStatusNormal PostStatus = "NORMAL"
-	PostStatusBanned PostStatus = "BANNED"
+	StatusNormal Status = "NORMAL"
+	StatusBanned Status = "BANNED"
 )
 
-var AllPostStatus = []PostStatus{
-	PostStatusNormal,
-	PostStatusBanned,
+var AllStatus = []Status{
+	StatusNormal,
+	StatusBanned,
 }
 
-func (e PostStatus) IsValid() bool {
+func (e Status) IsValid() bool {
 	switch e {
-	case PostStatusNormal, PostStatusBanned:
+	case StatusNormal, StatusBanned:
 		return true
 	}
 	return false
 }
 
-func (e PostStatus) String() string {
+func (e Status) String() string {
 	return string(e)
 }
 
-func (e *PostStatus) UnmarshalGQL(v interface{}) error {
+func (e *Status) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = PostStatus(str)
+	*e = Status(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid PostStatus", str)
+		return fmt.Errorf("%s is not a valid Status", str)
 	}
 	return nil
 }
 
-func (e PostStatus) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type ReplyType string
-
-const (
-	ReplyTypeReplycomment ReplyType = "REPLYCOMMENT"
-	ReplyTypeReplyfloor   ReplyType = "REPLYFLOOR"
-)
-
-var AllReplyType = []ReplyType{
-	ReplyTypeReplycomment,
-	ReplyTypeReplyfloor,
-}
-
-func (e ReplyType) IsValid() bool {
-	switch e {
-	case ReplyTypeReplycomment, ReplyTypeReplyfloor:
-		return true
-	}
-	return false
-}
-
-func (e ReplyType) String() string {
-	return string(e)
-}
-
-func (e *ReplyType) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = ReplyType(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid ReplyType", str)
-	}
-	return nil
-}
-
-func (e ReplyType) MarshalGQL(w io.Writer) {
+func (e Status) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
