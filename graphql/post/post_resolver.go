@@ -1,6 +1,7 @@
 package post
 
 import (
+	"changweiba-backend/dao"
 	"changweiba-backend/graphql/models"
 	accountpb "changweiba-backend/rpc/account/pb"
 	postpb "changweiba-backend/rpc/post/pb"
@@ -10,6 +11,7 @@ import (
 	"github.com/astaxie/beego/logs"
 	"google.golang.org/grpc"
 	"time"
+	"changweiba-backend/graphql/user"
 )
 
 const (
@@ -36,6 +38,7 @@ func (p *MyPostResolver) GetPost(ctx context.Context,postId int,conn *grpc.Clien
 		//不存在
 		return nil,errors.New("post不存在")
 	}
+	pbUser:=user
 	pbUser:=accountpb.User{
 		Id:r.Post.UserId,
 	}
@@ -67,5 +70,17 @@ func (p *MyPostResolver) GetPost(ctx context.Context,postId int,conn *grpc.Clien
 
 func (p *MyPostResolver) GetCommentsByPostId(ctx context.Context, obj *models.Post, page int, 
 	pageSize int) ([]*models.Comment, error){
-		
+		dbComments,err:=dao.GetCommentsByPostId(int64(obj.ID),page,pageSize)
+		if err!=nil{
+			logs.Error(fmt.Sprintf("get comments by post_id failed: %+v",err))
+			return nil, err
+		}
+		var comments []*models.Comment
+		for _,v:=range dbComments{
+			comments=append(comments,&models.Comment{
+				ID:int(v.Id),
+				User:
+			})
+		}
+		return comments,nil
 }

@@ -244,6 +244,12 @@ func GetComment(comment *Comment) (bool,error){
 	return has,nil
 }
 
+func GetCommentsByPostId(postId int64,page int,pageSize int) ([]*Comment,error){
+	comments:=make([]*Comment,pageSize)
+	err:=dbEngine.Where("post_id=?",postId).Limit(page,pageSize).Find(&comments)
+	return comments,err
+}
+
 func GetReply(reply *Reply) (bool,error){
 	has,err:=dbEngine.Get(reply)
 	if err!=nil{

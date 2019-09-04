@@ -48,7 +48,7 @@ func (u *MyUserResolver) RegisterUser(ctx context.Context,input models.NewUser,c
 	}
 	r,err :=client.RegisterUser(ctx,&user)
 	if err!=nil{
-		logs.Error("Register user error:",err.Error())
+		logs.Error("register user error:",err.Error())
 		return "", common.GRPCErrorConvert(err, map[codes.Code]string{
 			codes.Internal:AccountServiceError,
 			codes.AlreadyExists:"该昵称已注册",

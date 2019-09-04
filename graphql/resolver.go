@@ -145,8 +145,9 @@ func (r *userResolver) Replies(ctx context.Context, obj *models.User, page int, 
 
 type postResolver struct {
 	*Resolver
+	myPostResolver *post.MyPostResolver
 }
 
 func (r *postResolver) Comments(ctx context.Context, obj *models.Post, page int, pageSize int) ([]*models.Comment, error) {
-	panic("not implemented")
+	return r.myPostResolver.GetCommentsByPostId(ctx,obj,page,pageSize)
 }
