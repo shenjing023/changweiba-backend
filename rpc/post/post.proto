@@ -81,8 +81,6 @@ message DeleteResponse {
 
 message PostRequest {
     int64 id = 1;
-    int32 offset = 3;
-    int32 limit = 4;
 }
 
 message PostResponse {
@@ -100,12 +98,21 @@ message PostsResponse {
 
 message CommentRequest {
     int64 id = 1;
-    int32 offset = 2;
-    int32 limit = 3;
 }
 
 message CommentResponse {
     Comment comment = 1;
+}
+
+//通过post_id获取comments
+message CommentsRequest {
+    int64 post_id = 1;
+    int32 offset = 2;
+    int32 limit = 3;
+}
+
+message CommentsResponse {
+    repeated Comment comments = 1;
 }
 
 message ReplyRequest{
@@ -116,7 +123,16 @@ message ReplyResponse{
     Reply reply=1;
 }
 
+//通过comment_id获取replies
+message RepliesRequest{
+    int64 comment_id=1;
+    int32 offset=2;
+    int32 limit=3;
+}
 
+message RepliesResponse{
+    repeated Reply replies=1;
+}
 
 
 service PostService{
@@ -129,4 +145,6 @@ service PostService{
     rpc GetPost(PostRequest) returns(PostResponse){}
     rpc GetComment(CommentRequest) returns(CommentResponse){}
     rpc GetReply(ReplyRequest) returns(ReplyResponse){}
+    rpc GetCommentsByPostId(CommentsRequest) returns(CommentsResponse){}
+    rpc GetRepliesByCommentId(RepliesRequest) returns(RepliesResponse){}
 }

@@ -145,7 +145,7 @@ func (p *Post) GetComment(ctx context.Context,cr *pb.CommentRequest) (*pb.Commen
 				PostId:dbComment.PostId,
 				Content:dbComment.Content,
 				CreateTime:dbComment.CreateTime,
-				Floor:int32(dbComment.Floor),
+				Floor:dbComment.Floor,
 				Status:pb.Status(dbComment.Status),
 			},
 		}
@@ -183,6 +183,26 @@ func (p *Post) GetReply(ctx context.Context,rr *pb.ReplyRequest) (*pb.ReplyRespo
 	} else{
 		logs.Info("get reply failed: reply is not exist")
 		return &pb.ReplyResponse{}, nil
+	}
+}
+
+func (p *Post) GetCommentsByPostId(ctx context.Context,cr *pb.CommentsRequest) (*pb.CommentsResponse,error){
+	dbComments,err:=dao.GetCommentsByPostId(cr.PostId,int(cr.Offset),int(cr.Limit))
+	if err!=nil{
+		logs.Error(fmt.Sprintf("get comments by post_id failed: %+v",err))
+		return nil, err
+	}
+	var comments []*pb.Comment
+	for _,v:=range dbComments{
+		comments=append(comments,&pb.Comment{
+			Id:                   v.Id,
+			UserId:               v.UserId,
+			PostId:               v.PostId,
+			Content:              v.Content,
+			CreateTime:           v.CreateTime,
+			Floor:                v.Floor,
+			Status:               pb.Status(v.Status),
+		})
 	}
 }
 

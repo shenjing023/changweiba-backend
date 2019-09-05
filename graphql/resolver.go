@@ -25,11 +25,11 @@ func InitRPCConnection(){
 	var err error
 	accountConn,err=grpc.Dial(fmt.Sprintf("localhost:%d",conf.Cfg.Account.Port),grpc.WithInsecure())
 	if err!=nil{
-		log.Fatal("fail to accountRPC dial: %+v",err)
+		log.Fatal(fmt.Sprintf("fail to accountRPC dial: %+v",err))
 	}
 	postConn,err=grpc.Dial(fmt.Sprintf("localhost:%d",conf.Cfg.Post.Port),grpc.WithInsecure())
 	if err!=nil{
-		log.Fatal("fail to postRPC dial: %+v",err)
+		log.Fatal(fmt.Sprintf("fail to postRPC dial: %+v",err))
 	}
 }
 
@@ -75,10 +75,10 @@ func (r *mutationResolver) RegisterUser(ctx context.Context, input models.NewUse
 	if _,err:=common.GinContextFromContext(ctx);err!=nil{
 		return "", err
 	}
-	return r.myUserResolver.RegisterUser(ctx,input,accountConn)
+	return user.RegisterUser(ctx,input,accountConn)
 }
 func (r *mutationResolver) LoginUser(ctx context.Context, input models.NewUser) (string, error) {
-	return r.myUserResolver.LoginUser(ctx,input,accountConn)
+	return user.LoginUser(ctx,input,accountConn)
 }
 func (r *mutationResolver) EditUser(ctx context.Context, input models.EditUser) (string, error) {
 	panic("not implemented")
@@ -101,16 +101,14 @@ func (r *mutationResolver) DeletePost(ctx context.Context, input int) (bool, err
 
 type queryResolver struct{
 	*Resolver
-	myUserResolver *user.MyUserResolver
-	myPostResolver *post.MyPostResolver
 }
 
 func (r *queryResolver) User(ctx context.Context, userID int) (*models.User, error) {
-	return r.myUserResolver.GetUser(ctx,userID,accountConn)
+	return user.GetUser(ctx,userID,accountConn)
 }
 
 func (r *queryResolver) Post(ctx context.Context, postID int) (*models.Post, error){
-	return r.myPostResolver.GetPost(ctx,postID,postConn)
+	return post.GetPost(ctx,postID,postConn)
 }
 
 func (r *queryResolver) Posts(ctx context.Context, page int, pageSize int) ([]*models.Post, error){

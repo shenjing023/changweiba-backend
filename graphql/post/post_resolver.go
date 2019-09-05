@@ -22,7 +22,7 @@ type MyPostResolver struct {
 	
 }
 
-func (p *MyPostResolver) GetPost(ctx context.Context,postId int,conn *grpc.ClientConn) (*models.Post,error){
+func GetPost(ctx context.Context,postId int,conn *grpc.ClientConn) (*models.Post,error){
 	client:=postpb.NewPostServiceClient(conn)
 	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
 	defer cancel()
@@ -38,28 +38,11 @@ func (p *MyPostResolver) GetPost(ctx context.Context,postId int,conn *grpc.Clien
 		//不存在
 		return nil,errors.New("post不存在")
 	}
-	pbUser:=user
-	pbUser:=accountpb.User{
-		Id:r.Post.UserId,
-	}
-	client2:=accountpb.NewAccountClient(conn)
-	r2,err:=client2.GetUser(ctx,&pbUser)
-	if err!=nil{
-		logs.Error(fmt.Sprintf("get user[%d] error:%+v",r.Post.UserId,err))
-		return nil, err
-	}
-	user:=&models.User{
-		ID:int(r2.Id),
-		Name:r2.Name,
-		Avatar:r2.Avatar,
-		Status:models.UserStatus(r2.Status),
-		Score:int(r2.Score),
-		BannedReason:r2.BannedReason,
-		Role:models.UserRole(r2.Role),
-	}
+	u,_:=user.GetUser(ctx,int(r.Post.UserId),conn)
+
 	return &models.Post{
 		ID:int(r.Post.Id),
-		User:user,
+		User:u,
 		Topic:r.Post.Topic,
 		CreateAt:int(r.Post.CreateTime),
 		LastAt:int(r.Post.LastUpdate),
@@ -68,7 +51,7 @@ func (p *MyPostResolver) GetPost(ctx context.Context,postId int,conn *grpc.Clien
 	}, nil
 }
 
-func (p *MyPostResolver) GetCommentsByPostId(ctx context.Context, obj *models.Post, page int, 
+func GetCommentsByPostId(ctx context.Context, obj *models.Post, page int,
 	pageSize int) ([]*models.Comment, error){
 		dbComments,err:=dao.GetCommentsByPostId(int64(obj.ID),page,pageSize)
 		if err!=nil{
@@ -77,9 +60,10 @@ func (p *MyPostResolver) GetCommentsByPostId(ctx context.Context, obj *models.Po
 		}
 		var comments []*models.Comment
 		for _,v:=range dbComments{
+			u,_:=user.GetUser(ctx,int(v.UserId),conn)
 			comments=append(comments,&models.Comment{
 				ID:int(v.Id),
-				User:
+				User:v.UserId
 			})
 		}
 		return comments,nil

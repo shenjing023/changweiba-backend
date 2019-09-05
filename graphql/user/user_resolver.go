@@ -24,7 +24,7 @@ type MyUserResolver struct {
 
 }
 
-func (u *MyUserResolver) RegisterUser(ctx context.Context,input models.NewUser,conn *grpc.ClientConn) (string, error){
+func RegisterUser(ctx context.Context,input models.NewUser,conn *grpc.ClientConn) (string, error){
 	//获取客户端ip
 	gc,err:=common.GinContextFromContext(ctx)
 	if err!=nil{
@@ -67,7 +67,7 @@ func (u *MyUserResolver) RegisterUser(ctx context.Context,input models.NewUser,c
 	return token.AccessToken, nil
 }
 
-func (u *MyUserResolver) LoginUser(ctx context.Context,input models.NewUser,conn *grpc.ClientConn) (string,error){
+func LoginUser(ctx context.Context,input models.NewUser,conn *grpc.ClientConn) (string,error){
 	client:=pb.NewAccountClient(conn)
 	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
 	defer cancel()
@@ -94,7 +94,7 @@ func (u *MyUserResolver) LoginUser(ctx context.Context,input models.NewUser,conn
 	return token.AccessToken, nil
 }
 
-func (u *MyUserResolver) GetUser(ctx context.Context,userId int,conn *grpc.ClientConn) (*models.User,error){
+func GetUser(ctx context.Context,userId int,conn *grpc.ClientConn) (*models.User,error){
 	
 	client:=pb.NewAccountClient(conn)
 	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
