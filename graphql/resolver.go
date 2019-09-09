@@ -51,7 +51,6 @@ func (r *Resolver) Mutation() generated.MutationResolver {
 func (r *Resolver) Query() generated.QueryResolver {
 	return &queryResolver{
 		Resolver:r,
-		myUserResolver:&user.MyUserResolver{},
 	}
 }
 
@@ -66,6 +65,9 @@ func (r *Resolver) Post() generated.PostResolver {
 	return &postResolver{r}
 }
 
+func (r *Resolver) Comment() generated.CommentResolver {
+	return &commentResolver{r}
+}
 type mutationResolver struct{
 	*Resolver
 	myUserResolver *user.MyUserResolver
@@ -143,9 +145,16 @@ func (r *userResolver) Replies(ctx context.Context, obj *models.User, page int, 
 
 type postResolver struct {
 	*Resolver
-	myPostResolver *post.MyPostResolver
 }
 
 func (r *postResolver) Comments(ctx context.Context, obj *models.Post, page int, pageSize int) ([]*models.Comment, error) {
-	return r.myPostResolver.GetCommentsByPostId(ctx,obj,page,pageSize)
+	return post.GetCommentsByPostId(ctx,obj,page,pageSize,postConn)
+}
+
+type commentResolver struct {
+	*Resolver
+}
+func (r *commentResolver) Replies(ctx context.Context, obj *models.Comment, page int, pageSize int) ([]*models.Reply,
+	error){
+	return post.GetRepliesByCommentId(ctx,obj,page,pageSize,postConn)
 }

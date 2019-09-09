@@ -204,6 +204,34 @@ func (p *Post) GetCommentsByPostId(ctx context.Context,cr *pb.CommentsRequest) (
 			Status:               pb.Status(v.Status),
 		})
 	}
+	return &pb.CommentsResponse{
+		Comments:             comments,
+	},nil
+}
+
+func (p *Post) GetRepliesByCommentId(ctx context.Context,rr *pb.RepliesRequest) (*pb.RepliesResponse,error){
+	dbReplies,err:=dao.GetRepliesByCommentId(rr.CommentId,int(rr.Offset),int(rr.Limit))
+	if err!=nil{
+		logs.Error(fmt.Sprintf("get replies by comment_id failed: %+v",err))
+		return nil,err
+	}
+	var replies []*pb.Reply
+	for _,v:=range dbReplies{
+		replies=append(replies,&pb.Reply{
+			Id:                   v.Id,
+			UserId:               v.UserId,
+			PostId:               v.PostId,
+			CommentId:            v.CommentId,
+			Content:              v.Content,
+			CreateTime:           v.CreateTime,
+			ParentId:             v.ParentId,
+			Floor:                v.Floor,
+			Status:               pb.Status(v.Status),
+		})
+	}
+	return &pb.RepliesResponse{
+		Replies:replies,
+	}, nil
 }
 
 func NewPostService(addr string,port int){
