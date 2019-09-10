@@ -13,8 +13,10 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
+	"github.com/goinggo/mapstructure"
 )
 
 var (
@@ -262,6 +264,58 @@ func GetReply(reply *Reply) (bool,error){
 		return false, status.Error(codes.Internal,err.Error())
 	}
 	return has,nil
+}
+
+//通过id获取user,id为post_id,comment_id,reply_id
+func GetUserByIds(ids []int64,idType int) ([]*User,error){
+	var sql string
+	switch idType {
+	case 0:
+		//post
+		sql=`SELECT 
+				t1.id,t1.name,t1.avatar,t1.status,t1.score,t1.role,t1.banned_reason 
+			FROM user t1 
+			LEFT JOIN post t2 
+				ON t2.user_id=t1.id 
+			WHERE t2.id IN ?
+		`
+	case 1:
+		//comment
+		sql=`SELECT 
+				t1.id,t1.name,t1.avatar,t1.status,t1.score,t1.role,t1.banned_reason 
+			FROM user t1 
+			LEFT JOIN comment t2 
+				ON t2.user_id=t1.id 
+			WHERE t2.id IN ?
+		`
+	case 2:
+		//reply
+		sql=`SELECT 
+				t1.id,t1.name,t1.avatar,t1.status,t1.score,t1.role,t1.banned_reason 
+			FROM user t1 
+			LEFT JOIN reply t2 
+				ON t2.user_id=t1.id 
+			WHERE t2.id IN ?
+		`
+	}
+	//var temp []string
+	//for _,v:=range ids{
+	//	temp=append(temp,strconv.Itoa(int(v)))
+	//}
+	results,err:=dbEngine.Query(sql,ids)
+	if err!=nil{
+		return nil, err
+	}
+	var users []*User
+	for _,v:=range results{
+		var u *User
+		err:=mapstructure.Decode(v,u)
+		if err!=nil{
+			return nil, err
+		}
+		users=append(users,u)
+	}
+	return users, nil
 }
 
 //ip地址int->string相互转换
