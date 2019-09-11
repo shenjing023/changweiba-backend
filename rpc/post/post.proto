@@ -1,5 +1,5 @@
 syntax = "proto3";
-
+import "../account/account.proto";
 package postpb;
 
 enum Status{
@@ -134,6 +134,16 @@ message RepliesResponse{
     repeated Reply replies=1;
 }
 
+//通过ids获取user,id为post_id,comment_id,reply_id
+message UsersRequest{
+    repeated int64 ids=1;
+    //0为post 1为comment 2为reply
+    int64 idType=2;
+}
+
+message UsersResponse{
+    repeated accountpb.User users=1;
+}
 
 service PostService{
     rpc NewPost(NewPostRequest) returns(NewPostResponse){}
@@ -147,4 +157,5 @@ service PostService{
     rpc GetReply(ReplyRequest) returns(ReplyResponse){}
     rpc GetCommentsByPostId(CommentsRequest) returns(CommentsResponse){}
     rpc GetRepliesByCommentId(RepliesRequest) returns(RepliesResponse){}
+    rpc GetUsersByIds(UsersRequest) returns(UsersResponse){}
 }
