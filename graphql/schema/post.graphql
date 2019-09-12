@@ -25,7 +25,7 @@ type Comment{
 
 type Reply{
     id: Int!
-    user: User
+    user: User!
     post_id: Int!
     comment_id: Int!
     content: String!

@@ -39,24 +39,17 @@ func (u *User) GetUser(ctx context.Context, ur *pb.User) (*pb.User, error) {
 		return nil,errors.New(ServiceError)
 	}
 	if has{
-		status_,role:="NORMAL","NORMAL"
-		if dbUser.Status==1{
-			status_="BANNED"
-		}
-		if dbUser.Role==1{
-			role="ADMIN"
-		}
 		pbUser:=&pb.User{
 			Id:dbUser.Id,
 			Name:dbUser.Name,
 			Password:dbUser.Password,
 			Avatar:dbUser.Avatar,
-			Status:status_,
+			Status:pb.Status(dbUser.Status),
 			Score:dbUser.Score,
 			BannedReason:dbUser.BannedReason,
 			CreateTime:dbUser.CreateTime,
 			LastUpdate:dbUser.LastUpdate,
-			Role:role,
+			Role:pb.Role(dbUser.Role),
 		}
 		return pbUser,nil
 	} else{
@@ -130,7 +123,28 @@ func (u *User) checkNewUser(ur *pb.NewUserRequest) (string, error) {
 }
 
 func (u *User) GetUsersByIds(ctx context.Context,ur *pb.UsersRequest) (*pb.UsersResponse,error){
-	
+	dbUsers,err:=dao.GetUsersByIds(ur.Ids,int(ur.IdType))
+	if err!=nil{
+		logs.Error("get users by ids error:",err.Error())
+		return nil,status.Error(codes.Internal,ServiceError)
+	}
+	var users []*pb.User
+	for _,v:=range dbUsers{
+		users=append(users,&pb.User{
+			Id:v.Id,
+			Name:v.Name,
+			Avatar:v.Avatar,
+			Status:pb.Status(v.Status),
+			Score:v.Score,
+			BannedReason:v.BannedReason,
+			CreateTime:v.CreateTime,
+			LastUpdate:v.LastUpdate,
+			Role:pb.Role(v.Role),
+		})
+	}
+	return &pb.UsersResponse{
+		Users:users,
+	}, nil
 }
 
 //密码加盐加密
