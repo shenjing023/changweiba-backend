@@ -13,7 +13,6 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 	"github.com/goinggo/mapstructure"
@@ -267,7 +266,7 @@ func GetReply(reply *Reply) (bool,error){
 }
 
 //通过id获取user,id为post_id,comment_id,reply_id
-func GetUserByIds(ids []int64,idType int) ([]*User,error){
+func GetUsersByIds(ids []int64,idType int) ([]*User,error){
 	var sql string
 	switch idType {
 	case 0:

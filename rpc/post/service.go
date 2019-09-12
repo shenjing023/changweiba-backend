@@ -1,4 +1,4 @@
-//go:generate protoc --go_out=plugins=grpc:./pb post.proto
+//go:generate protoc  --go_out=plugins=grpc:./pb post.proto
 
 package post
 
@@ -233,8 +233,6 @@ func (p *Post) GetRepliesByCommentId(ctx context.Context,rr *pb.RepliesRequest) 
 		Replies:replies,
 	}, nil
 }
-
-func (p *Post) GetUsersByIds(ctx context.Context,rr *pb)
 
 func NewPostService(addr string,port int){
 	lis,err:=net.Listen("tcp",fmt.Sprintf("%s:%d",addr,port))

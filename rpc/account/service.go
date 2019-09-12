@@ -129,6 +129,10 @@ func (u *User) checkNewUser(ur *pb.NewUserRequest) (string, error) {
 	return "", nil
 }
 
+func (u *User) GetUsersByIds(ctx context.Context,ur *pb.UsersRequest) (*pb.UsersResponse,error){
+	
+}
+
 //密码加盐加密
 func (u *User) encryptPassword(password string) (string,error){
 	dk,err:=scrypt.Key([]byte(password),[]byte(conf.Cfg.Salt),1<<15,8,1,32)

@@ -8,8 +8,6 @@ import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
-	codes "google.golang.org/grpc/codes"
-	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -1445,44 +1443,6 @@ type PostServiceServer interface {
 	GetReply(context.Context, *ReplyRequest) (*ReplyResponse, error)
 	GetCommentsByPostId(context.Context, *CommentsRequest) (*CommentsResponse, error)
 	GetRepliesByCommentId(context.Context, *RepliesRequest) (*RepliesResponse, error)
-}
-
-// UnimplementedPostServiceServer can be embedded to have forward compatible implementations.
-type UnimplementedPostServiceServer struct {
-}
-
-func (*UnimplementedPostServiceServer) NewPost(ctx context.Context, req *NewPostRequest) (*NewPostResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NewPost not implemented")
-}
-func (*UnimplementedPostServiceServer) NewComment(ctx context.Context, req *NewCommentRequest) (*NewCommentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NewComment not implemented")
-}
-func (*UnimplementedPostServiceServer) NewReply(ctx context.Context, req *NewReplyRequest) (*NewReplyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NewReply not implemented")
-}
-func (*UnimplementedPostServiceServer) DeletePost(ctx context.Context, req *DeleteRequest) (*DeleteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeletePost not implemented")
-}
-func (*UnimplementedPostServiceServer) DeleteComment(ctx context.Context, req *DeleteRequest) (*DeleteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteComment not implemented")
-}
-func (*UnimplementedPostServiceServer) DeleteReply(ctx context.Context, req *DeleteRequest) (*DeleteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteReply not implemented")
-}
-func (*UnimplementedPostServiceServer) GetPost(ctx context.Context, req *PostRequest) (*PostResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPost not implemented")
-}
-func (*UnimplementedPostServiceServer) GetComment(ctx context.Context, req *CommentRequest) (*CommentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetComment not implemented")
-}
-func (*UnimplementedPostServiceServer) GetReply(ctx context.Context, req *ReplyRequest) (*ReplyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetReply not implemented")
-}
-func (*UnimplementedPostServiceServer) GetCommentsByPostId(ctx context.Context, req *CommentsRequest) (*CommentsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetCommentsByPostId not implemented")
-}
-func (*UnimplementedPostServiceServer) GetRepliesByCommentId(ctx context.Context, req *RepliesRequest) (*RepliesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetRepliesByCommentId not implemented")
 }
 
 func RegisterPostServiceServer(s *grpc.Server, srv PostServiceServer) {
