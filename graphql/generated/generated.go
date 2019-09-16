@@ -52,7 +52,7 @@ type ComplexityRoot struct {
 		Floor    func(childComplexity int) int
 		ID       func(childComplexity int) int
 		PostID   func(childComplexity int) int
-		Replies  func(childComplexity int, page int, pageSize int) int
+		Replies  func(childComplexity int, limit int) int
 		Status   func(childComplexity int) int
 		User     func(childComplexity int) int
 	}
@@ -69,7 +69,7 @@ type ComplexityRoot struct {
 	}
 
 	Post struct {
-		Comments func(childComplexity int, page int, pageSize int) int
+		Comments func(childComplexity int, limit int) int
 		CreateAt func(childComplexity int) int
 		ID       func(childComplexity int) int
 		LastAt   func(childComplexity int) int
@@ -80,11 +80,13 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Comment func(childComplexity int, commentID int) int
-		Post    func(childComplexity int, postID int) int
-		Posts   func(childComplexity int, page int, pageSize int) int
-		Reply   func(childComplexity int, replyID int) int
-		User    func(childComplexity int, userID int) int
+		Comment  func(childComplexity int, commentID int) int
+		Comments func(childComplexity int, postID int, page int, pageSize int) int
+		Post     func(childComplexity int, postID int) int
+		Posts    func(childComplexity int, page int, pageSize int) int
+		Replies  func(childComplexity int, commentID int, page int, pageSize int) int
+		Reply    func(childComplexity int, replyID int) int
+		User     func(childComplexity int, userID int) int
 	}
 
 	Reply struct {
@@ -115,7 +117,7 @@ type ComplexityRoot struct {
 }
 
 type CommentResolver interface {
-	Replies(ctx context.Context, obj *models.Comment, page int, pageSize int) ([]*models.Reply, error)
+	Replies(ctx context.Context, obj *models.Comment, limit int) ([]*models.Reply, error)
 }
 type MutationResolver interface {
 	RegisterUser(ctx context.Context, input models.NewUser) (string, error)
@@ -128,7 +130,7 @@ type MutationResolver interface {
 	DeletePost(ctx context.Context, input int) (bool, error)
 }
 type PostResolver interface {
-	Comments(ctx context.Context, obj *models.Post, page int, pageSize int) ([]*models.Comment, error)
+	Comments(ctx context.Context, obj *models.Post, limit int) ([]*models.Comment, error)
 }
 type QueryResolver interface {
 	User(ctx context.Context, userID int) (*models.User, error)
@@ -136,6 +138,8 @@ type QueryResolver interface {
 	Posts(ctx context.Context, page int, pageSize int) ([]*models.Post, error)
 	Comment(ctx context.Context, commentID int) (*models.Comment, error)
 	Reply(ctx context.Context, replyID int) (*models.Reply, error)
+	Replies(ctx context.Context, commentID int, page int, pageSize int) ([]*models.Reply, error)
+	Comments(ctx context.Context, postID int, page int, pageSize int) ([]*models.Comment, error)
 }
 type UserResolver interface {
 	Posts(ctx context.Context, obj *models.User, page int, pageSize int) ([]*models.Post, error)
@@ -203,7 +207,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Comment.Replies(childComplexity, args["page"].(int), args["page_size"].(int)), true
+		return e.complexity.Comment.Replies(childComplexity, args["limit"].(int)), true
 
 	case "Comment.status":
 		if e.complexity.Comment.Status == nil {
@@ -325,7 +329,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Post.Comments(childComplexity, args["page"].(int), args["page_size"].(int)), true
+		return e.complexity.Post.Comments(childComplexity, args["limit"].(int)), true
 
 	case "Post.create_at":
 		if e.complexity.Post.CreateAt == nil {
@@ -388,6 +392,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Comment(childComplexity, args["commentId"].(int)), true
 
+	case "Query.comments":
+		if e.complexity.Query.Comments == nil {
+			break
+		}
+
+		args, err := ec.field_Query_comments_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Comments(childComplexity, args["postId"].(int), args["page"].(int), args["pageSize"].(int)), true
+
 	case "Query.post":
 		if e.complexity.Query.Post == nil {
 			break
@@ -411,6 +427,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Posts(childComplexity, args["page"].(int), args["pageSize"].(int)), true
+
+	case "Query.replies":
+		if e.complexity.Query.Replies == nil {
+			break
+		}
+
+		args, err := ec.field_Query_replies_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Replies(childComplexity, args["commentId"].(int), args["page"].(int), args["pageSize"].(int)), true
 
 	case "Query.reply":
 		if e.complexity.Query.Reply == nil {
@@ -678,7 +706,7 @@ var parsedSchema = gqlparser.MustLoadSchema(
     """帖子回复的数量"""
     reply_num: Int!
     status: Status!
-    comments(page:Int!,page_size:Int!): [Comment!]
+    comments(limit:Int!): [Comment!]
 }
 
 type Comment{
@@ -690,12 +718,12 @@ type Comment{
     """第几楼"""
     floor: Int!
     status: Status!
-    replies(page:Int!,page_size:Int!): [Reply!]
+    replies(limit:Int!): [Reply!]
 }
 
 type Reply{
     id: Int!
-    user: User
+    user: User!
     post_id: Int!
     comment_id: Int!
     content: String!
@@ -751,6 +779,10 @@ input DeletePost{
     comment(commentId:Int!):Comment!
     """获取回复"""
     reply(replyId:Int!):Reply!
+    """获取comment下的reply"""
+    replies(commentId:Int!,page:Int!,pageSize:Int!):[Reply!]!
+    """获取post下的comment"""
+    comments(postId:Int!,page:Int!,pageSize:Int!):[Comment!]!
 }
 
 type Mutation{
@@ -827,21 +859,13 @@ func (ec *executionContext) field_Comment_replies_args(ctx context.Context, rawA
 	var err error
 	args := map[string]interface{}{}
 	var arg0 int
-	if tmp, ok := rawArgs["page"]; ok {
+	if tmp, ok := rawArgs["limit"]; ok {
 		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["page"] = arg0
-	var arg1 int
-	if tmp, ok := rawArgs["page_size"]; ok {
-		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["page_size"] = arg1
+	args["limit"] = arg0
 	return args, nil
 }
 
@@ -961,21 +985,13 @@ func (ec *executionContext) field_Post_comments_args(ctx context.Context, rawArg
 	var err error
 	args := map[string]interface{}{}
 	var arg0 int
-	if tmp, ok := rawArgs["page"]; ok {
+	if tmp, ok := rawArgs["limit"]; ok {
 		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["page"] = arg0
-	var arg1 int
-	if tmp, ok := rawArgs["page_size"]; ok {
-		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["page_size"] = arg1
+	args["limit"] = arg0
 	return args, nil
 }
 
@@ -1004,6 +1020,36 @@ func (ec *executionContext) field_Query_comment_args(ctx context.Context, rawArg
 		}
 	}
 	args["commentId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_comments_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["postId"]; ok {
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["postId"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["page"]; ok {
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["page"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["pageSize"]; ok {
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pageSize"] = arg2
 	return args, nil
 }
 
@@ -1040,6 +1086,36 @@ func (ec *executionContext) field_Query_posts_args(ctx context.Context, rawArgs 
 		}
 	}
 	args["pageSize"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_replies_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["commentId"]; ok {
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["commentId"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["page"]; ok {
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["page"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["pageSize"]; ok {
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pageSize"] = arg2
 	return args, nil
 }
 
@@ -1378,7 +1454,7 @@ func (ec *executionContext) _Comment_replies(ctx context.Context, field graphql.
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Comment().Replies(rctx, obj, args["page"].(int), args["page_size"].(int))
+		return ec.resolvers.Comment().Replies(rctx, obj, args["limit"].(int))
 	})
 	if resTmp == nil {
 		return graphql.Null
@@ -1870,7 +1946,7 @@ func (ec *executionContext) _Post_comments(ctx context.Context, field graphql.Co
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Post().Comments(rctx, obj, args["page"].(int), args["page_size"].(int))
+		return ec.resolvers.Post().Comments(rctx, obj, args["limit"].(int))
 	})
 	if resTmp == nil {
 		return graphql.Null
@@ -2051,6 +2127,74 @@ func (ec *executionContext) _Query_reply(ctx context.Context, field graphql.Coll
 	return ec.marshalNReply2ᚖchangweibaᚑbackendᚋgraphqlᚋmodelsᚐReply(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_replies(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_replies_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Replies(rctx, args["commentId"].(int), args["page"].(int), args["pageSize"].(int))
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*models.Reply)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNReply2ᚕᚖchangweibaᚑbackendᚋgraphqlᚋmodelsᚐReply(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_comments(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_comments_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Comments(rctx, args["postId"].(int), args["page"].(int), args["pageSize"].(int))
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*models.Comment)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNComment2ᚕᚖchangweibaᚑbackendᚋgraphqlᚋmodelsᚐComment(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
@@ -2149,12 +2293,15 @@ func (ec *executionContext) _Reply_user(ctx context.Context, field graphql.Colle
 		return obj.User, nil
 	})
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*models.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUser2ᚖchangweibaᚑbackendᚋgraphqlᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖchangweibaᚑbackendᚋgraphqlᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Reply_post_id(ctx context.Context, field graphql.CollectedField, obj *models.Reply) graphql.Marshaler {
@@ -4018,6 +4165,34 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "replies":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_replies(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "comments":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_comments(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -4051,6 +4226,9 @@ func (ec *executionContext) _Reply(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "user":
 			out.Values[i] = ec._Reply_user(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "post_id":
 			out.Values[i] = ec._Reply_post_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5093,17 +5271,6 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return ec.marshalOString2string(ctx, sel, *v)
-}
-
-func (ec *executionContext) marshalOUser2changweibaᚑbackendᚋgraphqlᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
-	return ec._User(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalOUser2ᚖchangweibaᚑbackendᚋgraphqlᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v *models.User) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._User(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOUserRole2changweibaᚑbackendᚋgraphqlᚋmodelsᚐUserRole(ctx context.Context, v interface{}) (models.UserRole, error) {

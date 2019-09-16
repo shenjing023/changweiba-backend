@@ -9,6 +9,10 @@ type Query {
     comment(commentId:Int!):Comment!
     """获取回复"""
     reply(replyId:Int!):Reply!
+    """获取comment下的reply"""
+    replies(commentId:Int!,page:Int!,pageSize:Int!):[Reply!]!
+    """获取post下的comment"""
+    comments(postId:Int!,page:Int!,pageSize:Int!):[Comment!]!
 }
 
 type Mutation{

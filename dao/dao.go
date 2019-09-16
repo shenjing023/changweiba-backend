@@ -2,6 +2,7 @@ package dao
 
 import (
 	"changweiba-backend/conf"
+	"encoding/binary"
 	"fmt"
 	"github.com/astaxie/beego/logs"
 	_ "github.com/go-sql-driver/mysql"
@@ -13,6 +14,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 	"github.com/goinggo/mapstructure"
@@ -268,6 +270,10 @@ func GetReply(reply *Reply) (bool,error){
 //通过id获取user,id为post_id,comment_id,reply_id
 func GetUsersByIds(ids []int64,idType int) ([]*User,error){
 	var sql string
+	var orderField []string
+	for _,v:=range ids{
+		orderField=append(orderField,strconv.FormatInt(v,10))
+	}
 	switch idType {
 	case 0:
 		//post
@@ -276,7 +282,7 @@ func GetUsersByIds(ids []int64,idType int) ([]*User,error){
 			FROM user t1 
 			LEFT JOIN post t2 
 				ON t2.user_id=t1.id 
-			WHERE t2.id IN ?
+			WHERE t2.id IN (?) ORDER BY FIELD(t2.id,?)
 		`
 	case 1:
 		//comment
@@ -285,7 +291,7 @@ func GetUsersByIds(ids []int64,idType int) ([]*User,error){
 			FROM user t1 
 			LEFT JOIN comment t2 
 				ON t2.user_id=t1.id 
-			WHERE t2.id IN ?
+			WHERE t2.id IN (?) ORDER BY FIELD(t2.id,?)
 		`
 	case 2:
 		//reply
@@ -294,27 +300,99 @@ func GetUsersByIds(ids []int64,idType int) ([]*User,error){
 			FROM user t1 
 			LEFT JOIN reply t2 
 				ON t2.user_id=t1.id 
-			WHERE t2.id IN ?
+			WHERE t2.id IN (?) ORDER BY FIELD(t2.id,?)
 		`
 	}
-	//var temp []string
-	//for _,v:=range ids{
-	//	temp=append(temp,strconv.Itoa(int(v)))
-	//}
-	results,err:=dbEngine.Query(sql,ids)
+	results,err:=dbEngine.Query(sql,ids,strings.Join(orderField,","))
 	if err!=nil{
-		return nil, err
+		return nil, status.Error(codes.Internal,err.Error())
 	}
+	//排序
 	var users []*User
-	for _,v:=range results{
+	j,l:=0,len(results)
+	for _,v:=range ids{
 		var u *User
-		err:=mapstructure.Decode(v,u)
-		if err!=nil{
-			return nil, err
+		if j+1>l{
+			users=append(users,u)
+			continue
+		}
+		if BytesToInt64(results[j]["id"])==v{
+			err:=mapstructure.Decode(v,u)
+			if err!=nil{
+				return nil, status.Error(codes.Internal,err.Error())
+			}
+			j++
 		}
 		users=append(users,u)
 	}
 	return users, nil
+}
+
+//通过comment_ids获取reply
+/*
+	ids: comment_id list
+	limit: 返回每个comment下的前limit个reply,order by create_time asc
+ */
+func GetRepliesByCommentIds(ids []int64,limit int) ([]*Reply,error){
+	if limit<=0 || limit>10{
+		return nil, status.Error(codes.Internal,"query reply_by_comment limit can not be <0 or >10")
+	}
+	var sql string
+	var orderField []string
+	for _,v:=range ids{
+		orderField=append(orderField,strconv.FormatInt(v,10))
+	}
+	sql=`
+		SELECT 
+			t1.id,
+			t1.user_id,
+			t1.content,
+			t1.parent_id,
+			t1.create_time,
+			t1.floor,
+			t1.status 
+		FROM 
+			reply t1 
+			LEFT JOIN reply t2 ON t1.comment_id=t2.comment_id 
+			AND t1.create_time > t2.create_time 
+		WHERE 
+			t1.comment_id IN (?) 
+		ORDER BY 
+			t1.id,
+			t1.comment_id 
+		HAVING 
+			COUNT(t2.id) < ? 
+		ORDER BY FIELD(t1.comment_id,?)
+	`
+	results,err:=dbEngine.Query(sql,ids,limit,strings.Join(orderField,","))
+	if err!=nil{
+		return nil, status.Error(codes.Internal,err.Error())
+	}
+	//排序
+	var limitIds []int64
+	for _,v:=range ids{
+		for i:=0;i<limit;i++{
+			limitIds=append(limitIds,v)
+		}
+	}
+	var replies []*Reply
+	j,l:=0,len(results)
+	for _,v:=range ids{
+		var r *Reply
+		if j+1>l{
+			replies=append(replies,r)
+			continue
+		}
+		if BytesToInt64(results[j]["id"])==v{
+			err:=mapstructure.Decode(v,r)
+			if err!=nil{
+				return nil, status.Error(codes.Internal,err.Error())
+			}
+			j++
+		}
+		replies=append(replies,r)
+	}
+	return replies, nil
 }
 
 //ip地址int->string相互转换
@@ -326,4 +404,9 @@ func InetAtoi(ip string) int64{
 
 func InetItoa(ip int64) string{
 	return fmt.Sprintf("%d.%d.%d.%d", byte(ip>>24), byte(ip>>16), byte(ip>>8), byte(ip))
+}
+
+//[]byte转int64
+func BytesToInt64(buf []byte) int64 {
+	return int64(binary.BigEndian.Uint64(buf))
 }

@@ -8,7 +8,7 @@ type Post{
     """帖子回复的数量"""
     reply_num: Int!
     status: Status!
-    comments(page:Int!,page_size:Int!): [Comment!]
+    comments(limit:Int!): [Comment!]
 }
 
 type Comment{
@@ -20,7 +20,7 @@ type Comment{
     """第几楼"""
     floor: Int!
     status: Status!
-    replies(page:Int!,page_size:Int!): [Reply!]
+    replies(limit:Int!): [Reply!]
 }
 
 type Reply{
