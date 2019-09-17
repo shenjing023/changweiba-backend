@@ -234,6 +234,60 @@ func (p *Post) GetRepliesByCommentId(ctx context.Context,rr *pb.RepliesRequest) 
 	}, nil
 }
 
+func (p *Post) Posts(ctx context.Context,pr *pb.PostsRequest) (*pb.PostsResponse,error){
+	dbPosts,err:=dao.GetPosts(int(pr.Offset),int(pr.Limit))
+	if err!=nil{
+		logs.Error(fmt.Sprintf("get posts failed: %+v",err))
+		return nil,err
+	}
+	var posts []*pb.Post
+	for _,v:=range dbPosts{
+		posts=append(posts,&pb.Post{
+			Id:v.Id,
+			UserId:v.UserId,
+			Topic:v.Topic,
+			CreateTime:v.CreateTime,
+			LastUpdate:v.LastUpdate,
+			ReplyNum:v.ReplyNum,
+			Status:pb.Status(v.Status),
+		})
+	}
+	return &pb.PostsResponse{
+		Posts:posts,
+	}, nil
+}
+
+func (p *Post) GetRepliesByCommentIds(ctx context.Context,rr *pb.RepliesByCommentsRequest) (*pb.
+	RepliesByCommentsResponse,error){
+	dbReplies,err:=dao.GetRepliesByCommentIds(rr.CommentIds,int(rr.Limit))
+	if err!=nil{
+		logs.Error(fmt.Sprintf("get replies by comment_id failed: %+v",err))
+		return nil,err
+	}
+	var replies []*pb.RepliesByCommentsResponse_Replies_
+	for _,v:=range dbReplies{
+		var temp []*pb.Reply
+		for _,vv:=range v{
+			temp=append(temp,&pb.Reply{
+				Id:vv.Id,
+				UserId:vv.UserId,
+				PostId:vv.PostId,
+				CommentId:vv.CommentId,
+				Content:vv.Content,
+				CreateTime:vv.CreateTime,
+				ParentId:vv.ParentId,
+				Floor:vv.Floor,
+			})
+		}
+		replies=append(replies,&pb.RepliesByCommentsResponse_Replies_{
+			Replies_:temp,
+		})
+	}
+	return &pb.RepliesByCommentsResponse{
+		Replies:replies,
+	},nil
+}
+
 func NewPostService(addr string,port int){
 	lis,err:=net.Listen("tcp",fmt.Sprintf("%s:%d",addr,port))
 	if err!=nil{

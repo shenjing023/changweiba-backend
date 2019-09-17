@@ -239,6 +239,12 @@ func GetPost(post *Post) (bool,error){
 	return has,nil
 }
 
+func GetPosts(page int,pageSize int) ([]*Post,error){
+	posts:=make([]*Post,pageSize)
+	err:=dbEngine.Where("status",0).Desc("last_update").Limit(page,pageSize).Find(&posts)
+	return posts,err
+}
+
 func GetComment(comment *Comment) (bool,error){
 	has,err:=dbEngine.Get(comment)
 	if err!=nil{
@@ -333,7 +339,7 @@ func GetUsersByIds(ids []int64,idType int) ([]*User,error){
 	ids: comment_id list
 	limit: 返回每个comment下的前limit个reply,order by create_time asc
  */
-func GetRepliesByCommentIds(ids []int64,limit int) ([]*Reply,error){
+func GetRepliesByCommentIds(ids []int64,limit int) ([][]*Reply,error){
 	if limit<=0 || limit>10{
 		return nil, status.Error(codes.Internal,"query reply_by_comment limit can not be <0 or >10")
 	}
@@ -356,7 +362,7 @@ func GetRepliesByCommentIds(ids []int64,limit int) ([]*Reply,error){
 			LEFT JOIN reply t2 ON t1.comment_id=t2.comment_id 
 			AND t1.create_time > t2.create_time 
 		WHERE 
-			t1.comment_id IN (?) 
+			t1.comment_id IN (?) AND t1.status=0 
 		ORDER BY 
 			t1.id,
 			t1.comment_id 
@@ -369,30 +375,94 @@ func GetRepliesByCommentIds(ids []int64,limit int) ([]*Reply,error){
 		return nil, status.Error(codes.Internal,err.Error())
 	}
 	//排序
-	var limitIds []int64
-	for _,v:=range ids{
-		for i:=0;i<limit;i++{
-			limitIds=append(limitIds,v)
-		}
-	}
-	var replies []*Reply
+	var replies [][]*Reply
 	j,l:=0,len(results)
 	for _,v:=range ids{
-		var r *Reply
-		if j+1>l{
-			replies=append(replies,r)
-			continue
-		}
-		if BytesToInt64(results[j]["id"])==v{
-			err:=mapstructure.Decode(v,r)
-			if err!=nil{
-				return nil, status.Error(codes.Internal,err.Error())
+		var temp []*Reply
+		
+		for i:=0;i<limit;i++{
+			var r *Reply
+			if j+1>l{
+				temp=append(temp,r)
+				continue
 			}
-			j++
+			if BytesToInt64(results[j]["id"])==v{
+				err:=mapstructure.Decode(results[j],r)
+				if err!=nil{
+					return nil, status.Error(codes.Internal,err.Error())
+				}
+				j++
+			}
+			temp=append(temp,r)
 		}
-		replies=append(replies,r)
+		replies=append(replies,temp)
 	}
 	return replies, nil
+}
+
+//通过post_ids获取comment
+/*
+	ids: post_id list
+	limit: 返回每个post下的前limit个comment,order by create_time asc
+*/
+func GetCommentsByPostIds(ids []int64,limit int) ([][]*Comment,error){
+	if limit<=0 || limit>10{
+		return nil, status.Error(codes.Internal,"get comment_by_post limit can not be <0 or >10")
+	}
+	var sql string
+	var orderField []string
+	for _,v:=range ids{
+		orderField=append(orderField,strconv.FormatInt(v,10))
+	}
+	sql=`
+		SELECT 
+			t1.id,
+			t1.user_id,
+			t1.content,
+			t1.create_time,
+			t1.floor,
+			t1.status 
+		FROM 
+			comment t1 
+			LEFT JOIN comment t2 ON t1.post_id=t2.post_id 
+			AND t1.create_time > t2.create_time 
+		WHERE 
+			t1.post_id IN (?) AND t1.status=0 
+		ORDER BY 
+			t1.id,
+			t1.post_id 
+		HAVING 
+			COUNT(t2.id) < ? 
+		ORDER BY FIELD(t1.post_id,?)
+	`
+	results,err:=dbEngine.Query(sql,ids,limit,strings.Join(orderField,","))
+	if err!=nil{
+		return nil, status.Error(codes.Internal,err.Error())
+	}
+	//排序
+	var comments [][]*Comment
+	j,l:=0,len(results)
+	for _,v:=range ids{
+		var temp []*Comment
+
+		for i:=0;i<limit;i++{
+			var r *Comment
+			if j+1>l{
+				temp=append(temp,r)
+				continue
+			}
+			if BytesToInt64(results[j]["id"])==v{
+				err:=mapstructure.Decode(results[j],r)
+				if err!=nil{
+					return nil, status.Error(codes.Internal,err.Error())
+				}
+				j++
+			}
+			temp=append(temp,r)
+		}
+		comments=append(comments,temp)
+	}
+	return comments, nil
 }
 
 //ip地址int->string相互转换

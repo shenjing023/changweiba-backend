@@ -12,7 +12,7 @@ import (
 // CommentLoaderConfig captures the config to create a new CommentLoader
 type CommentLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
-	Fetch func(keys []int) ([]*models.Comment, []error)
+	Fetch func(keys []int, params interface{}) ([][]*models.Comment, []error)
 
 	// Wait is how long wait before sending a batch
 	Wait time.Duration
@@ -33,7 +33,7 @@ func NewCommentLoader(config CommentLoaderConfig) *CommentLoader {
 // CommentLoader batches and caches requests
 type CommentLoader struct {
 	// this method provides the data for the loader
-	fetch func(keys []int) ([]*models.Comment, []error)
+	fetch func(keys []int, params interface{}) ([][]*models.Comment, []error)
 
 	// how long to done before sending a batch
 	wait time.Duration
@@ -44,7 +44,7 @@ type CommentLoader struct {
 	// INTERNAL
 
 	// lazily created cache
-	cache map[int]*models.Comment
+	cache map[int][]*models.Comment
 
 	// the current batch. keys will continue to be collected until timeout is hit,
 	// then everything will be sent to the fetch method and out to the listeners
@@ -56,25 +56,27 @@ type CommentLoader struct {
 
 type commentLoaderBatch struct {
 	keys    []int
-	data    []*models.Comment
+	data    [][]*models.Comment
 	error   []error
 	closing bool
 	done    chan struct{}
+	// customize
+	params interface{}
 }
 
 // Load a Comment by key, batching and caching will be applied automatically
-func (l *CommentLoader) Load(key int) (*models.Comment, error) {
+func (l *CommentLoader) Load(key int) ([]*models.Comment, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Comment.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *CommentLoader) LoadThunk(key int) func() (*models.Comment, error) {
+func (l *CommentLoader) LoadThunk(key int) func() ([]*models.Comment, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
-		return func() (*models.Comment, error) {
+		return func() ([]*models.Comment, error) {
 			return it, nil
 		}
 	}
@@ -85,10 +87,10 @@ func (l *CommentLoader) LoadThunk(key int) func() (*models.Comment, error) {
 	pos := batch.keyIndex(l, key)
 	l.mu.Unlock()
 
-	return func() (*models.Comment, error) {
+	return func() ([]*models.Comment, error) {
 		<-batch.done
 
-		var data *models.Comment
+		var data []*models.Comment
 		if pos < len(batch.data) {
 			data = batch.data[pos]
 		}
@@ -113,14 +115,14 @@ func (l *CommentLoader) LoadThunk(key int) func() (*models.Comment, error) {
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *CommentLoader) LoadAll(keys []int) ([]*models.Comment, []error) {
-	results := make([]func() (*models.Comment, error), len(keys))
+func (l *CommentLoader) LoadAll(keys []int) ([][]*models.Comment, []error) {
+	results := make([]func() ([]*models.Comment, error), len(keys))
 
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
 
-	comments := make([]*models.Comment, len(keys))
+	comments := make([][]*models.Comment, len(keys))
 	errors := make([]error, len(keys))
 	for i, thunk := range results {
 		comments[i], errors[i] = thunk()
@@ -131,13 +133,13 @@ func (l *CommentLoader) LoadAll(keys []int) ([]*models.Comment, []error) {
 // LoadAllThunk returns a function that when called will block waiting for a Comments.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *CommentLoader) LoadAllThunk(keys []int) func() ([]*models.Comment, []error) {
-	results := make([]func() (*models.Comment, error), len(keys))
+func (l *CommentLoader) LoadAllThunk(keys []int) func() ([][]*models.Comment, []error) {
+	results := make([]func() ([]*models.Comment, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
-	return func() ([]*models.Comment, []error) {
-		comments := make([]*models.Comment, len(keys))
+	return func() ([][]*models.Comment, []error) {
+		comments := make([][]*models.Comment, len(keys))
 		errors := make([]error, len(keys))
 		for i, thunk := range results {
 			comments[i], errors[i] = thunk()
@@ -149,14 +151,15 @@ func (l *CommentLoader) LoadAllThunk(keys []int) func() ([]*models.Comment, []er
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *CommentLoader) Prime(key int, value *models.Comment) bool {
+func (l *CommentLoader) Prime(key int, value []*models.Comment) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
 		// make a copy when writing to the cache, its easy to pass a pointer in from a loop var
 		// and end up with the whole cache pointing to the same value.
-		cpy := *value
-		l.unsafeSet(key, &cpy)
+		cpy := make([]*models.Comment, len(value))
+		copy(cpy, value)
+		l.unsafeSet(key, cpy)
 	}
 	l.mu.Unlock()
 	return !found
@@ -169,9 +172,9 @@ func (l *CommentLoader) Clear(key int) {
 	l.mu.Unlock()
 }
 
-func (l *CommentLoader) unsafeSet(key int, value *models.Comment) {
+func (l *CommentLoader) unsafeSet(key int, value []*models.Comment) {
 	if l.cache == nil {
-		l.cache = map[int]*models.Comment{}
+		l.cache = map[int][]*models.Comment{}
 	}
 	l.cache[key] = value
 }
@@ -219,6 +222,6 @@ func (b *commentLoaderBatch) startTimer(l *CommentLoader) {
 }
 
 func (b *commentLoaderBatch) end(l *CommentLoader) {
-	b.data, b.error = l.fetch(b.keys)
+	b.data, b.error = l.fetch(b.keys, b.params)
 	close(b.done)
 }

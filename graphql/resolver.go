@@ -5,6 +5,7 @@ package graphql
 import (
 	"changweiba-backend/common"
 	"changweiba-backend/conf"
+	"changweiba-backend/graphql/dataloader"
 	"changweiba-backend/graphql/generated"
 	"changweiba-backend/graphql/models"
 	"changweiba-backend/graphql/post"
@@ -13,6 +14,7 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	"log"
+	
 ) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
 //rpc连接
@@ -114,7 +116,7 @@ func (r *queryResolver) Post(ctx context.Context, postID int) (*models.Post, err
 }
 
 func (r *queryResolver) Posts(ctx context.Context, page int, pageSize int) ([]*models.Post, error){
-	panic("not implemented")
+	return post.GetPosts(ctx,page,pageSize,postConn)
 }
 
 func (r *queryResolver) Comment(ctx context.Context, commentID int) (*models.Comment, error){
@@ -147,14 +149,18 @@ type postResolver struct {
 	*Resolver
 }
 
-func (r *postResolver) Comments(ctx context.Context, obj *models.Post, page int, pageSize int) ([]*models.Comment, error) {
+func (r *postResolver) Comments(ctx context.Context, obj *models.Post, limit int) ([]*models.Comment, error) {
 	return post.GetCommentsByPostId(ctx,obj,page,pageSize,postConn)
+}
+
+func (r *postResolver) User(ctx context.Context, obj *models.Post) (*models.User, error){
+	dataloader.CtxLoaders(ctx)
 }
 
 type commentResolver struct {
 	*Resolver
 }
-func (r *commentResolver) Replies(ctx context.Context, obj *models.Comment, page int, pageSize int) ([]*models.Reply,
+func (r *commentResolver) Replies(ctx context.Context, obj *models.Comment, limit int) ([]*models.Reply,
 	error){
 	return post.GetRepliesByCommentId(ctx,obj,page,pageSize,postConn)
 }

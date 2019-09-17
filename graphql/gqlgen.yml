@@ -16,6 +16,8 @@ models:
     fields:
       comments:
         resolver: true
+      user:
+        resolver: true
   User:
     fields:
       posts:

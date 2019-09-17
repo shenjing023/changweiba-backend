@@ -12,7 +12,7 @@ import (
 // ReplyLoaderConfig captures the config to create a new ReplyLoader
 type ReplyLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
-	Fetch func(keys []int) ([]*models.Reply, []error)
+	Fetch func(keys []int, params interface{}) ([][]*models.Reply, []error)
 
 	// Wait is how long wait before sending a batch
 	Wait time.Duration
@@ -33,7 +33,7 @@ func NewReplyLoader(config ReplyLoaderConfig) *ReplyLoader {
 // ReplyLoader batches and caches requests
 type ReplyLoader struct {
 	// this method provides the data for the loader
-	fetch func(keys []int) ([]*models.Reply, []error)
+	fetch func(keys []int, params interface{}) ([][]*models.Reply, []error)
 
 	// how long to done before sending a batch
 	wait time.Duration
@@ -44,7 +44,7 @@ type ReplyLoader struct {
 	// INTERNAL
 
 	// lazily created cache
-	cache map[int]*models.Reply
+	cache map[int][]*models.Reply
 
 	// the current batch. keys will continue to be collected until timeout is hit,
 	// then everything will be sent to the fetch method and out to the listeners
@@ -56,25 +56,27 @@ type ReplyLoader struct {
 
 type replyLoaderBatch struct {
 	keys    []int
-	data    []*models.Reply
+	data    [][]*models.Reply
 	error   []error
 	closing bool
 	done    chan struct{}
+	// customize
+	params interface{}
 }
 
 // Load a Reply by key, batching and caching will be applied automatically
-func (l *ReplyLoader) Load(key int) (*models.Reply, error) {
+func (l *ReplyLoader) Load(key int) ([]*models.Reply, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Reply.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ReplyLoader) LoadThunk(key int) func() (*models.Reply, error) {
+func (l *ReplyLoader) LoadThunk(key int) func() ([]*models.Reply, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
-		return func() (*models.Reply, error) {
+		return func() ([]*models.Reply, error) {
 			return it, nil
 		}
 	}
@@ -85,10 +87,10 @@ func (l *ReplyLoader) LoadThunk(key int) func() (*models.Reply, error) {
 	pos := batch.keyIndex(l, key)
 	l.mu.Unlock()
 
-	return func() (*models.Reply, error) {
+	return func() ([]*models.Reply, error) {
 		<-batch.done
 
-		var data *models.Reply
+		var data []*models.Reply
 		if pos < len(batch.data) {
 			data = batch.data[pos]
 		}
@@ -113,14 +115,14 @@ func (l *ReplyLoader) LoadThunk(key int) func() (*models.Reply, error) {
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *ReplyLoader) LoadAll(keys []int) ([]*models.Reply, []error) {
-	results := make([]func() (*models.Reply, error), len(keys))
+func (l *ReplyLoader) LoadAll(keys []int) ([][]*models.Reply, []error) {
+	results := make([]func() ([]*models.Reply, error), len(keys))
 
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
 
-	replys := make([]*models.Reply, len(keys))
+	replys := make([][]*models.Reply, len(keys))
 	errors := make([]error, len(keys))
 	for i, thunk := range results {
 		replys[i], errors[i] = thunk()
@@ -131,13 +133,13 @@ func (l *ReplyLoader) LoadAll(keys []int) ([]*models.Reply, []error) {
 // LoadAllThunk returns a function that when called will block waiting for a Replys.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ReplyLoader) LoadAllThunk(keys []int) func() ([]*models.Reply, []error) {
-	results := make([]func() (*models.Reply, error), len(keys))
+func (l *ReplyLoader) LoadAllThunk(keys []int) func() ([][]*models.Reply, []error) {
+	results := make([]func() ([]*models.Reply, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
-	return func() ([]*models.Reply, []error) {
-		replys := make([]*models.Reply, len(keys))
+	return func() ([][]*models.Reply, []error) {
+		replys := make([][]*models.Reply, len(keys))
 		errors := make([]error, len(keys))
 		for i, thunk := range results {
 			replys[i], errors[i] = thunk()
@@ -149,14 +151,15 @@ func (l *ReplyLoader) LoadAllThunk(keys []int) func() ([]*models.Reply, []error)
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *ReplyLoader) Prime(key int, value *models.Reply) bool {
+func (l *ReplyLoader) Prime(key int, value []*models.Reply) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
 		// make a copy when writing to the cache, its easy to pass a pointer in from a loop var
 		// and end up with the whole cache pointing to the same value.
-		cpy := *value
-		l.unsafeSet(key, &cpy)
+		cpy := make([]*models.Reply, len(value))
+		copy(cpy, value)
+		l.unsafeSet(key, cpy)
 	}
 	l.mu.Unlock()
 	return !found
@@ -169,9 +172,9 @@ func (l *ReplyLoader) Clear(key int) {
 	l.mu.Unlock()
 }
 
-func (l *ReplyLoader) unsafeSet(key int, value *models.Reply) {
+func (l *ReplyLoader) unsafeSet(key int, value []*models.Reply) {
 	if l.cache == nil {
-		l.cache = map[int]*models.Reply{}
+		l.cache = map[int][]*models.Reply{}
 	}
 	l.cache[key] = value
 }
@@ -219,6 +222,6 @@ func (b *replyLoaderBatch) startTimer(l *ReplyLoader) {
 }
 
 func (b *replyLoaderBatch) end(l *ReplyLoader) {
-	b.data, b.error = l.fetch(b.keys)
+	b.data, b.error = l.fetch(b.keys, b.params)
 	close(b.done)
 }

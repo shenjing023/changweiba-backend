@@ -134,6 +134,18 @@ message RepliesResponse{
     repeated Reply replies=1;
 }
 
+//通过comment_ids获取reply
+message RepliesByCommentsRequest{
+    repeated int64 comment_ids=1 [packed=true];
+    int32 limit=2;
+}
+
+message RepliesByCommentsResponse{
+    repeated Replies_ replies=1;
+    message Replies_{
+        repeated Reply replies_=1;
+    }
+}
 
 
 service PostService{
@@ -148,4 +160,6 @@ service PostService{
     rpc GetReply(ReplyRequest) returns(ReplyResponse){}
     rpc GetCommentsByPostId(CommentsRequest) returns(CommentsResponse){}
     rpc GetRepliesByCommentId(RepliesRequest) returns(RepliesResponse){}
+    rpc Posts(PostsRequest) returns(PostsResponse){}
+    rpc GetRepliesByCommentIds(RepliesByCommentsRequest) returns(RepliesByCommentsResponse){}
 }

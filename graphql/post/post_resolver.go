@@ -110,3 +110,33 @@ func GetRepliesByCommentId(ctx context.Context,obj *models.Comment,page int,page
 	}
 	return replies,nil
 }
+
+func GetPosts(ctx context.Context, page int, pageSize int,conn *grpc.ClientConn) ([]*models.Post, error){
+	client:=postpb.NewPostServiceClient(conn)
+	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
+	defer cancel()
+	postsRequest:=postpb.PostsRequest{
+		Offset:int32(page),
+		Limit:int32(pageSize),
+	}
+	r,err:=client.Posts(ctx,&postsRequest)
+	if err!=nil{
+		logs.Error("get posts error:",err.Error())
+		return nil, err
+	}
+	var posts []*models.Post
+	for _,v:=range r.Posts{
+		posts=append(posts,&models.Post{
+			ID:int(v.Id),
+			Topic:v.Topic,
+			CreateAt:int(v.CreateTime),
+			LastAt:int(v.LastUpdate),
+			ReplyNum:int(v.ReplyNum),
+			Status:models.Status(v.Status),
+			User:&models.User{
+				ID:int(v.UserId),
+			},
+		})
+	}
+	return posts,nil
+}

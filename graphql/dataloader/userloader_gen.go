@@ -12,7 +12,7 @@ import (
 // UserLoaderConfig captures the config to create a new UserLoader
 type UserLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
-	Fetch func(keys []int) ([]*models.User, []error)
+	Fetch func(keys []int, params interface{}) ([]*models.User, []error)
 
 	// Wait is how long wait before sending a batch
 	Wait time.Duration
@@ -33,7 +33,7 @@ func NewUserLoader(config UserLoaderConfig) *UserLoader {
 // UserLoader batches and caches requests
 type UserLoader struct {
 	// this method provides the data for the loader
-	fetch func(keys []int) ([]*models.User, []error)
+	fetch func(keys []int, params interface{}) ([]*models.User, []error)
 
 	// how long to done before sending a batch
 	wait time.Duration
@@ -60,6 +60,8 @@ type userLoaderBatch struct {
 	error   []error
 	closing bool
 	done    chan struct{}
+	// customize
+	params interface{}
 }
 
 // Load a User by key, batching and caching will be applied automatically
@@ -219,6 +221,6 @@ func (b *userLoaderBatch) startTimer(l *UserLoader) {
 }
 
 func (b *userLoaderBatch) end(l *UserLoader) {
-	b.data, b.error = l.fetch(b.keys)
+	b.data, b.error = l.fetch(b.keys, b.params)
 	close(b.done)
 }
