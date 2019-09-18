@@ -50,12 +50,21 @@ message LoginResponse{
 
 //通过ids获取user,id为post_id,comment_id,reply_id
 message UsersRequest{
-    repeated int64 ids=1;
+    repeated int64 ids=1 [packed=true];
     //0为post 1为comment 2为reply
     int64 idType=2;
 }
 
 message UsersResponse{
+    repeated User users=1;
+}
+
+//通过user_ids获取users
+message UsersByUserIdsRequest{
+    repeated int64 ids=1 [packed=true];
+}
+
+message UsersByUserIdsResponse{
     repeated User users=1;
 }
 
@@ -70,4 +79,5 @@ service Account {
     rpc Login(LoginRequest) returns (LoginResponse){
     }
     rpc GetUsersByIds(UsersRequest) returns(UsersResponse){}
+    rpc GetUsersByUserIds(UsersByUserIdsRequest) returns(UsersByUserIdsResponse){}
 }

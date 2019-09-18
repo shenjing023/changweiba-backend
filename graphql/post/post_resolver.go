@@ -2,7 +2,7 @@ package post
 
 import (
 	"changweiba-backend/graphql/models"
-	"changweiba-backend/graphql/user"
+	"changweiba-backend/graphql/rpc_conn"
 	postpb "changweiba-backend/rpc/post/pb"
 	"context"
 	"errors"
@@ -19,8 +19,8 @@ type MyPostResolver struct {
 	
 }
 
-func GetPost(ctx context.Context,postId int,conn *grpc.ClientConn) (*models.Post,error){
-	client:=postpb.NewPostServiceClient(conn)
+func GetPost(ctx context.Context,postId int) (*models.Post,error){
+	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
 	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
 	defer cancel()
 	postRequest:=postpb.PostRequest{
@@ -35,11 +35,12 @@ func GetPost(ctx context.Context,postId int,conn *grpc.ClientConn) (*models.Post
 		//不存在
 		return nil,errors.New("post不存在")
 	}
-	u,_:=user.GetUser(ctx,int(r.Post.UserId),conn)
 
 	return &models.Post{
 		ID:int(r.Post.Id),
-		User:u,
+		User:&models.User{
+			ID:int(r.Post.UserId),
+		},
 		Topic:r.Post.Topic,
 		CreateAt:int(r.Post.CreateTime),
 		LastAt:int(r.Post.LastUpdate),
@@ -49,8 +50,8 @@ func GetPost(ctx context.Context,postId int,conn *grpc.ClientConn) (*models.Post
 }
 
 func GetCommentsByPostId(ctx context.Context, obj *models.Post, page int,
-	pageSize int,conn *grpc.ClientConn) ([]*models.Comment, error){
-	client:=postpb.NewPostServiceClient(conn)
+	pageSize int) ([]*models.Comment, error){
+	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
 	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
 	defer cancel()
 	commentsRequest:=postpb.CommentsRequest{
@@ -65,10 +66,11 @@ func GetCommentsByPostId(ctx context.Context, obj *models.Post, page int,
 	}
 	var comments []*models.Comment
 	for _,v:=range r.Comments{
-		u,_:=user.GetUser(ctx,int(v.UserId),conn)
 		comments=append(comments,&models.Comment{
 			ID:int(v.Id),
-			User:u,
+			User:&models.User{
+				ID:int(v.UserId),
+			},
 			PostID:int(v.PostId),
 			Content:v.Content,
 			CreateAt:int(v.CreateTime),
@@ -96,10 +98,11 @@ func GetRepliesByCommentId(ctx context.Context,obj *models.Comment,page int,page
 	}
 	var replies []*models.Reply
 	for _,v:=range r.Replies{
-		u,_:=user.GetUser(ctx,int(v.UserId),conn)
 		replies=append(replies,&models.Reply{
 			ID:int(v.Id),
-			User:u,
+			User:&models.User{
+				ID:int(v.UserId),
+			},
 			PostID:int(v.PostId),
 			CommentID:int(v.CommentId),
 			Content:v.Content,
@@ -111,8 +114,8 @@ func GetRepliesByCommentId(ctx context.Context,obj *models.Comment,page int,page
 	return replies,nil
 }
 
-func GetPosts(ctx context.Context, page int, pageSize int,conn *grpc.ClientConn) ([]*models.Post, error){
-	client:=postpb.NewPostServiceClient(conn)
+func GetPosts(ctx context.Context, page int, pageSize int) ([]*models.Post, error){
+	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
 	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
 	defer cancel()
 	postsRequest:=postpb.PostsRequest{

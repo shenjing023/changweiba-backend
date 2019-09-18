@@ -4,12 +4,12 @@ import (
 	"changweiba-backend/common"
 	"changweiba-backend/conf"
 	"changweiba-backend/graphql/models"
+	"changweiba-backend/graphql/rpc_conn"
 	"changweiba-backend/pkg/middleware"
 	pb "changweiba-backend/rpc/account/pb"
 	"context"
 	"errors"
 	"github.com/astaxie/beego/logs"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"net"
 	"strings"
@@ -24,7 +24,7 @@ type MyUserResolver struct {
 
 }
 
-func RegisterUser(ctx context.Context,input models.NewUser,conn *grpc.ClientConn) (string, error){
+func RegisterUser(ctx context.Context,input models.NewUser) (string, error){
 	//获取客户端ip
 	gc,err:=common.GinContextFromContext(ctx)
 	if err!=nil{
@@ -37,7 +37,7 @@ func RegisterUser(ctx context.Context,input models.NewUser,conn *grpc.ClientConn
 		return "", errors.New("system error")
 	}
 	
-	client:=pb.NewAccountClient(conn)
+	client:=pb.NewAccountClient(rpc_conn.AccountConn)
 	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
 	defer cancel()
 	
@@ -67,8 +67,8 @@ func RegisterUser(ctx context.Context,input models.NewUser,conn *grpc.ClientConn
 	return token.AccessToken, nil
 }
 
-func LoginUser(ctx context.Context,input models.NewUser,conn *grpc.ClientConn) (string,error){
-	client:=pb.NewAccountClient(conn)
+func LoginUser(ctx context.Context,input models.NewUser) (string,error){
+	client:=pb.NewAccountClient(rpc_conn.AccountConn)
 	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
 	defer cancel()
 	pbRequest:=pb.LoginRequest{
@@ -94,10 +94,9 @@ func LoginUser(ctx context.Context,input models.NewUser,conn *grpc.ClientConn) (
 	return token.AccessToken, nil
 }
 
-func GetUser(ctx context.Context,userId int,conn *grpc.ClientConn) (*models.User,error){
-	
-	client:=pb.NewAccountClient(conn)
-	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
+func GetUser(ctx context.Context,userId int) (*models.User,error){
+	client:=pb.NewAccountClient(rpc_conn.AccountConn)
+	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
 	defer cancel()
 	pbUser:=pb.User{
 		Id:int64(userId),
@@ -120,4 +119,28 @@ func GetUser(ctx context.Context,userId int,conn *grpc.ClientConn) (*models.User
 		BannedReason:r.BannedReason,
 		Role:models.UserRole(r.Role),
 	}, nil
+}
+
+func GetUsers(ctx context.Context,ids []int64) ([]*models.User,error){
+	client:=pb.NewAccountClient(rpc_conn.AccountConn)
+	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
+	defer cancel()
+	r,err:=client.GetUsersByUserIds(ctx,&pb.UsersByUserIdsRequest{Ids:ids})
+	if err!=nil{
+		logs.Error("get users by user_ids error:",err.Error())
+		return nil, err
+	}
+	var users []*models.User
+	for _,v:=range r.Users{
+		users=append(users,&models.User{
+			ID:int(v.Id),
+			Name:v.Name,
+			Avatar:v.Avatar,
+			Status:models.UserStatus(v.Status),
+			Score:int(v.Score),
+			BannedReason:v.BannedReason,
+			Role:models.UserRole(v.Role),
+		})
+	}
+	return users,nil
 }

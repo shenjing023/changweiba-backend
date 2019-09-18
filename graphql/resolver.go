@@ -4,43 +4,14 @@ package graphql
 
 import (
 	"changweiba-backend/common"
-	"changweiba-backend/conf"
 	"changweiba-backend/graphql/dataloader"
 	"changweiba-backend/graphql/generated"
 	"changweiba-backend/graphql/models"
 	"changweiba-backend/graphql/post"
 	"changweiba-backend/graphql/user"
 	"context"
-	"fmt"
-	"google.golang.org/grpc"
-	"log"
 	
 ) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
-
-//rpc连接
-var (
-	accountConn *grpc.ClientConn
-	postConn *grpc.ClientConn
-)
-
-func InitRPCConnection(){
-	var err error
-	accountConn,err=grpc.Dial(fmt.Sprintf("localhost:%d",conf.Cfg.Account.Port),grpc.WithInsecure())
-	if err!=nil{
-		log.Fatal(fmt.Sprintf("fail to accountRPC dial: %+v",err))
-	}
-	postConn,err=grpc.Dial(fmt.Sprintf("localhost:%d",conf.Cfg.Post.Port),grpc.WithInsecure())
-	if err!=nil{
-		log.Fatal(fmt.Sprintf("fail to postRPC dial: %+v",err))
-	}
-}
-
-//关闭rpc连接
-func StopRPCConnection(){
-	if accountConn!=nil{
-		accountConn.Close()
-	}
-}
 
 type Resolver struct{}
 
@@ -79,10 +50,10 @@ func (r *mutationResolver) RegisterUser(ctx context.Context, input models.NewUse
 	if _,err:=common.GinContextFromContext(ctx);err!=nil{
 		return "", err
 	}
-	return user.RegisterUser(ctx,input,accountConn)
+	return user.RegisterUser(ctx,input)
 }
 func (r *mutationResolver) LoginUser(ctx context.Context, input models.NewUser) (string, error) {
-	return user.LoginUser(ctx,input,accountConn)
+	return user.LoginUser(ctx,input)
 }
 func (r *mutationResolver) EditUser(ctx context.Context, input models.EditUser) (string, error) {
 	panic("not implemented")
@@ -108,15 +79,15 @@ type queryResolver struct{
 }
 
 func (r *queryResolver) User(ctx context.Context, userID int) (*models.User, error) {
-	return user.GetUser(ctx,userID,accountConn)
+	return user.GetUser(ctx,userID)
 }
 
 func (r *queryResolver) Post(ctx context.Context, postID int) (*models.Post, error){
-	return post.GetPost(ctx,postID,postConn)
+	return post.GetPost(ctx,postID)
 }
 
 func (r *queryResolver) Posts(ctx context.Context, page int, pageSize int) ([]*models.Post, error){
-	return post.GetPosts(ctx,page,pageSize,postConn)
+	return post.GetPosts(ctx,page,pageSize)
 }
 
 func (r *queryResolver) Comment(ctx context.Context, commentID int) (*models.Comment, error){
@@ -150,11 +121,11 @@ type postResolver struct {
 }
 
 func (r *postResolver) Comments(ctx context.Context, obj *models.Post, limit int) ([]*models.Comment, error) {
-	return post.GetCommentsByPostId(ctx,obj,page,pageSize,postConn)
+	return post.GetCommentsByPostId(ctx,obj,limit)
 }
 
 func (r *postResolver) User(ctx context.Context, obj *models.Post) (*models.User, error){
-	dataloader.CtxLoaders(ctx)
+	return dataloader.CtxLoaders(ctx).UsersByIds.Load(int64(obj.User.ID),nil)
 }
 
 type commentResolver struct {

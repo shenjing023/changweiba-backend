@@ -65,14 +65,14 @@ type commentLoaderBatch struct {
 }
 
 // Load a Comment by key, batching and caching will be applied automatically
-func (l *CommentLoader) Load(key int) ([]*models.Comment, error) {
-	return l.LoadThunk(key)()
+func (l *CommentLoader) Load(key int, params interface{}) ([]*models.Comment, error) {
+	return l.LoadThunk(key, params)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Comment.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *CommentLoader) LoadThunk(key int) func() ([]*models.Comment, error) {
+func (l *CommentLoader) LoadThunk(key int, params interface{}) func() ([]*models.Comment, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
@@ -81,7 +81,7 @@ func (l *CommentLoader) LoadThunk(key int) func() ([]*models.Comment, error) {
 		}
 	}
 	if l.batch == nil {
-		l.batch = &commentLoaderBatch{done: make(chan struct{})}
+		l.batch = &commentLoaderBatch{done: make(chan struct{}), params: params}
 	}
 	batch := l.batch
 	pos := batch.keyIndex(l, key)
@@ -115,11 +115,11 @@ func (l *CommentLoader) LoadThunk(key int) func() ([]*models.Comment, error) {
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *CommentLoader) LoadAll(keys []int) ([][]*models.Comment, []error) {
+func (l *CommentLoader) LoadAll(keys []int, params interface{}) ([][]*models.Comment, []error) {
 	results := make([]func() ([]*models.Comment, error), len(keys))
 
 	for i, key := range keys {
-		results[i] = l.LoadThunk(key)
+		results[i] = l.LoadThunk(key, params)
 	}
 
 	comments := make([][]*models.Comment, len(keys))
@@ -133,10 +133,10 @@ func (l *CommentLoader) LoadAll(keys []int) ([][]*models.Comment, []error) {
 // LoadAllThunk returns a function that when called will block waiting for a Comments.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *CommentLoader) LoadAllThunk(keys []int) func() ([][]*models.Comment, []error) {
+func (l *CommentLoader) LoadAllThunk(keys []int, params interface{}) func() ([][]*models.Comment, []error) {
 	results := make([]func() ([]*models.Comment, error), len(keys))
 	for i, key := range keys {
-		results[i] = l.LoadThunk(key)
+		results[i] = l.LoadThunk(key, params)
 	}
 	return func() ([][]*models.Comment, []error) {
 		comments := make([][]*models.Comment, len(keys))

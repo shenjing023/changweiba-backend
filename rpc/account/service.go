@@ -147,6 +147,31 @@ func (u *User) GetUsersByIds(ctx context.Context,ur *pb.UsersRequest) (*pb.Users
 	}, nil
 }
 
+func (u *User) GetUsersByUserIds(ctx context.Context, ur *pb.UsersByUserIdsRequest) (*pb.UsersByUserIdsResponse,error){
+	dbUsers,err:=dao.GetUsers(ur.Ids)
+	if err!=nil{
+		logs.Error("get users by ids error:",err.Error())
+		return nil,status.Error(codes.Internal,ServiceError)
+	}
+	var users []*pb.User
+	for _,v:=range dbUsers{
+		users=append(users,&pb.User{
+			Id:v.Id,
+			Name:v.Name,
+			Avatar:v.Avatar,
+			Status:pb.Status(v.Status),
+			Score:v.Score,
+			BannedReason:v.BannedReason,
+			CreateTime:v.CreateTime,
+			LastUpdate:v.LastUpdate,
+			Role:pb.Role(v.Role),
+		})
+	}
+	return &pb.UsersByUserIdsResponse{
+		Users:users,
+	}, nil
+}
+
 //密码加盐加密
 func (u *User) encryptPassword(password string) (string,error){
 	dk,err:=scrypt.Key([]byte(password),[]byte(conf.Cfg.Salt),1<<15,8,1,32)

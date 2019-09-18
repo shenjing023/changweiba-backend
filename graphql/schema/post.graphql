@@ -11,6 +11,18 @@ type Post{
     comments(limit:Int!): [Comment!]
 }
 
+type PostComments{
+    data:[Comment!]
+    total:Int!
+}
+
+type SinglePost{
+    id:Int!
+    user:User!
+    topic:String!
+    create_at
+}
+
 type Comment{
     id: Int!
     user: User!

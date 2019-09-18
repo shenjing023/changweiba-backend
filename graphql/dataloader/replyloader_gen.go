@@ -65,14 +65,14 @@ type replyLoaderBatch struct {
 }
 
 // Load a Reply by key, batching and caching will be applied automatically
-func (l *ReplyLoader) Load(key int) ([]*models.Reply, error) {
-	return l.LoadThunk(key)()
+func (l *ReplyLoader) Load(key int, params interface{}) ([]*models.Reply, error) {
+	return l.LoadThunk(key, params)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Reply.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ReplyLoader) LoadThunk(key int) func() ([]*models.Reply, error) {
+func (l *ReplyLoader) LoadThunk(key int, params interface{}) func() ([]*models.Reply, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
@@ -81,7 +81,7 @@ func (l *ReplyLoader) LoadThunk(key int) func() ([]*models.Reply, error) {
 		}
 	}
 	if l.batch == nil {
-		l.batch = &replyLoaderBatch{done: make(chan struct{})}
+		l.batch = &replyLoaderBatch{done: make(chan struct{}), params: params}
 	}
 	batch := l.batch
 	pos := batch.keyIndex(l, key)
@@ -115,11 +115,11 @@ func (l *ReplyLoader) LoadThunk(key int) func() ([]*models.Reply, error) {
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *ReplyLoader) LoadAll(keys []int) ([][]*models.Reply, []error) {
+func (l *ReplyLoader) LoadAll(keys []int, params interface{}) ([][]*models.Reply, []error) {
 	results := make([]func() ([]*models.Reply, error), len(keys))
 
 	for i, key := range keys {
-		results[i] = l.LoadThunk(key)
+		results[i] = l.LoadThunk(key, params)
 	}
 
 	replys := make([][]*models.Reply, len(keys))
@@ -133,10 +133,10 @@ func (l *ReplyLoader) LoadAll(keys []int) ([][]*models.Reply, []error) {
 // LoadAllThunk returns a function that when called will block waiting for a Replys.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ReplyLoader) LoadAllThunk(keys []int) func() ([][]*models.Reply, []error) {
+func (l *ReplyLoader) LoadAllThunk(keys []int, params interface{}) func() ([][]*models.Reply, []error) {
 	results := make([]func() ([]*models.Reply, error), len(keys))
 	for i, key := range keys {
-		results[i] = l.LoadThunk(key)
+		results[i] = l.LoadThunk(key, params)
 	}
 	return func() ([][]*models.Reply, []error) {
 		replys := make([][]*models.Reply, len(keys))

@@ -465,6 +465,53 @@ func GetCommentsByPostIds(ids []int64,limit int) ([][]*Comment,error){
 	return comments, nil
 }
 
+func GetUsers(ids []int64) ([]*User,error){
+	var sql string
+	var orderField []string
+	for _,v:=range ids{
+		orderField=append(orderField,strconv.FormatInt(v,10))
+	}
+	sql=`
+		SELECT 
+			id,
+			name,
+			avatar,
+			score,
+			role,
+			banned_reason,
+			create_time,
+			last_update 
+		FROM 
+			user 
+		WHERE 
+			id IN (?) 
+		ORDER BY FIELD(id,?)
+	`
+	results,err:=dbEngine.Query(sql,ids,strings.Join(orderField,","))
+	if err!=nil{
+		return nil, status.Error(codes.Internal,err.Error())
+	}
+	//排序
+	var users []*User
+	j,l:=0,len(results)
+	for _,v:=range ids{
+		var u *User
+		if j+1>l{
+			users=append(users,u)
+			continue
+		}
+		if BytesToInt64(results[j]["id"])==v{
+			err:=mapstructure.Decode(v,u)
+			if err!=nil{
+				return nil, status.Error(codes.Internal,err.Error())
+			}
+			j++
+		}
+		users=append(users,u)
+	}
+	return users, nil
+}
+
 //ip地址int->string相互转换
 func InetAtoi(ip string) int64{
 	ret := big.NewInt(0)
