@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"github.com/astaxie/beego/logs"
-	"google.golang.org/grpc"
 	"time"
 )
 
@@ -50,7 +49,7 @@ func GetPost(ctx context.Context,postId int) (*models.Post,error){
 }
 
 func GetCommentsByPostId(ctx context.Context, obj *models.Post, page int,
-	pageSize int) ([]*models.Comment, error){
+	pageSize int) (*models.CommentConnection, error){
 	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
 	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
 	defer cancel()
@@ -78,12 +77,14 @@ func GetCommentsByPostId(ctx context.Context, obj *models.Post, page int,
 			Status:models.Status(v.Status),
 		})
 	}
-	return comments,nil
+	return &models.CommentConnection{
+		Nodes:comments,
+		TotalCount:0,
+	},nil
 }
 
-func GetRepliesByCommentId(ctx context.Context,obj *models.Comment,page int,pageSize int,
-	conn *grpc.ClientConn) ([]*models.Reply,error){
-	client:=postpb.NewPostServiceClient(conn)
+func GetRepliesByCommentId(ctx context.Context,obj *models.Comment,page int,pageSize int) (*models.ReplyConnection,error){
+	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
 	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
 	defer cancel()
 	repliesRequest:=postpb.RepliesRequest{
@@ -111,12 +112,15 @@ func GetRepliesByCommentId(ctx context.Context,obj *models.Comment,page int,page
 			Status:models.Status(v.Status),
 		})
 	}
-	return replies,nil
+	return &models.ReplyConnection{
+		Nodes:replies,
+		TotalCount:0,
+	},nil
 }
 
-func GetPosts(ctx context.Context, page int, pageSize int) ([]*models.Post, error){
+func GetPosts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error){
 	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
-	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
+	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
 	defer cancel()
 	postsRequest:=postpb.PostsRequest{
 		Offset:int32(page),
@@ -141,5 +145,62 @@ func GetPosts(ctx context.Context, page int, pageSize int) ([]*models.Post, erro
 			},
 		})
 	}
-	return posts,nil
+	return &models.PostConnection{
+		Nodes:posts,
+		TotalCount:0,
+	},nil
+}
+
+//
+func NewPost(ctx context.Context,post models.NewPost) (int,error){
+	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
+	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
+	defer cancel()
+	request:=postpb.NewPostRequest{
+		UserId:int64(post.UserID),
+		Topic:post.Topic,
+		Content:post.Content,
+	}
+	r,err:=client.NewPost(ctx,&request)
+	if err!=nil{
+		logs.Error("create post error:",err.Error())
+		return 0, err
+	}
+	return int(r.PostId),nil
+}
+
+func NewComment(ctx context.Context,comment models.NewComment) (int,error){
+	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
+	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
+	defer cancel()
+	request:=postpb.NewCommentRequest{
+		UserId:int64(comment.UserID),
+		PostId:int64(comment.PostID),
+		Content:comment.Content,
+	}
+	r,err:=client.NewComment(ctx,&request)
+	if err!=nil{
+		logs.Error("create comment error:",err.Error())
+		return 0, err
+	}
+	return int(r.CommentId),nil
+}
+
+func NewReply(ctx context.Context,reply models.NewReply) (int,error){
+	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
+	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
+	defer cancel()
+	request:=postpb.NewReplyRequest{
+		UserId:int64(reply.UserID),
+		PostId:int64(reply.PostID),
+		Content:reply.Content,
+		CommentId:int64(reply.CommentID),
+		ParentId:int64(reply.ParentID),
+	}
+	r,err:=client.NewReply(ctx,&request)
+	if err!=nil{
+		logs.Error("create reply error:",err.Error())
+		return 0, err
+	}
+	return int(r.ReplyId),nil
 }

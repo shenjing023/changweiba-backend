@@ -8,10 +8,19 @@ import (
 	"changweiba-backend/graphql/generated"
 	"changweiba-backend/graphql/models"
 	"changweiba-backend/graphql/post"
+	"changweiba-backend/graphql/rpc_conn"
 	"changweiba-backend/graphql/user"
 	"context"
 	
 ) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
+
+func InitRPCConnection(){
+	rpc_conn.InitRPCConnection()
+}
+
+func StopRPCConnection(){
+	rpc_conn.StopRPCConnection()
+}
 
 type Resolver struct{}
 
@@ -41,6 +50,11 @@ func (r *Resolver) Post() generated.PostResolver {
 func (r *Resolver) Comment() generated.CommentResolver {
 	return &commentResolver{r}
 }
+
+func (r *Resolver) Reply() generated.ReplyResolver {
+	return &replyResolver{r}
+}
+
 type mutationResolver struct{
 	*Resolver
 	myUserResolver *user.MyUserResolver
@@ -62,13 +76,13 @@ func (r *mutationResolver) ReportUser(ctx context.Context, input models.ReportUs
 	panic("not implemented")
 }
 func (r *mutationResolver) NewPost(ctx context.Context, input models.NewPost) (int, error) {
-	panic("not implemented")
+	return post.NewPost(ctx,input)
 }
 func (r *mutationResolver) NewComment(ctx context.Context, input models.NewComment) (int, error) {
-	panic("not implemented")
+	return post.NewComment(ctx,input)
 }
 func (r *mutationResolver) NewReply(ctx context.Context, input models.NewReply) (int, error) {
-	panic("not implemented")
+	return post.NewReply(ctx,input)
 }
 func (r *mutationResolver) DeletePost(ctx context.Context, input int) (bool, error) {
 	panic("not implemented")
@@ -86,7 +100,7 @@ func (r *queryResolver) Post(ctx context.Context, postID int) (*models.Post, err
 	return post.GetPost(ctx,postID)
 }
 
-func (r *queryResolver) Posts(ctx context.Context, page int, pageSize int) ([]*models.Post, error){
+func (r *queryResolver) Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error){
 	return post.GetPosts(ctx,page,pageSize)
 }
 
@@ -94,7 +108,16 @@ func (r *queryResolver) Comment(ctx context.Context, commentID int) (*models.Com
 	panic("not implemented")
 }
 
+func (r *queryResolver) Comments(ctx context.Context, postId int,page int,pageSize int) (*models.CommentConnection, error){
+	panic("not implemented")
+}
+
 func (r *queryResolver) Reply(ctx context.Context, replyID int) (*models.Reply, error){
+	panic("not implemented")
+}
+
+func (r *queryResolver) Replies(ctx context.Context, commentID int,page int,pageSize int) (*models.ReplyConnection, 
+	error){
 	panic("not implemented")
 }
 
@@ -103,16 +126,16 @@ type userResolver struct {
 	myPostResolver *post.MyPostResolver
 }
 
-func (r *userResolver) Posts(ctx context.Context, obj *models.User, page int, pageSize int) ([]*models.Post, error) {
+func (r *userResolver) Posts(ctx context.Context, obj *models.User, page int, pageSize int) (*models.PostConnection, error) {
 	panic("not implemented")
 }
 
-func (r *userResolver) Comments(ctx context.Context, obj *models.User, page int, pageSize int) ([]*models.Comment, 
+func (r *userResolver) Comments(ctx context.Context, obj *models.User, page int, pageSize int) (*models.CommentConnection, 
 	error){
 	panic("not implemented")
 }
 
-func (r *userResolver) Replies(ctx context.Context, obj *models.User, page int, pageSize int) ([]*models.Reply, error){
+func (r *userResolver) Replies(ctx context.Context, obj *models.User, page int, pageSize int) (*models.ReplyConnection, error){
 	panic("not implemented")
 }
 
@@ -120,18 +143,34 @@ type postResolver struct {
 	*Resolver
 }
 
-func (r *postResolver) Comments(ctx context.Context, obj *models.Post, limit int) ([]*models.Comment, error) {
-	return post.GetCommentsByPostId(ctx,obj,limit)
+func (r *postResolver) Comments(ctx context.Context, obj *models.Post, page int, pageSize int) (*models.CommentConnection, error) {
+	return post.GetCommentsByPostId(ctx,obj,page,pageSize)
 }
 
 func (r *postResolver) User(ctx context.Context, obj *models.Post) (*models.User, error){
 	return dataloader.CtxLoaders(ctx).UsersByIds.Load(int64(obj.User.ID),nil)
 }
 
+func (r *postResolver) LastReplyUser(ctx context.Context, obj *models.Post) (*models.User, error){
+	return dataloader.CtxLoaders(ctx).UsersByIds.Load(int64(obj.User.ID),nil)
+}
+
 type commentResolver struct {
 	*Resolver
 }
-func (r *commentResolver) Replies(ctx context.Context, obj *models.Comment, limit int) ([]*models.Reply,
-	error){
-	return post.GetRepliesByCommentId(ctx,obj,page,pageSize,postConn)
+
+func (r *commentResolver) Replies(ctx context.Context, obj *models.Comment, page int,pageSize int) (*models.ReplyConnection, error){
+	return post.GetRepliesByCommentId(ctx,obj,page,pageSize)
+}
+
+func (r *commentResolver) User(ctx context.Context, obj *models.Comment) (*models.User, error){
+	return dataloader.CtxLoaders(ctx).UsersByIds.Load(int64(obj.User.ID),nil)
+}
+
+type replyResolver struct{
+	*Resolver
+}
+
+func (r *replyResolver) User(ctx context.Context, obj *models.Reply) (*models.User, error){
+	return dataloader.CtxLoaders(ctx).UsersByIds.Load(int64(obj.User.ID),nil)
 }

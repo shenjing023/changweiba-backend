@@ -46,7 +46,7 @@ CREATE TABLE `post` (
     `topic` varchar(255) NOT NULL COMMENT '帖子标题',
     `create_time` int(11) UNSIGNED NOT NULL COMMENT '创建时间',
     `last_update` int(11) UNSIGNED NOT NULL COMMENT '最后更新时间',
-    `reply_num` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '帖子回复数量',
+    `reply_num` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '帖子评论+回复总数',
     `status` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '状态,(0正常1删除)',
     PRIMARY KEY (`id`) USING BTREE,
     KEY `ids_user_id` (`user_id`)
@@ -64,6 +64,7 @@ CREATE TABLE `comment` (
     `create_time` int(11) NOT NULL COMMENT '创建时间',
     `floor` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '第几楼',
     `status` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '状态,(0正常1删除)',
+    `reply_num` int(11) UNSIGNED NOT NULL COMMENT '总回复数',
     PRIMARY KEY (`id`) USING BTREE,
     KEY `ids_user_id` (`user_id`),
     KEY `ids_post_id` (`post_id`)

@@ -5,22 +5,20 @@ type Post{
     create_at: Int!
     """最后回复时间"""
     last_at: Int!
-    """帖子回复的数量"""
+    """帖子评论+回复的总数"""
     reply_num: Int!
     status: Status!
-    comments(limit:Int!): [Comment!]
+    comments(
+        page:Int!
+        pageSize:Int!
+    ): CommentConnection!
+    """最后评论或回复的用户"""
+    last_reply_user:User!
 }
 
-type PostComments{
-    data:[Comment!]
-    total:Int!
-}
-
-type SinglePost{
-    id:Int!
-    user:User!
-    topic:String!
-    create_at
+type PostConnection{
+    nodes:[Post]
+    total_count:Int!
 }
 
 type Comment{
@@ -32,7 +30,15 @@ type Comment{
     """第几楼"""
     floor: Int!
     status: Status!
-    replies(limit:Int!): [Reply!]
+    replies(
+        page:Int!
+        pageSize:Int!
+    ): ReplyConnection
+}
+
+type CommentConnection{
+    nodes:[Comment]
+    total_count:Int!
 }
 
 type Reply{
@@ -47,6 +53,11 @@ type Reply{
     """楼中楼的第几楼"""
     floor: Int!
     status: Status!
+}
+
+type ReplyConnection{
+    nodes:[Reply]
+    total_count:Int!
 }
 
 enum Status{

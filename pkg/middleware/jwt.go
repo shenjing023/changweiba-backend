@@ -211,7 +211,7 @@ func JWTMiddleware(signKey string) gin.HandlerFunc {
 			systemError(c)
 		}
 
-		//陷进，不能是doc,err:= 目前还不知原因
+		//陷阱，不能是doc,err:= 目前还不知原因
 		doc,err_:=parser.ParseQuery(&ast.Source{Input:param.Query})
 		//spew.Dump(err)
 		if err_ != nil {

@@ -94,6 +94,7 @@ message PostsRequest {
 
 message PostsResponse {
     repeated Post posts = 1;
+    int32 total_count=2;
 }
 
 message CommentRequest {
@@ -113,6 +114,7 @@ message CommentsRequest {
 
 message CommentsResponse {
     repeated Comment comments = 1;
+    int32 total_count=2;
 }
 
 message ReplyRequest{
@@ -132,6 +134,7 @@ message RepliesRequest{
 
 message RepliesResponse{
     repeated Reply replies=1;
+    int32 total_count=2;
 }
 
 //通过comment_ids获取reply

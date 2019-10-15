@@ -18,6 +18,18 @@ models:
         resolver: true
       user:
         resolver: true
+      last_reply_user:
+        resolver: true
+  Comment:
+    fields:
+      user:
+        resolver: true
+      replies:
+        resolver: true
+  Reply:
+    fields:
+      user:
+        resolver: true
   User:
     fields:
       posts:
@@ -26,7 +38,4 @@ models:
         resolver: true
       replies:
         resolver: true
-  Comment:
-    fields:
-      replies:
-        resolver: true
+      

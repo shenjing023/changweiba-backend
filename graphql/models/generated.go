@@ -15,9 +15,14 @@ type Comment struct {
 	Content  string `json:"content"`
 	CreateAt int    `json:"create_at"`
 	// 第几楼
-	Floor   int      `json:"floor"`
-	Status  Status   `json:"status"`
-	Replies []*Reply `json:"replies"`
+	Floor   int              `json:"floor"`
+	Status  Status           `json:"status"`
+	Replies *ReplyConnection `json:"replies"`
+}
+
+type CommentConnection struct {
+	Nodes      []*Comment `json:"nodes"`
+	TotalCount int        `json:"total_count"`
 }
 
 type DeletePost struct {
@@ -66,10 +71,17 @@ type Post struct {
 	CreateAt int    `json:"create_at"`
 	// 最后回复时间
 	LastAt int `json:"last_at"`
-	// 帖子回复的数量
-	ReplyNum int        `json:"reply_num"`
-	Status   Status     `json:"status"`
-	Comments []*Comment `json:"comments"`
+	// 帖子评论+回复的总数
+	ReplyNum int                `json:"reply_num"`
+	Status   Status             `json:"status"`
+	Comments *CommentConnection `json:"comments"`
+	// 最后评论或回复的用户
+	LastReplyUser *User `json:"last_reply_user"`
+}
+
+type PostConnection struct {
+	Nodes      []*Post `json:"nodes"`
+	TotalCount int     `json:"total_count"`
 }
 
 type Reply struct {
@@ -84,6 +96,11 @@ type Reply struct {
 	// 楼中楼的第几楼
 	Floor  int    `json:"floor"`
 	Status Status `json:"status"`
+}
+
+type ReplyConnection struct {
+	Nodes      []*Reply `json:"nodes"`
+	TotalCount int      `json:"total_count"`
 }
 
 type ReportUser struct {
@@ -105,10 +122,10 @@ type User struct {
 	// 当前分数
 	Score int `json:"score"`
 	// 被封原因
-	BannedReason string     `json:"banned_reason"`
-	Posts        []*Post    `json:"posts"`
-	Comments     []*Comment `json:"comments"`
-	Replies      []*Reply   `json:"replies"`
+	BannedReason string             `json:"banned_reason"`
+	Posts        *PostConnection    `json:"posts"`
+	Comments     *CommentConnection `json:"comments"`
+	Replies      *ReplyConnection   `json:"replies"`
 }
 
 type Status string

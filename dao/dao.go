@@ -7,6 +7,7 @@ import (
 	"github.com/astaxie/beego/logs"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
+	"github.com/goinggo/mapstructure"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"math/big"
@@ -15,15 +16,11 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
-	"github.com/goinggo/mapstructure"
 )
 
 var (
 	dbEngine *xorm.Engine
-	commentMutex sync.Mutex
-	replyMutex sync.Mutex
 )
 
 func Init(){
@@ -110,7 +107,12 @@ func GetRandomAvatar() (url string,err error){
 	return 
 }
 
-func InsertPost(userId int64,topic string) (int64,error){
+func InsertPost(userId int64,topic string,content string) (int64,error){
+	session := dbEngine.NewSession()
+	defer session.Close()
+	if err := session.Begin(); err != nil {
+		return 0,err
+	}
 	now:=time.Now().Unix()
 	post:=Post{
 		UserId:     userId,
@@ -120,21 +122,44 @@ func InsertPost(userId int64,topic string) (int64,error){
 		ReplyNum:   0,
 		Status:     0,
 	}
-	_,err:=dbEngine.InsertOne(&post)
+	_,err:=session.InsertOne(&post)
 	if err!=nil{
+		session.Rollback()
 		return 0,err
 	}
+	comment:=Comment{
+		UserId:     userId,
+		PostId:     post.Id,
+		Content:    content,
+		CreateTime: now,
+		Status:     0,
+		Floor:		1,
+	}
+	_,err=session.InsertOne(&comment)
+	if err!=nil{
+		session.Rollback()
+		return 0,err
+	}
+	go increasePostReplyNum(post.Id)
+	session.Commit()
 	return post.Id,nil
 }
 
+
 func InsertComment(userId int64,postId int64,content string) (int64,error){
-	commentMutex.Lock()
-	defer commentMutex.Unlock()
+	session := dbEngine.NewSession()
+	defer session.Close()
+	// add Begin() before any action
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0,err
+	}
 	//先获取楼层数
-	sql:="SELECT count(*) AS total FROM comment WHERE post_id=?"
-	results,err:=dbEngine.Query(sql,postId)
+	sql:="SELECT count(*) AS total FROM comment WHERE post_id=? FOR UPDATE"
+	results,err:=session.Query(sql,postId)
 	floor,err:=strconv.Atoi(string(results[0]["total"]))
 	if err!=nil{
+		session.Rollback()
 		return 0, err
 	}
 	now:=time.Now().Unix()
@@ -146,22 +171,30 @@ func InsertComment(userId int64,postId int64,content string) (int64,error){
 		Status:     0,
 		Floor:int32(floor+1),
 	}
-	_,err=dbEngine.InsertOne(&comment)
+	_,err=session.InsertOne(&comment)
 	if err!=nil{
+		session.Rollback()
 		return 0,err
 	}
 	go increasePostReplyNum(postId)
+	session.Commit()
 	return comment.Id,nil
 }
 
 func InsertReply(userId,postId,commentId,parentId int64,content string) (int64,error){
-	replyMutex.Lock()
-	defer replyMutex.Unlock()
+	session := dbEngine.NewSession()
+	defer session.Close()
+	// add Begin() before any action
+	if err := session.Begin(); err != nil {
+		// if returned then will rollback automatically
+		return 0,err
+	}
 	//先获取楼层数
-	sql:="SELECT count(*) AS total FROM reply WHERE comment_id=?"
-	results,err:=dbEngine.Query(sql,commentId)
+	sql:="SELECT count(*) AS total FROM reply WHERE comment_id=? FOR UPDATE"
+	results,err:=session.Query(sql,commentId)
 	floor,err:=strconv.Atoi(string(results[0]["total"]))
 	if err!=nil{
+		session.Rollback()
 		return 0, err
 	}
 	now:=time.Now().Unix()
@@ -173,19 +206,21 @@ func InsertReply(userId,postId,commentId,parentId int64,content string) (int64,e
 		CommentId:commentId,
 		CreateTime:now,
 		Status:0,
-		Floor:int32(floor),
+		Floor:int32(floor+1),
 	}
-	_,err=dbEngine.InsertOne(&reply)
+	_,err=session.InsertOne(&reply)
 	if err!=nil{
+		session.Rollback()
 		return 0, err
 	}
 	go increasePostReplyNum(postId)
+	session.Commit()
 	return reply.Id,nil
 }
 
 //帖子回复数+1
 func increasePostReplyNum(postId int64){
-	sql:="UPDATE post SET reply_num=reply_num+1 WHERE id=?"
+	sql:="UPDATE post SET reply_num=reply_num+1,last_update=UNIX_TIMESTAMP() WHERE id=?"
 	dbEngine.Exec(sql,postId)
 }
 
@@ -234,7 +269,7 @@ func DeleteReply(replyId int64) error{
 func GetPost(post *Post) (bool,error){
 	has,err:=dbEngine.Get(post)
 	if err!=nil{
-		return false, status.Error(codes.Internal,err.Error())
+		return false, err
 	}
 	return has,nil
 }
@@ -245,10 +280,15 @@ func GetPosts(page int,pageSize int) ([]*Post,error){
 	return posts,err
 }
 
+func GetPostsCount() (int64,error){
+	post:=&Post{}
+	return dbEngine.Where("status",0).Count(post)
+}
+
 func GetComment(comment *Comment) (bool,error){
 	has,err:=dbEngine.Get(comment)
 	if err!=nil{
-		return false, status.Error(codes.Internal,err.Error())
+		return false, err
 	}
 	return has,nil
 }
@@ -257,6 +297,21 @@ func GetCommentsByPostId(postId int64,page int,pageSize int) ([]*Comment,error){
 	comments:=make([]*Comment,pageSize)
 	err:=dbEngine.Where("post_id=?",postId).Limit(page,pageSize).Find(&comments)
 	return comments,err
+}
+
+func GetCommentsCountByPostId(postId int64) (int64,error){
+	comment:=&Comment{}
+	return dbEngine.Where("post_id=?",postId).Count(comment)
+}
+
+func GetRepliesCountByPostId(postId int64) (int64,error){
+	reply:=&Reply{}
+	return dbEngine.Where("post_id",postId).Count(reply)
+}
+
+func GetRepliesCountByCommentId(commentId int64) (int64,error){
+	reply:=&Reply{}
+	return dbEngine.Where("comment_id",commentId).Count(reply)
 }
 
 func GetRepliesByCommentId(commentId int64,page int,pageSize int) ([]*Reply,error){

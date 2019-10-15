@@ -44,10 +44,6 @@ func userLoaderFunc (keys []int64,params interface{}) ([]*models.User,[]error){
 	return users,errs
 }
 
-func commentLoaderFunc(keys []int) ([][]*models.Comment,[]error){
-	
-}
-
 func CtxLoaders(ctx context.Context) loaders{
 	return ctx.Value(ctxKey).(loaders)
 }

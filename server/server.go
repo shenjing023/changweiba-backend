@@ -36,7 +36,7 @@ func graphqlHandler() gin.HandlerFunc {
 	// Resolver is in the resolver.go file
 	h := handler.GraphQL(
 		generated.NewExecutableSchema(generated.Config{Resolvers: &graphql.Resolver{}}),
-		handler.ComplexityLimit(4),
+		handler.ComplexityLimit(5),
 		)
 
 	return func(c *gin.Context) {

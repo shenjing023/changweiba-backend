@@ -12,9 +12,18 @@ type User{
     score: Int!
     """被封原因"""
     banned_reason: String!
-    posts(page:Int!,page_size:Int!): [Post!]!
-    comments(page:Int!,page_size:Int!):[Comment!]!
-    replies(page:Int!,page_size:Int!):[Reply!]!
+    posts(
+        page:Int!
+        pageSize:Int!
+    ): PostConnection
+    comments(
+        page:Int!
+        pageSize:Int!
+    ):CommentConnection
+    replies(
+        page:Int!
+        pageSize:Int!
+    ):ReplyConnection
 }
 
 enum UserStatus{

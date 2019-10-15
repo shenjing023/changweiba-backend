@@ -114,7 +114,7 @@ func GetUser(ctx context.Context,userId int) (*models.User,error){
 		ID:int(r.Id),
 		Name:r.Name,
 		Avatar:r.Avatar,
-		Status:models.UserStatus(r.Status),
+		Status:"sss",
 		Score:int(r.Score),
 		BannedReason:r.BannedReason,
 		Role:models.UserRole(r.Role),
