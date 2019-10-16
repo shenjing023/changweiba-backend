@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/99designs/gqlgen v0.10.1
 	github.com/astaxie/beego v1.11.1
+	github.com/davecgh/go-spew v1.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.4.0
 	github.com/go-sql-driver/mysql v1.4.1

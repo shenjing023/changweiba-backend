@@ -275,14 +275,14 @@ func GetPost(post *Post) (bool,error){
 }
 
 func GetPosts(page int,pageSize int) ([]*Post,error){
-	posts:=make([]*Post,pageSize)
-	err:=dbEngine.Where("status",0).Desc("last_update").Limit(page,pageSize).Find(&posts)
+	var posts []*Post
+	err:=dbEngine.Where("status = ?",0).Desc("last_update").Limit(pageSize,page).Find(&posts)
 	return posts,err
 }
 
 func GetPostsCount() (int64,error){
-	post:=&Post{}
-	return dbEngine.Where("status",0).Count(post)
+	post:=new(Post)
+	return dbEngine.Where("status = ?",0).Count(post)
 }
 
 func GetComment(comment *Comment) (bool,error){
@@ -294,8 +294,8 @@ func GetComment(comment *Comment) (bool,error){
 }
 
 func GetCommentsByPostId(postId int64,page int,pageSize int) ([]*Comment,error){
-	comments:=make([]*Comment,pageSize)
-	err:=dbEngine.Where("post_id=?",postId).Limit(page,pageSize).Find(&comments)
+	var comments []*Comment
+	err:=dbEngine.Where("post_id=?",postId).Limit(pageSize,page).Find(&comments)
 	return comments,err
 }
 

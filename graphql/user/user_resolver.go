@@ -29,12 +29,12 @@ func RegisterUser(ctx context.Context,input models.NewUser) (string, error){
 	gc,err:=common.GinContextFromContext(ctx)
 	if err!=nil{
 		logs.Error(err.Error())
-		return "", errors.New("system error")
+		return "", errors.New(AccountServiceError)
 	}
 	ip,_,err:=net.SplitHostPort(strings.TrimSpace(gc.Request.RemoteAddr))
 	if err!=nil{
 		logs.Error("get remote ip error:",err.Error())
-		return "", errors.New("system error")
+		return "", errors.New(AccountServiceError)
 	}
 	
 	client:=pb.NewAccountClient(rpc_conn.AccountConn)
@@ -110,14 +110,21 @@ func GetUser(ctx context.Context,userId int) (*models.User,error){
 		//user id不存在
 		return nil,errors.New("用户不存在")
 	}
+	status_,role_:=models.UserStatusNormal,models.UserRoleNormal
+	if r.Status==1{
+		status_=models.UserStatusBanned
+	}
+	if r.Role==1{
+		role_=models.UserRoleAdmin
+	}
 	return &models.User{
 		ID:int(r.Id),
 		Name:r.Name,
 		Avatar:r.Avatar,
-		Status:"sss",
+		Status:status_,
 		Score:int(r.Score),
 		BannedReason:r.BannedReason,
-		Role:models.UserRole(r.Role),
+		Role:role_,
 	}, nil
 }
 
@@ -132,14 +139,21 @@ func GetUsers(ctx context.Context,ids []int64) ([]*models.User,error){
 	}
 	var users []*models.User
 	for _,v:=range r.Users{
+		status_,role_:=models.UserStatusNormal,models.UserRoleNormal
+		if v.Status==1{
+			status_=models.UserStatusBanned
+		}
+		if v.Role==1{
+			role_=models.UserRoleAdmin
+		}
 		users=append(users,&models.User{
 			ID:int(v.Id),
 			Name:v.Name,
 			Avatar:v.Avatar,
-			Status:models.UserStatus(v.Status),
+			Status:status_,
 			Score:int(v.Score),
 			BannedReason:v.BannedReason,
-			Role:models.UserRole(v.Role),
+			Role:role_,
 		})
 	}
 	return users,nil

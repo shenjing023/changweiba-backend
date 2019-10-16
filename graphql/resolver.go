@@ -11,7 +11,6 @@ import (
 	"changweiba-backend/graphql/rpc_conn"
 	"changweiba-backend/graphql/user"
 	"context"
-	
 ) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
 func InitRPCConnection(){

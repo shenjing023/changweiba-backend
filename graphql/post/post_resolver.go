@@ -1,11 +1,13 @@
 package post
 
 import (
+	"changweiba-backend/common"
 	"changweiba-backend/graphql/models"
 	"changweiba-backend/graphql/rpc_conn"
 	postpb "changweiba-backend/rpc/post/pb"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/astaxie/beego/logs"
 	"time"
 )
@@ -147,17 +149,21 @@ func GetPosts(ctx context.Context, page int, pageSize int) (*models.PostConnecti
 	}
 	return &models.PostConnection{
 		Nodes:posts,
-		TotalCount:0,
+		TotalCount:int(r.TotalCount),
 	},nil
 }
 
 //
 func NewPost(ctx context.Context,post models.NewPost) (int,error){
+	userId,err:=getUserIdFromContext(ctx)
+	if err!=nil{
+		return 0,err
+	}
 	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
 	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
 	defer cancel()
 	request:=postpb.NewPostRequest{
-		UserId:int64(post.UserID),
+		UserId:userId,
 		Topic:post.Topic,
 		Content:post.Content,
 	}
@@ -170,11 +176,15 @@ func NewPost(ctx context.Context,post models.NewPost) (int,error){
 }
 
 func NewComment(ctx context.Context,comment models.NewComment) (int,error){
+	userId,err:=getUserIdFromContext(ctx)
+	if err!=nil{
+		return 0,err
+	}
 	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
 	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
 	defer cancel()
 	request:=postpb.NewCommentRequest{
-		UserId:int64(comment.UserID),
+		UserId:userId,
 		PostId:int64(comment.PostID),
 		Content:comment.Content,
 	}
@@ -186,12 +196,18 @@ func NewComment(ctx context.Context,comment models.NewComment) (int,error){
 	return int(r.CommentId),nil
 }
 
+
+
 func NewReply(ctx context.Context,reply models.NewReply) (int,error){
+	userId,err:=getUserIdFromContext(ctx)
+	if err!=nil{
+		return 0,err
+	}
 	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
 	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
 	defer cancel()
 	request:=postpb.NewReplyRequest{
-		UserId:int64(reply.UserID),
+		UserId:userId,
 		PostId:int64(reply.PostID),
 		Content:reply.Content,
 		CommentId:int64(reply.CommentID),
@@ -203,4 +219,19 @@ func NewReply(ctx context.Context,reply models.NewReply) (int,error){
 		return 0, err
 	}
 	return int(r.ReplyId),nil
+}
+
+func getUserIdFromContext(ctx context.Context) (int64,error){
+	gctx,err:=common.GinContextFromContext(ctx)
+	if err!=nil{
+		logs.Error(err.Error())
+		return 0, errors.New(PostServiceError)
+	}
+	userId,ok:=gctx.Value("claims").(float64)
+	if !ok{
+		logs.Error("get user_id from request ctx error")
+		logs.Info(fmt.Sprintf("ctx claims: %+v",gctx.Value("claims")))
+		return 0,errors.New(PostServiceError)
+	}
+	return int64(userId),nil
 }

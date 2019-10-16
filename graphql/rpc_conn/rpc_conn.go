@@ -16,7 +16,9 @@ var (
 func InitRPCConnection(){
 	var err error
 	AccountConn,err=grpc.Dial(fmt.Sprintf("localhost:%d",conf.Cfg.Account.Port),grpc.WithInsecure())
+	fmt.Println(11111)
 	if err!=nil{
+		fmt.Println(2222)
 		log.Fatal(fmt.Sprintf("fail to accountRPC dial: %+v",err))
 	}
 	PostConn,err=grpc.Dial(fmt.Sprintf("localhost:%d",conf.Cfg.Post.Port),grpc.WithInsecure())

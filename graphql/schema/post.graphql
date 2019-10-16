@@ -67,19 +67,16 @@ enum Status{
 
 
 input NewPost{
-    user_id: Int!
     topic: String!
     content: String!
 }
 
 input NewComment{
-    user_id: Int!
     post_id: Int!
     content: String!
 }
 
 input NewReply{
-    user_id: Int!
     post_id: Int!
     comment_id: Int!
     content: String!

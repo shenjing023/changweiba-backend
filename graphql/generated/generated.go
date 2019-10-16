@@ -824,19 +824,16 @@ enum Status{
 
 
 input NewPost{
-    user_id: Int!
     topic: String!
     content: String!
 }
 
 input NewComment{
-    user_id: Int!
     post_id: Int!
     content: String!
 }
 
 input NewReply{
-    user_id: Int!
     post_id: Int!
     comment_id: Int!
     content: String!
@@ -4936,12 +4933,6 @@ func (ec *executionContext) unmarshalInputNewComment(ctx context.Context, obj in
 
 	for k, v := range asMap {
 		switch k {
-		case "user_id":
-			var err error
-			it.UserID, err = ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "post_id":
 			var err error
 			it.PostID, err = ec.unmarshalNInt2int(ctx, v)
@@ -4966,12 +4957,6 @@ func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj inter
 
 	for k, v := range asMap {
 		switch k {
-		case "user_id":
-			var err error
-			it.UserID, err = ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "topic":
 			var err error
 			it.Topic, err = ec.unmarshalNString2string(ctx, v)
@@ -4996,12 +4981,6 @@ func (ec *executionContext) unmarshalInputNewReply(ctx context.Context, obj inte
 
 	for k, v := range asMap {
 		switch k {
-		case "user_id":
-			var err error
-			it.UserID, err = ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "post_id":
 			var err error
 			it.PostID, err = ec.unmarshalNInt2int(ctx, v)

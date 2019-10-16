@@ -40,19 +40,16 @@ type EditUser struct {
 }
 
 type NewComment struct {
-	UserID  int    `json:"user_id"`
 	PostID  int    `json:"post_id"`
 	Content string `json:"content"`
 }
 
 type NewPost struct {
-	UserID  int    `json:"user_id"`
 	Topic   string `json:"topic"`
 	Content string `json:"content"`
 }
 
 type NewReply struct {
-	UserID    int    `json:"user_id"`
 	PostID    int    `json:"post_id"`
 	CommentID int    `json:"comment_id"`
 	Content   string `json:"content"`
