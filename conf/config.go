@@ -33,6 +33,7 @@ type YamlConf struct {
 	} `yaml:"db"`
 	SignKey string	`yaml:"sign_key"`
 	Salt string	`yaml:"salt"`
+	QueryDeep int `yaml:"query_deep"`
 }
 
 //beego日志配置结构体

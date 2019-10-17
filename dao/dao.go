@@ -2,7 +2,6 @@ package dao
 
 import (
 	"changweiba-backend/conf"
-	"encoding/binary"
 	"fmt"
 	"github.com/astaxie/beego/logs"
 	_ "github.com/go-sql-driver/mysql"
@@ -542,7 +541,7 @@ func GetUsers(ids []int64) ([]*User,error){
 			id IN (?) 
 		ORDER BY FIELD(id,?)
 	`
-	results,err:=dbEngine.Query(sql,ids,strings.Join(orderField,","))
+	results,err:=dbEngine.Query(sql,strings.Join(orderField,","),strings.Join(orderField,","))
 	if err!=nil{
 		return nil, status.Error(codes.Internal,err.Error())
 	}
@@ -550,16 +549,21 @@ func GetUsers(ids []int64) ([]*User,error){
 	var users []*User
 	j,l:=0,len(results)
 	for _,v:=range ids{
-		var u *User
+		u:=&User{}
 		if j+1>l{
 			users=append(users,u)
 			continue
 		}
 		if BytesToInt64(results[j]["id"])==v{
-			err:=mapstructure.Decode(v,u)
-			if err!=nil{
-				return nil, status.Error(codes.Internal,err.Error())
-			}
+			u.Id=BytesToInt64(results[j]["id"])
+			u.Name=string(results[j]["name"])
+			u.Avatar=string(results[j]["avatar"])
+			//u.Status=BytesToInt32(results[j]["status"])
+			u.Score=BytesToInt32(results[j]["score"])
+			u.BannedReason=string(results[j]["banned_reason"])
+			u.CreateTime=BytesToInt64(results[j]["create_time"])
+			u.LastUpdate=BytesToInt64(results[j]["last_update"])
+			u.Role=BytesToInt32(results[j]["role"])
 			j++
 		}
 		users=append(users,u)
@@ -580,5 +584,11 @@ func InetItoa(ip int64) string{
 
 //[]byte转int64
 func BytesToInt64(buf []byte) int64 {
-	return int64(binary.BigEndian.Uint64(buf))
+	r,_:=strconv.ParseInt(string(buf),10,64)
+	return r
+}
+
+func BytesToInt32(buf []byte) int32{
+	r,_:=strconv.ParseInt(string(buf),10,32)
+	return int32(r)
 }

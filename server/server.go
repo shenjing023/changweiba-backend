@@ -4,6 +4,7 @@ import (
 	"changweiba-backend/common"
 	"changweiba-backend/conf"
 	"changweiba-backend/graphql"
+	"changweiba-backend/graphql/dataloader"
 	"changweiba-backend/graphql/generated"
 	"changweiba-backend/pkg/middleware"
 	"flag"
@@ -36,7 +37,7 @@ func graphqlHandler() gin.HandlerFunc {
 	// Resolver is in the resolver.go file
 	h := handler.GraphQL(
 		generated.NewExecutableSchema(generated.Config{Resolvers: &graphql.Resolver{}}),
-		//handler.ComplexityLimit(5),
+		handler.ComplexityLimit(20),
 		)
 
 	return func(c *gin.Context) {
@@ -62,7 +63,8 @@ func main() {
 	// Setting up Gin
 	r := gin.Default()
 	r.Use(common.GinContextToContextMiddleware())
-	r.Use(middleware.JWTMiddleware(conf.Cfg.SignKey))
+	r.Use(middleware.JWTMiddleware(conf.Cfg.SignKey,conf.Cfg.QueryDeep))
+	r.Use(dataloader.LoaderMiddleware())
 	
 	r.POST("/graphql", graphqlHandler())
 	r.GET("/", playgroundHandler())

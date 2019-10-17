@@ -50,13 +50,13 @@ func GetPost(ctx context.Context,postId int) (*models.Post,error){
 	}, nil
 }
 
-func GetCommentsByPostId(ctx context.Context, obj *models.Post, page int,
+func GetCommentsByPostId(ctx context.Context, postId int, page int,
 	pageSize int) (*models.CommentConnection, error){
 	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
 	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
 	defer cancel()
 	commentsRequest:=postpb.CommentsRequest{
-		PostId:int64(obj.ID),
+		PostId:int64(postId),
 		Offset:int32(page),
 		Limit:int32(pageSize),
 	}
@@ -81,7 +81,7 @@ func GetCommentsByPostId(ctx context.Context, obj *models.Post, page int,
 	}
 	return &models.CommentConnection{
 		Nodes:comments,
-		TotalCount:0,
+		TotalCount:int(r.TotalCount),
 	},nil
 }
 
@@ -116,7 +116,7 @@ func GetRepliesByCommentId(ctx context.Context,obj *models.Comment,page int,page
 	}
 	return &models.ReplyConnection{
 		Nodes:replies,
-		TotalCount:0,
+		TotalCount:int(r.TotalCount),
 	},nil
 }
 

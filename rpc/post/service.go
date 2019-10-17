@@ -244,16 +244,17 @@ func (p *Post) GetRepliesByCommentId(ctx context.Context,rr *pb.RepliesRequest) 
 }
 
 func (p *Post) Posts(ctx context.Context,pr *pb.PostsRequest) (*pb.PostsResponse,error){
-	dbPosts,err:=dao.GetPosts(int(pr.Offset),int(pr.Limit))
-	if err!=nil{
-		logs.Error(fmt.Sprintf("get posts failed: %+v",err))
-		return nil,status.Error(codes.Internal,sysError)
-	}
 	totalCount,err:=dao.GetPostsCount()
 	if err!=nil{
 		logs.Error(fmt.Sprintf("get posts_count failed: %+v",err))
 		return nil,status.Error(codes.Internal,sysError)
 	}
+	dbPosts,err:=dao.GetPosts(int(pr.Offset),int(pr.Limit))
+	if err!=nil{
+		logs.Error(fmt.Sprintf("get posts failed: %+v",err))
+		return nil,status.Error(codes.Internal,sysError)
+	}
+	
 	var posts []*pb.Post
 	for _,v:=range dbPosts{
 		posts=append(posts,&pb.Post{

@@ -8,7 +8,7 @@ import (
 	"changweiba-backend/graphql/models"
 	"changweiba-backend/graphql/user"
 	"context"
-	"net/http"
+	"github.com/gin-gonic/gin"
 	"time"
 )
 
@@ -18,17 +18,17 @@ type loaders struct {
 	UsersByIds  *UserLoader
 }
 
-func LoaderMiddleware(next http.Handler) http.Handler{
-	return http.HandlerFunc(func(w http.ResponseWriter,r *http.Request) {
+func LoaderMiddleware() gin.HandlerFunc{
+	return func(c *gin.Context) {
 		ldrs:=loaders{}
 		ldrs.UsersByIds=&UserLoader{
 			wait:1*time.Millisecond,
 			maxBatch:100,
 			fetch:userLoaderFunc,
 		}
-		dlCtx:=context.WithValue(r.Context(),ctxKey,ldrs)
-		next.ServeHTTP(w,r.WithContext(dlCtx))
-	})
+		c.Set(ctxKey,ldrs)
+		c.Next()
+	}
 }
 
 func userLoaderFunc (keys []int64,params interface{}) ([]*models.User,[]error){

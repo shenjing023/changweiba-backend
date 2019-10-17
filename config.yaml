@@ -17,4 +17,5 @@ db:
   max_open_conns: 10
 sign_key: "changweiba"
 salt: "changweisd23434123ba"
+query_deep: 5
   

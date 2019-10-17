@@ -11,6 +11,7 @@ import (
 	"changweiba-backend/graphql/rpc_conn"
 	"changweiba-backend/graphql/user"
 	"context"
+	"fmt"
 ) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
 func InitRPCConnection(){
@@ -108,7 +109,7 @@ func (r *queryResolver) Comment(ctx context.Context, commentID int) (*models.Com
 }
 
 func (r *queryResolver) Comments(ctx context.Context, postId int,page int,pageSize int) (*models.CommentConnection, error){
-	panic("not implemented")
+	return post.GetCommentsByPostId(ctx,postId,page,pageSize)
 }
 
 func (r *queryResolver) Reply(ctx context.Context, replyID int) (*models.Reply, error){
@@ -142,8 +143,9 @@ type postResolver struct {
 	*Resolver
 }
 
-func (r *postResolver) Comments(ctx context.Context, obj *models.Post, page int, pageSize int) (*models.CommentConnection, error) {
-	return post.GetCommentsByPostId(ctx,obj,page,pageSize)
+func (r *postResolver) Comments(ctx context.Context, obj *models.Post, page int, pageSize int) (*models.CommentConnection, 
+	error) {
+	return post.GetCommentsByPostId(ctx,obj.ID,page,pageSize)
 }
 
 func (r *postResolver) User(ctx context.Context, obj *models.Post) (*models.User, error){
@@ -163,7 +165,12 @@ func (r *commentResolver) Replies(ctx context.Context, obj *models.Comment, page
 }
 
 func (r *commentResolver) User(ctx context.Context, obj *models.Comment) (*models.User, error){
-	return dataloader.CtxLoaders(ctx).UsersByIds.Load(int64(obj.User.ID),nil)
+	gc,err:=common.GinContextFromContext(ctx)
+	if err!=nil{
+		fmt.Println(err)
+		return nil,err
+	}
+	return dataloader.CtxLoaders(gc).UsersByIds.Load(int64(obj.User.ID),nil)
 }
 
 type replyResolver struct{

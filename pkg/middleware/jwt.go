@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/astaxie/beego/logs"
-
 	//"github.com/davecgh/go-spew/spew"
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
@@ -190,7 +189,7 @@ func (j *JWTAuth) RefreshToken(tokenString string) (*JWTToken, error) {
 }
 
 // JWTAuth 中间件，检查token
-func JWTMiddleware(signKey string) gin.HandlerFunc {
+func JWTMiddleware(signKey string,queryDeep int) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.Method=="GET"{
 			return
@@ -222,6 +221,16 @@ func JWTMiddleware(signKey string) gin.HandlerFunc {
 		for _,v:=range ops{
 			for _,k:=range v.SelectionSet{
 				if tmp,ok:=k.(*ast.Field);ok{
+					//检查查询的字段深度
+					deep:=getQueryFieldDeep(tmp.SelectionSet,0)
+					if deep>queryDeep{
+						c.JSON(http.StatusOK, gin.H{
+							"status": -1,
+							"msg":    "请求字段深度超出限制",
+						})
+						c.Abort()
+						return
+					}
 					if tmp.Name!="registerUser" && tmp.Name!="loginUser" && tmp.Name!="posts"{
 						flag=true
 						break
@@ -268,4 +277,24 @@ func JWTMiddleware(signKey string) gin.HandlerFunc {
 			c.Set("claims", claims)
 		}
 	}
+}
+
+/*
+获取查询的深度
+ */
+func getQueryFieldDeep(set ast.SelectionSet,deep int) int{
+	if set==nil{
+		return deep
+	}
+	deep++
+	max:=0
+	for _,v:=range set{
+		if tmp,ok:=v.(*ast.Field);ok {
+			d:=getQueryFieldDeep(tmp.SelectionSet,deep)
+			if d>max{
+				max=d
+			}
+		}
+	}
+	return max
 }
