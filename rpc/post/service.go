@@ -304,6 +304,96 @@ func (p *Post) GetRepliesByCommentIds(ctx context.Context,rr *pb.RepliesByCommen
 	},nil
 }
 
+func (p *Post) GetPostsByUserId(ctx context.Context, pr *pb.PostsByUserIdRequest) (*pb.PostsByUserIdResponse, error){
+	totalCount,err:=dao.GetPostsCountByUserId(pr.UserId)
+	if err!=nil{
+		logs.Error(fmt.Sprintf("get posts_count by user_id failed: %+v",err))
+		return nil,status.Error(codes.Internal,sysError)
+	}
+	dbPosts,err:=dao.GetPostsByUserId(pr.UserId,int(pr.Offset),int(pr.Limit))
+	if err!=nil{
+		logs.Error(fmt.Sprintf("get posts by user_id failed: %+v",err))
+		return nil,err
+	}
+	var posts []*pb.Post
+	for _,v:=range dbPosts{
+		posts=append(posts,&pb.Post{
+			Id:v.Id,
+			UserId:v.UserId,
+			Topic:v.Topic,
+			CreateTime:v.CreateTime,
+			LastUpdate:v.LastUpdate,
+			ReplyNum:v.ReplyNum,
+			Status:pb.Status(v.Status),
+		})
+	}
+	return &pb.PostsByUserIdResponse{
+		Posts:posts,
+		TotalCount:int32(totalCount),
+	}, nil
+}
+
+func (p *Post) GetCommentsByUserId(ctx context.Context, cr *pb.CommentsByUserIdRequest) (*pb.CommentsByUserIdResponse, 
+	error){
+	totalCount,err:=dao.GetCommentsCountByUserId(cr.UserId)
+	if err!=nil{
+		logs.Error(fmt.Sprintf("get comments_count by user_id failed: %+v",err))
+		return nil,status.Error(codes.Internal,sysError)
+	}
+	dbComments,err:=dao.GetCommentsByUserId(cr.UserId,int(cr.Offset),int(cr.Limit))
+	if err!=nil{
+		logs.Error(fmt.Sprintf("get comments by user_id failed: %+v",err))
+		return nil,err
+	}
+	var comments []*pb.Comment
+	for _,v:=range dbComments{
+		comments=append(comments,&pb.Comment{
+			Id:v.Id,
+			UserId:v.UserId,
+			Content:v.Content,
+			CreateTime:v.CreateTime,
+			PostId:v.PostId,
+			Floor:v.Floor,
+			Status:pb.Status(v.Status),
+		})
+	}
+	return &pb.CommentsByUserIdResponse{
+		Comments:comments,
+		TotalCount:int32(totalCount),
+	}, nil
+}
+
+func (p *Post) GetRepliesByUserId(ctx context.Context, rr *pb.RepliesByUserIdRequest) (*pb.RepliesByUserIdResponse, error){
+	totalCount,err:=dao.GetRepliesCountByUserId(rr.UserId)
+	if err!=nil{
+		logs.Error(fmt.Sprintf("get replies_count by user_id failed: %+v",err))
+		return nil,status.Error(codes.Internal,sysError)
+	}
+	dbReplies,err:=dao.GetRepliesByUserId(rr.UserId,int(rr.Offset),int(rr.Limit))
+	if err!=nil{
+		logs.Error(fmt.Sprintf("get replies by user_id failed: %+v",err))
+		return nil,err
+	}
+	var replies []*pb.Reply
+	for _,v:=range dbReplies{
+		replies=append(replies,&pb.Reply{
+			Id:v.Id,
+			UserId:v.UserId,
+			CommentId:v.CommentId,
+			PostId:v.PostId,
+			Content:v.Content,
+			CreateTime:v.CreateTime,
+			ParentId:v.ParentId,
+			Floor:v.Floor,
+			Status:pb.Status(v.Status),
+		})
+	}
+	return &pb.RepliesByUserIdResponse{
+		Replies:replies,
+		TotalCount:int32(totalCount),
+	}, nil
+}
+
 func NewPostService(addr string,port int){
 	lis,err:=net.Listen("tcp",fmt.Sprintf("%s:%d",addr,port))
 	if err!=nil{

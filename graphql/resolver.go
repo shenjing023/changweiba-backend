@@ -116,9 +116,8 @@ func (r *queryResolver) Reply(ctx context.Context, replyID int) (*models.Reply, 
 	panic("not implemented")
 }
 
-func (r *queryResolver) Replies(ctx context.Context, commentID int,page int,pageSize int) (*models.ReplyConnection, 
-	error){
-	panic("not implemented")
+func (r *queryResolver) Replies(ctx context.Context, commentID int,page int,pageSize int) (*models.ReplyConnection, error){
+	return post.GetRepliesByCommentId(ctx,commentID,page,pageSize)
 }
 
 type userResolver struct {
@@ -127,16 +126,15 @@ type userResolver struct {
 }
 
 func (r *userResolver) Posts(ctx context.Context, obj *models.User, page int, pageSize int) (*models.PostConnection, error) {
-	panic("not implemented")
+	return post.GetPostsByUserId(ctx,obj.ID,page,pageSize)
 }
 
-func (r *userResolver) Comments(ctx context.Context, obj *models.User, page int, pageSize int) (*models.CommentConnection, 
-	error){
-	panic("not implemented")
+func (r *userResolver) Comments(ctx context.Context, obj *models.User, page int, pageSize int) (*models.CommentConnection, error){
+	return post.GetCommentsByUserId(ctx,obj.ID,page,pageSize)
 }
 
 func (r *userResolver) Replies(ctx context.Context, obj *models.User, page int, pageSize int) (*models.ReplyConnection, error){
-	panic("not implemented")
+	return post.GetRepliesByUserId(ctx,obj.ID,page,pageSize)
 }
 
 type postResolver struct {
@@ -161,7 +159,7 @@ type commentResolver struct {
 }
 
 func (r *commentResolver) Replies(ctx context.Context, obj *models.Comment, page int,pageSize int) (*models.ReplyConnection, error){
-	return post.GetRepliesByCommentId(ctx,obj,page,pageSize)
+	return post.GetRepliesByCommentId(ctx,obj.ID,page,pageSize)
 }
 
 func (r *commentResolver) User(ctx context.Context, obj *models.Comment) (*models.User, error){
@@ -178,5 +176,10 @@ type replyResolver struct{
 }
 
 func (r *replyResolver) User(ctx context.Context, obj *models.Reply) (*models.User, error){
-	return dataloader.CtxLoaders(ctx).UsersByIds.Load(int64(obj.User.ID),nil)
+	gc,err:=common.GinContextFromContext(ctx)
+	if err!=nil{
+		fmt.Println(err)
+		return nil,err
+	}
+	return dataloader.CtxLoaders(gc).UsersByIds.Load(int64(obj.User.ID),nil)
 }

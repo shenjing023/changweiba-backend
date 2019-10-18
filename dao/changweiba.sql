@@ -50,7 +50,7 @@ CREATE TABLE `post` (
     `status` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '状态,(0正常1删除)',
     PRIMARY KEY (`id`) USING BTREE,
     KEY `ids_user_id` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT = 0 CHARACTER SET =utf8 COLLATE = utf8_general_ci COMMENT = '帖子表' ROW_FORMAT = Compact;
+) ENGINE=InnoDB AUTO_INCREMENT = 10000 CHARACTER SET =utf8 COLLATE = utf8_general_ci COMMENT = '帖子表' ROW_FORMAT = Compact;
 
 /*
     评论表
@@ -68,7 +68,7 @@ CREATE TABLE `comment` (
     PRIMARY KEY (`id`) USING BTREE,
     KEY `ids_user_id` (`user_id`),
     KEY `ids_post_id` (`post_id`)
-) ENGINE=InnoDB AUTO_INCREMENT = 0 CHARACTER SET =utf8 COLLATE = utf8_general_ci COMMENT = '评论表' ROW_FORMAT = Compact;
+) ENGINE=InnoDB AUTO_INCREMENT = 10000 CHARACTER SET =utf8 COLLATE = utf8_general_ci COMMENT = '评论表' ROW_FORMAT = Compact;
 
 /*
     回复表
@@ -88,7 +88,7 @@ CREATE TABLE `reply` (
     KEY `ids_user_id` (`user_id`),
     KEY `ids_post_id` (`post_id`),
     KEY `ids_comment_id` (`comment_id`)
-) ENGINE=InnoDB AUTO_INCREMENT = 0 CHARACTER SET =utf8 COLLATE = utf8_general_ci COMMENT = '回复表' ROW_FORMAT = Compact;
+) ENGINE=InnoDB AUTO_INCREMENT = 10000 CHARACTER SET =utf8 COLLATE = utf8_general_ci COMMENT = '回复表' ROW_FORMAT = Compact;
 
 
 SET FOREIGN_KEY_CHECKS = 1;

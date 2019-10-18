@@ -85,12 +85,12 @@ func GetCommentsByPostId(ctx context.Context, postId int, page int,
 	},nil
 }
 
-func GetRepliesByCommentId(ctx context.Context,obj *models.Comment,page int,pageSize int) (*models.ReplyConnection,error){
+func GetRepliesByCommentId(ctx context.Context,commentId int,page int,pageSize int) (*models.ReplyConnection,error){
 	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
 	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
 	defer cancel()
 	repliesRequest:=postpb.RepliesRequest{
-		CommentId:int64(obj.ID),
+		CommentId:int64(commentId),
 		Offset:int32(page),
 		Limit:int32(pageSize),
 	}
@@ -112,6 +112,9 @@ func GetRepliesByCommentId(ctx context.Context,obj *models.Comment,page int,page
 			CreateAt:int(v.CreateTime),
 			Floor:int(v.Floor),
 			Status:models.Status(v.Status),
+			Parent:&models.Reply{
+				ID:int(v.ParentId),
+			},
 		})
 	}
 	return &models.ReplyConnection{
@@ -149,6 +152,113 @@ func GetPosts(ctx context.Context, page int, pageSize int) (*models.PostConnecti
 	}
 	return &models.PostConnection{
 		Nodes:posts,
+		TotalCount:int(r.TotalCount),
+	},nil
+}
+
+func GetPostsByUserId(ctx context.Context, userId int, page int, pageSize int) (*models.PostConnection, error){
+	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
+	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
+	defer cancel()
+	request:=postpb.PostsByUserIdRequest{
+		Offset:int32(page),
+		Limit:int32(pageSize),
+		UserId:int64(userId),
+	}
+	r,err:=client.GetPostsByUserId(ctx,&request)
+	if err!=nil{
+		logs.Error("get posts by user_id error:",err.Error())
+		return nil, err
+	}
+	var posts []*models.Post
+	for _,v:=range r.Posts{
+		posts=append(posts,&models.Post{
+			ID:int(v.Id),
+			Topic:v.Topic,
+			CreateAt:int(v.CreateTime),
+			LastAt:int(v.LastUpdate),
+			ReplyNum:int(v.ReplyNum),
+			Status:models.Status(v.Status),
+			User:&models.User{
+				ID:int(v.UserId),
+			},
+		})
+	}
+	return &models.PostConnection{
+		Nodes:posts,
+		TotalCount:int(r.TotalCount),
+	},nil
+}
+
+func GetCommentsByUserId(ctx context.Context, userId int, page int,
+	pageSize int) (*models.CommentConnection, error){
+	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
+	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
+	defer cancel()
+	request:=postpb.CommentsByUserIdRequest{
+		UserId:int64(userId),
+		Offset:int32(page),
+		Limit:int32(pageSize),
+	}
+	r,err:=client.GetCommentsByUserId(ctx,&request)
+	if err!=nil{
+		logs.Error("get comments by user_id error:",err.Error())
+		return nil, err
+	}
+	var comments []*models.Comment
+	for _,v:=range r.Comments{
+		comments=append(comments,&models.Comment{
+			ID:int(v.Id),
+			User:&models.User{
+				ID:int(v.UserId),
+			},
+			PostID:int(v.PostId),
+			Content:v.Content,
+			CreateAt:int(v.CreateTime),
+			Floor:int(v.Floor),
+			Status:models.Status(v.Status),
+		})
+	}
+	return &models.CommentConnection{
+		Nodes:comments,
+		TotalCount:int(r.TotalCount),
+	},nil
+}
+
+func GetRepliesByUserId(ctx context.Context,userId int,page int,pageSize int) (*models.ReplyConnection,error){
+	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
+	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
+	defer cancel()
+	request:=postpb.RepliesByUserIdRequest{
+		UserId:int64(userId),
+		Offset:int32(page),
+		Limit:int32(pageSize),
+	}
+	r,err:=client.GetRepliesByUserId(ctx,&request)
+	if err!=nil{
+		logs.Error("get replies by user_id error:",err.Error())
+		return nil, err
+	}
+	var replies []*models.Reply
+	for _,v:=range r.Replies{
+		replies=append(replies,&models.Reply{
+			ID:int(v.Id),
+			User:&models.User{
+				ID:int(v.UserId),
+			},
+			PostID:int(v.PostId),
+			CommentID:int(v.CommentId),
+			Content:v.Content,
+			CreateAt:int(v.CreateTime),
+			Floor:int(v.Floor),
+			Status:models.Status(v.Status),
+			Parent:&models.Reply{
+				ID:int(v.ParentId),
+			},
+		})
+	}
+	return &models.ReplyConnection{
+		Nodes:replies,
 		TotalCount:int(r.TotalCount),
 	},nil
 }

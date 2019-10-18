@@ -305,17 +305,17 @@ func GetCommentsCountByPostId(postId int64) (int64,error){
 
 func GetRepliesCountByPostId(postId int64) (int64,error){
 	reply:=&Reply{}
-	return dbEngine.Where("post_id",postId).Count(reply)
+	return dbEngine.Where("post_id=?",postId).Count(reply)
 }
 
 func GetRepliesCountByCommentId(commentId int64) (int64,error){
 	reply:=&Reply{}
-	return dbEngine.Where("comment_id",commentId).Count(reply)
+	return dbEngine.Where("comment_id=?",commentId).Count(reply)
 }
 
 func GetRepliesByCommentId(commentId int64,page int,pageSize int) ([]*Reply,error){
-	replies:=make([]*Reply,pageSize)
-	err:=dbEngine.Where("comment_id=?",commentId).Limit(page,pageSize).Find(&replies)
+	var replies []*Reply
+	err:=dbEngine.Where("comment_id=?",commentId).Limit(pageSize,page).Find(&replies)
 	return replies,err
 }
 
@@ -569,6 +569,39 @@ func GetUsers(ids []int64) ([]*User,error){
 		users=append(users,u)
 	}
 	return users, nil
+}
+
+func GetPostsByUserId(userId int64,offset int,limit int) ([]*Post,error){
+	var posts []*Post
+	err:=dbEngine.Where("user_id=?",userId).Desc("create_time").Limit(limit,offset).Find(&posts)
+	return posts,err
+}
+
+func GetPostsCountByUserId(userId int64) (int64,error){
+	post:=new(Post)
+	return dbEngine.Where("user_id=?",userId).Count(post)
+}
+
+func GetCommentsByUserId(userId int64,offset int,limit int) ([]*Comment,error){
+	var comments []*Comment
+	err:=dbEngine.Where("user_id=?",userId).Desc("create_time").Limit(limit,offset).Find(&comments)
+	return comments,err
+}
+
+func GetCommentsCountByUserId(userId int64) (int64,error){
+	comment:=new(Comment)
+	return dbEngine.Where("user_id=?",userId).Count(comment)
+}
+
+func GetRepliesByUserId(userId int64,offset int,limit int) ([]*Reply,error){
+	var replies []*Reply
+	err:=dbEngine.Where("user_id=?",userId).Desc("create_time").Limit(limit,offset).Find(&replies)
+	return replies,err
+}
+
+func GetRepliesCountByUserId(userId int64) (int64,error){
+	replies:=new(Reply)
+	return dbEngine.Where("user_id=?",userId).Count(replies)
 }
 
 //ip地址int->string相互转换
