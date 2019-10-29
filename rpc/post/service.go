@@ -1,4 +1,5 @@
-//go:generate protoc  --go_out=plugins=grpc:./pb post.proto
+//go:generate protoc  --plugin=protoc-gen-micro=$GOPATH/bin/protoc-gen-micro --micro_out=.
+// /pb --go_out=plugins=grpc:./pb post.proto
 
 package post
 
@@ -8,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/astaxie/beego/logs"
+	micro "github.com/micro/go-micro"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -26,7 +28,7 @@ func (p *Post) NewPost(ctx context.Context,pr *pb.NewPostRequest) (*pb.NewPostRe
 	if len(strings.TrimSpace(pr.Topic))==0 || len(strings.TrimSpace(pr.Content))==0{
 		return nil,status.Error(codes.InvalidArgument,"topic or content can not be empty")
 	}
-	postId,err:=dao.InsertPost(pr.UserId,pr.Topic,pr.Content)
+	postId,err:=dao.InsertPost(int(pr.UserId),pr.Topic,pr.Content)
 	if err!=nil{
 		logs.Error("insert post error: ",err.Error())
 		return nil,status.Error(codes.Internal,sysError)

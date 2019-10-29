@@ -13,7 +13,7 @@ message Post {
     string topic = 3;
     int64 create_time = 4;
     int64 last_update = 5;
-    int32 reply_num = 6;
+    int64 reply_num = 6;
     Status status = 7;
 }
 
@@ -23,7 +23,7 @@ message Comment {
     int64 post_id = 3;
     string content = 4;
     int64 create_time = 5;
-    int32 floor = 6;
+    int64 floor = 6;
     Status status = 7;
 }
 
@@ -35,7 +35,7 @@ message Reply {
     string content = 5;
     int64 create_time = 6;
     int64 parent_id = 7;
-    int32 floor = 8;
+    int64 floor = 8;
     Status status = 9;
 }
 
@@ -88,13 +88,13 @@ message PostResponse {
 }
 
 message PostsRequest {
-    int32 offset = 1;
-    int32 limit = 2;
+    int64 page = 1;
+    int64 page_size = 2;
 }
 
 message PostsResponse {
     repeated Post posts = 1;
-    int32 total_count=2;
+    int64 total_count=2;
 }
 
 message CommentRequest {
@@ -108,13 +108,13 @@ message CommentResponse {
 //通过post_id获取comments
 message CommentsRequest {
     int64 post_id = 1;
-    int32 offset = 2;
-    int32 limit = 3;
+    int64 page = 2;
+    int64 page_size = 3;
 }
 
 message CommentsResponse {
     repeated Comment comments = 1;
-    int32 total_count=2;
+    int64 total_count=2;
 }
 
 message ReplyRequest{
@@ -128,19 +128,19 @@ message ReplyResponse{
 //通过comment_id获取replies
 message RepliesRequest{
     int64 comment_id=1;
-    int32 offset=2;
-    int32 limit=3;
+    int64 page=2;
+    int64 page_size=3;
 }
 
 message RepliesResponse{
     repeated Reply replies=1;
-    int32 total_count=2;
+    int64 total_count=2;
 }
 
 //通过comment_ids获取reply
 message RepliesByCommentsRequest{
     repeated int64 comment_ids=1 [packed=true];
-    int32 limit=2;
+    int64 limit=2;
 }
 
 message RepliesByCommentsResponse{
@@ -152,35 +152,35 @@ message RepliesByCommentsResponse{
 
 message PostsByUserIdRequest{
     int64 user_id=1;
-    int32 offset=2;
-    int32 limit=3;
+    int64 page=2;
+    int64 page_size=3;
 }
 
 message PostsByUserIdResponse{
     repeated Post posts=1;
-    int32 total_count=2;
+    int64 total_count=2;
 }
 
 message CommentsByUserIdRequest{
     int64 user_id=1;
-    int32 offset=2;
-    int32 limit=3;
+    int64 page=2;
+    int64 page_size=3;
 }
 
 message CommentsByUserIdResponse{
     repeated Comment comments=1;
-    int32 total_count=2;
+    int64 total_count=2;
 }
 
 message RepliesByUserIdRequest{
     int64 user_id=1;
-    int32 offset=2;
-    int32 limit=3;
+    int64 page=2;
+    int64 page_size=3;
 }
 
 message RepliesByUserIdResponse{
     repeated Reply replies=1;
-    int32 total_count=2;
+    int64 total_count=2;
 }
 
 
