@@ -197,7 +197,7 @@ service PostService{
     rpc GetCommentsByPostId(CommentsRequest) returns(CommentsResponse){}
     rpc GetRepliesByCommentId(RepliesRequest) returns(RepliesResponse){}
     rpc Posts(PostsRequest) returns(PostsResponse){}
-    rpc GetRepliesByCommentIds(RepliesByCommentsRequest) returns(RepliesByCommentsResponse){}
+    //rpc GetRepliesByCommentIds(RepliesByCommentsRequest) returns(RepliesByCommentsResponse){}
     rpc GetPostsByUserId(PostsByUserIdRequest) returns(PostsByUserIdResponse){}
     rpc GetCommentsByUserId(CommentsByUserIdRequest) returns(CommentsByUserIdResponse){}
     rpc GetRepliesByUserId(RepliesByUserIdRequest) returns(RepliesByUserIdResponse){}

@@ -8,12 +8,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/astaxie/beego/logs"
-	micro "github.com/micro/go-micro"
-	"google.golang.org/grpc"
+	"github.com/micro/go-micro"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"net"
-	"os"
 	"strings"
 )
 
@@ -23,88 +20,94 @@ type Post struct{
 
 }
 
-func (p *Post) NewPost(ctx context.Context,pr *pb.NewPostRequest) (*pb.NewPostResponse,error){
+func (p *Post) NewPost(ctx context.Context,pr *pb.NewPostRequest,resp *pb.NewPostResponse) error{
 	if len(strings.TrimSpace(pr.Topic))==0 || len(strings.TrimSpace(pr.Content))==0{
-		return nil,status.Error(codes.InvalidArgument,"topic or content can not be empty")
+		return status.Error(codes.InvalidArgument,"topic or content can not be empty")
 	}
 	postId,err:=dao.InsertPost(pr.UserId,pr.Topic,pr.Content)
 	if err!=nil{
 		logs.Error("insert post error: ",err.Error())
-		return nil,status.Error(codes.Internal,sysError)
+		return status.Error(codes.Internal,sysError)
 	}
-	return &pb.NewPostResponse{
+	resp=&pb.NewPostResponse{
 		PostId:int64(postId),
-	},nil
+	}
+	return nil
 }
 
-func (p *Post) NewComment(ctx context.Context,cr *pb.NewCommentRequest) (*pb.NewCommentResponse,error){
+func (p *Post) NewComment(ctx context.Context,cr *pb.NewCommentRequest,resp *pb.NewCommentResponse) error{
 	if len(strings.TrimSpace(cr.Content))==0{
-		return nil,status.Error(codes.InvalidArgument,"comment content can not be empty")
+		return status.Error(codes.InvalidArgument,"comment content can not be empty")
 	}
 	commentId,err:=dao.InsertComment(cr.UserId,cr.PostId,cr.Content)
 	if err!=nil{
 		logs.Error("insert comment error: ",err.Error())
-		return nil,status.Error(codes.Internal,sysError)
+		return status.Error(codes.Internal,sysError)
 	}
-	return &pb.NewCommentResponse{
+	resp=&pb.NewCommentResponse{
 		CommentId:int64(commentId),
-	}, nil
+	}
+	return nil
 }
 
-func (p *Post) NewReply(ctx context.Context,rr *pb.NewReplyRequest) (*pb.NewReplyResponse,error){
+func (p *Post) NewReply(ctx context.Context,rr *pb.NewReplyRequest,resp *pb.NewReplyResponse) error{
 	if len(strings.TrimSpace(rr.Content))==0{
-		return nil,status.Error(codes.InvalidArgument,"comment content can not be empty")
+		return status.Error(codes.InvalidArgument,"comment content can not be empty")
 	}
 	replyId,err:=dao.InsertReply(rr.UserId,rr.PostId,rr.CommentId,rr.ParentId,rr.Content)
 	if err!=nil{
 		logs.Error("insert reply error: ",err.Error())
-		return nil,status.Error(codes.Internal,sysError)
+		return status.Error(codes.Internal,sysError)
 	}
-	return &pb.NewReplyResponse{
+	resp=&pb.NewReplyResponse{
 		ReplyId:replyId,
-	}, nil
+	}
+	return nil
 }
 
-func (p *Post) DeletePost(ctx context.Context,dr *pb.DeleteRequest) (*pb.DeleteResponse,error){
+func (p *Post) DeletePost(ctx context.Context,dr *pb.DeleteRequest,resp *pb.DeleteResponse) error{
 	err:=dao.DeletePost(dr.Id)
 	if err!=nil{
 		logs.Error("delete post error: ",err.Error())
-		return nil,status.Error(codes.Internal,sysError)
+		return status.Error(codes.Internal,sysError)
 	}
-	return &pb.DeleteResponse{
+	resp=&pb.DeleteResponse{
 		Success:true,
-	}, nil
+	}
+	return nil
 }
 
-func (p *Post) DeleteComment(ctx context.Context,dr *pb.DeleteRequest) (*pb.DeleteResponse,error){
+func (p *Post) DeleteComment(ctx context.Context,dr *pb.DeleteRequest,resp *pb.DeleteResponse) error{
 	err:=dao.DeleteComment(dr.Id)
 	if err!=nil{
 		logs.Error("delete comment error: ",err.Error())
-		return nil,status.Error(codes.Internal,sysError)
+		return status.Error(codes.Internal,sysError)
 	}
-	return &pb.DeleteResponse{
+	resp=&pb.DeleteResponse{
 		Success:true,
-	}, nil
+	}
+	return nil
 }
 
-func (p *Post) DeleteReply(ctx context.Context,dr *pb.DeleteRequest) (*pb.DeleteResponse,error){
+func (p *Post) DeleteReply(ctx context.Context,dr *pb.DeleteRequest,resp *pb.DeleteResponse) error{
 	err:=dao.DeleteReply(dr.Id)
 	if err!=nil{
 		logs.Error("delete reply error: ",err.Error())
-		return nil,status.Error(codes.Internal,sysError)
+		return status.Error(codes.Internal,sysError)
 	}
-	return &pb.DeleteResponse{
+	resp=&pb.DeleteResponse{
 		Success:true,
-	}, nil
+	}
+	return nil
 }
 
-func (p *Post) GetPost(ctx context.Context,pr *pb.PostRequest) (*pb.PostResponse,error){
+func (p *Post) GetPost(ctx context.Context,pr *pb.PostRequest,resp *pb.PostResponse) error{
 	dbPost,err:=dao.GetPost(pr.Id)
 	if err!=nil{
 		logs.Error("get post error:",err.Error())
-		return nil,status.Error(codes.Internal,sysError)
+		return status.Error(codes.Internal,sysError)
 	}
-	pbPost:=&pb.PostResponse{
+	resp=&pb.PostResponse{
 		Post:&pb.Post{
 			Id:dbPost.Id,
 			UserId:dbPost.UserId,
@@ -115,16 +118,16 @@ func (p *Post) GetPost(ctx context.Context,pr *pb.PostRequest) (*pb.PostResponse
 			Status:pb.Status(dbPost.Status),
 		},
 	}
-	return pbPost,nil
+	return nil
 }
 
-func (p *Post) GetComment(ctx context.Context,cr *pb.CommentRequest) (*pb.CommentResponse,error){
+func (p *Post) GetComment(ctx context.Context,cr *pb.CommentRequest,resp *pb.CommentResponse) error{
 	dbComment,err:=dao.GetComment(cr.Id)
 	if err!=nil{
 		logs.Error("get comment error:",err.Error())
-		return nil,status.Error(codes.Internal,sysError)
+		return status.Error(codes.Internal,sysError)
 	}
-	pbComment:=&pb.CommentResponse{
+	resp=&pb.CommentResponse{
 		Comment:&pb.Comment{
 			Id:dbComment.Id,
 			UserId:dbComment.UserId,
@@ -135,16 +138,16 @@ func (p *Post) GetComment(ctx context.Context,cr *pb.CommentRequest) (*pb.Commen
 			Status:pb.Status(dbComment.Status),
 		},
 	}
-	return pbComment,nil
+	return nil
 }
 
-func (p *Post) GetReply(ctx context.Context,rr *pb.ReplyRequest) (*pb.ReplyResponse,error){
+func (p *Post) GetReply(ctx context.Context,rr *pb.ReplyRequest,resp *pb.ReplyResponse) error{
 	dbReply,err:=dao.GetReply(rr.Id)
 	if err!=nil{
 		logs.Error("get reply error:",err.Error())
-		return nil,status.Error(codes.Internal,sysError)
+		return status.Error(codes.Internal,sysError)
 	}
-	pbReply:=&pb.ReplyResponse{
+	resp=&pb.ReplyResponse{
 		Reply:&pb.Reply{
 			Id:dbReply.Id,
 			UserId:dbReply.UserId,
@@ -157,14 +160,14 @@ func (p *Post) GetReply(ctx context.Context,rr *pb.ReplyRequest) (*pb.ReplyRespo
 			Status:pb.Status(dbReply.Status),
 		},
 	}
-	return pbReply,nil
+	return nil
 }
 
-func (p *Post) GetCommentsByPostId(ctx context.Context,cr *pb.CommentsRequest) (*pb.CommentsResponse,error){
+func (p *Post) GetCommentsByPostId(ctx context.Context,cr *pb.CommentsRequest,resp *pb.CommentsResponse) error{
 	dbComments,totalCount,err:=dao.GetCommentsByPostId(cr.PostId,cr.Page,cr.PageSize)
 	if err!=nil{
 		logs.Error(fmt.Sprintf("get comments by post_id failed: %+v",err))
-		return nil, status.Error(codes.Internal,sysError)
+		return status.Error(codes.Internal,sysError)
 	}
 	var comments []*pb.Comment
 	for _,v:=range dbComments{
@@ -178,17 +181,18 @@ func (p *Post) GetCommentsByPostId(ctx context.Context,cr *pb.CommentsRequest) (
 			Status:               pb.Status(v.Status),
 		})
 	}
-	return &pb.CommentsResponse{
+	resp=&pb.CommentsResponse{
 		Comments: comments,
 		TotalCount: totalCount,
-	},nil
+	}
+	return nil
 }
 
-func (p *Post) GetRepliesByCommentId(ctx context.Context,rr *pb.RepliesRequest) (*pb.RepliesResponse,error){
+func (p *Post) GetRepliesByCommentId(ctx context.Context,rr *pb.RepliesRequest,resp *pb.RepliesResponse) error{
 	dbReplies,totalCount,err:=dao.GetRepliesByCommentId(rr.CommentId,rr.Page,rr.PageSize)
 	if err!=nil{
 		logs.Error(fmt.Sprintf("get replies by comment_id failed: %+v",err))
-		return nil,status.Error(codes.Internal,sysError)
+		return status.Error(codes.Internal,sysError)
 	}
 	var replies []*pb.Reply
 	for _,v:=range dbReplies{
@@ -204,17 +208,18 @@ func (p *Post) GetRepliesByCommentId(ctx context.Context,rr *pb.RepliesRequest) 
 			Status:               pb.Status(v.Status),
 		})
 	}
-	return &pb.RepliesResponse{
+	resp=&pb.RepliesResponse{
 		Replies:replies,
 		TotalCount:totalCount,
-	}, nil
+	}
+	return nil
 }
 
-func (p *Post) Posts(ctx context.Context,pr *pb.PostsRequest) (*pb.PostsResponse,error){
+func (p *Post) Posts(ctx context.Context,pr *pb.PostsRequest,resp *pb.PostsResponse) error{
 	dbPosts,totalCount,err:=dao.GetPosts(pr.Page,pr.PageSize)
 	if err!=nil{
 		logs.Error(fmt.Sprintf("get posts failed: %+v",err))
-		return nil,status.Error(codes.Internal,sysError)
+		return status.Error(codes.Internal,sysError)
 	}
 	
 	var posts []*pb.Post
@@ -229,10 +234,11 @@ func (p *Post) Posts(ctx context.Context,pr *pb.PostsRequest) (*pb.PostsResponse
 			Status:pb.Status(v.Status),
 		})
 	}
-	return &pb.PostsResponse{
+	resp=&pb.PostsResponse{
 		Posts:posts,
 		TotalCount:totalCount,
-	}, nil
+	}
+	return nil
 }
 
 //func (p *Post) GetRepliesByCommentIds(ctx context.Context,rr *pb.RepliesByCommentsRequest) (*pb.
@@ -266,11 +272,11 @@ func (p *Post) Posts(ctx context.Context,pr *pb.PostsRequest) (*pb.PostsResponse
 //	},nil
 //}
 
-func (p *Post) GetPostsByUserId(ctx context.Context, pr *pb.PostsByUserIdRequest) (*pb.PostsByUserIdResponse, error){
+func (p *Post) GetPostsByUserId(ctx context.Context, pr *pb.PostsByUserIdRequest, resp *pb.PostsByUserIdResponse) error{
 	dbPosts,totalCount,err:=dao.GetPostsByUserId(pr.UserId,pr.Page,pr.PageSize)
 	if err!=nil{
 		logs.Error(fmt.Sprintf("get posts by user_id failed: %+v",err))
-		return nil,err
+		return status.Error(codes.Internal,sysError)
 	}
 	var posts []*pb.Post
 	for _,v:=range dbPosts{
@@ -284,17 +290,18 @@ func (p *Post) GetPostsByUserId(ctx context.Context, pr *pb.PostsByUserIdRequest
 			Status:pb.Status(v.Status),
 		})
 	}
-	return &pb.PostsByUserIdResponse{
+	resp=&pb.PostsByUserIdResponse{
 		Posts:posts,
 		TotalCount:totalCount,
-	}, nil
+	}
+	return nil
 }
 
-func (p *Post) GetCommentsByUserId(ctx context.Context, cr *pb.CommentsByUserIdRequest) (*pb.CommentsByUserIdResponse, error){
+func (p *Post) GetCommentsByUserId(ctx context.Context, cr *pb.CommentsByUserIdRequest,resp *pb.CommentsByUserIdResponse) error{
 	dbComments,totalCount,err:=dao.GetCommentsByUserId(cr.UserId,cr.Page,cr.PageSize)
 	if err!=nil{
 		logs.Error(fmt.Sprintf("get comments by user_id failed: %+v",err))
-		return nil,err
+		return status.Error(codes.Internal,sysError)
 	}
 	var comments []*pb.Comment
 	for _,v:=range dbComments{
@@ -308,23 +315,24 @@ func (p *Post) GetCommentsByUserId(ctx context.Context, cr *pb.CommentsByUserIdR
 			Status:pb.Status(v.Status),
 		})
 	}
-	return &pb.CommentsByUserIdResponse{
+	resp=&pb.CommentsByUserIdResponse{
 		Comments:comments,
 		TotalCount:totalCount,
-	}, nil
+	}
+	return nil
 }
 
-func (p *Post) GetRepliesByUserId(ctx context.Context, rr *pb.RepliesByUserIdRequest) (*pb.RepliesByUserIdResponse, error){
+func (p *Post) GetRepliesByUserId(ctx context.Context, rr *pb.RepliesByUserIdRequest, resp *pb.RepliesByUserIdResponse) error{
 	dbReplies,totalCount,err:=dao.GetRepliesByUserId(rr.UserId,rr.Page,rr.PageSize)
 	if err!=nil{
 		logs.Error(fmt.Sprintf("get replies by user_id failed: %+v",err))
-		return nil,err
+		return status.Error(codes.Internal,sysError)
 	}
 	var replies []*pb.Reply
 	for _,v:=range dbReplies{
 		replies=append(replies,&pb.Reply{
 			Id:v.Id,
-			UserId:(v.UserId),
+			UserId:v.UserId,
 			CommentId:int64(v.CommentId),
 			PostId:int64(v.PostId),
 			Content:v.Content,
@@ -334,10 +342,11 @@ func (p *Post) GetRepliesByUserId(ctx context.Context, rr *pb.RepliesByUserIdReq
 			Status:pb.Status(v.Status),
 		})
 	}
-	return &pb.RepliesByUserIdResponse{
+	resp=&pb.RepliesByUserIdResponse{
 		Replies:replies,
 		TotalCount:int64(totalCount),
-	}, nil
+	}
+	return nil
 }
 
 func NewPostService(addr string,port int){
@@ -350,15 +359,15 @@ func NewPostService(addr string,port int){
 		
 	}
 	
-	lis,err:=net.Listen("tcp",fmt.Sprintf("%s:%d",addr,port))
-	if err!=nil{
-		logs.Error(fmt.Sprintf("post service failed to listen: %+v",err))
-		os.Exit(1)
-	}
-	grpcServer:=grpc.NewServer()
-	pb.RegisterPostServiceServer(grpcServer,&Post{})
-	if err=grpcServer.Serve(lis);err!=nil{
-		logs.Error("run grpcserver postservice failed: %+v",err)
-		os.Exit(1)
-	}
+	//lis,err:=net.Listen("tcp",fmt.Sprintf("%s:%d",addr,port))
+	//if err!=nil{
+	//	logs.Error(fmt.Sprintf("post service failed to listen: %+v",err))
+	//	os.Exit(1)
+	//}
+	//grpcServer:=grpc.NewServer()
+	//pb.RegisterPostServiceServer(grpcServer,&Post{})
+	//if err=grpcServer.Serve(lis);err!=nil{
+	//	logs.Error("run grpcserver postservice failed: %+v",err)
+	//	os.Exit(1)
+	//}
 }

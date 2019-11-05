@@ -46,7 +46,7 @@ type PostService interface {
 	GetCommentsByPostId(ctx context.Context, in *CommentsRequest, opts ...client.CallOption) (*CommentsResponse, error)
 	GetRepliesByCommentId(ctx context.Context, in *RepliesRequest, opts ...client.CallOption) (*RepliesResponse, error)
 	Posts(ctx context.Context, in *PostsRequest, opts ...client.CallOption) (*PostsResponse, error)
-	GetRepliesByCommentIds(ctx context.Context, in *RepliesByCommentsRequest, opts ...client.CallOption) (*RepliesByCommentsResponse, error)
+	//rpc GetRepliesByCommentIds(RepliesByCommentsRequest) returns(RepliesByCommentsResponse){}
 	GetPostsByUserId(ctx context.Context, in *PostsByUserIdRequest, opts ...client.CallOption) (*PostsByUserIdResponse, error)
 	GetCommentsByUserId(ctx context.Context, in *CommentsByUserIdRequest, opts ...client.CallOption) (*CommentsByUserIdResponse, error)
 	GetRepliesByUserId(ctx context.Context, in *RepliesByUserIdRequest, opts ...client.CallOption) (*RepliesByUserIdResponse, error)
@@ -190,16 +190,6 @@ func (c *postService) Posts(ctx context.Context, in *PostsRequest, opts ...clien
 	return out, nil
 }
 
-func (c *postService) GetRepliesByCommentIds(ctx context.Context, in *RepliesByCommentsRequest, opts ...client.CallOption) (*RepliesByCommentsResponse, error) {
-	req := c.c.NewRequest(c.name, "PostService.GetRepliesByCommentIds", in)
-	out := new(RepliesByCommentsResponse)
-	err := c.c.Call(ctx, req, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *postService) GetPostsByUserId(ctx context.Context, in *PostsByUserIdRequest, opts ...client.CallOption) (*PostsByUserIdResponse, error) {
 	req := c.c.NewRequest(c.name, "PostService.GetPostsByUserId", in)
 	out := new(PostsByUserIdResponse)
@@ -245,7 +235,7 @@ type PostServiceHandler interface {
 	GetCommentsByPostId(context.Context, *CommentsRequest, *CommentsResponse) error
 	GetRepliesByCommentId(context.Context, *RepliesRequest, *RepliesResponse) error
 	Posts(context.Context, *PostsRequest, *PostsResponse) error
-	GetRepliesByCommentIds(context.Context, *RepliesByCommentsRequest, *RepliesByCommentsResponse) error
+	//rpc GetRepliesByCommentIds(RepliesByCommentsRequest) returns(RepliesByCommentsResponse){}
 	GetPostsByUserId(context.Context, *PostsByUserIdRequest, *PostsByUserIdResponse) error
 	GetCommentsByUserId(context.Context, *CommentsByUserIdRequest, *CommentsByUserIdResponse) error
 	GetRepliesByUserId(context.Context, *RepliesByUserIdRequest, *RepliesByUserIdResponse) error
@@ -265,7 +255,6 @@ func RegisterPostServiceHandler(s server.Server, hdlr PostServiceHandler, opts .
 		GetCommentsByPostId(ctx context.Context, in *CommentsRequest, out *CommentsResponse) error
 		GetRepliesByCommentId(ctx context.Context, in *RepliesRequest, out *RepliesResponse) error
 		Posts(ctx context.Context, in *PostsRequest, out *PostsResponse) error
-		GetRepliesByCommentIds(ctx context.Context, in *RepliesByCommentsRequest, out *RepliesByCommentsResponse) error
 		GetPostsByUserId(ctx context.Context, in *PostsByUserIdRequest, out *PostsByUserIdResponse) error
 		GetCommentsByUserId(ctx context.Context, in *CommentsByUserIdRequest, out *CommentsByUserIdResponse) error
 		GetRepliesByUserId(ctx context.Context, in *RepliesByUserIdRequest, out *RepliesByUserIdResponse) error
@@ -327,10 +316,6 @@ func (h *postServiceHandler) GetRepliesByCommentId(ctx context.Context, in *Repl
 
 func (h *postServiceHandler) Posts(ctx context.Context, in *PostsRequest, out *PostsResponse) error {
 	return h.PostServiceHandler.Posts(ctx, in, out)
-}
-
-func (h *postServiceHandler) GetRepliesByCommentIds(ctx context.Context, in *RepliesByCommentsRequest, out *RepliesByCommentsResponse) error {
-	return h.PostServiceHandler.GetRepliesByCommentIds(ctx, in, out)
 }
 
 func (h *postServiceHandler) GetPostsByUserId(ctx context.Context, in *PostsByUserIdRequest, out *PostsByUserIdResponse) error {
