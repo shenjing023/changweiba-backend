@@ -1,2 +1,3 @@
-FROM golang:1.13.4 as builder
+FROM alpine:latest
+RUN mkdir /app
 
