@@ -25,15 +25,24 @@ type YamlConf struct {
 		Host string	`yaml:"host"`
 		Port int	`yaml:"port"`
 		User string	`yaml:"user"`
-		Passwd string	`yaml:"passwd"`
+		Password string	`yaml:"password"`
 		Dbname string	`yaml:"dbname"`
-		MaxIdleConns int	`yaml:"max_idle_conns,omitempty"`
-		MaxOpenConns int	`yaml:"max_open_conns,omitempty"`
+		MaxIdle int	`yaml:"max_idle,omitempty"`
+		MaxOpen int	`yaml:"max_open,omitempty"`
 		LogFile string
 	} `yaml:"db"`
 	SignKey string	`yaml:"sign_key"`
 	Salt string	`yaml:"salt"`
 	QueryDeep int `yaml:"query_deep"`
+
+	Redis struct{
+		Host string	`yaml:"host"`
+		Port int	`yaml:"port"`
+		Password string `yaml:"password"`
+		MaxIdle int	`yaml:"max_idle,omitempty"`
+		MaxActive int 	`yaml:"max_active,omitempty"`
+		IdleTimeout int		`yaml:"idle_timeout,omitempty"`
+	} `yaml:"redis"`
 }
 
 //beego日志配置结构体

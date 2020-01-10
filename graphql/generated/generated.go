@@ -934,13 +934,11 @@ input NewUser{
 }
 
 input EditUser{
-    id: Int!
     name: String
     password: String
     avatar: String
     status: UserStatus
     role: UserRole
-    score: Int
 }
 
 input ReportUser{
@@ -4879,12 +4877,6 @@ func (ec *executionContext) unmarshalInputEditUser(ctx context.Context, obj inte
 
 	for k, v := range asMap {
 		switch k {
-		case "id":
-			var err error
-			it.ID, err = ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "name":
 			var err error
 			it.Name, err = ec.unmarshalOString2ᚖstring(ctx, v)
@@ -4912,12 +4904,6 @@ func (ec *executionContext) unmarshalInputEditUser(ctx context.Context, obj inte
 		case "role":
 			var err error
 			it.Role, err = ec.unmarshalOUserRole2ᚖchangweibaᚑbackendᚋgraphqlᚋmodelsᚐUserRole(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "score":
-			var err error
-			it.Score, err = ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6455,29 +6441,6 @@ func (ec *executionContext) marshalOCommentConnection2ᚖchangweibaᚑbackendᚋ
 		return graphql.Null
 	}
 	return ec._CommentConnection(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOInt2int(ctx context.Context, v interface{}) (int, error) {
-	return graphql.UnmarshalInt(v)
-}
-
-func (ec *executionContext) marshalOInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
-	return graphql.MarshalInt(v)
-}
-
-func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalOInt2int(ctx, v)
-	return &res, err
-}
-
-func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec.marshalOInt2int(ctx, sel, *v)
 }
 
 func (ec *executionContext) marshalOPost2changweibaᚑbackendᚋgraphqlᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v models.Post) graphql.Marshaler {

@@ -9,11 +9,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/astaxie/beego/logs"
+	"github.com/micro/go-micro"
 	"time"
 )
 
 const (
-	PostServiceError="post service system error"
+	ServiceError ="post service system error"
 )
 
 type MyPostResolver struct {
@@ -21,6 +22,12 @@ type MyPostResolver struct {
 }
 
 func GetPost(ctx context.Context,postId int) (*models.Post,error){
+	service:=micro.NewService(micro.Name("post.client"))
+	service.Init()
+	client:=postpb.NewPostService("post",service.Client())
+	client.GetPost()
+	
+	
 	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
 	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
 	defer cancel()
@@ -193,7 +200,7 @@ func GetPostsByUserId(ctx context.Context, userId int, page int, pageSize int) (
 func GetCommentsByUserId(ctx context.Context, userId int, page int,
 	pageSize int) (*models.CommentConnection, error){
 	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
-	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
+	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
 	defer cancel()
 	request:=postpb.CommentsByUserIdRequest{
 		UserId:int64(userId),
@@ -227,7 +234,7 @@ func GetCommentsByUserId(ctx context.Context, userId int, page int,
 
 func GetRepliesByUserId(ctx context.Context,userId int,page int,pageSize int) (*models.ReplyConnection,error){
 	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
-	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
+	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
 	defer cancel()
 	request:=postpb.RepliesByUserIdRequest{
 		UserId:int64(userId),
@@ -261,6 +268,120 @@ func GetRepliesByUserId(ctx context.Context,userId int,page int,pageSize int) (*
 		Nodes:replies,
 		TotalCount:int(r.TotalCount),
 	},nil
+}
+
+func GetCommentById(ctx context.Context,commentId int) (*models.Comment, error){
+	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
+	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
+	defer cancel()
+	request:=postpb.CommentRequest{
+		Id:int64(commentId),
+	}
+	r,err:=client.GetComment(ctx,&request)
+	if err!=nil{
+		logs.Error("get comment error:",err.Error())
+		return nil, err
+	}
+	if r.Comment.Id==0{
+		//不存在
+		return nil,errors.New("comment不存在")
+	}
+
+	status_:=models.StatusNormal
+	if r.Comment.Status==1{
+		status_=models.StatusBanned
+	}
+	return &models.Comment{
+		ID:int(r.Comment.Id),
+		User:&models.User{
+			ID:int(r.Comment.UserId),
+		},
+		PostID:int(r.Comment.PostId),
+		Content:r.Comment.Content,
+		CreateAt:int(r.Comment.CreateTime),
+		Floor:int(r.Comment.Floor),
+		Status:status_,
+	}, nil
+}
+
+func GetReplyById(ctx context.Context,replyId int) (*models.Reply,error){
+	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
+	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
+	defer cancel()
+	request:=postpb.ReplyRequest{
+		Id:int64(replyId),
+	}
+	r,err:=client.GetReply(ctx,&request)
+	if err!=nil{
+		logs.Error("get reply error:",err.Error())
+		return nil, err
+	}
+	if r.Reply.Id==0{
+		//不存在
+		return nil,errors.New("reply不存在")
+	}
+
+	status_:=models.StatusNormal
+	if r.Reply.Status==1{
+		status_=models.StatusBanned
+	}
+	return &models.Reply{
+		ID:int(r.Reply.Id),
+		User:&models.User{
+			ID:int(r.Reply.UserId),
+		},
+		PostID:int(r.Reply.PostId),
+		CommentID:int(r.Reply.CommentId),
+		Content:r.Reply.Content,
+		CreateAt:int(r.Reply.CreateTime),
+		Floor:int(r.Reply.Floor),
+		Status:status_,
+	}, nil
+}
+
+func DeletePost(ctx context.Context,postId int) (bool,error){
+	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
+	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
+	defer cancel()
+	request:=postpb.DeleteRequest{
+		Id:int64(postId),
+	}
+	r,err:=client.DeletePost(ctx,&request)
+	if err!=nil{
+		logs.Error("delete post error:",err.Error())
+		return false, err
+	}
+	return r.Success,nil
+}
+
+func DeleteComment(ctx context.Context,commentId int) (bool,error){
+	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
+	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
+	defer cancel()
+	request:=postpb.DeleteRequest{
+		Id:int64(commentId),
+	}
+	r,err:=client.DeleteComment(ctx,&request)
+	if err!=nil{
+		logs.Error("delete comment error:",err.Error())
+		return false, err
+	}
+	return r.Success,nil
+}
+
+func DeleteReply(ctx context.Context,replyId int) (bool,error){
+	client:=postpb.NewPostServiceClient(rpc_conn.PostConn)
+	ctx,cancel:=context.WithTimeout(ctx,10*time.Second)
+	defer cancel()
+	request:=postpb.DeleteRequest{
+		Id:int64(replyId),
+	}
+	r,err:=client.DeleteReply(ctx,&request)
+	if err!=nil{
+		logs.Error("delete reply error:",err.Error())
+		return false, err
+	}
+	return r.Success,nil
 }
 
 //
@@ -335,13 +456,13 @@ func getUserIdFromContext(ctx context.Context) (int64,error){
 	gctx,err:=common.GinContextFromContext(ctx)
 	if err!=nil{
 		logs.Error(err.Error())
-		return 0, errors.New(PostServiceError)
+		return 0, errors.New(ServiceError)
 	}
 	userId,ok:=gctx.Value("claims").(float64)
 	if !ok{
 		logs.Error("get user_id from request ctx error")
 		logs.Info(fmt.Sprintf("ctx claims: %+v",gctx.Value("claims")))
-		return 0,errors.New(PostServiceError)
+		return 0,errors.New(ServiceError)
 	}
 	return int64(userId),nil
 }

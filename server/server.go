@@ -12,7 +12,6 @@ import (
 	"github.com/99designs/gqlgen/handler"
 	"github.com/astaxie/beego/logs"
 	"github.com/gin-gonic/gin"
-	"google.golang.org/grpc"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,7 +19,6 @@ import (
 )
 
 const defaultPort = ":8088"
-var accountConn *grpc.ClientConn
 
 // Defining the Playground handler
 func playgroundHandler() gin.HandlerFunc {

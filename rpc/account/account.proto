@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package accountpb;
+package srv.account;
 
 enum Status{
     STATUS_NORMAL=0;
@@ -18,7 +18,7 @@ message User {
     string password = 3;
     string avatar = 4;
     Status status = 5;
-    int32 score = 6;
+    int64 score = 6;
     string banned_reason = 7;
     int64 create_time = 8;
     int64 last_update=9;

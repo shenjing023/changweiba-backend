@@ -1,4 +1,4 @@
-//go:generate protoc --go_out=plugins=grpc:./pb account.proto
+//go:generate protoc  --plugin=protoc-gen-micro=C:\GoProjects/bin/protoc-gen-micro.exe --micro_out=./pb --go_out=./pb account.proto
 
 package account
 
@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/astaxie/beego/logs"
+	"github.com/micro/go-micro"
 	"golang.org/x/crypto/scrypt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -28,79 +29,64 @@ const (
 type User struct {
 }
 
-func (u *User) GetUser(ctx context.Context, ur *pb.User) (*pb.User, error) {
-	dbUser:=&dao.User{
-		Id:ur.Id,
-		Name:ur.Name,
-	}
-	has,err:=dao.GetUser(dbUser)
+func (u *User) GetUser(ctx context.Context, ur *pb.User,resp *pb.User) error {
+	dbUser,err:=dao.GetUser(ur.Id)
 	if err!=nil{
 		logs.Error("get user error:",err.Error())
-		return nil,errors.New(ServiceError)
+		return errors.New(ServiceError)
 	}
-	if has{
-		pbUser:=&pb.User{
-			Id:dbUser.Id,
-			Name:dbUser.Name,
-			Password:dbUser.Password,
-			Avatar:dbUser.Avatar,
-			Status:pb.Status(dbUser.Status),
-			Score:dbUser.Score,
-			BannedReason:dbUser.BannedReason,
-			CreateTime:dbUser.CreateTime,
-			LastUpdate:dbUser.LastUpdate,
-			Role:pb.Role(dbUser.Role),
-		}
-		return pbUser,nil
-	} else{
-		logs.Info("get user failed:",UserNotFund)
-		return &pb.User{},nil
+	resp=&pb.User{
+		Id:dbUser.Id,
+		Name:dbUser.Name,
+		Password:dbUser.Password,
+		Avatar:dbUser.Avatar,
+		Status:pb.Status(dbUser.Status),
+		Score:dbUser.Score,
+		BannedReason:dbUser.BannedReason,
+		CreateTime:dbUser.CreateTime,
+		LastUpdate:dbUser.LastUpdate,
+		Role:pb.Role(dbUser.Role),
 	}
+	return nil
 }
 
-func (u *User) RegisterUser(ctx context.Context, ur *pb.NewUserRequest) (*pb.NewUserResponse, error) {
+func (u *User) RegisterUser(ctx context.Context, ur *pb.NewUserRequest,resp *pb.NewUserResponse) error {
 	msg, _ := u.checkNewUser(ur)
 	if len(msg)!=0{
-		return nil,status.Error(codes.InvalidArgument,msg)
+		return status.Error(codes.InvalidArgument,msg)
 	}
 	
 	password,err:=u.encryptPassword(ur.Password)
 	if err!=nil{
 		logs.Error("generate crypto password error:",err.Error())
-		return nil, status.Error(codes.Internal,ServiceError)
+		return status.Error(codes.Internal,ServiceError)
 	}
 	//头像url
 	avatar,err:=dao.GetRandomAvatar()
 	if err!=nil{
 		logs.Error("get random avatar error:",err.Error())
-		return nil, status.Error(codes.Internal,ServiceError)
+		return status.Error(codes.Internal,ServiceError)
 	}
 	id,err:=dao.InsertUser(ur.Name,password,ur.Ip,avatar)
 	if err!=nil{
 		logs.Error("insert user error:",err.Error())
-		return nil, err
+		return err
 	}
-	return &pb.NewUserResponse{
+	resp=&pb.NewUserResponse{
 		Id:id,
-	}, nil
+	}
+	return nil
 }
 
-func (u *User) EditUser(ctx context.Context, pbUser *pb.User) (*pb.User, error) {
-	return &pb.User{Id: pbUser.Id}, nil
+func (u *User) EditUser(ctx context.Context, pbUser *pb.User,resp *pb.User)  error {
+	return nil
 }
 
-func (u *User) Login(ctx context.Context,param *pb.LoginRequest) (*pb.LoginResponse, error){
-	dbUser:=&dao.User{
-		Name:param.Name,
-	}
-	has,err:=dao.GetUser(dbUser)
-	if err!=nil{
-		logs.Error("get user by name error:",err.Error())
-		return nil,status.Error(codes.Internal,ServiceError)
-	}
-	if has{
-		dbPassword:=dbUser.Password
-		tmp,_:=u.encryptPassword(param.Password)
+func (u *User) Login(ctx context.Context,lr *pb.LoginRequest) (*pb.LoginResponse, error){
+	dbUser,exist:=dao.CheckUserExist(lr.Name)
+	if exist{
+		dbPassword:=lr.Password
+		tmp,_:=u.encryptPassword(lr.Password)
 		if dbPassword==tmp{
 			return &pb.LoginResponse{
 				Id:dbUser.Id,
@@ -182,6 +168,10 @@ func (u *User) encryptPassword(password string) (string,error){
 }
 
 func NewAccountService(addr string, port int) {
+	service:=micro.NewService(micro.Name("srv.account"))
+	service.Init()
+	pb.RegisterAccountHandler()
+	
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", addr, port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

@@ -61,9 +61,9 @@ type mutationResolver struct{
 }
 
 func (r *mutationResolver) RegisterUser(ctx context.Context, input models.NewUser) (string, error) {
-	if _,err:=common.GinContextFromContext(ctx);err!=nil{
-		return "", err
-	}
+	//if _,err:=common.GinContextFromContext(ctx);err!=nil{
+	//	return "", err
+	//}
 	return user.RegisterUser(ctx,input)
 }
 func (r *mutationResolver) LoginUser(ctx context.Context, input models.NewUser) (string, error) {
@@ -85,7 +85,15 @@ func (r *mutationResolver) NewReply(ctx context.Context, input models.NewReply) 
 	return post.NewReply(ctx,input)
 }
 func (r *mutationResolver) DeletePost(ctx context.Context, input int) (bool, error) {
-	panic("not implemented")
+	return post.DeletePost(ctx,input)
+}
+
+func (r *mutationResolver) DeleteComment(ctx context.Context, input int) (bool, error) {
+	return post.DeleteComment(ctx,input)
+}
+
+func (r *mutationResolver) DeleteReply(ctx context.Context, input int) (bool, error) {
+	return post.DeleteReply(ctx,input)
 }
 
 type queryResolver struct{
@@ -105,7 +113,7 @@ func (r *queryResolver) Posts(ctx context.Context, page int, pageSize int) (*mod
 }
 
 func (r *queryResolver) Comment(ctx context.Context, commentID int) (*models.Comment, error){
-	panic("not implemented")
+	return post.GetCommentById(ctx,commentID)
 }
 
 func (r *queryResolver) Comments(ctx context.Context, postId int,page int,pageSize int) (*models.CommentConnection, error){
@@ -113,7 +121,7 @@ func (r *queryResolver) Comments(ctx context.Context, postId int,page int,pageSi
 }
 
 func (r *queryResolver) Reply(ctx context.Context, replyID int) (*models.Reply, error){
-	panic("not implemented")
+	return post.GetReplyById(ctx,replyID)
 }
 
 func (r *queryResolver) Replies(ctx context.Context, commentID int,page int,pageSize int) (*models.ReplyConnection, error){

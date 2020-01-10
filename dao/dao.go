@@ -4,97 +4,108 @@ import (
 	"changweiba-backend/conf"
 	"fmt"
 	"github.com/astaxie/beego/logs"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/xorm"
-	"github.com/goinggo/mapstructure"
+	"github.com/go-redis/redis/v7"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"log"
 	"math/big"
 	"math/rand"
 	"net"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
 var (
-	dbEngine *xorm.Engine
+	redisClient *redis.Client
+	dbOrm *gorm.DB
 )
 
 func Init(){
+	redisClient=redis.NewClient(&redis.Options{
+		Addr:fmt.Sprintf("%s:%d",conf.Cfg.Redis.Host,conf.Cfg.Redis.Port),
+		Password:conf.Cfg.Redis.Password,
+		DB:0,
+	})
+	if _, err := redisClient.Ping().Result();err!=nil{
+		logs.Error("connect to redis error: ",err)
+		os.Exit(1)
+	}
+
 	var err error
-	dataSourceName:=fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8",conf.Cfg.DB.User,conf.Cfg.DB.Passwd,
-		conf.Cfg.DB.Host, 
-		conf.Cfg.DB.Port,conf.Cfg.DB.Dbname)
-	dbEngine, err = xorm.NewEngine("mysql", dataSourceName)
+	dbOrm,err=gorm.Open("mysql", fmt.Sprintf("%s:%s@(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		conf.Cfg.DB.User,conf.Cfg.DB.Password,conf.Cfg.DB.Host,conf.Cfg.DB.Port,conf.Cfg.DB.Dbname))
 	if err!=nil{
-		logs.Error(err.Error())
-		os.Exit(1)
+		logs.Error("mysql connection error: ",err)
 	}
-	if err=dbEngine.Ping();err!=nil{
-		logs.Error(err.Error())
-		os.Exit(1)
+	if conf.Cfg.DB.MaxIdle>0{
+		dbOrm.DB().SetMaxIdleConns(conf.Cfg.DB.MaxIdle)
 	}
-	if conf.Cfg.DB.MaxIdleConns>0{
-		dbEngine.SetMaxIdleConns(conf.Cfg.DB.MaxIdleConns)
-	}
-	if conf.Cfg.DB.MaxOpenConns>0{
-		dbEngine.SetMaxOpenConns(conf.Cfg.DB.MaxOpenConns)
+	if conf.Cfg.DB.MaxOpen>0{
+		dbOrm.DB().SetMaxOpenConns(conf.Cfg.DB.MaxOpen)
 	}
 	//日志
 	f,err:=os.Create(conf.Cfg.DB.LogFile)
 	if err!=nil{
-		logs.Error("create sql file failed:",err.Error())
+		logs.Error("create sql log file failed:",err.Error())
+		os.Exit(1)
 	} else{
-		dbEngine.SetLogger(xorm.NewSimpleLogger(f))
-		dbEngine.ShowSQL(true)	//不能忽略
+		dbOrm.SetLogger(log.New(f,"\r\n", 0))
+		if conf.Cfg.Debug{
+			dbOrm.LogMode(true)
+		}
 	}
-	
 }
 
 func InsertUser(userName,password,ip,avatar string) (int64,error){
 	//先检查name是否存在
-	u:=User{
-		Name:userName,
+	var u User
+	if err:=dbOrm.Where("name=?",userName).First(&u).Error;err!=nil{
+		if gorm.IsRecordNotFoundError(err){
+			now:=time.Now().Unix()
+			user:=User{
+				Name:userName,
+				Password:password,
+				Ip:InetAtoi(ip),
+				CreateTime:now,
+				LastUpdate:now,
+				Avatar:avatar,
+			}
+			if dbOrm.Create(&user).Error!=nil{
+				return 0,status.Error(codes.Internal,err.Error())
+			} else{
+				return user.Id,nil
+			}
+		} else{
+			return 0,status.Error(codes.Internal,err.Error())
+		}
 	}
-	has,err:=GetUser(&u)
-	if err!=nil{
-		return 0, err
-	}
-	if has{
-		return 0,status.Error(codes.AlreadyExists,"this user has already exists")
-	}
-	
-	now:=time.Now().Unix()
-	user:=User{
-		Name:userName,
-		Password:password,
-		Ip:InetAtoi(ip),
-		CreateTime:now,
-		LastUpdate:now,
-		Avatar:avatar,
-	}
-	_,err=dbEngine.InsertOne(&user)
-	if err!=nil{
-		return 0,status.Error(codes.Internal,err.Error())
-	}
-	//spew.Dump(user)
-	return user.Id,nil
+	return 0,status.Error(codes.AlreadyExists,"this user has already exists")
 }
 
-func GetUser(user *User)(bool,error){
-	has,err:=dbEngine.Get(user)
-	if err!=nil{
-		return false, status.Error(codes.Internal,err.Error())
+func GetUser(userId int64)(*User,error){
+	var user User
+	if err:=dbOrm.First(&user,userId).Error;err!=nil{
+		return nil, status.Error(codes.Internal,err.Error())
 	}
-	return has,nil
+	return &user,nil
+}
+
+func CheckUserExist(name string) (*User,bool){
+	var user User
+	if exist:=dbOrm.Where("name=?",name).First(&user).RecordNotFound();exist{
+		return nil,false
+	} else{
+		return &user,true
+	}
 }
 
 //随机获取一个头像url
 func GetRandomAvatar() (url string,err error){
 	var avatars []Avatar
-	if err=dbEngine.Cols("url").Find(&avatars);err!=nil{
+	if err=dbOrm.Select("url").Find(&avatars).Error;err!=nil{
 		return "",status.Error(codes.Internal,err.Error())
 	}
 	if len(avatars)==0{
@@ -107,11 +118,7 @@ func GetRandomAvatar() (url string,err error){
 }
 
 func InsertPost(userId int64,topic string,content string) (int64,error){
-	session := dbEngine.NewSession()
-	defer session.Close()
-	if err := session.Begin(); err != nil {
-		return 0,err
-	}
+	session := dbOrm.Begin()
 	now:=time.Now().Unix()
 	post:=Post{
 		UserId:     userId,
@@ -121,10 +128,9 @@ func InsertPost(userId int64,topic string,content string) (int64,error){
 		ReplyNum:   0,
 		Status:     0,
 	}
-	_,err:=session.InsertOne(&post)
-	if err!=nil{
+	if err:=session.Create(&post).Error;err!=nil{
 		session.Rollback()
-		return 0,err
+		return 0,status.Error(codes.Internal,err.Error())
 	}
 	comment:=Comment{
 		UserId:     userId,
@@ -134,33 +140,27 @@ func InsertPost(userId int64,topic string,content string) (int64,error){
 		Status:     0,
 		Floor:		1,
 	}
-	_,err=session.InsertOne(&comment)
-	if err!=nil{
+	if err:=session.Create(&comment).Error;err!=nil{
 		session.Rollback()
-		return 0,err
+		return 0,status.Error(codes.Internal,err.Error())
 	}
-	go increasePostReplyNum(post.Id)
+	
 	session.Commit()
+	go increasePostReplyNum(post.Id)
 	return post.Id,nil
 }
 
 
 func InsertComment(userId int64,postId int64,content string) (int64,error){
-	session := dbEngine.NewSession()
-	defer session.Close()
-	// add Begin() before any action
-	if err := session.Begin(); err != nil {
-		// if returned then will rollback automatically
-		return 0,err
-	}
+	session := dbOrm.Begin()
 	//先获取楼层数
+	var floor int64
 	sql:="SELECT count(*) AS total FROM comment WHERE post_id=? FOR UPDATE"
-	results,err:=session.Query(sql,postId)
-	floor,err:=strconv.Atoi(string(results[0]["total"]))
-	if err!=nil{
+	if err:=session.Raw(sql,postId).Scan(&floor).Error;err!=nil{
 		session.Rollback()
-		return 0, err
+		return 0,status.Error(codes.Internal,err.Error())
 	}
+
 	now:=time.Now().Unix()
 	comment:=Comment{
 		UserId:     userId,
@@ -168,34 +168,28 @@ func InsertComment(userId int64,postId int64,content string) (int64,error){
 		Content:    content,
 		CreateTime: now,
 		Status:     0,
-		Floor:int32(floor+1),
+		Floor:		floor+1,
 	}
-	_,err=session.InsertOne(&comment)
-	if err!=nil{
+	if err:=session.Create(&comment).Error;err!=nil{
 		session.Rollback()
-		return 0,err
+		return 0,status.Error(codes.Internal,err.Error())
 	}
-	go increasePostReplyNum(postId)
+
 	session.Commit()
+	go increasePostReplyNum(postId)
 	return comment.Id,nil
 }
 
 func InsertReply(userId,postId,commentId,parentId int64,content string) (int64,error){
-	session := dbEngine.NewSession()
-	defer session.Close()
-	// add Begin() before any action
-	if err := session.Begin(); err != nil {
-		// if returned then will rollback automatically
-		return 0,err
-	}
+	session := dbOrm.Begin()
 	//先获取楼层数
+	var floor int64
 	sql:="SELECT count(*) AS total FROM reply WHERE comment_id=? FOR UPDATE"
-	results,err:=session.Query(sql,commentId)
-	floor,err:=strconv.Atoi(string(results[0]["total"]))
-	if err!=nil{
+	if err:=session.Raw(sql,commentId).Scan(&floor).Error;err!=nil{
 		session.Rollback()
-		return 0, err
+		return 0,status.Error(codes.Internal,err.Error())
 	}
+
 	now:=time.Now().Unix()
 	reply:=Reply{
 		UserId:userId,
@@ -205,327 +199,322 @@ func InsertReply(userId,postId,commentId,parentId int64,content string) (int64,e
 		CommentId:commentId,
 		CreateTime:now,
 		Status:0,
-		Floor:int32(floor+1),
+		Floor:floor+1,
 	}
-	_,err=session.InsertOne(&reply)
-	if err!=nil{
+	if err:=session.Create(&reply).Error;err!=nil{
 		session.Rollback()
-		return 0, err
+		return 0,status.Error(codes.Internal,err.Error())
 	}
-	go increasePostReplyNum(postId)
+	
 	session.Commit()
+	go increasePostReplyNum(postId)
 	return reply.Id,nil
 }
 
 //帖子回复数+1
 func increasePostReplyNum(postId int64){
 	sql:="UPDATE post SET reply_num=reply_num+1,last_update=UNIX_TIMESTAMP() WHERE id=?"
-	dbEngine.Exec(sql,postId)
+	dbOrm.Exec(sql,postId)
 }
 
 func decreasePostReplyNum(postId int64){
 	sql:="UPDATE post SET reply_num=reply_num-1 WHERE id=?"
-	dbEngine.Exec(sql,postId)
+	dbOrm.Exec(sql,postId)
 }
 
 func DeletePost(postId int64) error{
 	sql:="UPDATE post SET status=0 WHERE id=?"
-	_,err:=dbEngine.Exec(sql,postId)
-	if err==nil{
-		go decreasePostReplyNum(postId)
-	}
-	return err
+	err:=dbOrm.Exec(sql,postId).Error
+	return status.Error(codes.Internal,err.Error())
 }
 
-func DeleteComment(commentId int64) error{
+func DeleteComment(commentId int64) (err error){
 	sql:="UPDATE comment SET status=0 WHERE id=?"
-	_,err:=dbEngine.Exec(sql,commentId)
+	err=dbOrm.Exec(sql,commentId).Error
 	if err==nil{
 		go func() {
+			var postId int64
 			sql="SELECT post_id FROM comment WHERE id=?"
-			results,_:=dbEngine.Query(sql,commentId)
-			postId,_:=strconv.ParseInt(string(results[0]["post_id"]),10,64)
-			go decreasePostReplyNum(postId)
+			if err=dbOrm.Raw(sql,commentId).Scan(&postId).Error;err==nil{
+				go decreasePostReplyNum(postId)
+			}
 		}()
 	}
 	return err
 }
 
-func DeleteReply(replyId int64) error{
+func DeleteReply(replyId int64) (err error){
 	sql:="UPDATE reply SET status=0 WHERE id=?"
-	_,err:=dbEngine.Exec(sql,replyId)
+	err=dbOrm.Exec(sql,replyId).Error
 	if err==nil{
 		go func() {
+			var postId int64
 			sql="SELECT post_id FROM reply WHERE id=?"
-			results,_:=dbEngine.Query(sql,replyId)
-			postId,_:=strconv.ParseInt(string(results[0]["post_id"]),10,64)
-			go decreasePostReplyNum(postId)
+			if err=dbOrm.Raw(sql,replyId).Scan(&postId).Error;err==nil{
+				go decreasePostReplyNum(postId)
+			}
 		}()
 	}
 	return err
 }
 
-func GetPost(post *Post) (bool,error){
-	has,err:=dbEngine.Get(post)
-	if err!=nil{
-		return false, err
+func GetPost(postId int64) (*Post,error){
+	var post Post
+	if err:=dbOrm.First(&post,postId).Error;err!=nil{
+		return nil, status.Error(codes.Internal,err.Error())
 	}
-	return has,nil
+	return &post,nil
 }
 
-func GetPosts(page int,pageSize int) ([]*Post,error){
-	var posts []*Post
-	err:=dbEngine.Where("status = ?",0).Desc("last_update").Limit(pageSize,page).Find(&posts)
-	return posts,err
-}
 
-func GetPostsCount() (int64,error){
-	post:=new(Post)
-	return dbEngine.Where("status = ?",0).Count(post)
-}
-
-func GetComment(comment *Comment) (bool,error){
-	has,err:=dbEngine.Get(comment)
-	if err!=nil{
-		return false, err
+func GetPosts(page int64,pageSize int64) ([]*Post,int64,error){
+	var (
+		posts []*Post
+		totalCount int64
+	)
+	if err:=dbOrm.Raw("select count(*) from post where status=0").Scan(&totalCount).Error;err!=nil{
+		return nil, 0,status.Error(codes.Internal,err.Error())
 	}
-	return has,nil
-}
-
-func GetCommentsByPostId(postId int64,page int,pageSize int) ([]*Comment,error){
-	var comments []*Comment
-	err:=dbEngine.Where("post_id=?",postId).Limit(pageSize,page).Find(&comments)
-	return comments,err
-}
-
-func GetCommentsCountByPostId(postId int64) (int64,error){
-	comment:=&Comment{}
-	return dbEngine.Where("post_id=?",postId).Count(comment)
-}
-
-func GetRepliesCountByPostId(postId int64) (int64,error){
-	reply:=&Reply{}
-	return dbEngine.Where("post_id=?",postId).Count(reply)
-}
-
-func GetRepliesCountByCommentId(commentId int64) (int64,error){
-	reply:=&Reply{}
-	return dbEngine.Where("comment_id=?",commentId).Count(reply)
-}
-
-func GetRepliesByCommentId(commentId int64,page int,pageSize int) ([]*Reply,error){
-	var replies []*Reply
-	err:=dbEngine.Where("comment_id=?",commentId).Limit(pageSize,page).Find(&replies)
-	return replies,err
-}
-
-func GetReply(reply *Reply) (bool,error){
-	has,err:=dbEngine.Get(reply)
-	if err!=nil{
-		return false, status.Error(codes.Internal,err.Error())
+	if err:=dbOrm.Where("status=?",0).Offset(pageSize*(page-1)).Limit(pageSize).Order("last_update desc").Error;err!=nil{
+		return nil, 0,status.Error(codes.Internal,err.Error())
 	}
-	return has,nil
+	return posts,totalCount,nil
+}
+
+func GetComment(commentId int64) (*Comment,error){
+	var comment Comment
+	if err:=dbOrm.First(&comment,commentId).Error;err!=nil{
+		return nil, status.Error(codes.Internal,err.Error())
+	}
+	return &comment,nil
+}
+
+func GetCommentsByPostId(postId int64,page int64,pageSize int64) ([]*Comment,int64,error){
+	var (
+		comments []*Comment
+		totalCount int64
+		tmp []*Comment
+	)
+	if err:=dbOrm.Where("post_id=?",postId).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize*(page-1)).Find(&comments).Error;err!=nil{
+		return nil,0,status.Error(codes.Internal,err.Error())
+	}
+	return comments,totalCount,nil
+}
+
+func GetRepliesByCommentId(commentId int64,page int64,pageSize int64) ([]*Reply,int64,error){
+	var (
+		replies []*Reply
+		totalCount int64
+		tmp []*Reply
+	)
+	if err:=dbOrm.Where("comment_id=?",commentId).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize*(page-1)).Find(&replies).Error;err!=nil{
+		return nil,0,status.Error(codes.Internal,err.Error())
+	}
+	return replies,totalCount,nil
+}
+
+func GetReply(replyId int64) (*Reply,error){
+	var reply Reply
+	if err:=dbOrm.First(&reply,replyId).Error;err!=nil{
+		return nil, status.Error(codes.Internal,err.Error())
+	}
+	return &reply,nil
 }
 
 //通过id获取user,id为post_id,comment_id,reply_id
-func GetUsersByIds(ids []int64,idType int) ([]*User,error){
-	var sql string
-	var orderField []string
-	for _,v:=range ids{
-		orderField=append(orderField,strconv.FormatInt(v,10))
-	}
-	switch idType {
-	case 0:
-		//post
-		sql=`SELECT 
-				t1.id,t1.name,t1.avatar,t1.status,t1.score,t1.role,t1.banned_reason 
-			FROM user t1 
-			LEFT JOIN post t2 
-				ON t2.user_id=t1.id 
-			WHERE t2.id IN (?) ORDER BY FIELD(t2.id,?)
-		`
-	case 1:
-		//comment
-		sql=`SELECT 
-				t1.id,t1.name,t1.avatar,t1.status,t1.score,t1.role,t1.banned_reason 
-			FROM user t1 
-			LEFT JOIN comment t2 
-				ON t2.user_id=t1.id 
-			WHERE t2.id IN (?) ORDER BY FIELD(t2.id,?)
-		`
-	case 2:
-		//reply
-		sql=`SELECT 
-				t1.id,t1.name,t1.avatar,t1.status,t1.score,t1.role,t1.banned_reason 
-			FROM user t1 
-			LEFT JOIN reply t2 
-				ON t2.user_id=t1.id 
-			WHERE t2.id IN (?) ORDER BY FIELD(t2.id,?)
-		`
-	}
-	results,err:=dbEngine.Query(sql,ids,strings.Join(orderField,","))
-	if err!=nil{
-		return nil, status.Error(codes.Internal,err.Error())
-	}
-	//排序
-	var users []*User
-	j,l:=0,len(results)
-	for _,v:=range ids{
-		var u *User
-		if j+1>l{
-			users=append(users,u)
-			continue
-		}
-		if BytesToInt64(results[j]["id"])==v{
-			err:=mapstructure.Decode(v,u)
-			if err!=nil{
-				return nil, status.Error(codes.Internal,err.Error())
-			}
-			j++
-		}
-		users=append(users,u)
-	}
-	return users, nil
-}
+//func GetUsersByIds(ids []int64,idType int) ([]*User,error){
+//	var sql string
+//	var orderField []string
+//	for _,v:=range ids{
+//		orderField=append(orderField,strconv.FormatInt(v,10))
+//	}
+//	switch idType {
+//	case 0:
+//		//post
+//		sql=`SELECT 
+//				t1.id,t1.name,t1.avatar,t1.status,t1.score,t1.role,t1.banned_reason 
+//			FROM user t1 
+//			LEFT JOIN post t2 
+//				ON t2.user_id=t1.id 
+//			WHERE t2.id IN (?) ORDER BY FIELD(t2.id,?)
+//		`
+//	case 1:
+//		//comment
+//		sql=`SELECT 
+//				t1.id,t1.name,t1.avatar,t1.status,t1.score,t1.role,t1.banned_reason 
+//			FROM user t1 
+//			LEFT JOIN comment t2 
+//				ON t2.user_id=t1.id 
+//			WHERE t2.id IN (?) ORDER BY FIELD(t2.id,?)
+//		`
+//	case 2:
+//		//reply
+//		sql=`SELECT 
+//				t1.id,t1.name,t1.avatar,t1.status,t1.score,t1.role,t1.banned_reason 
+//			FROM user t1 
+//			LEFT JOIN reply t2 
+//				ON t2.user_id=t1.id 
+//			WHERE t2.id IN (?) ORDER BY FIELD(t2.id,?)
+//		`
+//	}
+//	results,err:=dbEngine.Query(sql,ids,strings.Join(orderField,","))
+//	if err!=nil{
+//		return nil, status.Error(codes.Internal,err.Error())
+//	}
+//	//排序
+//	var users []*User
+//	j,l:=0,len(results)
+//	for _,v:=range ids{
+//		var u *User
+//		if j+1>l{
+//			users=append(users,u)
+//			continue
+//		}
+//		if BytesToInt64(results[j]["id"])==v{
+//			err:=mapstructure.Decode(v,u)
+//			if err!=nil{
+//				return nil, status.Error(codes.Internal,err.Error())
+//			}
+//			j++
+//		}
+//		users=append(users,u)
+//	}
+//	return users, nil
+//}
 
 //通过comment_ids获取reply
 /*
 	ids: comment_id list
 	limit: 返回每个comment下的前limit个reply,order by create_time asc
  */
-func GetRepliesByCommentIds(ids []int64,limit int) ([][]*Reply,error){
-	if limit<=0 || limit>10{
-		return nil, status.Error(codes.Internal,"query reply_by_comment limit can not be <0 or >10")
-	}
-	var sql string
-	var orderField []string
-	for _,v:=range ids{
-		orderField=append(orderField,strconv.FormatInt(v,10))
-	}
-	sql=`
-		SELECT 
-			t1.id,
-			t1.user_id,
-			t1.content,
-			t1.parent_id,
-			t1.create_time,
-			t1.floor,
-			t1.status 
-		FROM 
-			reply t1 
-			LEFT JOIN reply t2 ON t1.comment_id=t2.comment_id 
-			AND t1.create_time > t2.create_time 
-		WHERE 
-			t1.comment_id IN (?) AND t1.status=0 
-		ORDER BY 
-			t1.id,
-			t1.comment_id 
-		HAVING 
-			COUNT(t2.id) < ? 
-		ORDER BY FIELD(t1.comment_id,?)
-	`
-	results,err:=dbEngine.Query(sql,ids,limit,strings.Join(orderField,","))
-	if err!=nil{
-		return nil, status.Error(codes.Internal,err.Error())
-	}
-	//排序
-	var replies [][]*Reply
-	j,l:=0,len(results)
-	for _,v:=range ids{
-		var temp []*Reply
-		
-		for i:=0;i<limit;i++{
-			var r *Reply
-			if j+1>l{
-				temp=append(temp,r)
-				continue
-			}
-			if BytesToInt64(results[j]["id"])==v{
-				err:=mapstructure.Decode(results[j],r)
-				if err!=nil{
-					return nil, status.Error(codes.Internal,err.Error())
-				}
-				j++
-			}
-			temp=append(temp,r)
-		}
-		replies=append(replies,temp)
-	}
-	return replies, nil
-}
+//func GetRepliesByCommentIds(ids []int64,limit int) ([][]*Reply,error){
+//	if limit<=0 || limit>10{
+//		return nil, status.Error(codes.Internal,"query reply_by_comment limit can not be <0 or >10")
+//	}
+//	var sql string
+//	var orderField []string
+//	for _,v:=range ids{
+//		orderField=append(orderField,strconv.FormatInt(v,10))
+//	}
+//	sql=`
+//		SELECT 
+//			t1.id,
+//			t1.user_id,
+//			t1.content,
+//			t1.parent_id,
+//			t1.create_time,
+//			t1.floor,
+//			t1.status 
+//		FROM 
+//			reply t1 
+//			LEFT JOIN reply t2 ON t1.comment_id=t2.comment_id 
+//			AND t1.create_time > t2.create_time 
+//		WHERE 
+//			t1.comment_id IN (?) AND t1.status=0 
+//		ORDER BY 
+//			t1.id,
+//			t1.comment_id 
+//		HAVING 
+//			COUNT(t2.id) < ? 
+//		ORDER BY FIELD(t1.comment_id,?)
+//	`
+//	results,err:=dbEngine.Query(sql,ids,limit,strings.Join(orderField,","))
+//	if err!=nil{
+//		return nil, status.Error(codes.Internal,err.Error())
+//	}
+//	//排序
+//	var replies [][]*Reply
+//	j,l:=0,len(results)
+//	for _,v:=range ids{
+//		var temp []*Reply
+//		
+//		for i:=0;i<limit;i++{
+//			var r *Reply
+//			if j+1>l{
+//				temp=append(temp,r)
+//				continue
+//			}
+//			if BytesToInt64(results[j]["id"])==v{
+//				err:=mapstructure.Decode(results[j],r)
+//				if err!=nil{
+//					return nil, status.Error(codes.Internal,err.Error())
+//				}
+//				j++
+//			}
+//			temp=append(temp,r)
+//		}
+//		replies=append(replies,temp)
+//	}
+//	return replies, nil
+//}
 
 //通过post_ids获取comment
 /*
 	ids: post_id list
 	limit: 返回每个post下的前limit个comment,order by create_time asc
 */
-func GetCommentsByPostIds(ids []int64,limit int) ([][]*Comment,error){
-	if limit<=0 || limit>10{
-		return nil, status.Error(codes.Internal,"get comment_by_post limit can not be <0 or >10")
-	}
-	var sql string
-	var orderField []string
-	for _,v:=range ids{
-		orderField=append(orderField,strconv.FormatInt(v,10))
-	}
-	sql=`
-		SELECT 
-			t1.id,
-			t1.user_id,
-			t1.content,
-			t1.create_time,
-			t1.floor,
-			t1.status 
-		FROM 
-			comment t1 
-			LEFT JOIN comment t2 ON t1.post_id=t2.post_id 
-			AND t1.create_time > t2.create_time 
-		WHERE 
-			t1.post_id IN (?) AND t1.status=0 
-		ORDER BY 
-			t1.id,
-			t1.post_id 
-		HAVING 
-			COUNT(t2.id) < ? 
-		ORDER BY FIELD(t1.post_id,?)
-	`
-	results,err:=dbEngine.Query(sql,ids,limit,strings.Join(orderField,","))
-	if err!=nil{
-		return nil, status.Error(codes.Internal,err.Error())
-	}
-	//排序
-	var comments [][]*Comment
-	j,l:=0,len(results)
-	for _,v:=range ids{
-		var temp []*Comment
-
-		for i:=0;i<limit;i++{
-			var r *Comment
-			if j+1>l{
-				temp=append(temp,r)
-				continue
-			}
-			if BytesToInt64(results[j]["id"])==v{
-				err:=mapstructure.Decode(results[j],r)
-				if err!=nil{
-					return nil, status.Error(codes.Internal,err.Error())
-				}
-				j++
-			}
-			temp=append(temp,r)
-		}
-		comments=append(comments,temp)
-	}
-	return comments, nil
-}
+//func GetCommentsByPostIds(ids []int64,limit int) ([][]*Comment,error){
+//	if limit<=0 || limit>10{
+//		return nil, status.Error(codes.Internal,"get comment_by_post limit can not be <0 or >10")
+//	}
+//	var sql string
+//	var orderField []string
+//	for _,v:=range ids{
+//		orderField=append(orderField,strconv.FormatInt(v,10))
+//	}
+//	sql=`
+//		SELECT 
+//			t1.id,
+//			t1.user_id,
+//			t1.content,
+//			t1.create_time,
+//			t1.floor,
+//			t1.status 
+//		FROM 
+//			comment t1 
+//			LEFT JOIN comment t2 ON t1.post_id=t2.post_id 
+//			AND t1.create_time > t2.create_time 
+//		WHERE 
+//			t1.post_id IN (?) AND t1.status=0 
+//		ORDER BY 
+//			t1.id,
+//			t1.post_id 
+//		HAVING 
+//			COUNT(t2.id) < ? 
+//		ORDER BY FIELD(t1.post_id,?)
+//	`
+//	results,err:=dbEngine.Query(sql,ids,limit,strings.Join(orderField,","))
+//	if err!=nil{
+//		return nil, status.Error(codes.Internal,err.Error())
+//	}
+//	//排序
+//	var comments [][]*Comment
+//	j,l:=0,len(results)
+//	for _,v:=range ids{
+//		var temp []*Comment
+//
+//		for i:=0;i<limit;i++{
+//			var r *Comment
+//			if j+1>l{
+//				temp=append(temp,r)
+//				continue
+//			}
+//			if BytesToInt64(results[j]["id"])==v{
+//				err:=mapstructure.Decode(results[j],r)
+//				if err!=nil{
+//					return nil, status.Error(codes.Internal,err.Error())
+//				}
+//				j++
+//			}
+//			temp=append(temp,r)
+//		}
+//		comments=append(comments,temp)
+//	}
+//	return comments, nil
+//}
 
 func GetUsers(ids []int64) ([]*User,error){
-	var sql string
-	var orderField []string
-	for _,v:=range ids{
-		orderField=append(orderField,strconv.FormatInt(v,10))
-	}
-	sql=`
+	sql:=`
 		SELECT 
 			id,
 			name,
@@ -541,8 +530,8 @@ func GetUsers(ids []int64) ([]*User,error){
 			id IN (?) 
 		ORDER BY FIELD(id,?)
 	`
-	results,err:=dbEngine.Query(sql,strings.Join(orderField,","),strings.Join(orderField,","))
-	if err!=nil{
+	var results []*User
+	if err:=dbOrm.Raw(sql,ids,ids).Scan(&results).Error;err!=nil{
 		return nil, status.Error(codes.Internal,err.Error())
 	}
 	//排序
@@ -554,54 +543,50 @@ func GetUsers(ids []int64) ([]*User,error){
 			users=append(users,u)
 			continue
 		}
-		if BytesToInt64(results[j]["id"])==v{
-			u.Id=BytesToInt64(results[j]["id"])
-			u.Name=string(results[j]["name"])
-			u.Avatar=string(results[j]["avatar"])
-			//u.Status=BytesToInt32(results[j]["status"])
-			u.Score=BytesToInt32(results[j]["score"])
-			u.BannedReason=string(results[j]["banned_reason"])
-			u.CreateTime=BytesToInt64(results[j]["create_time"])
-			u.LastUpdate=BytesToInt64(results[j]["last_update"])
-			u.Role=BytesToInt32(results[j]["role"])
+		if results[j].Id==v{
+			users=append(users,results[j])
 			j++
+			continue
 		}
 		users=append(users,u)
 	}
 	return users, nil
 }
 
-func GetPostsByUserId(userId int64,offset int,limit int) ([]*Post,error){
-	var posts []*Post
-	err:=dbEngine.Where("user_id=?",userId).Desc("create_time").Limit(limit,offset).Find(&posts)
-	return posts,err
+func GetPostsByUserId(userId int64,page int64,pageSize int64) ([]*Post,int64,error){
+	var (
+		posts []*Post
+		totalCount int64
+		tmp []*Post
+	)
+	if err:=dbOrm.Where("user_id=?",userId).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize*(page-1)).Order("create_time desc").Find(&posts).Error;err!=nil{
+		return nil,0,status.Error(codes.Internal,err.Error())
+	}
+	return posts,totalCount,nil
 }
 
-func GetPostsCountByUserId(userId int64) (int64,error){
-	post:=new(Post)
-	return dbEngine.Where("user_id=?",userId).Count(post)
+func GetCommentsByUserId(userId int64,page int64,pageSize int64) ([]*Comment,int64,error){
+	var (
+		comments []*Comment
+		totalCount int64
+		tmp []*Comment
+	)
+	if err:=dbOrm.Where("user_id=?",userId).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize*(page-1)).Order("create_time desc").Find(&comments).Error;err!=nil{
+		return nil,0,status.Error(codes.Internal,err.Error())
+	}
+	return comments,totalCount,nil
 }
 
-func GetCommentsByUserId(userId int64,offset int,limit int) ([]*Comment,error){
-	var comments []*Comment
-	err:=dbEngine.Where("user_id=?",userId).Desc("create_time").Limit(limit,offset).Find(&comments)
-	return comments,err
-}
-
-func GetCommentsCountByUserId(userId int64) (int64,error){
-	comment:=new(Comment)
-	return dbEngine.Where("user_id=?",userId).Count(comment)
-}
-
-func GetRepliesByUserId(userId int64,offset int,limit int) ([]*Reply,error){
-	var replies []*Reply
-	err:=dbEngine.Where("user_id=?",userId).Desc("create_time").Limit(limit,offset).Find(&replies)
-	return replies,err
-}
-
-func GetRepliesCountByUserId(userId int64) (int64,error){
-	replies:=new(Reply)
-	return dbEngine.Where("user_id=?",userId).Count(replies)
+func GetRepliesByUserId(userId int64,page int64,pageSize int64) ([]*Reply,int64,error){
+	var (
+		replies []*Reply
+		totalCount int64
+		tmp []*Reply
+	)
+	if err:=dbOrm.Where("user_id=?",userId).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize*(page-1)).Order("create_time desc").Find(&replies).Error;err!=nil{
+		return nil,0,status.Error(codes.Internal,err.Error())
+	}
+	return replies,totalCount,nil
 }
 
 //ip地址int->string相互转换

@@ -30,13 +30,11 @@ type DeletePost struct {
 }
 
 type EditUser struct {
-	ID       int         `json:"id"`
 	Name     *string     `json:"name"`
 	Password *string     `json:"password"`
 	Avatar   *string     `json:"avatar"`
 	Status   *UserStatus `json:"status"`
 	Role     *UserRole   `json:"role"`
-	Score    *int        `json:"score"`
 }
 
 type NewComment struct {

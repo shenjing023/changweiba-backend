@@ -42,13 +42,11 @@ input NewUser{
 }
 
 input EditUser{
-    id: Int!
     name: String
     password: String
     avatar: String
     status: UserStatus
     role: UserRole
-    score: Int
 }
 
 input ReportUser{
