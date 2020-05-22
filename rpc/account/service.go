@@ -23,7 +23,7 @@ import (
 
 const (
 	ServiceError ="account service system error"
-	UserNotFund="user can not fund"
+	UserNotFound="user can not found"
 )
 
 type User struct {

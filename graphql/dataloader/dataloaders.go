@@ -6,7 +6,7 @@ package dataloader
 
 import (
 	"changweiba-backend/graphql/models"
-	"changweiba-backend/graphql/user"
+	"changweiba-backend/graphql/service"
 	"context"
 	"github.com/gin-gonic/gin"
 	"time"
@@ -34,7 +34,7 @@ func LoaderMiddleware() gin.HandlerFunc{
 func userLoaderFunc (keys []int64,params interface{}) ([]*models.User,[]error){
 	//rpc调用
 	ctx:=context.Background()
-	users,err:=user.GetUsers(ctx,keys)
+	users,err:= service.GetUsers(ctx,keys)
 	var errs []error
 	if err!=nil{
 		for i:=0;i<len(keys);i++{

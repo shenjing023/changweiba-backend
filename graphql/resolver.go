@@ -7,9 +7,8 @@ import (
 	"changweiba-backend/graphql/dataloader"
 	"changweiba-backend/graphql/generated"
 	"changweiba-backend/graphql/models"
-	"changweiba-backend/graphql/post"
 	"changweiba-backend/graphql/rpc_conn"
-	"changweiba-backend/graphql/user"
+	"changweiba-backend/graphql/service"
 	"context"
 	"fmt"
 ) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
@@ -27,7 +26,7 @@ type Resolver struct{}
 func (r *Resolver) Mutation() generated.MutationResolver {
 	return &mutationResolver{
 		Resolver:r,
-		myUserResolver:&user.MyUserResolver{},
+		myUserResolver:&service.MyUserResolver{},
 	}
 }
 func (r *Resolver) Query() generated.QueryResolver {
@@ -39,7 +38,7 @@ func (r *Resolver) Query() generated.QueryResolver {
 func (r *Resolver) User() generated.UserResolver {
 	return &userResolver{
 		Resolver:r,
-		myPostResolver:&post.MyPostResolver{},
+		myPostResolver:&service.MyPostResolver{},
 	}
 }
 
@@ -57,17 +56,17 @@ func (r *Resolver) Reply() generated.ReplyResolver {
 
 type mutationResolver struct{
 	*Resolver
-	myUserResolver *user.MyUserResolver
+	myUserResolver *service.MyUserResolver
 }
 
 func (r *mutationResolver) RegisterUser(ctx context.Context, input models.NewUser) (string, error) {
 	//if _,err:=common.GinContextFromContext(ctx);err!=nil{
 	//	return "", err
 	//}
-	return user.RegisterUser(ctx,input)
+	return service.RegisterUser(ctx,input)
 }
 func (r *mutationResolver) LoginUser(ctx context.Context, input models.NewUser) (string, error) {
-	return user.LoginUser(ctx,input)
+	return service.LoginUser(ctx,input)
 }
 func (r *mutationResolver) EditUser(ctx context.Context, input models.EditUser) (string, error) {
 	panic("not implemented")
@@ -76,24 +75,24 @@ func (r *mutationResolver) ReportUser(ctx context.Context, input models.ReportUs
 	panic("not implemented")
 }
 func (r *mutationResolver) NewPost(ctx context.Context, input models.NewPost) (int, error) {
-	return post.NewPost(ctx,input)
+	return service.NewPost(ctx,input)
 }
 func (r *mutationResolver) NewComment(ctx context.Context, input models.NewComment) (int, error) {
-	return post.NewComment(ctx,input)
+	return service.NewComment(ctx,input)
 }
 func (r *mutationResolver) NewReply(ctx context.Context, input models.NewReply) (int, error) {
-	return post.NewReply(ctx,input)
+	return service.NewReply(ctx,input)
 }
 func (r *mutationResolver) DeletePost(ctx context.Context, input int) (bool, error) {
-	return post.DeletePost(ctx,input)
+	return service.DeletePost(ctx,input)
 }
 
 func (r *mutationResolver) DeleteComment(ctx context.Context, input int) (bool, error) {
-	return post.DeleteComment(ctx,input)
+	return service.DeleteComment(ctx,input)
 }
 
 func (r *mutationResolver) DeleteReply(ctx context.Context, input int) (bool, error) {
-	return post.DeleteReply(ctx,input)
+	return service.DeleteReply(ctx,input)
 }
 
 type queryResolver struct{
@@ -101,48 +100,48 @@ type queryResolver struct{
 }
 
 func (r *queryResolver) User(ctx context.Context, userID int) (*models.User, error) {
-	return user.GetUser(ctx,userID)
+	return service.GetUser(ctx,userID)
 }
 
 func (r *queryResolver) Post(ctx context.Context, postID int) (*models.Post, error){
-	return post.GetPost(ctx,postID)
+	return service.GetPost(ctx,postID)
 }
 
 func (r *queryResolver) Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error){
-	return post.GetPosts(ctx,page,pageSize)
+	return service.GetPosts(ctx,page,pageSize)
 }
 
 func (r *queryResolver) Comment(ctx context.Context, commentID int) (*models.Comment, error){
-	return post.GetCommentById(ctx,commentID)
+	return service.GetCommentById(ctx,commentID)
 }
 
 func (r *queryResolver) Comments(ctx context.Context, postId int,page int,pageSize int) (*models.CommentConnection, error){
-	return post.GetCommentsByPostId(ctx,postId,page,pageSize)
+	return service.GetCommentsByPostId(ctx,postId,page,pageSize)
 }
 
 func (r *queryResolver) Reply(ctx context.Context, replyID int) (*models.Reply, error){
-	return post.GetReplyById(ctx,replyID)
+	return service.GetReplyById(ctx,replyID)
 }
 
 func (r *queryResolver) Replies(ctx context.Context, commentID int,page int,pageSize int) (*models.ReplyConnection, error){
-	return post.GetRepliesByCommentId(ctx,commentID,page,pageSize)
+	return service.GetRepliesByCommentId(ctx,commentID,page,pageSize)
 }
 
 type userResolver struct {
 	*Resolver
-	myPostResolver *post.MyPostResolver
+	myPostResolver *service.MyPostResolver
 }
 
 func (r *userResolver) Posts(ctx context.Context, obj *models.User, page int, pageSize int) (*models.PostConnection, error) {
-	return post.GetPostsByUserId(ctx,obj.ID,page,pageSize)
+	return service.GetPostsByUserId(ctx,obj.ID,page,pageSize)
 }
 
 func (r *userResolver) Comments(ctx context.Context, obj *models.User, page int, pageSize int) (*models.CommentConnection, error){
-	return post.GetCommentsByUserId(ctx,obj.ID,page,pageSize)
+	return service.GetCommentsByUserId(ctx,obj.ID,page,pageSize)
 }
 
 func (r *userResolver) Replies(ctx context.Context, obj *models.User, page int, pageSize int) (*models.ReplyConnection, error){
-	return post.GetRepliesByUserId(ctx,obj.ID,page,pageSize)
+	return service.GetRepliesByUserId(ctx,obj.ID,page,pageSize)
 }
 
 type postResolver struct {
@@ -151,7 +150,7 @@ type postResolver struct {
 
 func (r *postResolver) Comments(ctx context.Context, obj *models.Post, page int, pageSize int) (*models.CommentConnection, 
 	error) {
-	return post.GetCommentsByPostId(ctx,obj.ID,page,pageSize)
+	return service.GetCommentsByPostId(ctx,obj.ID,page,pageSize)
 }
 
 func (r *postResolver) User(ctx context.Context, obj *models.Post) (*models.User, error){
@@ -167,7 +166,7 @@ type commentResolver struct {
 }
 
 func (r *commentResolver) Replies(ctx context.Context, obj *models.Comment, page int,pageSize int) (*models.ReplyConnection, error){
-	return post.GetRepliesByCommentId(ctx,obj.ID,page,pageSize)
+	return service.GetRepliesByCommentId(ctx,obj.ID,page,pageSize)
 }
 
 func (r *commentResolver) User(ctx context.Context, obj *models.Comment) (*models.User, error){

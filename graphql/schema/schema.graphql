@@ -28,9 +28,9 @@ type Query {
 
 type Mutation{
     """用户注册"""
-    registerUser(input: NewUser!): String!
+    signUp(input: NewUser!): String!
     """登陆"""
-    loginUser(input: NewUser!): String!
+    signIn(input: NewUser!): String!
     editUser(input: EditUser!): ID!
     """举报用户"""
     reportUser(input: ReportUser!): Boolean!
