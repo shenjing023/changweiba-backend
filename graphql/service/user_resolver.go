@@ -5,19 +5,15 @@ import (
 	"changweiba-backend/conf"
 	"changweiba-backend/dao"
 	"changweiba-backend/graphql/models"
-	"changweiba-backend/graphql/rpc_conn"
 	"changweiba-backend/pkg/middleware"
-	pb "changweiba-backend/rpc/account/pb"
 	"context"
 	"encoding/base64"
 	"fmt"
 	"github.com/astaxie/beego/logs"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/scrypt"
-	"google.golang.org/grpc/codes"
 	"net"
 	"strings"
-	"time"
 )
 
 const (
@@ -36,7 +32,7 @@ func SignUp(ctx context.Context, input models.NewUser) (string, error) {
 	}
 	ip, _, err := net.SplitHostPort(strings.TrimSpace(gc.Request.RemoteAddr))
 	if err != nil {
-		logs.Error("get remote ip error:", err.Error())
+		logs.Error("get remote ip error: ", err)
 		return "", errors.New(AccountServiceError)
 	}
 	//client := pb.NewAccountClient(rpc_conn.AccountConn)
@@ -75,7 +71,12 @@ func SignUp(ctx context.Context, input models.NewUser) (string, error) {
 	id, err := dao.InsertUser(input.Name, password, ip, avatar)
 	if err != nil {
 		logs.Error("insert user error:", err)
-		return "", errors.New("error")
+		return "", common.ServiceErrorConvert(err, map[common.ErrorCode]string{
+			common.Unknown:         AccountServiceError,
+			common.AlreadyExists:   "改昵称已注册",
+			common.Internal:        AccountServiceError,
+			common.InvalidArgument: "昵称或密码不能为空",
+		})
 	}
 	//生成jwt
 	jwt := middleware.NewJWT(
@@ -84,83 +85,72 @@ func SignUp(ctx context.Context, input models.NewUser) (string, error) {
 	token, err := jwt.GenerateToken(id)
 	if err != nil {
 		logs.Error("generate jwt token error: ", err)
-		return "", err
+		return "", errors.New(AccountServiceError)
 	}
 	return token.AccessToken, nil
 }
 
-func LoginUser(ctx context.Context, input models.NewUser) (string, error) {
-	client := pb.NewAccountClient(rpc_conn.AccountConn)
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	pbRequest := pb.LoginRequest{
-		Name:     input.Name,
-		Password: input.Password,
-	}
-	r, err := client.Login(ctx, &pbRequest)
-	if err != nil {
-		logs.Error("call Login error:", err.Error())
-		return "", common.GRPCErrorConvert(err, map[codes.Code]string{
-			codes.InvalidArgument: AccountServiceError,
-		})
+func SignIn(ctx context.Context, input models.NewUser) (string, error) {
+	dbUser, exist := dao.CheckUserExist(input.Name)
+	if exist {
+		dbPassword := dbUser.Password
+		tmp, _ := encryptPassword(input.Password)
+		if dbPassword != tmp {
+			return "", errors.New("密码错误")
+		}
+	} else {
+		return "", errors.New("用户名错误")
 	}
 	//生成jwt
 	jwt := middleware.NewJWT(
 		middleware.SetSigningKey(conf.Cfg.SignKey),
 	)
-	token, err := jwt.GenerateToken(r.Id)
+	token, err := jwt.GenerateToken(dbUser.Id)
 	if err != nil {
-		logs.Error("generate jwt token error:", err.Error())
+		logs.Error("generate jwt token error:", err)
 		return "", errors.New(AccountServiceError)
 	}
 	return token.AccessToken, nil
 }
 
 func GetUser(ctx context.Context, userId int) (*models.User, error) {
-	client := pb.NewAccountClient(rpc_conn.AccountConn)
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	pbUser := pb.User{
-		Id: int64(userId),
-	}
-	r, err := client.GetUser(ctx, &pbUser)
+	dbUser, err := dao.GetUser(int64(userId))
 	if err != nil {
-		logs.Error("get user error:", err.Error())
-		return nil, err
+		logs.Error(fmt.Sprintf("get user[%d] error: ", userId), err)
+		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
+			common.NotFound: "该用户不存在",
+			common.Internal: AccountServiceError,
+		})
 	}
-	if r.Id == 0 {
-		//user id不存在
-		return nil, errors.New("用户不存在")
-	}
+
 	status_, role_ := models.UserStatusNormal, models.UserRoleNormal
-	if r.Status == 1 {
+	if dbUser.Status == 1 {
 		status_ = models.UserStatusBanned
 	}
-	if r.Role == 1 {
+	if dbUser.Role == 1 {
 		role_ = models.UserRoleAdmin
 	}
 	return &models.User{
-		ID:           int(r.Id),
-		Name:         r.Name,
-		Avatar:       r.Avatar,
+		ID:           int(dbUser.Id),
+		Name:         dbUser.Name,
+		Avatar:       dbUser.Avatar,
 		Status:       status_,
-		Score:        int(r.Score),
-		BannedReason: r.BannedReason,
+		Score:        int(dbUser.Score),
+		BannedReason: dbUser.BannedReason,
 		Role:         role_,
 	}, nil
 }
 
 func GetUsers(ctx context.Context, ids []int64) ([]*models.User, error) {
-	client := pb.NewAccountClient(rpc_conn.AccountConn)
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	r, err := client.GetUsersByUserIds(ctx, &pb.UsersByUserIdsRequest{Ids: ids})
+	dbUsers, err := dao.GetUsers(ids)
 	if err != nil {
-		logs.Error("get users by user_ids error:", err.Error())
-		return nil, err
+		logs.Error(fmt.Sprintf("get users[%v] error: ", ids), err)
+		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
+			common.Internal: AccountServiceError,
+		})
 	}
 	var users []*models.User
-	for _, v := range r.Users {
+	for _, v := range dbUsers {
 		status_, role_ := models.UserStatusNormal, models.UserRoleNormal
 		if v.Status == 1 {
 			status_ = models.UserStatusBanned

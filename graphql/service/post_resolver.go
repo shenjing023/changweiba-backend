@@ -2,14 +2,15 @@ package service
 
 import (
 	"changweiba-backend/common"
+	"changweiba-backend/dao"
 	"changweiba-backend/graphql/models"
 	"changweiba-backend/graphql/rpc_conn"
 	postpb "changweiba-backend/rpc/post/pb"
 	"context"
-	"errors"
 	"fmt"
 	"github.com/astaxie/beego/logs"
 	"github.com/micro/go-micro"
+	"github.com/pkg/errors"
 	"time"
 )
 
@@ -21,57 +22,63 @@ type MyPostResolver struct {
 }
 
 func GetPost(ctx context.Context, postId int) (*models.Post, error) {
-	service := micro.NewService(micro.Name("post.client"))
-	service.Init()
-	client := postpb.NewPostService("post", service.Client())
-	client.GetPost()
+	//service := micro.NewService(micro.Name("post.client"))
+	//service.Init()
+	//client := postpb.NewPostService("post", service.Client())
+	//client.GetPost()
 
-	client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	postRequest := postpb.PostRequest{
-		Id: int64(postId),
-	}
-	r, err := client.GetPost(ctx, &postRequest)
+	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
+	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	//defer cancel()
+	//postRequest := postpb.PostRequest{
+	//	Id: int64(postId),
+	//}
+	//r, err := client.GetPost(ctx, &postRequest)
+
+	dbPost, err := dao.GetPost(int64(postId))
 	if err != nil {
-		logs.Error("get post error:", err.Error())
-		return nil, err
-	}
-	if r.Post.Id == 0 {
-		//不存在
-		return nil, errors.New("post不存在")
+		logs.Error("get post error:", err)
+		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
+			common.NotFound: "该帖子不存在",
+			common.Internal: ServiceError,
+		})
 	}
 
 	return &models.Post{
-		ID: int(r.Post.Id),
+		ID: int(dbPost.Id),
 		User: &models.User{
-			ID: int(r.Post.UserId),
+			ID: int(dbPost.UserId),
 		},
-		Topic:    r.Post.Topic,
-		CreateAt: int(r.Post.CreateTime),
-		LastAt:   int(r.Post.LastUpdate),
-		ReplyNum: int(r.Post.ReplyNum),
-		Status:   models.Status(r.Post.Status),
+		Topic:    dbPost.Topic,
+		CreateAt: int(dbPost.CreateTime),
+		LastAt:   int(dbPost.LastUpdate),
+		ReplyNum: int(dbPost.ReplyNum),
+		Status:   models.Status(dbPost.Status),
 	}, nil
 }
 
 func GetCommentsByPostId(ctx context.Context, postId int, page int,
 	pageSize int) (*models.CommentConnection, error) {
-	client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	commentsRequest := postpb.CommentsRequest{
-		PostId: int64(postId),
-		Offset: int32(page),
-		Limit:  int32(pageSize),
-	}
-	r, err := client.GetCommentsByPostId(ctx, &commentsRequest)
+	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
+	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	//defer cancel()
+	//commentsRequest := postpb.CommentsRequest{
+	//	PostId: int64(postId),
+	//	Offset: int32(page),
+	//	Limit:  int32(pageSize),
+	//}
+	//r, err := client.GetCommentsByPostId(ctx, &commentsRequest)
+
+	dbComments, totalCount, err := dao.GetCommentsByPostId(int64(postId), int64(page), int64(pageSize))
 	if err != nil {
-		logs.Error("get comments error:", err.Error())
-		return nil, err
+		logs.Error("get comments error:", err)
+		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
+			common.Internal: ServiceError,
+			common.NotFound: "该帖子不存在",
+		})
 	}
 	var comments []*models.Comment
-	for _, v := range r.Comments {
+	for _, v := range dbComments {
 		comments = append(comments, &models.Comment{
 			ID: int(v.Id),
 			User: &models.User{
@@ -86,26 +93,31 @@ func GetCommentsByPostId(ctx context.Context, postId int, page int,
 	}
 	return &models.CommentConnection{
 		Nodes:      comments,
-		TotalCount: int(r.TotalCount),
+		TotalCount: int(totalCount),
 	}, nil
 }
 
 func GetRepliesByCommentId(ctx context.Context, commentId int, page int, pageSize int) (*models.ReplyConnection, error) {
-	client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	repliesRequest := postpb.RepliesRequest{
-		CommentId: int64(commentId),
-		Offset:    int32(page),
-		Limit:     int32(pageSize),
-	}
-	r, err := client.GetRepliesByCommentId(ctx, &repliesRequest)
+	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
+	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	//defer cancel()
+	//repliesRequest := postpb.RepliesRequest{
+	//	CommentId: int64(commentId),
+	//	Offset:    int32(page),
+	//	Limit:     int32(pageSize),
+	//}
+	//r, err := client.GetRepliesByCommentId(ctx, &repliesRequest)
+
+	dbReplies, totalCount, err := dao.GetRepliesByCommentId(int64(commentId), int64(page), int64(pageSize))
 	if err != nil {
 		logs.Error("get replies error:", err.Error())
-		return nil, err
+		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
+			common.Internal: ServiceError,
+			common.NotFound: "该评论不存在",
+		})
 	}
 	var replies []*models.Reply
-	for _, v := range r.Replies {
+	for _, v := range dbReplies {
 		replies = append(replies, &models.Reply{
 			ID: int(v.Id),
 			User: &models.User{
@@ -124,7 +136,7 @@ func GetRepliesByCommentId(ctx context.Context, commentId int, page int, pageSiz
 	}
 	return &models.ReplyConnection{
 		Nodes:      replies,
-		TotalCount: int(r.TotalCount),
+		TotalCount: int(totalCount),
 	}, nil
 }
 

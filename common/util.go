@@ -25,7 +25,18 @@ func GRPCErrorConvert(err error, conf map[codes.Code]string) error {
 }
 
 func ServiceErrorConvert(err error, conf map[ErrorCode]string) error {
-
+	de, ok := FromError(err)
+	if !ok {
+		return errors.New("system error")
+	}
+	var errMsg = de.Error()
+	for k, v := range conf {
+		if k == de.Code {
+			errMsg = v
+			break
+		}
+	}
+	return errors.New(errMsg)
 }
 
 func GinContextToContextMiddleware() gin.HandlerFunc {

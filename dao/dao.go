@@ -91,7 +91,10 @@ func InsertUser(userName, password, ip, avatar string) (int64, error) {
 func GetUser(userId int64) (*User, error) {
 	var user User
 	if err := dbOrm.First(&user, userId).Error; err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, common.NewDaoErr(common.NotFound, err)
+		}
+		return nil, common.NewDaoErr(common.Internal, err)
 	}
 	return &user, nil
 }
@@ -263,7 +266,10 @@ func DeleteReply(replyId int64) (err error) {
 func GetPost(postId int64) (*Post, error) {
 	var post Post
 	if err := dbOrm.First(&post, postId).Error; err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, common.NewDaoErr(common.NotFound, err)
+		}
+		return nil, common.NewDaoErr(common.Internal, errs)
 	}
 	return &post, nil
 }
@@ -297,7 +303,10 @@ func GetCommentsByPostId(postId int64, page int64, pageSize int64) ([]*Comment, 
 		tmp        []*Comment
 	)
 	if err := dbOrm.Where("post_id=?", postId).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize * (page - 1)).Find(&comments).Error; err != nil {
-		return nil, 0, status.Error(codes.Internal, err.Error())
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, 0, common.NewDaoErr(common.NotFound, err)
+		}
+		return nil, 0, common.NewDaoErr(common.Internal, err)
 	}
 	return comments, totalCount, nil
 }
@@ -309,7 +318,10 @@ func GetRepliesByCommentId(commentId int64, page int64, pageSize int64) ([]*Repl
 		tmp        []*Reply
 	)
 	if err := dbOrm.Where("comment_id=?", commentId).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize * (page - 1)).Find(&replies).Error; err != nil {
-		return nil, 0, status.Error(codes.Internal, err.Error())
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, 0, common.NewDaoErr(common.NotFound, err)
+		}
+		return nil, 0, common.NewDaoErr(common.Internal, err)
 	}
 	return replies, totalCount, nil
 }
@@ -533,9 +545,9 @@ func GetUsers(ids []int64) ([]*User, error) {
 	`
 	var results []*User
 	if err := dbOrm.Raw(sql, ids, ids).Scan(&results).Error; err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, common.NewDaoErr(common.Internal, err)
 	}
-	//排序
+	//可能有的id不存在,需要再排序
 	var users []*User
 	j, l := 0, len(results)
 	for _, v := range ids {
