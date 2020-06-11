@@ -291,7 +291,10 @@ func GetPosts(page int64, pageSize int64) ([]*Post, int64, error) {
 func GetComment(commentId int64) (*Comment, error) {
 	var comment Comment
 	if err := dbOrm.First(&comment, commentId).Error; err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, common.NewDaoErr(common.NotFound, err)
+		}
+		return nil, common.NewDaoErr(common.Internal, err)
 	}
 	return &comment, nil
 }
@@ -573,7 +576,10 @@ func GetPostsByUserId(userId int64, page int64, pageSize int64) ([]*Post, int64,
 		tmp        []*Post
 	)
 	if err := dbOrm.Where("user_id=?", userId).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize * (page - 1)).Order("create_time desc").Find(&posts).Error; err != nil {
-		return nil, 0, status.Error(codes.Internal, err.Error())
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, 0, common.NewDaoErr(common.NotFound, err)
+		}
+		return nil, 0, common.NewDaoErr(common.Internal, err)
 	}
 	return posts, totalCount, nil
 }
@@ -585,7 +591,10 @@ func GetCommentsByUserId(userId int64, page int64, pageSize int64) ([]*Comment, 
 		tmp        []*Comment
 	)
 	if err := dbOrm.Where("user_id=?", userId).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize * (page - 1)).Order("create_time desc").Find(&comments).Error; err != nil {
-		return nil, 0, status.Error(codes.Internal, err.Error())
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, 0, common.NewDaoErr(common.NotFound, err)
+		}
+		return nil, 0, common.NewDaoErr(common.Internal, err)
 	}
 	return comments, totalCount, nil
 }
