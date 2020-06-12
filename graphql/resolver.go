@@ -13,11 +13,11 @@ import (
 	"fmt"
 ) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
-func InitRPCConnection(){
+func InitRPCConnection() {
 	rpc_conn.InitRPCConnection()
 }
 
-func StopRPCConnection(){
+func StopRPCConnection() {
 	rpc_conn.StopRPCConnection()
 }
 
@@ -25,20 +25,20 @@ type Resolver struct{}
 
 func (r *Resolver) Mutation() generated.MutationResolver {
 	return &mutationResolver{
-		Resolver:r,
-		myUserResolver:&service.MyUserResolver{},
+		Resolver: r,
+		//myUserResolver: &service.MyUserResolver{},
 	}
 }
 func (r *Resolver) Query() generated.QueryResolver {
 	return &queryResolver{
-		Resolver:r,
+		Resolver: r,
 	}
 }
 
 func (r *Resolver) User() generated.UserResolver {
 	return &userResolver{
-		Resolver:r,
-		myPostResolver:&service.MyPostResolver{},
+		Resolver: r,
+		//		myPostResolver: &service.MyPostResolver{},
 	}
 }
 
@@ -54,19 +54,19 @@ func (r *Resolver) Reply() generated.ReplyResolver {
 	return &replyResolver{r}
 }
 
-type mutationResolver struct{
+type mutationResolver struct {
 	*Resolver
-	myUserResolver *service.MyUserResolver
+	//myUserResolver *service.MyUserResolver
 }
 
-func (r *mutationResolver) RegisterUser(ctx context.Context, input models.NewUser) (string, error) {
+func (r *mutationResolver) SignUp(ctx context.Context, input models.NewUser) (string, error) {
 	//if _,err:=common.GinContextFromContext(ctx);err!=nil{
 	//	return "", err
 	//}
-	return service.RegisterUser(ctx,input)
+	return service.SignUp(ctx, input)
 }
-func (r *mutationResolver) LoginUser(ctx context.Context, input models.NewUser) (string, error) {
-	return service.LoginUser(ctx,input)
+func (r *mutationResolver) SignIn(ctx context.Context, input models.NewUser) (string, error) {
+	return service.SignIn(ctx, input)
 }
 func (r *mutationResolver) EditUser(ctx context.Context, input models.EditUser) (string, error) {
 	panic("not implemented")
@@ -75,118 +75,118 @@ func (r *mutationResolver) ReportUser(ctx context.Context, input models.ReportUs
 	panic("not implemented")
 }
 func (r *mutationResolver) NewPost(ctx context.Context, input models.NewPost) (int, error) {
-	return service.NewPost(ctx,input)
+	return service.NewPost(ctx, input)
 }
 func (r *mutationResolver) NewComment(ctx context.Context, input models.NewComment) (int, error) {
-	return service.NewComment(ctx,input)
+	return service.NewComment(ctx, input)
 }
 func (r *mutationResolver) NewReply(ctx context.Context, input models.NewReply) (int, error) {
-	return service.NewReply(ctx,input)
+	return service.NewReply(ctx, input)
 }
 func (r *mutationResolver) DeletePost(ctx context.Context, input int) (bool, error) {
-	return service.DeletePost(ctx,input)
+	return service.DeletePost(ctx, input)
 }
 
 func (r *mutationResolver) DeleteComment(ctx context.Context, input int) (bool, error) {
-	return service.DeleteComment(ctx,input)
+	return service.DeleteComment(ctx, input)
 }
 
 func (r *mutationResolver) DeleteReply(ctx context.Context, input int) (bool, error) {
-	return service.DeleteReply(ctx,input)
+	return service.DeleteReply(ctx, input)
 }
 
-type queryResolver struct{
+type queryResolver struct {
 	*Resolver
 }
 
 func (r *queryResolver) User(ctx context.Context, userID int) (*models.User, error) {
-	return service.GetUser(ctx,userID)
+	return service.GetUser(ctx, userID)
 }
 
-func (r *queryResolver) Post(ctx context.Context, postID int) (*models.Post, error){
-	return service.GetPost(ctx,postID)
+func (r *queryResolver) Post(ctx context.Context, postID int) (*models.Post, error) {
+	return service.GetPost(ctx, postID)
 }
 
-func (r *queryResolver) Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error){
-	return service.GetPosts(ctx,page,pageSize)
+func (r *queryResolver) Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error) {
+	return service.GetPosts(ctx, page, pageSize)
 }
 
-func (r *queryResolver) Comment(ctx context.Context, commentID int) (*models.Comment, error){
-	return service.GetCommentById(ctx,commentID)
+func (r *queryResolver) Comment(ctx context.Context, commentID int) (*models.Comment, error) {
+	return service.GetCommentById(ctx, commentID)
 }
 
-func (r *queryResolver) Comments(ctx context.Context, postId int,page int,pageSize int) (*models.CommentConnection, error){
-	return service.GetCommentsByPostId(ctx,postId,page,pageSize)
+func (r *queryResolver) Comments(ctx context.Context, postId int, page int, pageSize int) (*models.CommentConnection, error) {
+	return service.GetCommentsByPostId(ctx, postId, page, pageSize)
 }
 
-func (r *queryResolver) Reply(ctx context.Context, replyID int) (*models.Reply, error){
-	return service.GetReplyById(ctx,replyID)
+func (r *queryResolver) Reply(ctx context.Context, replyID int) (*models.Reply, error) {
+	return service.GetReplyById(ctx, replyID)
 }
 
-func (r *queryResolver) Replies(ctx context.Context, commentID int,page int,pageSize int) (*models.ReplyConnection, error){
-	return service.GetRepliesByCommentId(ctx,commentID,page,pageSize)
+func (r *queryResolver) Replies(ctx context.Context, commentID int, page int, pageSize int) (*models.ReplyConnection, error) {
+	return service.GetRepliesByCommentId(ctx, commentID, page, pageSize)
 }
 
 type userResolver struct {
 	*Resolver
-	myPostResolver *service.MyPostResolver
+	//	myPostResolver *service.MyPostResolver
 }
 
 func (r *userResolver) Posts(ctx context.Context, obj *models.User, page int, pageSize int) (*models.PostConnection, error) {
-	return service.GetPostsByUserId(ctx,obj.ID,page,pageSize)
+	return service.GetPostsByUserId(ctx, obj.ID, page, pageSize)
 }
 
-func (r *userResolver) Comments(ctx context.Context, obj *models.User, page int, pageSize int) (*models.CommentConnection, error){
-	return service.GetCommentsByUserId(ctx,obj.ID,page,pageSize)
+func (r *userResolver) Comments(ctx context.Context, obj *models.User, page int, pageSize int) (*models.CommentConnection, error) {
+	return service.GetCommentsByUserId(ctx, obj.ID, page, pageSize)
 }
 
-func (r *userResolver) Replies(ctx context.Context, obj *models.User, page int, pageSize int) (*models.ReplyConnection, error){
-	return service.GetRepliesByUserId(ctx,obj.ID,page,pageSize)
+func (r *userResolver) Replies(ctx context.Context, obj *models.User, page int, pageSize int) (*models.ReplyConnection, error) {
+	return service.GetRepliesByUserId(ctx, obj.ID, page, pageSize)
 }
 
 type postResolver struct {
 	*Resolver
 }
 
-func (r *postResolver) Comments(ctx context.Context, obj *models.Post, page int, pageSize int) (*models.CommentConnection, 
+func (r *postResolver) Comments(ctx context.Context, obj *models.Post, page int, pageSize int) (*models.CommentConnection,
 	error) {
-	return service.GetCommentsByPostId(ctx,obj.ID,page,pageSize)
+	return service.GetCommentsByPostId(ctx, obj.ID, page, pageSize)
 }
 
-func (r *postResolver) User(ctx context.Context, obj *models.Post) (*models.User, error){
-	return dataloader.CtxLoaders(ctx).UsersByIds.Load(int64(obj.User.ID),nil)
+func (r *postResolver) User(ctx context.Context, obj *models.Post) (*models.User, error) {
+	return dataloader.CtxLoaders(ctx).UsersByIds.Load(int64(obj.User.ID), nil)
 }
 
-func (r *postResolver) LastReplyUser(ctx context.Context, obj *models.Post) (*models.User, error){
-	return dataloader.CtxLoaders(ctx).UsersByIds.Load(int64(obj.User.ID),nil)
+func (r *postResolver) LastReplyUser(ctx context.Context, obj *models.Post) (*models.User, error) {
+	return dataloader.CtxLoaders(ctx).UsersByIds.Load(int64(obj.User.ID), nil)
 }
 
 type commentResolver struct {
 	*Resolver
 }
 
-func (r *commentResolver) Replies(ctx context.Context, obj *models.Comment, page int,pageSize int) (*models.ReplyConnection, error){
-	return service.GetRepliesByCommentId(ctx,obj.ID,page,pageSize)
+func (r *commentResolver) Replies(ctx context.Context, obj *models.Comment, page int, pageSize int) (*models.ReplyConnection, error) {
+	return service.GetRepliesByCommentId(ctx, obj.ID, page, pageSize)
 }
 
-func (r *commentResolver) User(ctx context.Context, obj *models.Comment) (*models.User, error){
-	gc,err:=common.GinContextFromContext(ctx)
-	if err!=nil{
+func (r *commentResolver) User(ctx context.Context, obj *models.Comment) (*models.User, error) {
+	gc, err := common.GinContextFromContext(ctx)
+	if err != nil {
 		fmt.Println(err)
-		return nil,err
+		return nil, err
 	}
-	return dataloader.CtxLoaders(gc).UsersByIds.Load(int64(obj.User.ID),nil)
+	return dataloader.CtxLoaders(gc).UsersByIds.Load(int64(obj.User.ID), nil)
 }
 
-type replyResolver struct{
+type replyResolver struct {
 	*Resolver
 }
 
-func (r *replyResolver) User(ctx context.Context, obj *models.Reply) (*models.User, error){
-	gc,err:=common.GinContextFromContext(ctx)
-	if err!=nil{
+func (r *replyResolver) User(ctx context.Context, obj *models.Reply) (*models.User, error) {
+	gc, err := common.GinContextFromContext(ctx)
+	if err != nil {
 		fmt.Println(err)
-		return nil,err
+		return nil, err
 	}
-	return dataloader.CtxLoaders(gc).UsersByIds.Load(int64(obj.User.ID),nil)
+	return dataloader.CtxLoaders(gc).UsersByIds.Load(int64(obj.User.ID), nil)
 }
