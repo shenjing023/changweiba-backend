@@ -4,14 +4,10 @@ import (
 	"changweiba-backend/common"
 	"changweiba-backend/dao"
 	"changweiba-backend/graphql/models"
-	"changweiba-backend/graphql/rpc_conn"
-	postpb "changweiba-backend/rpc/post/pb"
 	"context"
 	"fmt"
 	"github.com/astaxie/beego/logs"
-	"github.com/micro/go-micro"
 	"github.com/pkg/errors"
-	"time"
 )
 
 const (
@@ -371,114 +367,141 @@ func GetReplyById(ctx context.Context, replyId int) (*models.Reply, error) {
 }
 
 func DeletePost(ctx context.Context, postId int) (bool, error) {
-	client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	request := postpb.DeleteRequest{
-		Id: int64(postId),
-	}
-	r, err := client.DeletePost(ctx, &request)
+	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
+	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	//defer cancel()
+	//request := postpb.DeleteRequest{
+	//	Id: int64(postId),
+	//}
+	//r, err := client.DeletePost(ctx, &request)
+
+	err := dao.DeletePost(int64(postId))
 	if err != nil {
-		logs.Error("delete post error:", err.Error())
-		return false, err
+		logs.Error(fmt.Sprintf("delete post[%d] error: ", postId), err)
+		return false, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
+			common.Internal: ServiceError,
+		})
 	}
-	return r.Success, nil
+	return true, nil
 }
 
 func DeleteComment(ctx context.Context, commentId int) (bool, error) {
-	client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	request := postpb.DeleteRequest{
-		Id: int64(commentId),
-	}
-	r, err := client.DeleteComment(ctx, &request)
+	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
+	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	//defer cancel()
+	//request := postpb.DeleteRequest{
+	//	Id: int64(commentId),
+	//}
+	//r, err := client.DeleteComment(ctx, &request)
+
+	err := dao.DeleteComment(int64(commentId))
 	if err != nil {
-		logs.Error("delete comment error:", err.Error())
-		return false, err
+		logs.Error(fmt.Sprintf("delete comment[%d] error: ", commentId), err)
+		return false, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
+			common.Internal: ServiceError,
+		})
 	}
-	return r.Success, nil
+	return true, nil
 }
 
 func DeleteReply(ctx context.Context, replyId int) (bool, error) {
-	client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	request := postpb.DeleteRequest{
-		Id: int64(replyId),
-	}
-	r, err := client.DeleteReply(ctx, &request)
+	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
+	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	//defer cancel()
+	//request := postpb.DeleteRequest{
+	//	Id: int64(replyId),
+	//}
+	//r, err := client.DeleteReply(ctx, &request)
+
+	err := dao.DeleteReply(int64(replyId))
 	if err != nil {
-		logs.Error("delete reply error:", err.Error())
-		return false, err
+		logs.Error(fmt.Sprintf("delete reply[%d] error: ", replyId), err)
+		return false, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
+			common.Internal: ServiceError,
+		})
 	}
-	return r.Success, nil
+	return true, nil
 }
 
 //
 func NewPost(ctx context.Context, post models.NewPost) (int, error) {
 	userId, err := getUserIdFromContext(ctx)
 	if err != nil {
+		logs.Error("new post get userId from context error: ", err)
 		return 0, err
 	}
-	client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	request := postpb.NewPostRequest{
-		UserId:  userId,
-		Topic:   post.Topic,
-		Content: post.Content,
-	}
-	r, err := client.NewPost(ctx, &request)
+	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
+	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	//defer cancel()
+	//request := postpb.NewPostRequest{
+	//	UserId:  userId,
+	//	Topic:   post.Topic,
+	//	Content: post.Content,
+	//}
+	//r, err := client.NewPost(ctx, &request)
+
+	postId, err := dao.InsertPost(userId, post.Topic, post.Content)
 	if err != nil {
-		logs.Error("create post error:", err.Error())
-		return 0, err
+		logs.Error("create post error:", err)
+		return 0, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
+			common.Internal: ServiceError,
+		})
 	}
-	return int(r.PostId), nil
+	return int(postId), nil
 }
 
 func NewComment(ctx context.Context, comment models.NewComment) (int, error) {
 	userId, err := getUserIdFromContext(ctx)
 	if err != nil {
+		logs.Error("new comment get userId from context error: ", err)
 		return 0, err
 	}
-	client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	request := postpb.NewCommentRequest{
-		UserId:  userId,
-		PostId:  int64(comment.PostID),
-		Content: comment.Content,
-	}
-	r, err := client.NewComment(ctx, &request)
+	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
+	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	//defer cancel()
+	//request := postpb.NewCommentRequest{
+	//	UserId:  userId,
+	//	PostId:  int64(comment.PostID),
+	//	Content: comment.Content,
+	//}
+	//r, err := client.NewComment(ctx, &request)
+
+	commentId, err := dao.InsertComment(userId, int64(comment.PostID), comment.Content)
 	if err != nil {
-		logs.Error("create comment error:", err.Error())
-		return 0, err
+		logs.Error("create comment error:", err)
+		return 0, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
+			common.Internal: ServiceError,
+		})
 	}
-	return int(r.CommentId), nil
+	return int(commentId), nil
 }
 
 func NewReply(ctx context.Context, reply models.NewReply) (int, error) {
 	userId, err := getUserIdFromContext(ctx)
 	if err != nil {
+		logs.Error("new reply get userId from context error: ", err)
 		return 0, err
 	}
-	client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	request := postpb.NewReplyRequest{
-		UserId:    userId,
-		PostId:    int64(reply.PostID),
-		Content:   reply.Content,
-		CommentId: int64(reply.CommentID),
-		ParentId:  int64(reply.ParentID),
-	}
-	r, err := client.NewReply(ctx, &request)
+	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
+	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	//defer cancel()
+	//request := postpb.NewReplyRequest{
+	//	UserId:    userId,
+	//	PostId:    int64(reply.PostID),
+	//	Content:   reply.Content,
+	//	CommentId: int64(reply.CommentID),
+	//	ParentId:  int64(reply.ParentID),
+	//}
+	//r, err := client.NewReply(ctx, &request)
+
+	replyId, err := dao.InsertReply(userId, int64(reply.PostID), int64(reply.CommentID), int64(reply.ParentID), reply.Content)
 	if err != nil {
-		logs.Error("create reply error:", err.Error())
-		return 0, err
+		logs.Error("create reply error:", err)
+		return 0, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
+			common.Internal: ServiceError,
+		})
 	}
-	return int(r.ReplyId), nil
+	return int(replyId), nil
 }
 
 func getUserIdFromContext(ctx context.Context) (int64, error) {

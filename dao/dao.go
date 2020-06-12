@@ -3,14 +3,12 @@ package dao
 import (
 	"changweiba-backend/common"
 	"changweiba-backend/conf"
+	"errors"
 	"fmt"
 	"github.com/astaxie/beego/logs"
 	"github.com/go-redis/redis/v7"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/pkg/errors"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"log"
 	"math/big"
 	"math/rand"
@@ -112,10 +110,10 @@ func CheckUserExist(name string) (*User, bool) {
 func GetRandomAvatar() (url string, err error) {
 	var avatars []Avatar
 	if err = dbOrm.Select("url").Find(&avatars).Error; err != nil {
-		return "", status.Error(codes.Internal, err.Error())
+		return "", common.NewDaoErr(common.Internal, err)
 	}
 	if len(avatars) == 0 {
-		return "", status.Error(codes.Internal, "there are no avatar data in db")
+		return "", common.NewDaoErr(common.Internal, errors.New("there are no avatar data in db"))
 	}
 	seed := rand.New(rand.NewSource(time.Now().UnixNano()))
 	index := seed.Intn(len(avatars))
@@ -136,7 +134,7 @@ func InsertPost(userId int64, topic string, content string) (int64, error) {
 	}
 	if err := session.Create(&post).Error; err != nil {
 		session.Rollback()
-		return 0, status.Error(codes.Internal, err.Error())
+		return 0, common.NewDaoErr(common.Internal, err)
 	}
 	comment := Comment{
 		UserId:     userId,
@@ -148,7 +146,7 @@ func InsertPost(userId int64, topic string, content string) (int64, error) {
 	}
 	if err := session.Create(&comment).Error; err != nil {
 		session.Rollback()
-		return 0, status.Error(codes.Internal, err.Error())
+		return 0, common.NewDaoErr(common.Internal, err)
 	}
 
 	session.Commit()
@@ -163,7 +161,7 @@ func InsertComment(userId int64, postId int64, content string) (int64, error) {
 	sql := "SELECT count(*) AS total FROM comment WHERE post_id=? FOR UPDATE"
 	if err := session.Raw(sql, postId).Scan(&floor).Error; err != nil {
 		session.Rollback()
-		return 0, status.Error(codes.Internal, err.Error())
+		return 0, common.NewDaoErr(common.Internal, err)
 	}
 
 	now := time.Now().Unix()
@@ -177,7 +175,7 @@ func InsertComment(userId int64, postId int64, content string) (int64, error) {
 	}
 	if err := session.Create(&comment).Error; err != nil {
 		session.Rollback()
-		return 0, status.Error(codes.Internal, err.Error())
+		return 0, common.NewDaoErr(common.Internal, err)
 	}
 
 	session.Commit()
@@ -192,7 +190,7 @@ func InsertReply(userId, postId, commentId, parentId int64, content string) (int
 	sql := "SELECT count(*) AS total FROM reply WHERE comment_id=? FOR UPDATE"
 	if err := session.Raw(sql, commentId).Scan(&floor).Error; err != nil {
 		session.Rollback()
-		return 0, status.Error(codes.Internal, err.Error())
+		return 0, common.NewDaoErr(common.Internal, err)
 	}
 
 	now := time.Now().Unix()
@@ -208,7 +206,7 @@ func InsertReply(userId, postId, commentId, parentId int64, content string) (int
 	}
 	if err := session.Create(&reply).Error; err != nil {
 		session.Rollback()
-		return 0, status.Error(codes.Internal, err.Error())
+		return 0, common.NewDaoErr(common.Internal, err)
 	}
 
 	session.Commit()
@@ -230,7 +228,10 @@ func decreasePostReplyNum(postId int64) {
 func DeletePost(postId int64) error {
 	sql := "UPDATE post SET status=0 WHERE id=?"
 	err := dbOrm.Exec(sql, postId).Error
-	return status.Error(codes.Internal, err.Error())
+	if err != nil {
+		return common.NewDaoErr(common.Internal, err)
+	}
+	return nil
 }
 
 func DeleteComment(commentId int64) (err error) {
@@ -244,8 +245,9 @@ func DeleteComment(commentId int64) (err error) {
 				go decreasePostReplyNum(postId)
 			}
 		}()
+		return nil
 	}
-	return err
+	return common.NewDaoErr(common.Internal, err)
 }
 
 func DeleteReply(replyId int64) (err error) {
@@ -259,8 +261,9 @@ func DeleteReply(replyId int64) (err error) {
 				go decreasePostReplyNum(postId)
 			}
 		}()
+		return nil
 	}
-	return err
+	return common.NewDaoErr(common.Internal, err)
 }
 
 func GetPost(postId int64) (*Post, error) {
@@ -269,7 +272,7 @@ func GetPost(postId int64) (*Post, error) {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, common.NewDaoErr(common.NotFound, err)
 		}
-		return nil, common.NewDaoErr(common.Internal, errs)
+		return nil, common.NewDaoErr(common.Internal, err)
 	}
 	return &post, nil
 }
@@ -280,10 +283,10 @@ func GetPosts(page int64, pageSize int64) ([]*Post, int64, error) {
 		totalCount int64
 	)
 	if err := dbOrm.Raw("select count(*) from post where status=0").Scan(&totalCount).Error; err != nil {
-		return nil, 0, status.Error(codes.Internal, err.Error())
+		return nil, 0, common.NewDaoErr(common.Internal, err)
 	}
 	if err := dbOrm.Where("status=?", 0).Offset(pageSize * (page - 1)).Limit(pageSize).Order("last_update desc").Error; err != nil {
-		return nil, 0, status.Error(codes.Internal, err.Error())
+		return nil, 0, common.NewDaoErr(common.Internal, err)
 	}
 	return posts, totalCount, nil
 }
@@ -332,7 +335,7 @@ func GetRepliesByCommentId(commentId int64, page int64, pageSize int64) ([]*Repl
 func GetReply(replyId int64) (*Reply, error) {
 	var reply Reply
 	if err := dbOrm.First(&reply, replyId).Error; err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, common.NewDaoErr(common.Internal, err)
 	}
 	return &reply, nil
 }
@@ -606,7 +609,7 @@ func GetRepliesByUserId(userId int64, page int64, pageSize int64) ([]*Reply, int
 		tmp        []*Reply
 	)
 	if err := dbOrm.Where("user_id=?", userId).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize * (page - 1)).Order("create_time desc").Find(&replies).Error; err != nil {
-		return nil, 0, status.Error(codes.Internal, err.Error())
+		return nil, 0, common.NewDaoErr(common.Internal, err)
 	}
 	return replies, totalCount, nil
 }
