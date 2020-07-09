@@ -4,23 +4,27 @@ import (
 	"changweiba-backend/common"
 	"changweiba-backend/conf"
 	"changweiba-backend/dao"
-	mygraphql "changweiba-backend/graphql"
 	"changweiba-backend/graphql/dataloader"
 	"changweiba-backend/graphql/generated"
 	"changweiba-backend/pkg/middleware"
 	"flag"
 	"fmt"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/playground"
+
 	//"github.com/99designs/gqlgen/handler"
-	"github.com/astaxie/beego/logs"
-	"github.com/gin-gonic/gin"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
 	"time"
+
+	"changweiba-backend/pkg/logs"
+
+	"github.com/gin-gonic/gin"
 )
 
 const defaultPort = ":8088"
@@ -28,7 +32,7 @@ const defaultPort = ":8088"
 // Defining the Playground handler
 func playgroundHandler() gin.HandlerFunc {
 	//h := handler.Playground("GraphQL", "/graphql")
-	h := playground.Handler("Graphql", "/graphql")
+	h := playground.Handler("GraphQL", "/graphql")
 
 	return func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)
@@ -39,16 +43,15 @@ func playgroundHandler() gin.HandlerFunc {
 func graphqlHandler() gin.HandlerFunc {
 	// NewExecutableSchema and Config are in the generated.go file
 	// Resolver is in the resolver.go file
-	h := handler.GraphQL(
-		generated.NewExecutableSchema(generated.Config{Resolvers: &graphql.Resolver{}}),
-		handler.ComplexityLimit(20),
-	)
-
-	h := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: &graphql.Resolver{}}),
-		handler.ComplexityLimit(20))
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(
+		generated.Config{
+			Resolvers: &graphql.Resolver{},
+		},
+	))
+	srv.Use(extension.FixedComplexityLimit(20))
 
 	return func(c *gin.Context) {
-		h.ServeHTTP(c.Writer, c.Request)
+		srv.ServeHTTP(c.Writer, c.Request)
 	}
 }
 
