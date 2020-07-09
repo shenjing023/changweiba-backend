@@ -1,12 +1,13 @@
 package conf
 
 import (
+	"changweiba-backend/pkg/logs"
 	"encoding/json"
 	"fmt"
-	"github.com/astaxie/beego/logs"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 type YamlConf struct {
@@ -67,7 +68,7 @@ func InitConfig(executeDir string) {
 	//加载配置文件
 	file, err := ioutil.ReadFile(executeDir + "/config.yaml")
 	if err != nil {
-		fmt.Println("Open config file error:", err.Error())
+		fmt.Println("Read config file error:", err.Error())
 		os.Exit(1)
 	}
 	if err = yaml.Unmarshal(file, Cfg); err != nil {

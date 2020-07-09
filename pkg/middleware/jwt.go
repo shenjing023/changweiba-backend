@@ -2,18 +2,21 @@ package middleware
 
 import (
 	"bytes"
+	"changweiba-backend/pkg/logs"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/astaxie/beego/logs"
+
+	"github.com/pkg/errors"
+
 	//"github.com/davecgh/go-spew/spew"
-	jwtgo "github.com/dgrijalva/jwt-go"
-	"github.com/gin-gonic/gin"
-	"github.com/vektah/gqlparser/ast"
-	"github.com/vektah/gqlparser/parser"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	jwtgo "github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/gin"
+	"github.com/vektah/gqlparser/v2/ast"
+	"github.com/vektah/gqlparser/v2/parser"
 )
 
 // 一些常量
@@ -31,10 +34,10 @@ type postParams struct {
 	Variables     map[string]interface{} `json:"variables"`
 }
 
-func systemError(ctx *gin.Context){
-	ctx.JSON(http.StatusOK,gin.H{
-		"code":-1,
-		"msg":"system error",
+func systemError(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, gin.H{
+		"code": -1,
+		"msg":  "system error",
 	})
 	ctx.Abort()
 	return
@@ -101,7 +104,7 @@ func SetSigningMethod(method jwtgo.SigningMethod) Option {
 func SetSigningKey(key string) Option {
 	return func(o *options) {
 		o.signingKey = key
-		o.keyfunc= func(t *jwtgo.Token) (interface{}, error) {
+		o.keyfunc = func(t *jwtgo.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwtgo.SigningMethodHMAC); !ok {
 				return nil, TokenInvalid
 			}
@@ -189,41 +192,41 @@ func (j *JWTAuth) RefreshToken(tokenString string) (*JWTToken, error) {
 }
 
 // JWTAuth 中间件，检查token
-func JWTMiddleware(signKey string,queryDeep int) gin.HandlerFunc {
+func JWTMiddleware(signKey string, queryDeep int) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.Request.Method=="GET"{
+		if c.Request.Method == "GET" {
 			return
 		}
 		body, err := ioutil.ReadAll(c.Request.Body)
 		if err != nil {
-			logs.Error("read request body error:",err.Error())
+			logs.Error("read request body error:", err.Error())
 			systemError(c)
 		}
 		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body)) // 关键点,不能去掉
-		
+
 		//解析query
-		var flag =false	//访问路径是否需要过滤token的标记
+		var flag = false //访问路径是否需要过滤token的标记
 		var param postParams
-		err=json.Unmarshal(body,&param)
-		if err!=nil{
-			logs.Error(fmt.Sprintf("unmarshal post param error:%s, body: %s",err.Error(),string(body)))
+		err = json.Unmarshal(body, &param)
+		if err != nil {
+			logs.Error(fmt.Sprintf("unmarshal post param error:%s, body: %s", err.Error(), string(body)))
 			systemError(c)
 		}
 
 		//陷阱，不能是doc,err:= 目前还不知原因
-		doc,err_:=parser.ParseQuery(&ast.Source{Input:param.Query})
+		doc, err_ := parser.ParseQuery(&ast.Source{Input: param.Query})
 		//spew.Dump(err)
 		if err_ != nil {
-			logs.Error(fmt.Sprintf("parse query error:%+v",err_))
+			logs.Error(fmt.Sprintf("parse query error:%+v", err_))
 			systemError(c)
 		}
-		ops:=doc.Operations
-		for _,v:=range ops{
-			for _,k:=range v.SelectionSet{
-				if tmp,ok:=k.(*ast.Field);ok{
+		ops := doc.Operations
+		for _, v := range ops {
+			for _, k := range v.SelectionSet {
+				if tmp, ok := k.(*ast.Field); ok {
 					//检查查询的字段深度
-					deep:=getQueryFieldDeep(tmp.SelectionSet,0)
-					if deep>queryDeep{
+					deep := getQueryFieldDeep(tmp.SelectionSet, 0)
+					if deep > queryDeep {
 						c.JSON(http.StatusOK, gin.H{
 							"status": -1,
 							"msg":    "请求字段深度超出限制",
@@ -231,11 +234,11 @@ func JWTMiddleware(signKey string,queryDeep int) gin.HandlerFunc {
 						c.Abort()
 						return
 					}
-					if tmp.Name!="registerUser" && tmp.Name!="loginUser" && tmp.Name!="posts"{
-						flag=true
+					if tmp.Name != "signIn" && tmp.Name != "signUp" && tmp.Name != "posts" {
+						flag = true
 						break
 					}
-				} else{
+				} else {
 					logs.Error("selection change to ast.Field error")
 					systemError(c)
 				}
@@ -243,7 +246,7 @@ func JWTMiddleware(signKey string,queryDeep int) gin.HandlerFunc {
 		}
 
 		token := c.Request.Header.Get("token")
-		if token == "" && flag{
+		if token == "" && flag {
 			c.JSON(http.StatusOK, gin.H{
 				"status": -1,
 				"msg":    "请求未携带token，无权限访问",
@@ -251,13 +254,13 @@ func JWTMiddleware(signKey string,queryDeep int) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		
-		if flag{
+
+		if flag {
 			j := NewJWT(SetSigningKey(signKey))
 			// parseToken 解析token包含的信息
 			claims, err := j.ParseToken(token)
 			if err != nil {
-				logs.Error("parse token failed:",err.Error())
+				logs.Error("parse token failed:", err.Error())
 				if err == TokenExpired {
 					c.JSON(http.StatusOK, gin.H{
 						"status": -1,
@@ -281,18 +284,18 @@ func JWTMiddleware(signKey string,queryDeep int) gin.HandlerFunc {
 
 /*
 获取查询的深度
- */
-func getQueryFieldDeep(set ast.SelectionSet,deep int) int{
-	if set==nil{
+*/
+func getQueryFieldDeep(set ast.SelectionSet, deep int) int {
+	if set == nil {
 		return deep
 	}
 	deep++
-	max:=0
-	for _,v:=range set{
-		if tmp,ok:=v.(*ast.Field);ok {
-			d:=getQueryFieldDeep(tmp.SelectionSet,deep)
-			if d>max{
-				max=d
+	max := 0
+	for _, v := range set {
+		if tmp, ok := v.(*ast.Field); ok {
+			d := getQueryFieldDeep(tmp.SelectionSet, deep)
+			if d > max {
+				max = d
 			}
 		}
 	}

@@ -5,15 +5,15 @@ import (
 	"changweiba-backend/conf"
 	"changweiba-backend/dao"
 	"changweiba-backend/graphql/models"
+	"changweiba-backend/pkg/logs"
 	"changweiba-backend/pkg/middleware"
 	"context"
 	"encoding/base64"
 	"fmt"
-	"github.com/astaxie/beego/logs"
+	"strings"
+
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/scrypt"
-	"net"
-	"strings"
 )
 
 const (
@@ -30,11 +30,7 @@ func SignUp(ctx context.Context, input models.NewUser) (string, error) {
 		logs.Error("%+v", err)
 		return "", errors.New(AccountServiceError)
 	}
-	ip, _, err := net.SplitHostPort(strings.TrimSpace(gc.Request.RemoteAddr))
-	if err != nil {
-		logs.Error("get remote ip error: ", err)
-		return "", errors.New(AccountServiceError)
-	}
+	ip := gc.ClientIP()
 	//client := pb.NewAccountClient(rpc_conn.AccountConn)
 	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	//defer cancel()
@@ -65,12 +61,12 @@ func SignUp(ctx context.Context, input models.NewUser) (string, error) {
 	//头像url
 	avatar, err := dao.GetRandomAvatar()
 	if err != nil {
-		logs.Error("get random avatar error:", err)
+		common.LogDaoError("get random avatar error:", err)
 		return "", errors.New(AccountServiceError)
 	}
 	id, err := dao.InsertUser(input.Name, password, ip, avatar)
 	if err != nil {
-		logs.Error("insert user error:", err)
+		common.LogDaoError(fmt.Sprintf("insert user[%s] error: ", input.Name), err)
 		return "", common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.Unknown:         AccountServiceError,
 			common.AlreadyExists:   "改昵称已注册",

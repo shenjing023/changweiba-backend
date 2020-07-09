@@ -10,12 +10,10 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/playground"
 
-	//"github.com/99designs/gqlgen/handler"
 	"os"
 	"os/signal"
 	"runtime"
@@ -23,6 +21,8 @@ import (
 	"time"
 
 	"changweiba-backend/pkg/logs"
+
+	mygraphql "changweiba-backend/graphql"
 
 	"github.com/gin-gonic/gin"
 )
@@ -45,7 +45,7 @@ func graphqlHandler() gin.HandlerFunc {
 	// Resolver is in the resolver.go file
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(
 		generated.Config{
-			Resolvers: &graphql.Resolver{},
+			Resolvers: &mygraphql.Resolver{},
 		},
 	))
 	srv.Use(extension.FixedComplexityLimit(20))

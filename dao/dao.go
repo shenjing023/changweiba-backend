@@ -3,12 +3,9 @@ package dao
 import (
 	"changweiba-backend/common"
 	"changweiba-backend/conf"
-	"errors"
+	"changweiba-backend/pkg/logs"
+	"context"
 	"fmt"
-	"github.com/astaxie/beego/logs"
-	"github.com/go-redis/redis/v8"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"log"
 	"math/big"
 	"math/rand"
@@ -16,6 +13,12 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/pkg/errors"
+
+	"github.com/go-redis/redis/v8"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
 var (
@@ -23,14 +26,17 @@ var (
 	dbOrm       *gorm.DB
 )
 
+/*
+* 数据库连接初始化
+ */
 func Init() {
 	redisClient = redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", conf.Cfg.Redis.Host, conf.Cfg.Redis.Port),
 		Password: conf.Cfg.Redis.Password,
 		DB:       0,
 	})
-	if _, err := redisClient.Ping().Result(); err != nil {
-		logs.Error("connect to redis error: ", err)
+	if _, err := redisClient.Ping(context.Background()).Result(); err != nil {
+		fmt.Printf("connect to redis error: %+v", err)
 		os.Exit(1)
 	}
 
@@ -52,13 +58,17 @@ func Init() {
 		logs.Error("create sql log file failed:", err.Error())
 		os.Exit(1)
 	} else {
+		// 待优化
 		dbOrm.SetLogger(log.New(f, "\r\n", 0))
 		if conf.Cfg.Debug {
 			dbOrm.LogMode(true)
 		}
 	}
+	// 全局禁用表名复数形式
+	dbOrm.SingularTable(true)
 }
 
+//插入用户
 func InsertUser(userName, password, ip, avatar string) (int64, error) {
 	//先检查name是否存在
 	var u User
@@ -75,15 +85,15 @@ func InsertUser(userName, password, ip, avatar string) (int64, error) {
 				Avatar:     avatar,
 			}
 			if dbOrm.Create(&user).Error != nil {
-				return 0, common.NewDaoErr(common.Internal, err)
+				return 0, common.NewDaoErr(common.Internal, errors.WithStack(err))
 			} else {
 				return user.Id, nil
 			}
 		} else {
-			return 0, common.NewDaoErr(common.Internal, err)
+			return 0, common.NewDaoErr(common.Internal, errors.WithStack(err))
 		}
 	}
-	return 0, common.NewDaoErr(common.AlreadyExists, err)
+	return 0, common.NewDaoErr(common.AlreadyExists, errors.New("user already exist"))
 }
 
 func GetUser(userId int64) (*User, error) {
@@ -110,7 +120,7 @@ func CheckUserExist(name string) (*User, bool) {
 func GetRandomAvatar() (url string, err error) {
 	var avatars []Avatar
 	if err = dbOrm.Select("url").Find(&avatars).Error; err != nil {
-		return "", common.NewDaoErr(common.Internal, err)
+		return "", common.NewDaoErr(common.Internal, errors.WithStack(err))
 	}
 	if len(avatars) == 0 {
 		return "", common.NewDaoErr(common.Internal, errors.New("there are no avatar data in db"))

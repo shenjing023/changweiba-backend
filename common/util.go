@@ -1,28 +1,14 @@
 package common
 
 import (
+	"changweiba-backend/pkg/logs"
 	"context"
+
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
-func GRPCErrorConvert(err error, conf map[codes.Code]string) error {
-	st, ok := status.FromError(err)
-	if !ok {
-		// Error was not a status error
-		return errors.New("system error")
-	}
-	var errMsg = st.Message()
-	for k, v := range conf {
-		if k == st.Code() {
-			errMsg = v
-			break
-		}
-	}
-	return errors.New(errMsg)
-}
+const GinContextKey = "GinContextKey"
 
 func ServiceErrorConvert(err error, conf map[ErrorCode]string) error {
 	de, ok := FromError(err)
@@ -41,14 +27,14 @@ func ServiceErrorConvert(err error, conf map[ErrorCode]string) error {
 
 func GinContextToContextMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		ctx := context.WithValue(c.Request.Context(), "GinContextKey", c)
+		ctx := context.WithValue(c.Request.Context(), GinContextKey, c)
 		c.Request = c.Request.WithContext(ctx)
 		c.Next()
 	}
 }
 
 func GinContextFromContext(ctx context.Context) (*gin.Context, error) {
-	ginContext := ctx.Value("GinContextKey")
+	ginContext := ctx.Value(GinContextKey)
 	if ginContext == nil {
 		return nil, errors.New("retrieve gin.Context error")
 	}
@@ -58,4 +44,17 @@ func GinContextFromContext(ctx context.Context) (*gin.Context, error) {
 		return nil, errors.New("gin.Context has wrong type")
 	}
 	return gc, nil
+}
+
+//记录dao错误到日志
+func LogDaoError(prefix string, err error) {
+	de, ok := FromError(err)
+	if !ok {
+		logs.Error(prefix, err)
+	}
+	if de.Code == Unknown || de.Code == Internal {
+		logs.Error(prefix, de.Err)
+	} else {
+		logs.Error(prefix, de)
+	}
 }

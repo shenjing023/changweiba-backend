@@ -8,18 +8,17 @@ account:
 post:
   port: 8013
 db:
-  host: "localhost"
+  host: "10.0.0.209"
   port: 3306
-  user: "liuwei"
-  password: "123456"
-  dbname: "changweiba"
+  user: "domob"
+  password: "domob"
+  dbname: "liuwei1"
   max_idle_conns: 10
   max_open_conns: 10
 redis:
-  host: "localhost"
-  port: 6379
-  password: "ssss"
+  host: "10.0.0.210"
+  port: 9902
+  password: ""
 sign_key: "changweiba"
 salt: "changweisd23434123ba"
 query_deep: 5
-  

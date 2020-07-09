@@ -7,19 +7,18 @@ import (
 	"changweiba-backend/graphql/dataloader"
 	"changweiba-backend/graphql/generated"
 	"changweiba-backend/graphql/models"
-	"changweiba-backend/graphql/rpc_conn"
 	"changweiba-backend/graphql/service"
 	"context"
 	"fmt"
 ) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
-func InitRPCConnection() {
-	rpc_conn.InitRPCConnection()
-}
+// func InitRPCConnection() {
+// 	rpc_conn.InitRPCConnection()
+// }
 
-func StopRPCConnection() {
-	rpc_conn.StopRPCConnection()
-}
+// func StopRPCConnection() {
+// 	rpc_conn.StopRPCConnection()
+// }
 
 type Resolver struct{}
 

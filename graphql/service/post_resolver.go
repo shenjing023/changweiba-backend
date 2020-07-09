@@ -4,9 +4,10 @@ import (
 	"changweiba-backend/common"
 	"changweiba-backend/dao"
 	"changweiba-backend/graphql/models"
+	"changweiba-backend/pkg/logs"
 	"context"
 	"fmt"
-	"github.com/astaxie/beego/logs"
+
 	"github.com/pkg/errors"
 )
 
