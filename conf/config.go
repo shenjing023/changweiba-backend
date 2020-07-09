@@ -18,30 +18,27 @@ type YamlConf struct {
 	Account struct {
 		Port int `yaml:"port"`
 	} `yaml:"account,omitempty"`
-	Post struct{
+	Post struct {
 		Port int `yaml:"port"`
 	} `yaml:"post,omitempty"`
-	DB struct{
-		Host string	`yaml:"host"`
-		Port int	`yaml:"port"`
-		User string	`yaml:"user"`
-		Password string	`yaml:"password"`
-		Dbname string	`yaml:"dbname"`
-		MaxIdle int	`yaml:"max_idle,omitempty"`
-		MaxOpen int	`yaml:"max_open,omitempty"`
-		LogFile string
-	} `yaml:"db"`
-	SignKey string	`yaml:"sign_key"`
-	Salt string	`yaml:"salt"`
-	QueryDeep int `yaml:"query_deep"`
-
-	Redis struct{
-		Host string	`yaml:"host"`
-		Port int	`yaml:"port"`
+	DB struct {
+		Host     string `yaml:"host"`
+		Port     int    `yaml:"port"`
+		User     string `yaml:"user"`
 		Password string `yaml:"password"`
-		MaxIdle int	`yaml:"max_idle,omitempty"`
-		MaxActive int 	`yaml:"max_active,omitempty"`
-		IdleTimeout int		`yaml:"idle_timeout,omitempty"`
+		Dbname   string `yaml:"dbname"`
+		MaxIdle  int    `yaml:"max_idle,omitempty"`
+		MaxOpen  int    `yaml:"max_open,omitempty"`
+		LogFile  string
+	} `yaml:"db"`
+	SignKey   string `yaml:"sign_key"`
+	Salt      string `yaml:"salt"`
+	QueryDeep int    `yaml:"query_deep"`
+
+	Redis struct {
+		Host     string `yaml:"host"`
+		Port     int    `yaml:"port"`
+		Password string `yaml:"password"`
 	} `yaml:"redis"`
 }
 
@@ -62,8 +59,8 @@ type LoggerConfig struct {
 
 var Cfg *YamlConf
 
-func init(){
-	Cfg=new(YamlConf)
+func init() {
+	Cfg = new(YamlConf)
 }
 
 func InitConfig(executeDir string) {
@@ -77,7 +74,7 @@ func InitConfig(executeDir string) {
 		fmt.Println("Read yaml config file error:", err.Error())
 		os.Exit(1)
 	}
-	Cfg.DB.LogFile=executeDir+"/log/sql.log"
+	Cfg.DB.LogFile = executeDir + "/log/sql.log"
 
 	//日志配置
 	var logConf = LoggerConfig{
