@@ -27,28 +27,10 @@ func SignUp(ctx context.Context, input models.NewUser) (string, error) {
 	//获取客户端ip
 	gc, err := common.GinContextFromContext(ctx)
 	if err != nil {
-		logs.Error("%+v", err)
+		logs.Error(err)
 		return "", errors.New(AccountServiceError)
 	}
 	ip := gc.ClientIP()
-	//client := pb.NewAccountClient(rpc_conn.AccountConn)
-	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	//defer cancel()
-
-	//user := pb.NewUserRequest{
-	//	Name:     input.Name,
-	//	Password: input.Password,
-	//	Ip:       ip,
-	//}
-	//r, err := client.RegisterUser(ctx, &user)
-	//if err != nil {
-	//	logs.Error("register user error:", err.Error())
-	//	return "", common.GRPCErrorConvert(err, map[codes.Code]string{
-	//		codes.Internal:        AccountServiceError,
-	//		codes.AlreadyExists:   "该昵称已注册",
-	//		codes.InvalidArgument: "昵称或密码不能为空",
-	//	})
-	//}
 
 	if b, msg := checkNewUser(input.Name, input.Password, ip); !b {
 		return "", errors.New(msg)

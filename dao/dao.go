@@ -624,6 +624,11 @@ func GetRepliesByUserId(userId int64, page int64, pageSize int64) ([]*Reply, int
 	return replies, totalCount, nil
 }
 
+//检测user表中的ip是否超过次数，防止恶意注册用户
+func CheckUserIp(ip string) (bool, error) {
+
+}
+
 //ip地址int->string相互转换
 func InetAtoi(ip string) int64 {
 	ret := big.NewInt(0)
