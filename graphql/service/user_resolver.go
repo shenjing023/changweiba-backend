@@ -17,12 +17,11 @@ import (
 )
 
 const (
-	AccountServiceError = "system error"
+	//系统错误
+	AccountServiceError = "user system error"
 )
 
-type MyUserResolver struct {
-}
-
+// SignUp 用户登录
 func SignUp(ctx context.Context, input models.NewUser) (string, error) {
 	//获取客户端ip
 	gc, err := common.GinContextFromContext(ctx)
@@ -68,6 +67,7 @@ func SignUp(ctx context.Context, input models.NewUser) (string, error) {
 	return token.AccessToken, nil
 }
 
+// SignIn 用户登录
 func SignIn(ctx context.Context, input models.NewUser) (string, error) {
 	dbUser, exist := dao.CheckUserExist(input.Name)
 	if exist {
@@ -85,16 +85,17 @@ func SignIn(ctx context.Context, input models.NewUser) (string, error) {
 	)
 	token, err := jwt.GenerateToken(dbUser.Id)
 	if err != nil {
-		logs.Error("generate jwt token error:", err)
+		logs.Error("generate jwt token error: ", err)
 		return "", errors.New(AccountServiceError)
 	}
 	return token.AccessToken, nil
 }
 
-func GetUser(ctx context.Context, userId int) (*models.User, error) {
-	dbUser, err := dao.GetUser(int64(userId))
+// GetUser 获取单个用户信息
+func GetUser(ctx context.Context, userID int) (*models.User, error) {
+	dbUser, err := dao.GetUser(int64(userID))
 	if err != nil {
-		logs.Error(fmt.Sprintf("get user[%d] error: ", userId), err)
+		common.LogDaoError(fmt.Sprintf("get user[%d] error: ", userID), err)
 		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.NotFound: "该用户不存在",
 			common.Internal: AccountServiceError,
@@ -119,10 +120,11 @@ func GetUser(ctx context.Context, userId int) (*models.User, error) {
 	}, nil
 }
 
+// GetUsers 获取多个用户信息
 func GetUsers(ctx context.Context, ids []int64) ([]*models.User, error) {
 	dbUsers, err := dao.GetUsers(ids)
 	if err != nil {
-		logs.Error(fmt.Sprintf("get users[%v] error: ", ids), err)
+		common.LogDaoError(fmt.Sprintf("get users[%v] error: ", ids), err)
 		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.Internal: AccountServiceError,
 		})
@@ -158,6 +160,14 @@ func checkNewUser(name string, password string, ip string) (bool, string) {
 	}
 	//检查该ip下的账号
 	fmt.Println(ip)
+	b, err := dao.CheckUserIP(ip)
+	if err != nil {
+		common.LogDaoError("check ip error:", err)
+		return false, AccountServiceError
+	}
+	if !b {
+		return false, "该ip已注册多个用户"
+	}
 	return true, ""
 }
 

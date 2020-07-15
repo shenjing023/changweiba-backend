@@ -12,29 +12,15 @@ import (
 )
 
 const (
-	ServiceError = "post service system error"
+	//系统错误
+	ServiceError = "post system error"
 )
 
-type MyPostResolver struct {
-}
-
-func GetPost(ctx context.Context, postId int) (*models.Post, error) {
-	//service := micro.NewService(micro.Name("post.client"))
-	//service.Init()
-	//client := postpb.NewPostService("post", service.Client())
-	//client.GetPost()
-
-	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	//defer cancel()
-	//postRequest := postpb.PostRequest{
-	//	Id: int64(postId),
-	//}
-	//r, err := client.GetPost(ctx, &postRequest)
-
-	dbPost, err := dao.GetPost(int64(postId))
+// GetPost 获取帖子信息
+func GetPost(ctx context.Context, postID int) (*models.Post, error) {
+	dbPost, err := dao.GetPost(int64(postID))
 	if err != nil {
-		logs.Error("get post error:", err)
+		common.LogDaoError(fmt.Sprintf("get post[%d] error: ", postID), err)
 		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.NotFound: "该帖子不存在",
 			common.Internal: ServiceError,
@@ -54,21 +40,12 @@ func GetPost(ctx context.Context, postId int) (*models.Post, error) {
 	}, nil
 }
 
-func GetCommentsByPostId(ctx context.Context, postId int, page int,
+// GetCommentsByPostID 获取该帖子下的评论
+func GetCommentsByPostID(ctx context.Context, postID int, page int,
 	pageSize int) (*models.CommentConnection, error) {
-	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	//defer cancel()
-	//commentsRequest := postpb.CommentsRequest{
-	//	PostId: int64(postId),
-	//	Offset: int32(page),
-	//	Limit:  int32(pageSize),
-	//}
-	//r, err := client.GetCommentsByPostId(ctx, &commentsRequest)
-
-	dbComments, totalCount, err := dao.GetCommentsByPostId(int64(postId), int64(page), int64(pageSize))
+	dbComments, totalCount, err := dao.GetCommentsByPostId(int64(postID), int64(page), int64(pageSize))
 	if err != nil {
-		logs.Error("get comments error:", err)
+		common.LogDaoError(fmt.Sprintf("get comments under post[%d] error: ", postID), err)
 		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.Internal: ServiceError,
 			common.NotFound: "该帖子不存在",
@@ -94,20 +71,11 @@ func GetCommentsByPostId(ctx context.Context, postId int, page int,
 	}, nil
 }
 
-func GetRepliesByCommentId(ctx context.Context, commentId int, page int, pageSize int) (*models.ReplyConnection, error) {
-	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	//defer cancel()
-	//repliesRequest := postpb.RepliesRequest{
-	//	CommentId: int64(commentId),
-	//	Offset:    int32(page),
-	//	Limit:     int32(pageSize),
-	//}
-	//r, err := client.GetRepliesByCommentId(ctx, &repliesRequest)
-
-	dbReplies, totalCount, err := dao.GetRepliesByCommentId(int64(commentId), int64(page), int64(pageSize))
+// GetRepliesByCommentID 获取该评论下的回复
+func GetRepliesByCommentID(ctx context.Context, commentID int, page int, pageSize int) (*models.ReplyConnection, error) {
+	dbReplies, totalCount, err := dao.GetRepliesByCommentId(int64(commentID), int64(page), int64(pageSize))
 	if err != nil {
-		logs.Error("get replies error:", err.Error())
+		common.LogDaoError(fmt.Sprintf("get replies under comment[%d] error: ", commentID), err)
 		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.Internal: ServiceError,
 			common.NotFound: "该评论不存在",
@@ -137,19 +105,11 @@ func GetRepliesByCommentId(ctx context.Context, commentId int, page int, pageSiz
 	}, nil
 }
 
+// GetPosts 获取帖子信息
 func GetPosts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error) {
-	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	//defer cancel()
-	//postsRequest := postpb.PostsRequest{
-	//	Offset: int32(page),
-	//	Limit:  int32(pageSize),
-	//}
-	//r, err := client.Posts(ctx, &postsRequest)
-
 	dbPosts, totalCount, err := dao.GetPosts(int64(page), int64(pageSize))
 	if err != nil {
-		logs.Error("get posts error:", err)
+		logs.Error("get posts error: ", err)
 		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.Internal: ServiceError,
 		})
@@ -174,20 +134,11 @@ func GetPosts(ctx context.Context, page int, pageSize int) (*models.PostConnecti
 	}, nil
 }
 
-func GetPostsByUserId(ctx context.Context, userId int, page int, pageSize int) (*models.PostConnection, error) {
-	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	//defer cancel()
-	//request := postpb.PostsByUserIdRequest{
-	//	Offset: int32(page),
-	//	Limit:  int32(pageSize),
-	//	UserId: int64(userId),
-	//}
-	//r, err := client.GetPostsByUserId(ctx, &request)
-
-	dbPosts, totalCount, err := dao.GetPostsByUserId(int64(userId), int64(page), int64(pageSize))
+// GetPostsByUserId 获取该用户的帖子
+func GetPostsByUserId(ctx context.Context, userID int, page int, pageSize int) (*models.PostConnection, error) {
+	dbPosts, totalCount, err := dao.GetPostsByUserId(int64(userID), int64(page), int64(pageSize))
 	if err != nil {
-		logs.Error(fmt.Sprintf("get posts by user_id[%d] error: ", userId), err)
+		common.LogDaoError(fmt.Sprintf("get posts by user_id[%d] error: ", userID), err)
 		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.Internal: ServiceError,
 			common.NotFound: "该用户不存在",
@@ -213,21 +164,12 @@ func GetPostsByUserId(ctx context.Context, userId int, page int, pageSize int) (
 	}, nil
 }
 
-func GetCommentsByUserId(ctx context.Context, userId int, page int,
+// GetCommentsByUserId 获取该用户的评论
+func GetCommentsByUserId(ctx context.Context, userID int, page int,
 	pageSize int) (*models.CommentConnection, error) {
-	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	//defer cancel()
-	//request := postpb.CommentsByUserIdRequest{
-	//	UserId: int64(userId),
-	//	Offset: int32(page),
-	//	Limit:  int32(pageSize),
-	//}
-	//r, err := client.GetCommentsByUserId(ctx, &request)
-
-	dbComments, totalCount, err := dao.GetCommentsByUserId(int64(userId), int64(page), int64(pageSize))
+	dbComments, totalCount, err := dao.GetCommentsByUserId(int64(userID), int64(page), int64(pageSize))
 	if err != nil {
-		logs.Error(fmt.Sprintf("get comments by user_id[%d] error: ", userId), err)
+		common.LogDaoError(fmt.Sprintf("get comments by user_id[%d] error: ", userID), err)
 		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.Internal: ServiceError,
 			common.NotFound: "该用户不存在",
@@ -253,20 +195,11 @@ func GetCommentsByUserId(ctx context.Context, userId int, page int,
 	}, nil
 }
 
-func GetRepliesByUserId(ctx context.Context, userId int, page int, pageSize int) (*models.ReplyConnection, error) {
-	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	//defer cancel()
-	//request := postpb.RepliesByUserIdRequest{
-	//	UserId: int64(userId),
-	//	Offset: int32(page),
-	//	Limit:  int32(pageSize),
-	//}
-	//r, err := client.GetRepliesByUserId(ctx, &request)
-
-	dbReplies, totalCount, err := dao.GetRepliesByUserId(int64(userId), int64(page), int64(pageSize))
+// GetRepliesByUserID 获取该用户的回复
+func GetRepliesByUserID(ctx context.Context, userID int, page int, pageSize int) (*models.ReplyConnection, error) {
+	dbReplies, totalCount, err := dao.GetRepliesByUserId(int64(userID), int64(page), int64(pageSize))
 	if err != nil {
-		logs.Error(fmt.Sprintf("get replies by user_id[%d] error: ", userId), err)
+		common.LogDaoError(fmt.Sprintf("get replies by user_id[%d] error: ", userID), err)
 		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.NotFound: "该用户不存在",
 			common.Internal: ServiceError,
@@ -296,18 +229,11 @@ func GetRepliesByUserId(ctx context.Context, userId int, page int, pageSize int)
 	}, nil
 }
 
-func GetCommentById(ctx context.Context, commentId int) (*models.Comment, error) {
-	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	//defer cancel()
-	//request := postpb.CommentRequest{
-	//	Id: int64(commentId),
-	//}
-	//r, err := client.GetComment(ctx, &request)
-
-	dbComment, err := dao.GetComment(int64(commentId))
+// GetCommentByID 根据id获取评论信息
+func GetCommentByID(ctx context.Context, commentID int) (*models.Comment, error) {
+	dbComment, err := dao.GetComment(int64(commentID))
 	if err != nil {
-		logs.Error(fmt.Sprintf("get comment[%d] error: ", commentId), err)
+		common.LogDaoError(fmt.Sprintf("get comment[%d] error: ", commentID), err)
 		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.Internal: ServiceError,
 			common.NotFound: "该评论不存在",
@@ -331,18 +257,11 @@ func GetCommentById(ctx context.Context, commentId int) (*models.Comment, error)
 	}, nil
 }
 
-func GetReplyById(ctx context.Context, replyId int) (*models.Reply, error) {
-	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	//defer cancel()
-	//request := postpb.ReplyRequest{
-	//	Id: int64(replyId),
-	//}
-	//r, err := client.GetReply(ctx, &request)
-
-	dbReply, err := dao.GetReply(int64(replyId))
+// GetReplyByID 根据id获取回复
+func GetReplyByID(ctx context.Context, replyID int) (*models.Reply, error) {
+	dbReply, err := dao.GetReply(int64(replyID))
 	if err != nil {
-		logs.Error(fmt.Sprintf("get reply[%d] error: ", replyId), err)
+		common.LogDaoError(fmt.Sprintf("get reply[%d] error: ", replyID), err)
 		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.Internal: ServiceError,
 			common.NotFound: "该回复不存在",
@@ -367,155 +286,106 @@ func GetReplyById(ctx context.Context, replyId int) (*models.Reply, error) {
 	}, nil
 }
 
-func DeletePost(ctx context.Context, postId int) (bool, error) {
-	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	//defer cancel()
-	//request := postpb.DeleteRequest{
-	//	Id: int64(postId),
-	//}
-	//r, err := client.DeletePost(ctx, &request)
-
-	err := dao.DeletePost(int64(postId))
+// DeletePost 删除帖子
+func DeletePost(ctx context.Context, postID int) (bool, error) {
+	err := dao.DeletePost(int64(postID))
 	if err != nil {
-		logs.Error(fmt.Sprintf("delete post[%d] error: ", postId), err)
+		common.LogDaoError(fmt.Sprintf("delete post[%d] error: ", postID), err)
 		return false, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.Internal: ServiceError,
+			common.NotFound: "该帖子不存在",
 		})
 	}
 	return true, nil
 }
 
-func DeleteComment(ctx context.Context, commentId int) (bool, error) {
-	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	//defer cancel()
-	//request := postpb.DeleteRequest{
-	//	Id: int64(commentId),
-	//}
-	//r, err := client.DeleteComment(ctx, &request)
-
-	err := dao.DeleteComment(int64(commentId))
+// DeleteComment 删除评论
+func DeleteComment(ctx context.Context, commentID int) (bool, error) {
+	err := dao.DeleteComment(int64(commentID))
 	if err != nil {
-		logs.Error(fmt.Sprintf("delete comment[%d] error: ", commentId), err)
+		common.LogDaoError(fmt.Sprintf("delete comment[%d] error: ", commentID), err)
 		return false, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.Internal: ServiceError,
+			common.NotFound: "该评论不存在",
 		})
 	}
 	return true, nil
 }
 
-func DeleteReply(ctx context.Context, replyId int) (bool, error) {
-	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	//defer cancel()
-	//request := postpb.DeleteRequest{
-	//	Id: int64(replyId),
-	//}
-	//r, err := client.DeleteReply(ctx, &request)
-
-	err := dao.DeleteReply(int64(replyId))
+// DeleteReply 删除回复
+func DeleteReply(ctx context.Context, replyID int) (bool, error) {
+	err := dao.DeleteReply(int64(replyID))
 	if err != nil {
-		logs.Error(fmt.Sprintf("delete reply[%d] error: ", replyId), err)
+		common.LogDaoError(fmt.Sprintf("delete reply[%d] error: ", replyID), err)
 		return false, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.Internal: ServiceError,
+			common.NotFound: "该回复不存在",
 		})
 	}
 	return true, nil
 }
 
-//
+// NewPost 新建帖子
 func NewPost(ctx context.Context, post models.NewPost) (int, error) {
-	userId, err := getUserIdFromContext(ctx)
+	userID, err := getUserIDFromContext(ctx)
 	if err != nil {
-		logs.Error("new post get userId from context error: ", err)
-		return 0, err
+		return 0, errors.New(ServiceError)
 	}
-	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	//defer cancel()
-	//request := postpb.NewPostRequest{
-	//	UserId:  userId,
-	//	Topic:   post.Topic,
-	//	Content: post.Content,
-	//}
-	//r, err := client.NewPost(ctx, &request)
 
-	postId, err := dao.InsertPost(userId, post.Topic, post.Content)
+	postID, err := dao.InsertPost(userID, post.Topic, post.Content)
 	if err != nil {
-		logs.Error("create post error:", err)
+		logs.Error("create post error: ", err)
 		return 0, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.Internal: ServiceError,
 		})
 	}
-	return int(postId), nil
+	return int(postID), nil
 }
 
+// NewComment 新建评论
 func NewComment(ctx context.Context, comment models.NewComment) (int, error) {
-	userId, err := getUserIdFromContext(ctx)
+	userID, err := getUserIDFromContext(ctx)
 	if err != nil {
-		logs.Error("new comment get userId from context error: ", err)
-		return 0, err
+		return 0, errors.New(ServiceError)
 	}
-	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	//defer cancel()
-	//request := postpb.NewCommentRequest{
-	//	UserId:  userId,
-	//	PostId:  int64(comment.PostID),
-	//	Content: comment.Content,
-	//}
-	//r, err := client.NewComment(ctx, &request)
 
-	commentId, err := dao.InsertComment(userId, int64(comment.PostID), comment.Content)
+	commentID, err := dao.InsertComment(userID, int64(comment.PostID), comment.Content)
 	if err != nil {
-		logs.Error("create comment error:", err)
+		logs.Error("create comment error: ", err)
 		return 0, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.Internal: ServiceError,
 		})
 	}
-	return int(commentId), nil
+	return int(commentID), nil
 }
 
+// NewReply 新建回复
 func NewReply(ctx context.Context, reply models.NewReply) (int, error) {
-	userId, err := getUserIdFromContext(ctx)
+	userID, err := getUserIDFromContext(ctx)
 	if err != nil {
-		logs.Error("new reply get userId from context error: ", err)
-		return 0, err
+		return 0, errors.New(ServiceError)
 	}
-	//client := postpb.NewPostServiceClient(rpc_conn.PostConn)
-	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	//defer cancel()
-	//request := postpb.NewReplyRequest{
-	//	UserId:    userId,
-	//	PostId:    int64(reply.PostID),
-	//	Content:   reply.Content,
-	//	CommentId: int64(reply.CommentID),
-	//	ParentId:  int64(reply.ParentID),
-	//}
-	//r, err := client.NewReply(ctx, &request)
 
-	replyId, err := dao.InsertReply(userId, int64(reply.PostID), int64(reply.CommentID), int64(reply.ParentID), reply.Content)
+	replyID, err := dao.InsertReply(userID, int64(reply.PostID), int64(reply.CommentID), int64(reply.ParentID), reply.Content)
 	if err != nil {
 		logs.Error("create reply error:", err)
 		return 0, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
 			common.Internal: ServiceError,
 		})
 	}
-	return int(replyId), nil
+	return int(replyID), nil
 }
 
-func getUserIdFromContext(ctx context.Context) (int64, error) {
+func getUserIDFromContext(ctx context.Context) (int64, error) {
 	gctx, err := common.GinContextFromContext(ctx)
 	if err != nil {
-		logs.Error(err.Error())
-		return 0, errors.New(ServiceError)
+		logs.Error("get gin_context from context error: ", err)
+		return 0, err
 	}
-	userId, ok := gctx.Value("claims").(float64)
+	userID, ok := gctx.Value("claims").(float64)
 	if !ok {
 		logs.Error("get user_id from request ctx error")
-		logs.Info(fmt.Sprintf("ctx claims: %+v", gctx.Value("claims")))
 		return 0, errors.New(ServiceError)
 	}
-	return int64(userId), nil
+	return int64(userID), nil
 }

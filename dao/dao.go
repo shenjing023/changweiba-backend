@@ -624,12 +624,22 @@ func GetRepliesByUserId(userId int64, page int64, pageSize int64) ([]*Reply, int
 	return replies, totalCount, nil
 }
 
-//检测user表中的ip是否超过次数，防止恶意注册用户
-func CheckUserIp(ip string) (bool, error) {
-
+//CheckUserIP 检测user表中的ip是否超过次数，防止恶意注册用户
+func CheckUserIP(ip string) (bool, error) {
+	var (
+		tmp        []*User
+		totalCount int64
+	)
+	if err := dbOrm.Where("ip=?", InetAtoi(ip)).Find(tmp).Count(&totalCount).Error; err != nil {
+		return false, common.NewDaoErr(common.Internal, err)
+	}
+	if totalCount > 3 {
+		return false, nil
+	}
+	return true, nil
 }
 
-//ip地址int->string相互转换
+//InetAtoi ip地址int->string相互转换
 func InetAtoi(ip string) int64 {
 	ret := big.NewInt(0)
 	ret.SetBytes(net.ParseIP(ip).To4())
