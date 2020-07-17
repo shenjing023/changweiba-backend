@@ -111,19 +111,19 @@ func (r *queryResolver) Posts(ctx context.Context, page int, pageSize int) (*mod
 }
 
 func (r *queryResolver) Comment(ctx context.Context, commentID int) (*models.Comment, error) {
-	return service.GetCommentById(ctx, commentID)
+	return service.GetCommentByID(ctx, commentID)
 }
 
 func (r *queryResolver) Comments(ctx context.Context, postId int, page int, pageSize int) (*models.CommentConnection, error) {
-	return service.GetCommentsByPostId(ctx, postId, page, pageSize)
+	return service.GetCommentsByPostID(ctx, postId, page, pageSize)
 }
 
 func (r *queryResolver) Reply(ctx context.Context, replyID int) (*models.Reply, error) {
-	return service.GetReplyById(ctx, replyID)
+	return service.GetReplyByID(ctx, replyID)
 }
 
 func (r *queryResolver) Replies(ctx context.Context, commentID int, page int, pageSize int) (*models.ReplyConnection, error) {
-	return service.GetRepliesByCommentId(ctx, commentID, page, pageSize)
+	return service.GetRepliesByCommentID(ctx, commentID, page, pageSize)
 }
 
 type userResolver struct {
@@ -140,7 +140,7 @@ func (r *userResolver) Comments(ctx context.Context, obj *models.User, page int,
 }
 
 func (r *userResolver) Replies(ctx context.Context, obj *models.User, page int, pageSize int) (*models.ReplyConnection, error) {
-	return service.GetRepliesByUserId(ctx, obj.ID, page, pageSize)
+	return service.GetRepliesByUserID(ctx, obj.ID, page, pageSize)
 }
 
 type postResolver struct {
@@ -149,7 +149,7 @@ type postResolver struct {
 
 func (r *postResolver) Comments(ctx context.Context, obj *models.Post, page int, pageSize int) (*models.CommentConnection,
 	error) {
-	return service.GetCommentsByPostId(ctx, obj.ID, page, pageSize)
+	return service.GetCommentsByPostID(ctx, obj.ID, page, pageSize)
 }
 
 func (r *postResolver) User(ctx context.Context, obj *models.Post) (*models.User, error) {
@@ -165,7 +165,7 @@ type commentResolver struct {
 }
 
 func (r *commentResolver) Replies(ctx context.Context, obj *models.Comment, page int, pageSize int) (*models.ReplyConnection, error) {
-	return service.GetRepliesByCommentId(ctx, obj.ID, page, pageSize)
+	return service.GetRepliesByCommentID(ctx, obj.ID, page, pageSize)
 }
 
 func (r *commentResolver) User(ctx context.Context, obj *models.Comment) (*models.User, error) {

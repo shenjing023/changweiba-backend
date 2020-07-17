@@ -7,8 +7,10 @@ import (
 	"changweiba-backend/graphql/dataloader"
 	"changweiba-backend/graphql/generated"
 	"changweiba-backend/pkg/middleware"
+	"context"
 	"flag"
 	"fmt"
+	"runtime/debug"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -25,6 +27,7 @@ import (
 	mygraphql "changweiba-backend/graphql"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 )
 
 const defaultPort = ":8088"
@@ -48,6 +51,12 @@ func graphqlHandler() gin.HandlerFunc {
 			Resolvers: &mygraphql.Resolver{},
 		},
 	))
+	srv.SetRecoverFunc(func(ctx context.Context, err interface{}) error {
+		// send this panic somewhere
+		logs.Error("system panic: ", err)
+		logs.Trace(string(debug.Stack()))
+		return errors.New("system error")
+	})
 	srv.Use(extension.FixedComplexityLimit(20))
 
 	return func(c *gin.Context) {

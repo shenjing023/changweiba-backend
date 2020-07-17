@@ -159,7 +159,6 @@ func checkNewUser(name string, password string, ip string) (bool, string) {
 		return false, "user name or password can not be empty"
 	}
 	//检查该ip下的账号
-	fmt.Println(ip)
 	b, err := dao.CheckUserIP(ip)
 	if err != nil {
 		common.LogDaoError("check ip error:", err)

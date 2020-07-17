@@ -46,11 +46,12 @@ func GinContextFromContext(ctx context.Context) (*gin.Context, error) {
 	return gc, nil
 }
 
-//记录dao错误到日志
+//LogDaoError 记录dao错误到日志
 func LogDaoError(prefix string, err error) {
 	de, ok := FromError(err)
 	if !ok {
 		logs.Error(prefix, err)
+		return
 	}
 	if de.Code == Unknown || de.Code == Internal {
 		logs.Error(prefix, de.Err)

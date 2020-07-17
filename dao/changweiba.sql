@@ -80,7 +80,7 @@ CREATE TABLE `reply` (
     `post_id` int(11) UNSIGNED NOT NULL COMMENT '帖子id',
     `comment_id` int(11) UNSIGNED NOT NULL COMMENT '评论id',
     `content` varchar(1024) NOT NULL COMMENT '评论内容',
-    `parent_id` int(11) UNSIGNED NOT NULL COMMENT '回复哪个的id',
+    `parent_id` int(11) UNSIGNED NOT NULL COMMENT '回复哪个回复的id',
     `create_time` int(11) UNSIGNED NOT NULL COMMENT '创建时间',
     `floor` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '楼中楼第几楼',
     `status` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '状态,(0正常1删除)',

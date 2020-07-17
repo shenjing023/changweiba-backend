@@ -18,7 +18,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
+	_ "github.com/jinzhu/gorm/dialects/mysql" //mysql驱动
 )
 
 var (
@@ -68,7 +68,7 @@ func Init() {
 	dbOrm.SingularTable(true)
 }
 
-//插入用户
+//InsertUser 插入用户
 func InsertUser(userName, password, ip, avatar string) (int64, error) {
 	//先检查name是否存在
 	var u User
@@ -96,9 +96,9 @@ func InsertUser(userName, password, ip, avatar string) (int64, error) {
 	return 0, common.NewDaoErr(common.AlreadyExists, errors.New("user already exist"))
 }
 
-func GetUser(userId int64) (*User, error) {
+func GetUser(userID int64) (*User, error) {
 	var user User
-	if err := dbOrm.First(&user, userId).Error; err != nil {
+	if err := dbOrm.First(&user, userID).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, common.NewDaoErr(common.NotFound, err)
 		}
@@ -111,12 +111,11 @@ func CheckUserExist(name string) (*User, bool) {
 	var user User
 	if exist := dbOrm.Where("name=?", name).First(&user).RecordNotFound(); exist {
 		return nil, false
-	} else {
-		return &user, true
 	}
+	return &user, true
 }
 
-//随机获取一个头像url
+//GetRandomAvatar 随机获取一个头像url
 func GetRandomAvatar() (url string, err error) {
 	var avatars []Avatar
 	if err = dbOrm.Select("url").Find(&avatars).Error; err != nil {
@@ -131,11 +130,11 @@ func GetRandomAvatar() (url string, err error) {
 	return
 }
 
-func InsertPost(userId int64, topic string, content string) (int64, error) {
+func InsertPost(userID int64, topic string, content string) (int64, error) {
 	session := dbOrm.Begin()
 	now := time.Now().Unix()
 	post := Post{
-		UserId:     userId,
+		UserId:     userID,
 		Topic:      topic,
 		CreateTime: now,
 		LastUpdate: now,
@@ -147,7 +146,7 @@ func InsertPost(userId int64, topic string, content string) (int64, error) {
 		return 0, common.NewDaoErr(common.Internal, err)
 	}
 	comment := Comment{
-		UserId:     userId,
+		UserId:     userID,
 		PostId:     post.Id,
 		Content:    content,
 		CreateTime: now,
@@ -164,24 +163,37 @@ func InsertPost(userId int64, topic string, content string) (int64, error) {
 	return post.Id, nil
 }
 
-func InsertComment(userId int64, postId int64, content string) (int64, error) {
+// InsertComment 对某个帖子插入新评论
+func InsertComment(userID int64, postID int64, content string) (int64, error) {
+	// 先检查帖子是否存在或删除
+	var count int64
+	if err := dbOrm.Model(&Post{}).Where("id = ? AND status = 0", postID).Count(&count).Error; err != nil {
+		return 0, common.NewDaoErr(common.Internal, err)
+	}
+	if count == 0 {
+		return 0, common.NewDaoErr(common.InvalidArgument, errors.New("该帖子不存在或已删除"))
+	}
+
 	session := dbOrm.Begin()
 	//先获取楼层数
-	var floor int64
+	type Floor struct {
+		Total int64
+	}
+	var floor Floor
 	sql := "SELECT count(*) AS total FROM comment WHERE post_id=? FOR UPDATE"
-	if err := session.Raw(sql, postId).Scan(&floor).Error; err != nil {
+	if err := session.Raw(sql, postID).Scan(&floor).Error; err != nil {
 		session.Rollback()
 		return 0, common.NewDaoErr(common.Internal, err)
 	}
 
 	now := time.Now().Unix()
 	comment := Comment{
-		UserId:     userId,
-		PostId:     postId,
+		UserId:     userID,
+		PostId:     postID,
 		Content:    content,
 		CreateTime: now,
 		Status:     0,
-		Floor:      floor + 1,
+		Floor:      floor.Total + 1,
 	}
 	if err := session.Create(&comment).Error; err != nil {
 		session.Rollback()
@@ -189,30 +201,59 @@ func InsertComment(userId int64, postId int64, content string) (int64, error) {
 	}
 
 	session.Commit()
-	go increasePostReplyNum(postId)
+	go increasePostReplyNum(postID)
 	return comment.Id, nil
 }
 
-func InsertReply(userId, postId, commentId, parentId int64, content string) (int64, error) {
+// InsertReply 给评论插入回复
+func InsertReply(userID, postID, commentID, parentID int64, content string) (int64, error) {
+	// 先检查参数
+	var count int64
+	if err := dbOrm.Model(&Post{}).Where("id = ? AND status = 0", postID).Count(&count).Error; err != nil {
+		return 0, common.NewDaoErr(common.Internal, err)
+	}
+	if count == 0 {
+		return 0, common.NewDaoErr(common.InvalidArgument, errors.New("该帖子不存在或已删除"))
+	}
+	count = 0
+	if err := dbOrm.Model(&Comment{}).Where("id = ? AND status = 0", commentID).Count(&count).Error; err != nil {
+		return 0, common.NewDaoErr(common.Internal, err)
+	}
+	if count == 0 {
+		return 0, common.NewDaoErr(common.InvalidArgument, errors.New("该评论不存在或已删除"))
+	}
+	if parentID == 0 {
+		count = 0
+		if err := dbOrm.Model(&Reply{}).Where("id = ? AND status = 0", parentID).Count(&count).Error; err != nil {
+			return 0, common.NewDaoErr(common.Internal, err)
+		}
+		if count == 0 {
+			return 0, common.NewDaoErr(common.InvalidArgument, errors.New("该回复不存在或已删除"))
+		}
+	}
+
 	session := dbOrm.Begin()
 	//先获取楼层数
-	var floor int64
+	type Floor struct {
+		Total int64
+	}
+	var floor Floor
 	sql := "SELECT count(*) AS total FROM reply WHERE comment_id=? FOR UPDATE"
-	if err := session.Raw(sql, commentId).Scan(&floor).Error; err != nil {
+	if err := session.Raw(sql, commentID).Scan(&floor).Error; err != nil {
 		session.Rollback()
 		return 0, common.NewDaoErr(common.Internal, err)
 	}
 
 	now := time.Now().Unix()
 	reply := Reply{
-		UserId:     userId,
-		PostId:     postId,
+		UserId:     userID,
+		PostId:     postID,
 		Content:    content,
-		ParentId:   parentId,
-		CommentId:  commentId,
+		ParentId:   parentID,
+		CommentId:  commentID,
 		CreateTime: now,
 		Status:     0,
-		Floor:      floor + 1,
+		Floor:      floor.Total + 1,
 	}
 	if err := session.Create(&reply).Error; err != nil {
 		session.Rollback()
@@ -220,39 +261,39 @@ func InsertReply(userId, postId, commentId, parentId int64, content string) (int
 	}
 
 	session.Commit()
-	go increasePostReplyNum(postId)
+	go increasePostReplyNum(postID)
 	return reply.Id, nil
 }
 
 //帖子回复数+1
-func increasePostReplyNum(postId int64) {
+func increasePostReplyNum(postID int64) {
 	sql := "UPDATE post SET reply_num=reply_num+1,last_update=UNIX_TIMESTAMP() WHERE id=?"
-	dbOrm.Exec(sql, postId)
+	dbOrm.Exec(sql, postID)
 }
 
-func decreasePostReplyNum(postId int64) {
+func decreasePostReplyNum(postID int64) {
 	sql := "UPDATE post SET reply_num=reply_num-1 WHERE id=?"
-	dbOrm.Exec(sql, postId)
+	dbOrm.Exec(sql, postID)
 }
 
-func DeletePost(postId int64) error {
+func DeletePost(postID int64) error {
 	sql := "UPDATE post SET status=0 WHERE id=?"
-	err := dbOrm.Exec(sql, postId).Error
+	err := dbOrm.Exec(sql, postID).Error
 	if err != nil {
 		return common.NewDaoErr(common.Internal, err)
 	}
 	return nil
 }
 
-func DeleteComment(commentId int64) (err error) {
+func DeleteComment(commentID int64) (err error) {
 	sql := "UPDATE comment SET status=0 WHERE id=?"
-	err = dbOrm.Exec(sql, commentId).Error
+	err = dbOrm.Exec(sql, commentID).Error
 	if err == nil {
 		go func() {
-			var postId int64
+			var postID int64
 			sql = "SELECT post_id FROM comment WHERE id=?"
-			if err = dbOrm.Raw(sql, commentId).Scan(&postId).Error; err == nil {
-				go decreasePostReplyNum(postId)
+			if err = dbOrm.Raw(sql, commentID).Scan(&postID).Error; err == nil {
+				go decreasePostReplyNum(postID)
 			}
 		}()
 		return nil
@@ -260,14 +301,14 @@ func DeleteComment(commentId int64) (err error) {
 	return common.NewDaoErr(common.Internal, err)
 }
 
-func DeleteReply(replyId int64) (err error) {
+func DeleteReply(replyID int64) (err error) {
 	sql := "UPDATE reply SET status=0 WHERE id=?"
-	err = dbOrm.Exec(sql, replyId).Error
+	err = dbOrm.Exec(sql, replyID).Error
 	if err == nil {
 		go func() {
 			var postId int64
 			sql = "SELECT post_id FROM reply WHERE id=?"
-			if err = dbOrm.Raw(sql, replyId).Scan(&postId).Error; err == nil {
+			if err = dbOrm.Raw(sql, replyID).Scan(&postId).Error; err == nil {
 				go decreasePostReplyNum(postId)
 			}
 		}()
@@ -276,9 +317,9 @@ func DeleteReply(replyId int64) (err error) {
 	return common.NewDaoErr(common.Internal, err)
 }
 
-func GetPost(postId int64) (*Post, error) {
+func GetPost(postID int64) (*Post, error) {
 	var post Post
-	if err := dbOrm.First(&post, postId).Error; err != nil {
+	if err := dbOrm.First(&post, postID).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, common.NewDaoErr(common.NotFound, err)
 		}
@@ -301,9 +342,9 @@ func GetPosts(page int64, pageSize int64) ([]*Post, int64, error) {
 	return posts, totalCount, nil
 }
 
-func GetComment(commentId int64) (*Comment, error) {
+func GetComment(commentID int64) (*Comment, error) {
 	var comment Comment
-	if err := dbOrm.First(&comment, commentId).Error; err != nil {
+	if err := dbOrm.First(&comment, commentID).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, common.NewDaoErr(common.NotFound, err)
 		}
@@ -312,13 +353,13 @@ func GetComment(commentId int64) (*Comment, error) {
 	return &comment, nil
 }
 
-func GetCommentsByPostId(postId int64, page int64, pageSize int64) ([]*Comment, int64, error) {
+func GetCommentsByPostId(postID int64, page int64, pageSize int64) ([]*Comment, int64, error) {
 	var (
 		comments   []*Comment
 		totalCount int64
 		tmp        []*Comment
 	)
-	if err := dbOrm.Where("post_id=?", postId).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize * (page - 1)).Find(&comments).Error; err != nil {
+	if err := dbOrm.Where("post_id=?", postID).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize * (page - 1)).Find(&comments).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, 0, common.NewDaoErr(common.NotFound, err)
 		}
@@ -327,13 +368,13 @@ func GetCommentsByPostId(postId int64, page int64, pageSize int64) ([]*Comment, 
 	return comments, totalCount, nil
 }
 
-func GetRepliesByCommentId(commentId int64, page int64, pageSize int64) ([]*Reply, int64, error) {
+func GetRepliesByCommentId(commentID int64, page int64, pageSize int64) ([]*Reply, int64, error) {
 	var (
 		replies    []*Reply
 		totalCount int64
 		tmp        []*Reply
 	)
-	if err := dbOrm.Where("comment_id=?", commentId).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize * (page - 1)).Find(&replies).Error; err != nil {
+	if err := dbOrm.Where("comment_id=?", commentID).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize * (page - 1)).Find(&replies).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, 0, common.NewDaoErr(common.NotFound, err)
 		}
@@ -542,6 +583,7 @@ func GetReply(replyId int64) (*Reply, error) {
 //	return comments, nil
 //}
 
+// GetUsers 获取多个user
 func GetUsers(ids []int64) ([]*User, error) {
 	sql := `
 		SELECT 
@@ -630,7 +672,7 @@ func CheckUserIP(ip string) (bool, error) {
 		tmp        []*User
 		totalCount int64
 	)
-	if err := dbOrm.Where("ip=?", InetAtoi(ip)).Find(tmp).Count(&totalCount).Error; err != nil {
+	if err := dbOrm.Where("ip=?", InetAtoi(ip)).Find(&tmp).Count(&totalCount).Error; err != nil {
 		return false, common.NewDaoErr(common.Internal, err)
 	}
 	if totalCount > 3 {

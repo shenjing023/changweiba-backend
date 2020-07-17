@@ -351,9 +351,10 @@ func NewComment(ctx context.Context, comment models.NewComment) (int, error) {
 
 	commentID, err := dao.InsertComment(userID, int64(comment.PostID), comment.Content)
 	if err != nil {
-		logs.Error("create comment error: ", err)
+		common.LogDaoError("create comment error: ", err)
 		return 0, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
-			common.Internal: ServiceError,
+			common.Internal:        ServiceError,
+			common.InvalidArgument: err.Error(),
 		})
 	}
 	return int(commentID), nil
