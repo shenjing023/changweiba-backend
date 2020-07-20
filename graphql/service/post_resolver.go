@@ -288,6 +288,11 @@ func GetReplyByID(ctx context.Context, replyID int) (*models.Reply, error) {
 
 // DeletePost 删除帖子
 func DeletePost(ctx context.Context, postID int) (bool, error) {
+	// userID, err := getUserIDFromContext(ctx)
+	// if err != nil {
+	// 	return false, errors.New(ServiceError)
+	// }
+
 	err := dao.DeletePost(int64(postID))
 	if err != nil {
 		common.LogDaoError(fmt.Sprintf("delete post[%d] error: ", postID), err)

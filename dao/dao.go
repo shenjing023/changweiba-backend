@@ -4,7 +4,6 @@ import (
 	"changweiba-backend/common"
 	"changweiba-backend/conf"
 	"changweiba-backend/pkg/logs"
-	"context"
 	"fmt"
 	"log"
 	"math/big"
@@ -19,6 +18,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql" //mysql驱动
+	"github.com/mitchellh/mapstructure"
 )
 
 var (
@@ -35,7 +35,7 @@ func Init() {
 		Password: conf.Cfg.Redis.Password,
 		DB:       0,
 	})
-	if _, err := redisClient.Ping(context.Background()).Result(); err != nil {
+	if _, err := redisClient.Ping(redisClient.Context()).Result(); err != nil {
 		fmt.Printf("connect to redis error: %+v", err)
 		os.Exit(1)
 	}
@@ -86,16 +86,15 @@ func InsertUser(userName, password, ip, avatar string) (int64, error) {
 			}
 			if dbOrm.Create(&user).Error != nil {
 				return 0, common.NewDaoErr(common.Internal, errors.WithStack(err))
-			} else {
-				return user.Id, nil
 			}
-		} else {
-			return 0, common.NewDaoErr(common.Internal, errors.WithStack(err))
+			return user.Id, nil
 		}
+		return 0, common.NewDaoErr(common.Internal, errors.WithStack(err))
 	}
 	return 0, common.NewDaoErr(common.AlreadyExists, errors.New("user already exist"))
 }
 
+// GetUser 根据id获取用户
 func GetUser(userID int64) (*User, error) {
 	var user User
 	if err := dbOrm.First(&user, userID).Error; err != nil {
@@ -107,12 +106,40 @@ func GetUser(userID int64) (*User, error) {
 	return &user, nil
 }
 
-func CheckUserExist(name string) (*User, bool) {
+// CheckUserExist 检查用户是否存在,有则返回相关信息
+func CheckUserExist(name string) (*User, bool, error) {
 	var user User
-	if exist := dbOrm.Where("name=?", name).First(&user).RecordNotFound(); exist {
-		return nil, false
+	// 先检查redis,hgetall的返回没有redis.Nil,先用exists
+	if val, err := redisClient.Exists(redisClient.Context(), "user_"+name).Result(); err != nil {
+		return nil, false, common.NewDaoErr(common.Internal, err)
+	} else {
+		if val == 1 {
+			//存在
+			if val, err := redisClient.HGetAll(redisClient.Context(), "user_"+name).Result(); err != nil {
+				return nil, false, common.NewDaoErr(common.Internal, err)
+			} else {
+				if err = mapstructure.Decode(val, &user); err != nil {
+					return nil, false, common.NewDaoErr(common.Internal, err)
+				}
+				return &user, true, nil
+			}
+		}
 	}
-	return &user, true
+
+	//redis不存在
+	if err := dbOrm.Where("name=?", name).First(&user).Error; err != nil {
+		return nil, false, common.NewDaoErr(common.Internal, err)
+	} else if gorm.IsRecordNotFoundError(err) {
+		return nil, false, common.NewDaoErr(common.NotFound, err)
+	}
+	err := redisClient.HSet(redisClient.Context(), "user_"+name, map[string]interface{}{
+		"id":       user.Id,
+		"name":     user.Name,
+		"password": user.Password,
+		"role":     user.Role,
+	}).Err()
+	fmt.Print(err)
+	return &user, true, nil
 }
 
 //GetRandomAvatar 随机获取一个头像url
@@ -130,6 +157,7 @@ func GetRandomAvatar() (url string, err error) {
 	return
 }
 
+// InsertPost 插入新帖子
 func InsertPost(userID int64, topic string, content string) (int64, error) {
 	session := dbOrm.Begin()
 	now := time.Now().Unix()
@@ -165,7 +193,7 @@ func InsertPost(userID int64, topic string, content string) (int64, error) {
 
 // InsertComment 对某个帖子插入新评论
 func InsertComment(userID int64, postID int64, content string) (int64, error) {
-	// 先检查帖子是否存在或删除
+	// 先检查帖子是否存在或删除,待优化，可redis
 	var count int64
 	if err := dbOrm.Model(&Post{}).Where("id = ? AND status = 0", postID).Count(&count).Error; err != nil {
 		return 0, common.NewDaoErr(common.Internal, err)
@@ -272,10 +300,11 @@ func increasePostReplyNum(postID int64) {
 }
 
 func decreasePostReplyNum(postID int64) {
-	sql := "UPDATE post SET reply_num=reply_num-1 WHERE id=?"
+	sql := "UPDATE post SET reply_num=reply_num-1,last_update=UNIX_TIMESTAMP() WHERE id=?"
 	dbOrm.Exec(sql, postID)
 }
 
+// DeletePost 删除帖子
 func DeletePost(postID int64) error {
 	sql := "UPDATE post SET status=0 WHERE id=?"
 	err := dbOrm.Exec(sql, postID).Error
