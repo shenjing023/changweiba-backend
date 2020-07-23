@@ -53,8 +53,7 @@ func Init() {
 		dbOrm.DB().SetMaxOpenConns(conf.Cfg.DB.MaxOpen)
 	}
 	//日志
-	f, err := os.Create(conf.Cfg.DB.LogFile)
-	if err != nil {
+	if f, err := os.Create(conf.Cfg.DB.LogFile); err != nil {
 		logs.Error("create sql log file failed:", err.Error())
 		os.Exit(1)
 	} else {
@@ -118,13 +117,15 @@ func CheckUserExist(name string) (*User, bool, error) {
 			if val, err := redisClient.HGetAll(redisClient.Context(), "user_"+name).Result(); err != nil {
 				return nil, false, common.NewDaoErr(common.Internal, err)
 			} else {
-				if err = mapstructure.Decode(val, &user); err != nil {
+				if err = mapstructure.WeakDecode(val, &user); err != nil {
+					logs.Error(errors.Wrap(err, "ss"))
 					return nil, false, common.NewDaoErr(common.Internal, err)
 				}
 				return &user, true, nil
 			}
 		}
 	}
+	fmt.Println(1111)
 
 	//redis不存在
 	if err := dbOrm.Where("name=?", name).First(&user).Error; err != nil {
@@ -132,13 +133,14 @@ func CheckUserExist(name string) (*User, bool, error) {
 	} else if gorm.IsRecordNotFoundError(err) {
 		return nil, false, common.NewDaoErr(common.NotFound, err)
 	}
-	err := redisClient.HSet(redisClient.Context(), "user_"+name, map[string]interface{}{
+	if err := redisClient.HSet(redisClient.Context(), "user_"+name, map[string]interface{}{
 		"id":       user.Id,
 		"name":     user.Name,
 		"password": user.Password,
 		"role":     user.Role,
-	}).Err()
-	fmt.Print(err)
+	}).Err(); err != nil {
+
+	}
 	return &user, true, nil
 }
 

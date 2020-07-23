@@ -71,10 +71,10 @@ func SignUp(ctx context.Context, input models.NewUser) (string, error) {
 func SignIn(ctx context.Context, input models.NewUser) (string, error) {
 	dbUser, exist, err := dao.CheckUserExist(input.Name)
 	if err != nil {
+		logs.Error(err)
 		return "", errors.New(AccountServiceError)
 	}
 	if exist {
-		fmt.Printf("1:%+v", dbUser)
 		dbPassword := dbUser.Password
 		tmp, _ := encryptPassword(input.Password)
 		if dbPassword != tmp {
