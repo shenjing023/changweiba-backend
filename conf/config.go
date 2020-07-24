@@ -23,14 +23,14 @@ type YamlConf struct {
 		Port int `yaml:"port"`
 	} `yaml:"post,omitempty"`
 	DB struct {
-		Host     string `yaml:"host"`
-		Port     int    `yaml:"port"`
-		User     string `yaml:"user"`
-		Password string `yaml:"password"`
-		Dbname   string `yaml:"dbname"`
-		MaxIdle  int    `yaml:"max_idle,omitempty"`
-		MaxOpen  int    `yaml:"max_open,omitempty"`
-		LogFile  string
+		Host      string `yaml:"host"`
+		Port      int    `yaml:"port"`
+		User      string `yaml:"user"`
+		Password  string `yaml:"password"`
+		Dbname    string `yaml:"dbname"`
+		MaxIdle   int    `yaml:"max_idle,omitempty"`
+		MaxOpen   int    `yaml:"max_open,omitempty"`
+		LogConfig string
 	} `yaml:"db"`
 	SignKey   string `yaml:"sign_key"`
 	Salt      string `yaml:"salt"`
@@ -75,9 +75,23 @@ func InitConfig(executeDir string) {
 		fmt.Println("Read yaml config file error:", err.Error())
 		os.Exit(1)
 	}
-	Cfg.DB.LogFile = executeDir + "/log/sql.log"
 
-	//日志配置
+	//db日志配置
+	var dbLogConf = LoggerConfig{
+		FileName:            executeDir + "/log/sql.log",
+		Level:               7,
+		EnableFuncCallDepth: true,
+		LogFuncCallDepth:    3,
+		RotatePerm:          "777",
+		Perm:                "777",
+		Daily:               true,
+		Rotate:              true,
+		Maxdays:             30,
+	}
+	cfg, _ := json.Marshal(&dbLogConf)
+	Cfg.DB.LogConfig = string(cfg)
+
+	//服务日志配置
 	var logConf = LoggerConfig{
 		FileName:            executeDir + "/log/log.log",
 		Level:               7,
@@ -89,12 +103,12 @@ func InitConfig(executeDir string) {
 		Rotate:              true,
 		Maxdays:             30,
 	}
-	cfg, _ := json.Marshal(&logConf)
+	cfg, _ = json.Marshal(&logConf)
 	if Cfg.Debug {
-		logs.SetLogger("console")
+		_ = logs.SetLogger("console")
 	}
 	if err = logs.SetLogger(logs.AdapterFile, string(cfg)); err != nil {
-		fmt.Println("Init logger error:", err.Error())
+		fmt.Println("Init server logger error:", err.Error())
 		os.Exit(1)
 	}
 	logs.EnableFuncCallDepth(logConf.EnableFuncCallDepth)

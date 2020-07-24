@@ -5,7 +5,6 @@ import (
 	"changweiba-backend/conf"
 	"changweiba-backend/pkg/logs"
 	"fmt"
-	"log"
 	"math/big"
 	"math/rand"
 	"net"
@@ -52,13 +51,14 @@ func Init() {
 	if conf.Cfg.DB.MaxOpen > 0 {
 		dbOrm.DB().SetMaxOpenConns(conf.Cfg.DB.MaxOpen)
 	}
-	//日志
-	if f, err := os.Create(conf.Cfg.DB.LogFile); err != nil {
-		logs.Error("create sql log file failed:", err.Error())
+	//mysql日志
+	logger := logs.NewLogger()
+	if err = logger.SetLogger(logs.AdapterFile, conf.Cfg.DB.LogConfig); err != nil {
+		logs.Error("Init DB logger error:", err.Error())
 		os.Exit(1)
 	} else {
 		// 待优化
-		dbOrm.SetLogger(log.New(f, "\r\n", 0))
+		dbOrm.SetLogger(logger)
 		if conf.Cfg.Debug {
 			dbOrm.LogMode(true)
 		}
@@ -125,7 +125,6 @@ func CheckUserExist(name string) (*User, bool, error) {
 			}
 		}
 	}
-	fmt.Println(1111)
 
 	//redis不存在
 	if err := dbOrm.Where("name=?", name).First(&user).Error; err != nil {

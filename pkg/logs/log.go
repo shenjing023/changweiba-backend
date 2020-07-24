@@ -39,6 +39,7 @@ package logs
 
 import (
 	"fmt"
+	"github.com/jinzhu/gorm"
 	"log"
 	"os"
 	"path"
@@ -670,4 +671,13 @@ func formatLog(f interface{}, v ...interface{}) string {
 		msg += strings.Repeat(" %+v", len(v))
 	}
 	return fmt.Sprintf(msg, v...)
+}
+
+// db的日志配置，配合gorm使用
+// compatibility alias for Informational()
+func (bl *BeeLogger) Print(v ...interface{}) {
+	if LevelInfo > bl.level {
+		return
+	}
+	bl.writeMsg(LevelInfo, "", gorm.LogFormatter(v...)...)
 }
