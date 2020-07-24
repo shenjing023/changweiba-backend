@@ -71,7 +71,7 @@ func SignUp(ctx context.Context, input models.NewUser) (string, error) {
 func SignIn(ctx context.Context, input models.NewUser) (string, error) {
 	dbUser, exist, err := dao.CheckUserExist(input.Name)
 	if err != nil {
-		logs.Error(err)
+		common.LogDaoError("check user error: ", err)
 		return "", errors.New(AccountServiceError)
 	}
 	if exist {

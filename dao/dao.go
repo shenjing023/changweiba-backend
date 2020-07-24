@@ -118,8 +118,7 @@ func CheckUserExist(name string) (*User, bool, error) {
 				return nil, false, common.NewDaoErr(common.Internal, err)
 			} else {
 				if err = mapstructure.WeakDecode(val, &user); err != nil {
-					logs.Error(errors.Wrap(err, "ss"))
-					return nil, false, common.NewDaoErr(common.Internal, err)
+					return nil, false, common.NewDaoErr(common.Internal, errors.WithStack(err))
 				}
 				return &user, true, nil
 			}
