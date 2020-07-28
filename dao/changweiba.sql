@@ -1,9 +1,10 @@
 /**
     mysql changweiba
  */
- 
+CREATE DATABASE IF NOT EXISTS changweiba;
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
+USE changweiba;
 
 /*
     用户表

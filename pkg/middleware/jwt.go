@@ -217,7 +217,7 @@ func JWTMiddleware(signKey string, queryDeep int) gin.HandlerFunc {
 		doc, err_ := parser.ParseQuery(&ast.Source{Input: param.Query})
 		//spew.Dump(err)
 		if err_ != nil {
-			logs.Error(fmt.Sprintf("parse query error:%+v", err_))
+			logs.Error("parse query error: ", err_)
 			systemError(c)
 		}
 		ops := doc.Operations
