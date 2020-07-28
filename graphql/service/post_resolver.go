@@ -43,7 +43,7 @@ func GetPost(ctx context.Context, postID int) (*models.Post, error) {
 // GetCommentsByPostID 获取该帖子下的评论
 func GetCommentsByPostID(ctx context.Context, postID int, page int,
 	pageSize int) (*models.CommentConnection, error) {
-	dbComments, totalCount, err := dao.GetCommentsByPostId(int64(postID), int64(page), int64(pageSize))
+	dbComments, totalCount, err := dao.GetCommentsByPostID(int64(postID), int64(page), int64(pageSize))
 	if err != nil {
 		common.LogDaoError(fmt.Sprintf("get comments under post[%d] error: ", postID), err)
 		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{

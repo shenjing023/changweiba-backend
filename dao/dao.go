@@ -382,39 +382,46 @@ func GetComment(commentID int64) (*Comment, error) {
 	return &comment, nil
 }
 
-func GetCommentsByPostId(postID int64, page int64, pageSize int64) ([]*Comment, int64, error) {
+// GetCommentsByPostID 获取帖子的回复
+func GetCommentsByPostID(postID int64, page int64, pageSize int64) ([]*Comment, int64, error) {
 	var (
 		comments   []*Comment
 		totalCount int64
 		tmp        []*Comment
 	)
+	//slice作为结果集不会返回ErrRecordNotFound,https://segmentfault.com/a/1190000021363996
 	if err := dbOrm.Where("post_id=?", postID).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize * (page - 1)).Find(&comments).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, 0, common.NewDaoErr(common.NotFound, err)
-		}
 		return nil, 0, common.NewDaoErr(common.Internal, err)
+	}
+	if len(tmp) == 0 {
+		return nil, 0, common.NewDaoErr(common.NotFound, errors.New("getCommentsByPostID error: postID not found"))
 	}
 	return comments, totalCount, nil
 }
 
-func GetRepliesByCommentId(commentID int64, page int64, pageSize int64) ([]*Reply, int64, error) {
+// GetRepliesByCommentID 获取评论回复
+func GetRepliesByCommentID(commentID int64, page int64, pageSize int64) ([]*Reply, int64, error) {
 	var (
 		replies    []*Reply
 		totalCount int64
 		tmp        []*Reply
 	)
 	if err := dbOrm.Where("comment_id=?", commentID).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize * (page - 1)).Find(&replies).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, 0, common.NewDaoErr(common.NotFound, err)
-		}
 		return nil, 0, common.NewDaoErr(common.Internal, err)
+	}
+	if len(tmp) == 0 {
+		return nil, 0, common.NewDaoErr(common.NotFound, errors.New("getRepliessByCommentID error: commentID not found"))
 	}
 	return replies, totalCount, nil
 }
 
-func GetReply(replyId int64) (*Reply, error) {
+// GetReply 获取回复
+func GetReply(replyID int64) (*Reply, error) {
 	var reply Reply
-	if err := dbOrm.First(&reply, replyId).Error; err != nil {
+	if err := dbOrm.First(&reply, replyID).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, common.NewDaoErr(common.NotFound, errors.New("getReply error: replyID not found"))
+		}
 		return nil, common.NewDaoErr(common.Internal, err)
 	}
 	return &reply, nil
@@ -653,17 +660,18 @@ func GetUsers(ids []int64) ([]*User, error) {
 	return users, nil
 }
 
-func GetPostsByUserId(userId int64, page int64, pageSize int64) ([]*Post, int64, error) {
+// GetPostsByUserID 获取用户的帖子
+func GetPostsByUserID(userID int64, page int64, pageSize int64) ([]*Post, int64, error) {
 	var (
 		posts      []*Post
 		totalCount int64
 		tmp        []*Post
 	)
-	if err := dbOrm.Where("user_id=?", userId).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize * (page - 1)).Order("create_time desc").Find(&posts).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, 0, common.NewDaoErr(common.NotFound, err)
-		}
+	if err := dbOrm.Where("user_id=?", userID).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize * (page - 1)).Order("create_time desc").Find(&posts).Error; err != nil {
 		return nil, 0, common.NewDaoErr(common.Internal, err)
+	}
+	if len(tmp) == 0 {
+		return nil, 0, common.NewDaoErr(common.NotFound, errors.New("getPostsByUserID error: userID not found"))
 	}
 	return posts, totalCount, nil
 }
