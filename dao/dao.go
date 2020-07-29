@@ -335,10 +335,10 @@ func DeleteReply(replyID int64) (err error) {
 	err = dbOrm.Exec(sql, replyID).Error
 	if err == nil {
 		go func() {
-			var postId int64
+			var postID int64
 			sql = "SELECT post_id FROM reply WHERE id=?"
-			if err = dbOrm.Raw(sql, replyID).Scan(&postId).Error; err == nil {
-				go decreasePostReplyNum(postId)
+			if err = dbOrm.Raw(sql, replyID).Scan(&postID).Error; err == nil {
+				go decreasePostReplyNum(postID)
 			}
 		}()
 		return nil
@@ -357,15 +357,27 @@ func GetPost(postID int64) (*Post, error) {
 	return &post, nil
 }
 
+/*
+	由于访问频繁，redis更好
+*/
 func GetPosts(page int64, pageSize int64) ([]*Post, int64, error) {
 	var (
 		posts      []*Post
 		totalCount int64
 	)
-	if err := dbOrm.Raw("select count(*) from post where status=0").Scan(&totalCount).Error; err != nil {
+	if val, err := redisClient.Get(redisClient.Context(), "post_total_count").Result(); err == redis.Nil {
+		//key不存在，添加
+		if err := redisClient.Set(redisClient.Context(), "post_total_count", 0, 0).Err(); err != nil {
+			return nil, 0, common.NewDaoErr(common.Internal, err)
+		}
+		return posts, 0, nil
+	} else if err != nil {
 		return nil, 0, common.NewDaoErr(common.Internal, err)
+	} else {
+		totalCount, _ = strconv.ParseInt(val, 10, 64)
 	}
-	if err := dbOrm.Where("status=?", 0).Offset(pageSize * (page - 1)).Limit(pageSize).Order("last_update desc").Error; err != nil {
+
+	if err := dbOrm.Where("status=?", 0).Limit(pageSize).Offset(pageSize * (page - 1)).Order("last_update desc").Find(&posts).Error; err != nil {
 		return nil, 0, common.NewDaoErr(common.Internal, err)
 	}
 	return posts, totalCount, nil
@@ -660,7 +672,7 @@ func GetUsers(ids []int64) ([]*User, error) {
 	return users, nil
 }
 
-// GetPostsByUserID 获取用户的帖子
+// GetPostsByUserID 获取用户的帖子，sql需要优化tmp变量
 func GetPostsByUserID(userID int64, page int64, pageSize int64) ([]*Post, int64, error) {
 	var (
 		posts      []*Post
@@ -676,13 +688,13 @@ func GetPostsByUserID(userID int64, page int64, pageSize int64) ([]*Post, int64,
 	return posts, totalCount, nil
 }
 
-func GetCommentsByUserId(userId int64, page int64, pageSize int64) ([]*Comment, int64, error) {
+func GetCommentsByUserID(userID int64, page int64, pageSize int64) ([]*Comment, int64, error) {
 	var (
 		comments   []*Comment
 		totalCount int64
 		tmp        []*Comment
 	)
-	if err := dbOrm.Where("user_id=?", userId).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize * (page - 1)).Order("create_time desc").Find(&comments).Error; err != nil {
+	if err := dbOrm.Where("user_id=?", userID).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize * (page - 1)).Order("create_time desc").Find(&comments).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, 0, common.NewDaoErr(common.NotFound, err)
 		}
@@ -691,13 +703,13 @@ func GetCommentsByUserId(userId int64, page int64, pageSize int64) ([]*Comment, 
 	return comments, totalCount, nil
 }
 
-func GetRepliesByUserId(userId int64, page int64, pageSize int64) ([]*Reply, int64, error) {
+func GetRepliesByUserID(userID int64, page int64, pageSize int64) ([]*Reply, int64, error) {
 	var (
 		replies    []*Reply
 		totalCount int64
 		tmp        []*Reply
 	)
-	if err := dbOrm.Where("user_id=?", userId).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize * (page - 1)).Order("create_time desc").Find(&replies).Error; err != nil {
+	if err := dbOrm.Where("user_id=?", userID).Find(&tmp).Count(&totalCount).Limit(pageSize).Offset(pageSize * (page - 1)).Order("create_time desc").Find(&replies).Error; err != nil {
 		return nil, 0, common.NewDaoErr(common.Internal, err)
 	}
 	return replies, totalCount, nil
