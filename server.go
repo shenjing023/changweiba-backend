@@ -10,6 +10,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net/http"
 	"runtime/debug"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -73,9 +74,8 @@ func main() {
 	flag.Parse()
 	fmt.Println("Current execute directory is:", *execDir)
 	conf.InitConfig(*execDir)
-	//graphql.InitRPCConnection()
 	dao.Init()
-	registerSignalHandler()
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
@@ -84,28 +84,40 @@ func main() {
 	// Setting up Gin
 	r := gin.Default()
 	r.Use(common.GinContextToContextMiddleware())
-	r.Use(middleware.JWTMiddleware(conf.Cfg.SignKey, conf.Cfg.QueryDeep))
+	r.Use(middleware.QueryMiddleware(conf.Cfg.QueryDeep))
+	r.Use(middleware.JWTMiddleware(conf.Cfg.SignKey))
 	r.Use(dataloader.LoaderMiddleware())
 
 	r.POST("/graphql", graphqlHandler())
 	r.GET("/", playgroundHandler())
 
-	r.Run(port)
-}
+	srv := &http.Server{
+		Addr:    port,
+		Handler: r,
+	}
 
-func registerSignalHandler() {
 	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-		for {
-			sig := <-c
-			logs.Info("Signal %d received", sig)
-			switch sig {
-			case syscall.SIGINT, syscall.SIGTERM:
-				//graphql.StopRPCConnection()
-				time.Sleep(time.Second)
-				os.Exit(0)
-			}
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logs.Error("listen: %s\n", err)
 		}
 	}()
+
+	registerSignalHandler(srv)
+
+}
+
+func registerSignalHandler(srv *http.Server) {
+	c := make(chan os.Signal)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+	for {
+		sig := <-c
+		logs.Info("Signal %d received", sig)
+		switch sig {
+		case syscall.SIGINT, syscall.SIGTERM:
+			srv.Shutdown(context.Background())
+			//todo 关闭数据库
+			time.Sleep(time.Second)
+			os.Exit(0)
+		}
+	}
 }

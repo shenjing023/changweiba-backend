@@ -1,22 +1,18 @@
 package middleware
 
 import (
-	"bytes"
 	"changweiba-backend/pkg/logs"
-	"encoding/json"
-	"fmt"
 
 	"github.com/pkg/errors"
 
 	//"github.com/davecgh/go-spew/spew"
-	"io/ioutil"
+
 	"net/http"
 	"time"
 
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/vektah/gqlparser/v2/ast"
-	"github.com/vektah/gqlparser/v2/parser"
 )
 
 // 一些常量
@@ -35,7 +31,7 @@ type postParams struct {
 }
 
 func systemError(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, gin.H{
+	ctx.JSON(http.StatusInternalServerError, gin.H{
 		"code": -1,
 		"msg":  "system error",
 	})
@@ -191,63 +187,18 @@ func (j *JWTAuth) RefreshToken(tokenString string) (*JWTToken, error) {
 	return nil, TokenInvalid
 }
 
-// JWTAuth 中间件，检查token
-func JWTMiddleware(signKey string, queryDeep int) gin.HandlerFunc {
+/*
+	JWTAuth 中间件，检查token
+*/
+func JWTMiddleware(signKey string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.Method == "GET" {
 			return
 		}
-		body, err := ioutil.ReadAll(c.Request.Body)
-		if err != nil {
-			logs.Error("read request body error:", err.Error())
-			systemError(c)
-		}
-		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body)) // 关键点,不能去掉
-
-		//解析query
-		var flag = false //访问路径是否需要过滤token的标记
-		var param postParams
-		err = json.Unmarshal(body, &param)
-		if err != nil {
-			logs.Error(fmt.Sprintf("unmarshal post param error:%s, body: %s", err.Error(), string(body)))
-			systemError(c)
-		}
-
-		//陷阱，不能是doc,err:= 目前还不知原因
-		doc, err_ := parser.ParseQuery(&ast.Source{Input: param.Query})
-		//spew.Dump(err)
-		if err_ != nil {
-			logs.Error("parse query error: ", err_)
-			systemError(c)
-		}
-		ops := doc.Operations
-		for _, v := range ops {
-			for _, k := range v.SelectionSet {
-				if tmp, ok := k.(*ast.Field); ok {
-					//检查查询的字段深度
-					deep := getQueryFieldDeep(tmp.SelectionSet, 0)
-					if deep > queryDeep {
-						c.JSON(http.StatusOK, gin.H{
-							"status": -1,
-							"msg":    "请求字段深度超出限制",
-						})
-						c.Abort()
-						return
-					}
-					if tmp.Name != "signIn" && tmp.Name != "signUp" && tmp.Name != "posts" {
-						flag = true
-						break
-					}
-				} else {
-					logs.Error("selection change to ast.Field error")
-					systemError(c)
-				}
-			}
-		}
-
+		flag := checkQuery(c)
 		token := c.Request.Header.Get("token")
-		if token == "" && flag {
-			c.JSON(http.StatusOK, gin.H{
+		if token == "" && !flag {
+			c.JSON(http.StatusBadRequest, gin.H{
 				"status": -1,
 				"msg":    "请求未携带token，无权限访问",
 			})
@@ -255,7 +206,7 @@ func JWTMiddleware(signKey string, queryDeep int) gin.HandlerFunc {
 			return
 		}
 
-		if flag {
+		if !flag {
 			j := NewJWT(SetSigningKey(signKey))
 			// parseToken 解析token包含的信息
 			claims, err := j.ParseToken(token)
@@ -269,7 +220,7 @@ func JWTMiddleware(signKey string, queryDeep int) gin.HandlerFunc {
 					c.Abort()
 					return
 				}
-				c.JSON(http.StatusOK, gin.H{
+				c.JSON(http.StatusBadRequest, gin.H{
 					"status": -1,
 					"msg":    "token无效",
 				})
@@ -278,6 +229,7 @@ func JWTMiddleware(signKey string, queryDeep int) gin.HandlerFunc {
 			}
 			//继续交由下一个路由处理,并将解析出的信息传递下去
 			c.Set("claims", claims)
+			c.Next()
 		}
 	}
 }
@@ -300,4 +252,17 @@ func getQueryFieldDeep(set ast.SelectionSet, deep int) int {
 		}
 	}
 	return max
+}
+
+/*
+	指定的请求路径是否在queryName里
+*/
+func checkQuery(c *gin.Context) bool {
+	queryName := c.GetStringSlice("queryName")
+	for _, v := range queryName {
+		if v == "posts" || v == "signIn" || v == "signUp" {
+			return true
+		}
+	}
+	return false
 }

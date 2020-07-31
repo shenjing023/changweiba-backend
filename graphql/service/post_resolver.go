@@ -167,7 +167,7 @@ func GetPostsByUserId(ctx context.Context, userID int, page int, pageSize int) (
 // GetCommentsByUserId 获取该用户的评论
 func GetCommentsByUserId(ctx context.Context, userID int, page int,
 	pageSize int) (*models.CommentConnection, error) {
-	dbComments, totalCount, err := dao.GetCommentsByUserId(int64(userID), int64(page), int64(pageSize))
+	dbComments, totalCount, err := dao.GetCommentsByUserID(int64(userID), int64(page), int64(pageSize))
 	if err != nil {
 		common.LogDaoError(fmt.Sprintf("get comments by user_id[%d] error: ", userID), err)
 		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
@@ -197,7 +197,7 @@ func GetCommentsByUserId(ctx context.Context, userID int, page int,
 
 // GetRepliesByUserID 获取该用户的回复
 func GetRepliesByUserID(ctx context.Context, userID int, page int, pageSize int) (*models.ReplyConnection, error) {
-	dbReplies, totalCount, err := dao.GetRepliesByUserId(int64(userID), int64(page), int64(pageSize))
+	dbReplies, totalCount, err := dao.GetRepliesByUserID(int64(userID), int64(page), int64(pageSize))
 	if err != nil {
 		common.LogDaoError(fmt.Sprintf("get replies by user_id[%d] error: ", userID), err)
 		return nil, common.ServiceErrorConvert(err, map[common.ErrorCode]string{
