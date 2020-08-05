@@ -203,11 +203,12 @@ func InsertComment(userID int64, postID int64, content string) (int64, error) {
 	}
 
 	session := dbOrm.Begin()
-	//先获取楼层数
+	//先获取楼层数,待优化，可redis
 	type Floor struct {
 		Total int64
 	}
 	var floor Floor
+	//由于已确保post_id存在，不会发生死锁
 	sql := "SELECT count(*) AS total FROM comment WHERE post_id=? FOR UPDATE"
 	if err := session.Raw(sql, postID).Scan(&floor).Error; err != nil {
 		session.Rollback()
