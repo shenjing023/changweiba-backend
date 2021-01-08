@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+option go_package = ".;svc_account";
+package svc_account;
+
+enum Status{
+    STATUS_NORMAL=0;
+    STATUS_BANNED=1;
+}
+
+enum Role{
+    ROLE_NORMAL=0;
+    ROLE_ADMIN=1;
+}
+
+message User {
+    int64 id = 1;
+    string name = 2;
+    string password = 3;
+    string avatar = 4;
+    Status status = 5;
+    int64 score = 6;
+    string banned_reason = 7;
+    int64 create_time = 8;
+    int64 last_update=9;
+    Role role=10;
+}
+
+message UserRequest {
+    int64 id = 1;
+}
+
+message NewUserRequest {
+    string name=1;
+    string password=2;
+    string ip = 3;
+}
+
+message NewUserResponse {
+    int64 id=1;
+}
+
+message LoginRequest{
+    string name=1;
+    string password=2;
+}
+
+message LoginResponse{
+    int64 id=1;
+}
+
+//通过ids获取user,id为post_id,comment_id,reply_id
+message UsersRequest{
+    repeated int64 ids=1 [packed=true];
+    //0为post 1为comment 2为reply
+    int64 idType=2;
+}
+
+message UsersResponse{
+    repeated User users=1;
+}
+
+//通过user_ids获取users
+message UsersByUserIdsRequest{
+    repeated int64 ids=1 [packed=true];
+}
+
+message UsersByUserIdsResponse{
+    repeated User users=1;
+}
+
+
+service Account {
+    rpc GetUser (User) returns (User) {
+    }
+    rpc RegisterUser (NewUserRequest) returns (NewUserResponse) {
+    }
+    rpc EditUser (User) returns (User) {
+    }
+    rpc Login(LoginRequest) returns (LoginResponse){
+    }
+    rpc GetUsersByIds(UsersRequest) returns(UsersResponse){}
+    rpc GetUsersByUserIds(UsersByUserIdsRequest) returns(UsersByUserIdsResponse){}
+}

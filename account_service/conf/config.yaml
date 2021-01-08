@@ -1,0 +1,16 @@
+#服务相关配置
+debug: true
+port: 8018
+db:
+  host: "localhost"
+  port: 3306
+  user: "liuwei"
+  password: "123456"
+  dbname: "changweiba"
+  max_idle_conns: 10
+  max_open_conns: 10
+redis:
+  host: "localhost"
+  port: 6379
+  password: "ssss"
+log_dir: ""

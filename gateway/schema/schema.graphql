@@ -1,0 +1,43 @@
+type Query {
+    """获取用户信息"""
+    user(userId:Int!):User!
+    """获取帖子详情"""
+    post(postId:Int!):Post!
+    """获取帖子list"""
+    posts(
+        page:Int!
+        pageSize:Int!
+    ):PostConnection!
+    """获取评论"""
+    comment(commentId:Int!):Comment!
+    """获取post下的comment"""
+    comments(
+        postId:Int!
+        page:Int!
+        pageSize:Int!
+    ):CommentConnection!
+    """获取回复"""
+    reply(replyId:Int!):Reply!
+    """获取comment下的reply"""
+    replies(
+        commentId:Int!
+        page:Int!
+        pageSize:Int!
+    ):ReplyConnection!
+}
+
+type Mutation{
+    """用户注册"""
+    signUp(input: NewUser!): String!
+    """登陆"""
+    signIn(input: NewUser!): String!
+    editUser(input: EditUser!): ID!
+    """举报用户"""
+    reportUser(input: ReportUser!): Boolean!
+
+    newPost(input: NewPost!): Int!
+    newComment(input: NewComment!): Int!
+    newReply(input: NewReply!): Int!
+    """删除帖子"""
+    deletePost(input: Int!): Boolean!
+}
