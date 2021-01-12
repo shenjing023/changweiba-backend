@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-option go_package = ".;svc_account";
-package svc_account;
+option go_package = ".;svc_account_pb";
+package svc_account_pb;
 
 enum Status{
     STATUS_NORMAL=0;

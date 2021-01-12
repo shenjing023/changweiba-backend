@@ -1,0 +1,135 @@
+package gateway
+
+//go:generate rm -rf generated
+//go:generate go run github.com/99designs/gqlgen
+
+// THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
+
+import (
+	"context"
+	"gateway/generated"
+	"gateway/models"
+)
+
+type Resolver struct{}
+
+func (r *commentResolver) User(ctx context.Context, obj *models.Comment) (*models.User, error) {
+	panic("not implemented")
+}
+
+func (r *commentResolver) Replies(ctx context.Context, obj *models.Comment, page int, pageSize int) (*models.ReplyConnection, error) {
+	panic("not implemented")
+}
+
+func (r *mutationResolver) SignUp(ctx context.Context, input models.NewUser) (string, error) {
+	panic("not implemented")
+}
+
+func (r *mutationResolver) SignIn(ctx context.Context, input models.NewUser) (string, error) {
+	panic("not implemented")
+}
+
+func (r *mutationResolver) EditUser(ctx context.Context, input models.EditUser) (string, error) {
+	panic("not implemented")
+}
+
+func (r *mutationResolver) ReportUser(ctx context.Context, input models.ReportUser) (bool, error) {
+	panic("not implemented")
+}
+
+func (r *mutationResolver) NewPost(ctx context.Context, input models.NewPost) (int, error) {
+	panic("not implemented")
+}
+
+func (r *mutationResolver) NewComment(ctx context.Context, input models.NewComment) (int, error) {
+	panic("not implemented")
+}
+
+func (r *mutationResolver) NewReply(ctx context.Context, input models.NewReply) (int, error) {
+	panic("not implemented")
+}
+
+func (r *mutationResolver) DeletePost(ctx context.Context, input int) (bool, error) {
+	panic("not implemented")
+}
+
+func (r *postResolver) User(ctx context.Context, obj *models.Post) (*models.User, error) {
+	panic("not implemented")
+}
+
+func (r *postResolver) Comments(ctx context.Context, obj *models.Post, page int, pageSize int) (*models.CommentConnection, error) {
+	panic("not implemented")
+}
+
+func (r *postResolver) LastReplyUser(ctx context.Context, obj *models.Post) (*models.User, error) {
+	panic("not implemented")
+}
+
+func (r *queryResolver) User(ctx context.Context, userID int) (*models.User, error) {
+	panic("not implemented")
+}
+
+func (r *queryResolver) Post(ctx context.Context, postID int) (*models.Post, error) {
+	panic("not implemented")
+}
+
+func (r *queryResolver) Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error) {
+	panic("not implemented")
+}
+
+func (r *queryResolver) Comment(ctx context.Context, commentID int) (*models.Comment, error) {
+	panic("not implemented")
+}
+
+func (r *queryResolver) Comments(ctx context.Context, postID int, page int, pageSize int) (*models.CommentConnection, error) {
+	panic("not implemented")
+}
+
+func (r *queryResolver) Reply(ctx context.Context, replyID int) (*models.Reply, error) {
+	panic("not implemented")
+}
+
+func (r *queryResolver) Replies(ctx context.Context, commentID int, page int, pageSize int) (*models.ReplyConnection, error) {
+	panic("not implemented")
+}
+
+func (r *replyResolver) User(ctx context.Context, obj *models.Reply) (*models.User, error) {
+	panic("not implemented")
+}
+
+func (r *userResolver) Posts(ctx context.Context, obj *models.User, page int, pageSize int) (*models.PostConnection, error) {
+	panic("not implemented")
+}
+
+func (r *userResolver) Comments(ctx context.Context, obj *models.User, page int, pageSize int) (*models.CommentConnection, error) {
+	panic("not implemented")
+}
+
+func (r *userResolver) Replies(ctx context.Context, obj *models.User, page int, pageSize int) (*models.ReplyConnection, error) {
+	panic("not implemented")
+}
+
+// Comment returns generated.CommentResolver implementation.
+func (r *Resolver) Comment() generated.CommentResolver { return &commentResolver{r} }
+
+// Mutation returns generated.MutationResolver implementation.
+func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
+
+// Post returns generated.PostResolver implementation.
+func (r *Resolver) Post() generated.PostResolver { return &postResolver{r} }
+
+// Query returns generated.QueryResolver implementation.
+func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
+
+// Reply returns generated.ReplyResolver implementation.
+func (r *Resolver) Reply() generated.ReplyResolver { return &replyResolver{r} }
+
+// User returns generated.UserResolver implementation.
+func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
+
+type commentResolver struct{ *Resolver }
+type mutationResolver struct{ *Resolver }
+type postResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
+type replyResolver struct{ *Resolver }
+type userResolver struct{ *Resolver }

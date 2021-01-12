@@ -1,7 +1,15 @@
 package main
 
-import "cw_account_service/conf"
+import (
+	service "cw_account_service"
+	"flag"
+	"os"
+)
 
 func main() {
-	conf.InitConfig()
+	pwd, _ := os.Getwd()
+	execDir := flag.String("d", pwd, "execute directory")
+	flag.Parse()
+	service.NewAccountService(*execDir + "/conf/config.yaml")
+	//conf.InitConfig()
 }
