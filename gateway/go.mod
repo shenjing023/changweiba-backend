@@ -10,6 +10,7 @@ require (
 	github.com/gin-gonic/gin v1.6.3
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/kr/text v0.2.0 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/shenjing023/llog v0.1.2
 	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/vektah/gqlparser/v2 v2.1.0
