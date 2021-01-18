@@ -11,7 +11,7 @@ require (
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/shenjing023/llog v0.1.2
+	github.com/shenjing023/llog v0.1.3
 	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/vektah/gqlparser/v2 v2.1.0
 	golang.org/x/sys v0.0.0-20210112091331-59c308dcf3cc // indirect
