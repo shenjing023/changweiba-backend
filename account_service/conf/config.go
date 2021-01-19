@@ -30,6 +30,7 @@ type YamlConf struct {
 		Password string `yaml:"password"`
 	} `yaml:"redis"`
 	LogDir string `yaml:"log_dir"`
+	Salt   string `yaml:"salt"`
 }
 
 // Cfg global config variate

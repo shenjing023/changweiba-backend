@@ -12,10 +12,10 @@ import (
 
 // 一些常量
 var (
-	errTokenExpired     = errors.New("Token is expired")
-	errTokenNotValidYet = errors.New("Token not active yet")
-	errTokenMalformed   = errors.New("That's not even a token")
-	errTokenInvalid     = errors.New("Couldn't handle this token")
+	ErrTokenExpired     = errors.New("Token is expired")
+	ErrTokenNotValidYet = errors.New("Token not active yet")
+	ErrTokenMalformed   = errors.New("That's not even a token")
+	ErrTokenInvalid     = errors.New("Couldn't handle this token")
 	signKey             = "secret key"
 )
 
@@ -55,7 +55,7 @@ var defaultOptions = options{
 	signingKey:    signKey,
 	keyfunc: func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errTokenInvalid
+			return nil, ErrTokenInvalid
 		}
 		return []byte(signKey), nil
 	},
@@ -77,7 +77,7 @@ func WithSigningKey(key string) Option {
 		o.signingKey = key
 		o.keyfunc = func(t *jwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, errTokenInvalid
+				return nil, ErrTokenInvalid
 			}
 			return []byte(key), nil
 		}
@@ -133,14 +133,14 @@ func (j *Auth) ParseToken(tokenString string) (interface{}, error) {
 	if err != nil {
 		if ve, ok := err.(*jwt.ValidationError); ok {
 			if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-				return nil, errTokenMalformed
+				return nil, ErrTokenMalformed
 			} else if ve.Errors&jwt.ValidationErrorExpired != 0 {
 				// Token is expired
-				return nil, errTokenExpired
+				return nil, ErrTokenExpired
 			} else if ve.Errors&jwt.ValidationErrorNotValidYet != 0 {
-				return nil, errTokenNotValidYet
+				return nil, ErrTokenNotValidYet
 			} else {
-				return nil, errTokenInvalid
+				return nil, ErrTokenInvalid
 			}
 		}
 	}
@@ -148,7 +148,7 @@ func (j *Auth) ParseToken(tokenString string) (interface{}, error) {
 	if claims, ok := token.Claims.(*CustomClaims); ok {
 		return claims.Attachment, nil
 	}
-	return errTokenInvalid, nil
+	return ErrTokenInvalid, nil
 }
 
 // RefreshToken refresh token
@@ -165,7 +165,7 @@ func (j *Auth) RefreshToken(tokenString string) (*JWTToken, error) {
 		claims.StandardClaims.ExpiresAt = time.Now().Add(1 * time.Hour).Unix()
 		return j.GenerateToken(claims.Attachment)
 	}
-	return nil, errTokenInvalid
+	return nil, ErrTokenInvalid
 }
 
 // AuthMiddleware authentication middleware
@@ -191,7 +191,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			claims, err := j.ParseToken(token)
 			if err != nil {
 				log.Error("parse token failed:", err.Error())
-				if err == errTokenExpired {
+				if err == ErrTokenExpired {
 					c.JSON(http.StatusOK, gin.H{
 						"status": -1,
 						"msg":    "授权已过期",

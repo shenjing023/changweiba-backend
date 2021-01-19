@@ -1,9 +1,16 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
+	"math/big"
+	"math/rand"
+	"net"
 	"os"
+	"strconv"
+	"time"
 
+	"cw_account_service/common"
 	"cw_account_service/conf"
 
 	"github.com/go-redis/redis/v8"
@@ -60,4 +67,73 @@ func Init() {
 	if conf.Cfg.DB.MaxOpen > 0 {
 		sqlDB.SetMaxOpenConns(conf.Cfg.DB.MaxOpen)
 	}
+}
+
+// GetRandomAvatar 随机获取一个头像url
+func GetRandomAvatar() (url string, err error) {
+	var avatars []Avatar
+	if err = dbOrm.Where("status=0").Select("url").Find(&avatars).Error; err != nil {
+		return "", common.NewServiceErr(common.Internal, err)
+	}
+	if len(avatars) == 0 {
+		return "", common.NewServiceErr(common.Internal, errors.New("there are no avatar data in db"))
+	}
+	seed := rand.New(rand.NewSource(time.Now().UnixNano()))
+	index := seed.Intn(len(avatars))
+	url = avatars[index].URL
+	return
+}
+
+// InsertUser insert new user
+func InsertUser(userName, password, ip, avatar string) (int64, error) {
+	//先检查name是否存在
+	now := time.Now().Unix()
+	user := User{
+		Name:       userName,
+		Password:   password,
+		ID:         InetAtoi(ip),
+		CreateTime: now,
+		LastUpdate: now,
+		Avatar:     avatar,
+	}
+	if err := dbOrm.Create(&user).Error; err != nil {
+		return 0, common.NewServiceErr(common.Internal, err)
+	}
+	return user.ID, nil
+}
+
+// CheckUserExistByName 检查user是否已存在
+func CheckUserExistByName(userName string) (bool, error) {
+	var count int64
+	if err := dbOrm.Model(&User{}).Where("name=?", userName).Count(&count).Error; err != nil {
+		return false, common.NewServiceErr(common.Internal, err)
+	}
+	if count == 0 {
+		return false, nil
+	}
+	return true, nil
+}
+
+// InetAtoi ip地址string->int
+func InetAtoi(ip string) int64 {
+	ret := big.NewInt(0)
+	ret.SetBytes(net.ParseIP(ip).To4())
+	return ret.Int64()
+}
+
+// InetItoa ip地址int->string
+func InetItoa(ip int64) string {
+	return fmt.Sprintf("%d.%d.%d.%d", byte(ip>>24), byte(ip>>16), byte(ip>>8), byte(ip))
+}
+
+//BytesToInt64 []byte转int64
+func BytesToInt64(buf []byte) int64 {
+	r, _ := strconv.ParseInt(string(buf), 10, 64)
+	return r
+}
+
+// BytesToInt32 []byte转int32
+func BytesToInt32(buf []byte) int32 {
+	r, _ := strconv.ParseInt(string(buf), 10, 32)
+	return int32(r)
 }

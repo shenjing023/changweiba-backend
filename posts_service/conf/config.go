@@ -13,17 +13,23 @@ import (
 
 // YamlConf global config struct
 type YamlConf struct {
-	Debug   bool   `yaml:"debug"`
-	Port    int    `yaml:"port"`
-	LogDir  string `yaml:"log_dir"`
-	Account struct {
-		Port int    `yaml:"port"`
-		Host string `yaml:"host"`
-	} `yaml:"account"`
-	Posts struct {
-		Host string `yaml:"host"`
-		Port int    `yaml:"port"`
-	} `yaml:"posts"`
+	Debug bool `yaml:"debug"`
+	Port  int  `yaml:"port"`
+	DB    struct {
+		Host     string `yaml:"host"`
+		Port     int    `yaml:"port"`
+		User     string `yaml:"user"`
+		Password string `yaml:"password"`
+		Dbname   string `yaml:"dbname"`
+		MaxIdle  int    `yaml:"max_idle,omitempty"` //设置连接池中空闲连接的最大数量
+		MaxOpen  int    `yaml:"max_open,omitempty"` //设置打开数据库连接的最大数量
+	} `yaml:"db"`
+	Redis struct {
+		Host     string `yaml:"host"`
+		Port     int    `yaml:"port"`
+		Password string `yaml:"password"`
+	} `yaml:"redis"`
+	LogDir string `yaml:"log_dir"`
 }
 
 // Cfg global config variate

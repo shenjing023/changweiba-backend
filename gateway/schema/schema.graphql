@@ -31,6 +31,7 @@ type Mutation{
     signUp(input: NewUser!): String!
     """登陆"""
     signIn(input: NewUser!): String!
+    """用户编辑"""
     editUser(input: EditUser!): ID!
     """举报用户"""
     reportUser(input: ReportUser!): Boolean!
