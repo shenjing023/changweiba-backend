@@ -5,6 +5,8 @@ import (
 	"errors"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // GinContextToContextMiddleware gin ctx middleware
@@ -28,4 +30,21 @@ func GinContextFromContext(ctx context.Context) (*gin.Context, error) {
 		return nil, errors.New("gin.Context has wrong type")
 	}
 	return gc, nil
+}
+
+// GRPCErrorConvert grpc error convert to service error
+func GRPCErrorConvert(err error, conf map[codes.Code]string) error {
+	st, ok := status.FromError(err)
+	if !ok {
+		// Error was not a status error
+		return errors.New("system error")
+	}
+	var errMsg = st.Message()
+	for k, v := range conf {
+		if k == st.Code() {
+			errMsg = v
+			break
+		}
+	}
+	return errors.New(errMsg)
 }

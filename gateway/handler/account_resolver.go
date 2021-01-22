@@ -13,6 +13,7 @@ import (
 	pb "gateway/pb"
 
 	log "github.com/shenjing023/llog"
+	"google.golang.org/grpc/codes"
 )
 
 const (
@@ -34,6 +35,24 @@ func SignUp(ctx context.Context, input models.NewUser) (string, error) {
 	}
 
 	client := pb.NewAccountClient(AccountConn)
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
+
+	user:=pb.SignUpRequest{
+		Name: input.Name,
+		Password: input.Password,
+		Ip: ip,
+	}
+	resp,err:=client.SignUp(ctx,&user)
+	if err!=nil{
+		log.Error("SignUp user error: %v",err)
+		return "",common.GRPCErrorConvert(err,map[codes.Code]string{
+			codes.Internal:ServiceError,
+			codes.AlreadyExists:"该昵称已注册",
+			codes.InvalidArgument:"昵称或密码不能为空",
+		})
+	}
+
+	// 生成jwt token
+	
 }

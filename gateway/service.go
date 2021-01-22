@@ -1,8 +1,8 @@
 package gateway
 
 import (
-	"cw_account_service/conf"
 	"fmt"
+	"gateway/conf"
 	"gateway/generated"
 	"os"
 	"os/signal"
