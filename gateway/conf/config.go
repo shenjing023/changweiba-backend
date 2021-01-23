@@ -24,6 +24,17 @@ type YamlConf struct {
 		Host string `yaml:"host"`
 		Port int    `yaml:"port"`
 	} `yaml:"posts"`
+	AuthToken struct {
+		Access struct {
+			SignKey string `yaml:"sign_key"`
+			Expire  int    `yaml:"expire"`
+		} `yaml:"access"`
+		Refresh struct {
+			SignKey string `yaml:"sign_key"`
+			Expire  int    `yaml:"expire"`
+		} `yaml:"refresh"`
+	} `yaml:"auth_token"`
+	Salt string `yaml:"salt"`
 }
 
 // Cfg global config variate

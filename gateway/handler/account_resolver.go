@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"gateway/middleware"
 	"gateway/models"
 	"net"
 	"strings"
@@ -38,21 +39,30 @@ func SignUp(ctx context.Context, input models.NewUser) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	user:=pb.SignUpRequest{
-		Name: input.Name,
+	user := pb.SignUpRequest{
+		Name:     input.Name,
 		Password: input.Password,
-		Ip: ip,
+		Ip:       ip,
 	}
-	resp,err:=client.SignUp(ctx,&user)
-	if err!=nil{
-		log.Error("SignUp user error: %v",err)
-		return "",common.GRPCErrorConvert(err,map[codes.Code]string{
-			codes.Internal:ServiceError,
-			codes.AlreadyExists:"该昵称已注册",
-			codes.InvalidArgument:"昵称或密码不能为空",
+	resp, err := client.SignUp(ctx, &user)
+	if err != nil {
+		log.Error("SignUp user error: %v", err)
+		return "", common.GRPCErrorConvert(err, map[codes.Code]string{
+			codes.Internal:        ServiceError,
+			codes.AlreadyExists:   "该昵称已注册",
+			codes.InvalidArgument: "昵称或密码不能为空",
 		})
 	}
 
 	// 生成jwt token
-	
+	accessToken, err := middleware.GenerateAccessToken(resp.Id)
+	if err != nil {
+		log.Error("generate access_token error: %v", err)
+		return "", errors.New(ServiceError)
+	}
+	refreshToken, err := middleware.GenerateRefreshToken(resp.Id)
+	if err != nil {
+		log.Error("generate refresh_token error: %v", err)
+		return "", errors.New(ServiceError)
+	}
 }

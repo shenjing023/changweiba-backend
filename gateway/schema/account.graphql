@@ -54,3 +54,8 @@ input ReportUser{
     reported_user_id: ID!
     reason: String!
 }
+
+type AuthToken {
+    access_token: String!
+    refresh_token: String!
+}
