@@ -8,6 +8,7 @@ package gateway
 import (
 	"context"
 	"gateway/generated"
+	"gateway/handler"
 	"gateway/models"
 )
 
@@ -21,12 +22,12 @@ func (r *commentResolver) Replies(ctx context.Context, obj *models.Comment, page
 	panic("not implemented")
 }
 
-func (r *mutationResolver) SignUp(ctx context.Context, input models.NewUser) (string, error) {
-	panic("not implemented")
+func (r *mutationResolver) SignUp(ctx context.Context, input models.NewUser) (*models.AuthToken, error) {
+	return handler.SignUp(ctx, input)
 }
 
-func (r *mutationResolver) SignIn(ctx context.Context, input models.NewUser) (string, error) {
-	panic("not implemented")
+func (r *mutationResolver) SignIn(ctx context.Context, input models.NewUser) (*models.AuthToken, error) {
+	return handler.SignIn(ctx, input)
 }
 
 func (r *mutationResolver) EditUser(ctx context.Context, input models.EditUser) (string, error) {

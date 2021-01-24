@@ -34,7 +34,8 @@ type YamlConf struct {
 			Expire  int    `yaml:"expire"`
 		} `yaml:"refresh"`
 	} `yaml:"auth_token"`
-	Salt string `yaml:"salt"`
+	Salt      string `yaml:"salt"`
+	QueryDeep int    `yaml:"query_deep"`
 }
 
 // Cfg global config variate

@@ -9,15 +9,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// GinContextToContextMiddleware gin ctx middleware
-func GinContextToContextMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		ctx := context.WithValue(c.Request.Context(), "GinContextKey", c)
-		c.Request = c.Request.WithContext(ctx)
-		c.Next()
-	}
-}
-
 // GinContextFromContext normal ctx covert to gin ctx
 func GinContextFromContext(ctx context.Context) (*gin.Context, error) {
 	ginContext := ctx.Value("GinContextKey")

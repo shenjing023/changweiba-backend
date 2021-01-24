@@ -10,6 +10,6 @@ func main() {
 	pwd, _ := os.Getwd()
 	execDir := flag.String("d", pwd, "execute directory")
 	flag.Parse()
-	service.NewAccountService(*execDir + "/conf/config.yaml")
+	service.RunAccountService(*execDir + "/conf/config.yaml")
 	//conf.InitConfig()
 }

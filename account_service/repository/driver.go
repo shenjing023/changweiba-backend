@@ -114,6 +114,18 @@ func CheckUserExistByName(userName string) (bool, error) {
 	return true, nil
 }
 
+// GetUserByName get user by name
+func GetUserByName(name string) (*User, error) {
+	var user User
+	if err := dbOrm.Where("name=?", name).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, common.NewServiceErr(common.NotFound, err)
+		}
+		return nil, common.NewServiceErr(common.Internal, err)
+	}
+	return &user, nil
+}
+
 // InetAtoi ip地址string->int
 func InetAtoi(ip string) int64 {
 	ret := big.NewInt(0)

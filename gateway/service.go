@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gateway/conf"
 	"gateway/generated"
+	"gateway/middleware"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,11 +22,13 @@ func NewGatewayService(configPath string) {
 	conf.Init(configPath)
 	//graphql.InitRPCConnection()
 	// dao.Init()
+	middleware.InitAuth()
 	registerSignalHandler()
 
 	// Setting up Gin
 	r := gin.Default()
-	// r.Use(common.GinContextToContextMiddleware())
+	r.Use(middleware.GinContextToContextMiddleware())
+	r.Use(middleware.QueryDeepMiddleware(conf.Cfg.QueryDeep))
 	// r.Use(middleware.JWTMiddleware(conf.Cfg.SignKey, conf.Cfg.QueryDeep))
 	// r.Use(dataloader.LoaderMiddleware())
 

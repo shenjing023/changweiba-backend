@@ -43,12 +43,12 @@ func ServiceErr2GRPCErr(err error) error {
 }
 
 // SignUp 注册
-func (u *User) SignUp(ctx context.Context, ur *pb.SignUpRequest) (*pb.SignUpResponse, error) {
-	if err := checkNewUser(ur); err != nil {
+func (u *User) SignUp(ctx context.Context, sr *pb.SignUpRequest) (*pb.SignUpResponse, error) {
+	if err := checkNewUser(sr); err != nil {
 		return nil, ServiceErr2GRPCErr(err)
 	}
 
-	password, err := encryptPassword(ur.Password)
+	password, err := encryptPassword(sr.Password)
 	if err != nil {
 		log.Error("generate crypto password error:", err.Error())
 		return nil, status.Error(codes.Internal, ServiceError)
@@ -59,7 +59,7 @@ func (u *User) SignUp(ctx context.Context, ur *pb.SignUpRequest) (*pb.SignUpResp
 		log.Error("get random avatar error:", err.Error())
 		return nil, ServiceErr2GRPCErr(err)
 	}
-	id, err := repository.InsertUser(ur.Name, password, ur.Ip, avatar)
+	id, err := repository.InsertUser(sr.Name, password, sr.Ip, avatar)
 	if err != nil {
 		log.Error("insert user error:", err.Error())
 		return nil, ServiceErr2GRPCErr(err)
@@ -70,19 +70,36 @@ func (u *User) SignUp(ctx context.Context, ur *pb.SignUpRequest) (*pb.SignUpResp
 	return resp, nil
 }
 
-func checkNewUser(ur *pb.SignUpRequest) error {
-	if len(strings.TrimSpace(ur.Name)) == 0 || len(strings.TrimSpace(ur.Password)) == 0 {
+// SignIn 登录
+func (u *User) SignIn(ctx context.Context, sr *pb.SignInRequest) (*pb.SignInResponse, error) {
+	dbUser, err := repository.GetUserByName(sr.Name)
+	if err != nil {
+		return nil, ServiceErr2GRPCErr(err)
+	}
+	dbPassword := dbUser.Password
+	tmp, _ := encryptPassword(sr.Password)
+	if dbPassword != tmp {
+		return nil, common.NewServiceErr(common.InvalidArgument,
+			errors.New("password incorrect"))
+	}
+	return &pb.SignInResponse{
+		Id: dbUser.ID,
+	}, nil
+}
+
+func checkNewUser(sr *pb.SignUpRequest) error {
+	if len(strings.TrimSpace(sr.Name)) == 0 || len(strings.TrimSpace(sr.Password)) == 0 {
 		return common.NewServiceErr(common.InvalidArgument,
 			errors.New("user name or password can not be empty"))
 	}
-	if exist, err := repository.CheckUserExistByName(ur.Name); err != nil {
+	if exist, err := repository.CheckUserExistByName(sr.Name); err != nil {
 		return err
 	} else if exist {
 		return common.NewServiceErr(common.AlreadyExists,
 			errors.New("user name already exist"))
 	}
 	//检查该ip下的账号
-	fmt.Println(ur.Ip)
+	fmt.Println(sr.Ip)
 	return nil
 }
 
@@ -95,8 +112,8 @@ func encryptPassword(password string) (string, error) {
 	return base64.StdEncoding.EncodeToString(dk)[:32], nil
 }
 
-// NewAccountService create new service
-func NewAccountService(configPath string) {
+// RunAccountService create and run new service
+func RunAccountService(configPath string) {
 	conf.Init(configPath)
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", conf.Cfg.Port))
 	if err != nil {

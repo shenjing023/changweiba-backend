@@ -8,6 +8,11 @@ import (
 	"strconv"
 )
 
+type AuthToken struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 type Comment struct {
 	ID       int    `json:"id"`
 	User     *User  `json:"user"`
