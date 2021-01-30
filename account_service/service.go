@@ -1,13 +1,13 @@
 package main
 
 import (
-	"cw_account_service/conf"
 	"flag"
 	"fmt"
 	"net"
 
 	"os"
 
+	"cw_account_service/conf"
 	pb "cw_account_service/pb"
 
 	"cw_account_service/handler"
