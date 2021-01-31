@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"time"
 
+	service_handler "gateway/handler"
+
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -20,7 +22,7 @@ import (
 // NewGatewayService create gateway service
 func NewGatewayService(configPath string) {
 	conf.Init(configPath)
-	//graphql.InitRPCConnection()
+	service_handler.InitGRPCConn()
 	// dao.Init()
 	middleware.InitAuth()
 	registerSignalHandler()
@@ -73,7 +75,7 @@ func registerSignalHandler() {
 			log.Info("Signal %d received", sig)
 			switch sig {
 			case syscall.SIGINT, syscall.SIGTERM:
-				//graphql.StopRPCConnection()
+				service_handler.StopGRPCConn()
 				time.Sleep(time.Second)
 				os.Exit(0)
 			}

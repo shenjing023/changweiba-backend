@@ -22,10 +22,10 @@ func InitGRPCConn() {
 	if err != nil {
 		log.Fatal(fmt.Sprintf("fail to accountRPC dial: %+v", err))
 	}
-	PostsConn, err = grpc.Dial(fmt.Sprintf("%s:%d", conf.Cfg.Posts.Host, conf.Cfg.Posts.Port), grpc.WithInsecure())
-	if err != nil {
-		log.Fatal(fmt.Sprintf("fail to postsRPC dial: %+v", err))
-	}
+	// PostsConn, err = grpc.Dial(fmt.Sprintf("%s:%d", conf.Cfg.Posts.Host, conf.Cfg.Posts.Port), grpc.WithInsecure())
+	// if err != nil {
+	// 	log.Fatal(fmt.Sprintf("fail to postsRPC dial: %+v", err))
+	// }
 }
 
 // StopGRPCConn 关闭rpc连接

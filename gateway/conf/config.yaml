@@ -1,0 +1,19 @@
+#服务相关配置
+debug: true
+port: 8020
+account:
+  host: "account-service"
+  port: 8018
+post:
+  host: "localhost"
+  port: 33060
+auth_token:
+  access:
+    sign_key: "ssdadasd"
+    expire: 3600
+  refresh:
+    sign_key: "ssdadasd"
+    expire: 3600
+salt: "asdah#!2sddh"
+query_deep: 3
+log_dir: ""

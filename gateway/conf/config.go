@@ -20,10 +20,10 @@ type YamlConf struct {
 		Port int    `yaml:"port"`
 		Host string `yaml:"host"`
 	} `yaml:"account"`
-	Posts struct {
+	Post struct {
 		Host string `yaml:"host"`
 		Port int    `yaml:"port"`
-	} `yaml:"posts"`
+	} `yaml:"post"`
 	AuthToken struct {
 		Access struct {
 			SignKey string `yaml:"sign_key"`
