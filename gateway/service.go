@@ -1,6 +1,7 @@
-package gateway
+package main
 
 import (
+	"flag"
 	"fmt"
 	"gateway/conf"
 	"gateway/generated"
@@ -19,8 +20,8 @@ import (
 	log "github.com/shenjing023/llog"
 )
 
-// NewGatewayService create gateway service
-func NewGatewayService(configPath string) {
+// runGatewayService create gateway service
+func runGatewayService(configPath string) {
 	conf.Init(configPath)
 	service_handler.InitGRPCConn()
 	// dao.Init()
@@ -72,7 +73,7 @@ func registerSignalHandler() {
 		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 		for {
 			sig := <-c
-			log.Info("Signal %d received", sig)
+			log.Infof("Signal %d received", sig)
 			switch sig {
 			case syscall.SIGINT, syscall.SIGTERM:
 				service_handler.StopGRPCConn()
@@ -81,4 +82,11 @@ func registerSignalHandler() {
 			}
 		}
 	}()
+}
+
+func main() {
+	pwd, _ := os.Getwd()
+	execDir := flag.String("d", pwd, "execute directory")
+	flag.Parse()
+	runGatewayService(*execDir + "/conf/config.yaml")
 }

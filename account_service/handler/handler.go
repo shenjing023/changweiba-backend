@@ -77,8 +77,8 @@ func (u *User) SignIn(ctx context.Context, sr *pb.SignInRequest) (*pb.SignInResp
 	dbPassword := dbUser.Password
 	tmp, _ := encryptPassword(sr.Password)
 	if dbPassword != tmp {
-		return nil, common.NewServiceErr(common.InvalidArgument,
-			errors.New("password incorrect"))
+		return nil, ServiceErr2GRPCErr(common.NewServiceErr(common.InvalidArgument,
+			errors.New("password incorrect")))
 	}
 	return &pb.SignInResponse{
 		Id: dbUser.ID,

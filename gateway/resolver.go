@@ -1,4 +1,4 @@
-package gateway
+package main
 
 //go:generate rm -rf generated
 //go:generate go run github.com/99designs/gqlgen

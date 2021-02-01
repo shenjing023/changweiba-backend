@@ -69,6 +69,13 @@ func Init() {
 	}
 }
 
+// Close close db connection
+func Close() {
+	sqlDB, _ := dbOrm.DB()
+	sqlDB.Close()
+	redisClient.Close()
+}
+
 // GetRandomAvatar 随机获取一个头像url
 func GetRandomAvatar() (url string, err error) {
 	var avatars []Avatar
@@ -86,12 +93,11 @@ func GetRandomAvatar() (url string, err error) {
 
 // InsertUser insert new user
 func InsertUser(userName, password, ip, avatar string) (int64, error) {
-	//先检查name是否存在
 	now := time.Now().Unix()
 	user := User{
 		Name:       userName,
 		Password:   password,
-		ID:         InetAtoi(ip),
+		IP:         InetAtoi(ip),
 		CreateTime: now,
 		LastUpdate: now,
 		Avatar:     avatar,

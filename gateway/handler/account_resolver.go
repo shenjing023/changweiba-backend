@@ -46,7 +46,7 @@ func SignUp(ctx context.Context, input models.NewUser) (*models.AuthToken, error
 	}
 	resp, err := client.SignUp(ctx, &user)
 	if err != nil {
-		log.Error("SignUp user error: %v", err)
+		log.Error("SignUp user error: ", err)
 		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
 			codes.Internal:        ServiceError,
 			codes.AlreadyExists:   "该昵称已注册",
@@ -57,12 +57,12 @@ func SignUp(ctx context.Context, input models.NewUser) (*models.AuthToken, error
 	// 生成jwt token
 	accessToken, err := middleware.GenerateAccessToken(resp.Id)
 	if err != nil {
-		log.Error("generate access_token error: %v", err)
+		log.Error("generate access_token error: ", err)
 		return nil, errors.New(ServiceError)
 	}
 	refreshToken, err := middleware.GenerateRefreshToken(resp.Id)
 	if err != nil {
-		log.Error("generate refresh_token error: %v", err)
+		log.Error("generate refresh_token error: ", err)
 		return nil, errors.New(ServiceError)
 	}
 
@@ -84,7 +84,7 @@ func SignIn(ctx context.Context, input models.NewUser) (*models.AuthToken, error
 	}
 	resp, err := client.SignIn(ctx, &user)
 	if err != nil {
-		log.Error("SignUp user error: %v", err)
+		log.Error("SignIn user error: ", err)
 		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
 			codes.Internal:        ServiceError,
 			codes.NotFound:        "昵称不正确",
@@ -95,12 +95,12 @@ func SignIn(ctx context.Context, input models.NewUser) (*models.AuthToken, error
 	// 生成jwt token
 	accessToken, err := middleware.GenerateAccessToken(resp.Id)
 	if err != nil {
-		log.Error("generate access_token error: %v", err)
+		log.Error("generate access_token error: ", err)
 		return nil, errors.New(ServiceError)
 	}
 	refreshToken, err := middleware.GenerateRefreshToken(resp.Id)
 	if err != nil {
-		log.Error("generate refresh_token error: %v", err)
+		log.Error("generate refresh_token error: ", err)
 		return nil, errors.New(ServiceError)
 	}
 
