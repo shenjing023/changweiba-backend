@@ -9,10 +9,10 @@ post:
   port: 33060
 auth_token:
   access:
-    sign_key: "ssdadasd"
+    sign_key: "ssdadasd1"
     expire: 3600
   refresh:
-    sign_key: "ssdadasd"
+    sign_key: "ssdadasd2"
     expire: 3600
 salt: "asdah#!2sddh"
 query_deep: 3

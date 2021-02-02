@@ -28,3 +28,13 @@ spec:
             host: gateway-service
             port:
               number: 8020
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: gateway-service-dr
+spec:
+  host: gateway-service
+  trafficPolicy:
+    loadBalancer:
+      simple: RANDOM
