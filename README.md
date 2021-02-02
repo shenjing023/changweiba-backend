@@ -24,7 +24,7 @@
      ```
   -  Set service config in yaml config file
   -  Run service
-  -  Install Kiali dashboard, along with Prometheus, Grafana, and Jaeger [here](https://istio.io/latest/docs/setup/getting-started/#dashboard)
+  -  Install Kiali dashboard, along with Prometheus, Grafana, and Jaeger [kiali](https://istio.io/latest/docs/setup/getting-started/#dashboard) [grafana](https://istio.io/latest/docs/tasks/observability/metrics/using-istio-dashboard/)
   -  Install loki
 
 ## Doc

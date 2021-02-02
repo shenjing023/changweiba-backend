@@ -85,6 +85,23 @@ func (u *User) SignIn(ctx context.Context, sr *pb.SignInRequest) (*pb.SignInResp
 	}, nil
 }
 
+// GetUser 获取user信息
+func (u *User) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
+	dbUser, err := repository.GetUserByID(user.Id)
+	if err != nil {
+		return nil, ServiceErr2GRPCErr(err)
+	}
+	return &pb.User{
+		Id:           dbUser.ID,
+		Name:         dbUser.Name,
+		Avatar:       dbUser.Avatar,
+		Status:       pb.Status(dbUser.Status),
+		Score:        dbUser.Score,
+		BannedReason: dbUser.BannedReason,
+		Role:         pb.Role(dbUser.Role),
+	}, nil
+}
+
 func checkNewUser(sr *pb.SignUpRequest) error {
 	if len(strings.TrimSpace(sr.Name)) == 0 || len(strings.TrimSpace(sr.Password)) == 0 {
 		return common.NewServiceErr(common.InvalidArgument,

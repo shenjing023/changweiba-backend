@@ -108,6 +108,18 @@ func InsertUser(userName, password, ip, avatar string) (int64, error) {
 	return user.ID, nil
 }
 
+// GetUserByID get user by user_id
+func GetUserByID(id int64) (*User, error) {
+	var user User
+	if err := dbOrm.Where("id=?", id).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, common.NewServiceErr(common.NotFound, err)
+		}
+		return nil, common.NewServiceErr(common.Internal, err)
+	}
+	return &user, nil
+}
+
 // CheckUserExistByName 检查user是否已存在
 func CheckUserExistByName(userName string) (bool, error) {
 	var count int64
