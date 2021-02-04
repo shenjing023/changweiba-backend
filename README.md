@@ -26,7 +26,17 @@
   -  Run service
   -  Install Kiali dashboard, along with Prometheus, Grafana, and Jaeger [kiali](https://istio.io/latest/docs/setup/getting-started/#dashboard) [grafana](https://istio.io/latest/docs/tasks/observability/metrics/using-istio-dashboard/)
   -  Install loki
+      
 
 ## Doc
 
   - 仅使用k8s的service在grpc服务时不能负载均衡，需要配合istio的virtualservice和destinationrule使用 [这里](https://medium.com/getamis/istio-%E5%9F%BA%E7%A4%8E-grpc-%E8%B2%A0%E8%BC%89%E5%9D%87%E8%A1%A1-d4be0d49ee07) [github](https://github.com/alanchchen/grpc-lb-istio)
+  - promtail error:
+    ```bash
+    Failed to list *v1.Endpoints: endpoints is forbidden: User "system:serviceaccount:istio-system:default" cannot list resource "endpoints" in API group "" in the namespace "default"
+    ```
+    [here](https://github.com/prometheus-operator/prometheus-operator/issues/2155#issuecomment-441002864)
+    solution:
+    ```bash
+    kubectl create clusterrolebinding default-view --clusterrole=view --serviceaccount=istio-system:default
+    ```
