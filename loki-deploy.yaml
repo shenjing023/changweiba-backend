@@ -161,57 +161,16 @@ data:
             labels:
               job: varlogs
               __path__: /var/log/containers/*log
-      - job_name: kubernetes-pods-app
-        pipeline_stages:
-          - docker: {}
-
-        kubernetes_sd_configs:
-        - role: pod
-        relabel_configs:
-        - action: keep
-          regex: true
-          source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-        - action: drop
-          regex: .+
-          source_labels:
-          - __meta_kubernetes_pod_label_name
-        - source_labels:
-          - __meta_kubernetes_pod_label_app
-          target_label: __service__
-        - source_labels:
-          - __meta_kubernetes_pod_node_name
-          target_label: __host__
-        - action: drop
-          regex: ""
-          source_labels:
-          - __service__
-        - action: labelmap
-          regex: __meta_kubernetes_pod_label_(.+)
-        - action: replace
-          replacement: $1
-          separator: /
-          source_labels:
-          - __meta_kubernetes_namespace
-          - __service__
-          target_label: job
-        - action: replace
-          source_labels:
-          - __meta_kubernetes_namespace
-          target_label: namespace
-        - action: replace
-          source_labels:
-          - __meta_kubernetes_pod_name
-          target_label: instance
-        - action: replace
-          source_labels:
-          - __meta_kubernetes_pod_container_name
-          target_label: container_name
-        - replacement: /var/log/pods/*$1/*.log
-          separator: /
-          source_labels:
-          - __meta_kubernetes_pod_uid
-          - __meta_kubernetes_pod_container_name
-          target_label: __path__
+          - targets:
+            - localhost
+            labels:
+              app: account-service
+              __path__: /var/log/pods/*_account-service-*/account-service/*.log
+          - targets:
+            - localhost
+            labels:
+              app: gateway-service
+              __path__: /var/log/pods/*_gateway-service-*/gateway-service/*.log
 ---
 apiVersion: apps/v1
 kind: Deployment
