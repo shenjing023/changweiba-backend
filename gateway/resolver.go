@@ -39,7 +39,7 @@ func (r *mutationResolver) ReportUser(ctx context.Context, input models.ReportUs
 }
 
 func (r *mutationResolver) NewPost(ctx context.Context, input models.NewPost) (int, error) {
-	panic("not implemented")
+	return handler.NewPost(ctx, input)
 }
 
 func (r *mutationResolver) NewComment(ctx context.Context, input models.NewComment) (int, error) {

@@ -1,0 +1,17 @@
+#服务相关配置
+debug: false
+port: 8019
+db:
+  host: "10.0.0.209"
+  port: 3306
+  user: "domob"
+  password: "domob"
+  dbname: "liuwei1"
+  max_idle_conns: 10
+  max_open_conns: 10
+redis:
+  host: "10.0.0.202"
+  port: 6383
+  password: ""
+log_dir: ""
+salt: "asdah#!2sddh"

@@ -39,3 +39,16 @@ func GRPCErrorConvert(err error, conf map[codes.Code]string) error {
 	}
 	return errors.New(errMsg)
 }
+
+// GetUserIDFromContext get user_id from context
+func GetUserIDFromContext(ctx context.Context) (int64, error) {
+	gctx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return 0, err
+	}
+	userID, ok := gctx.Value("claims").(float64)
+	if !ok {
+		return 0, errors.New("get user_id from request ctx error")
+	}
+	return int64(userID), nil
+}

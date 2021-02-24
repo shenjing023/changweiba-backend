@@ -1,9 +1,10 @@
 #服务相关配置
 debug: true
-port: 8020
+port: 9020
 account:
-  host: "account-service"
-  port: 8018
+  # host: "account-service"
+  host: "localhost"
+  port: 9018
 post:
   host: "localhost"
   port: 33060

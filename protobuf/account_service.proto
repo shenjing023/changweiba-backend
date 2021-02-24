@@ -3,9 +3,9 @@ syntax = "proto3";
 option go_package = ".;pb";
 package pb;
 
-enum Status{
-    STATUS_NORMAL=0;
-    STATUS_BANNED=1;
+enum UserStatus{
+    NORMAL=0;
+    BANNED=1;
 }
 
 enum Role{
@@ -18,7 +18,7 @@ message User {
     string name = 2;
     string password = 3;
     string avatar = 4;
-    Status status = 5;
+    UserStatus status = 5;
     int64 score = 6;
     string banned_reason = 7;
     int64 create_time = 8;

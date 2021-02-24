@@ -47,15 +47,13 @@ func registerSignalHandler() {
 	go func() {
 		c := make(chan os.Signal)
 		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-		for {
-			sig := <-c
-			log.Infof("Signal %d received", sig)
-			switch sig {
-			case syscall.SIGINT, syscall.SIGTERM:
-				repository.Close()
-				time.Sleep(time.Second)
-				os.Exit(0)
-			}
+		sig := <-c
+		log.Infof("Signal %d received", sig)
+		switch sig {
+		case syscall.SIGINT, syscall.SIGTERM:
+			repository.Close()
+			time.Sleep(time.Second)
+			os.Exit(0)
 		}
 	}()
 }

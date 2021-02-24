@@ -1,7 +1,7 @@
 package repository
 
 // Posts 帖子表
-type Posts struct {
+type Post struct {
 	ID         int64 `grom:"column:id"`
 	UserID     int64 `grom:"column:user_id"`
 	Topic      string
@@ -9,6 +9,10 @@ type Posts struct {
 	LastUpdate int64
 	ReplyNum   int64
 	Status     int64
+}
+
+func (Post) TableName() string {
+	return "cw_post"
 }
 
 // Comment 评论表
@@ -22,6 +26,10 @@ type Comment struct {
 	Status     int64
 }
 
+func (Comment) TableName() string {
+	return "cw_comment"
+}
+
 // Reply 评论回复表
 type Reply struct {
 	ID         int64 `grom:"column:id"`
@@ -33,4 +41,8 @@ type Reply struct {
 	ParentID   int64 `grom:"column:parent_id"`
 	Floor      int64
 	Status     int64
+}
+
+func (Reply) TableName() string {
+	return "cw_reply"
 }

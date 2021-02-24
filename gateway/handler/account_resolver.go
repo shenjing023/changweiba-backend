@@ -18,6 +18,7 @@ import (
 )
 
 const (
+	// ServiceError service error
 	ServiceError = "gateway service internal error"
 )
 
@@ -36,7 +37,7 @@ func SignUp(ctx context.Context, input models.NewUser) (*models.AuthToken, error
 	}
 
 	client := pb.NewAccountClient(AccountConn)
-	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
 	user := pb.SignUpRequest{

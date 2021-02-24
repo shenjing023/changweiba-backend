@@ -12,7 +12,7 @@ import (
 //rpc连接
 var (
 	AccountConn *grpc.ClientConn
-	PostsConn   *grpc.ClientConn
+	PostConn    *grpc.ClientConn
 )
 
 // InitGRPCConn init grpc conn
@@ -22,10 +22,10 @@ func InitGRPCConn() {
 	if err != nil {
 		log.Fatal(fmt.Sprintf("fail to accountRPC dial: %+v", err))
 	}
-	// PostsConn, err = grpc.Dial(fmt.Sprintf("%s:%d", conf.Cfg.Posts.Host, conf.Cfg.Posts.Port), grpc.WithInsecure())
-	// if err != nil {
-	// 	log.Fatal(fmt.Sprintf("fail to postsRPC dial: %+v", err))
-	// }
+	PostConn, err = grpc.Dial(fmt.Sprintf("%s:%d", conf.Cfg.Post.Host, conf.Cfg.Post.Port), grpc.WithInsecure())
+	if err != nil {
+		log.Fatal(fmt.Sprintf("fail to postsRPC dial: %+v", err))
+	}
 }
 
 // StopGRPCConn 关闭rpc连接
@@ -33,7 +33,7 @@ func StopGRPCConn() {
 	if AccountConn != nil {
 		AccountConn.Close()
 	}
-	if PostsConn != nil {
-		PostsConn.Close()
+	if PostConn != nil {
+		PostConn.Close()
 	}
 }

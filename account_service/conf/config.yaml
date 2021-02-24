@@ -1,5 +1,5 @@
 #服务相关配置
-debug: true
+debug: false
 port: 9018
 db:
   host: "10.0.0.209"

@@ -41,4 +41,6 @@ type Mutation{
     newReply(input: NewReply!): Int!
     """删除帖子"""
     deletePost(input: Int!): Boolean!
+    """获取access_token"""
+    getAccessToken(input: String!): String!
 }
