@@ -32,6 +32,7 @@ func runGatewayService(configPath string) {
 	r := gin.Default()
 	r.Use(middleware.GinContextToContextMiddleware())
 	r.Use(middleware.QueryDeepMiddleware(conf.Cfg.QueryDeep))
+	r.Use(middleware.AuthMiddleware())
 	// r.Use(middleware.JWTMiddleware(conf.Cfg.SignKey, conf.Cfg.QueryDeep))
 	// r.Use(dataloader.LoaderMiddleware())
 

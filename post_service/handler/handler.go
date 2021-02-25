@@ -58,7 +58,7 @@ func (PostService) GetPosts(ctx context.Context, pr *pb.PostsRequest) (*pb.Posts
 			CreateTime: v.CreateTime,
 			LastUpdate: v.LastUpdate,
 			ReplyNum:   v.ReplyNum,
-			Status:     pb.Status(v.Status),
+			Status:     pb.PostStatus(v.Status),
 		})
 	}
 	return &pb.PostsResponse{

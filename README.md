@@ -24,7 +24,19 @@
      ```
   -  Set service config in yaml config file
   -  Run service
-  -  Install Kiali dashboard, along with Prometheus, Grafana, and Jaeger [kiali](https://istio.io/latest/docs/setup/getting-started/#dashboard) [grafana](https://istio.io/latest/docs/tasks/observability/metrics/using-istio-dashboard/)
+  -  Install [Kiali dashboard](https://istio.io/latest/docs/setup/getting-started/#dashboard), along with Prometheus, [Grafana](https://istio.io/latest/docs/tasks/observability/metrics/using-istio-dashboard/), and Jaeger
+     ```bash
+     kubectl apply -f samples/addons
+     kubectl rollout status deployment/kiali -n istio-system
+     ```
+     and use port forwarding to access grafana in cluster
+     ```bash
+     kubectl -n istio-system port-forward $(kubectl -n istio-system get pod -l app=grafana -o jsonpath='{.items[0].metadata.name}') 3000:3000
+     ```
+     or
+     ```bash
+     istioctl dashboard grafana
+     ```
   -  Install loki
       
 
