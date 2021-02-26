@@ -59,12 +59,12 @@ func SignUp(ctx context.Context, input models.NewUser) (*models.AuthToken, error
 	accessToken, err := middleware.GenerateAccessToken(resp.Id)
 	if err != nil {
 		log.Error("generate access_token error: ", err)
-		return nil, errors.New(ServiceError)
+		return nil, common.NewGQLError(common.Internal, ServiceError)
 	}
 	refreshToken, err := middleware.GenerateRefreshToken(resp.Id)
 	if err != nil {
 		log.Error("generate refresh_token error: ", err)
-		return nil, errors.New(ServiceError)
+		return nil, common.NewGQLError(common.Internal, ServiceError)
 	}
 
 	return &models.AuthToken{
@@ -97,12 +97,12 @@ func SignIn(ctx context.Context, input models.NewUser) (*models.AuthToken, error
 	accessToken, err := middleware.GenerateAccessToken(resp.Id)
 	if err != nil {
 		log.Error("generate access_token error: ", err)
-		return nil, errors.New(ServiceError)
+		return nil, common.NewGQLError(common.Internal, ServiceError)
 	}
 	refreshToken, err := middleware.GenerateRefreshToken(resp.Id)
 	if err != nil {
 		log.Error("generate refresh_token error: ", err)
-		return nil, errors.New(ServiceError)
+		return nil, common.NewGQLError(common.Internal, ServiceError)
 	}
 
 	return &models.AuthToken{

@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/gin-gonic/gin"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -28,16 +29,30 @@ func GRPCErrorConvert(err error, conf map[codes.Code]string) error {
 	st, ok := status.FromError(err)
 	if !ok {
 		// Error was not a status error
-		return errors.New("system error")
+		return &gqlerror.Error{
+			Message: "system error",
+			Extensions: map[string]interface{}{
+				"code": Internal,
+			},
+		}
 	}
-	var errMsg = st.Message()
+	var (
+		errMsg = st.Message()
+		code   = Unknown
+	)
 	for k, v := range conf {
 		if k == st.Code() {
 			errMsg = v
+			code = ErrMap[k]
 			break
 		}
 	}
-	return errors.New(errMsg)
+	return &gqlerror.Error{
+		Message: errMsg,
+		Extensions: map[string]interface{}{
+			"code": code,
+		},
+	}
 }
 
 // GetUserIDFromContext get user_id from context
@@ -51,4 +66,14 @@ func GetUserIDFromContext(ctx context.Context) (int64, error) {
 		return 0, errors.New("get user_id from request ctx error")
 	}
 	return int64(userID), nil
+}
+
+// NewGQLError new graphql error return to front end
+func NewGQLError(code ErrorCode, msg string) error {
+	return &gqlerror.Error{
+		Message: msg,
+		Extensions: map[string]interface{}{
+			"code": code,
+		},
+	}
 }
