@@ -1,15 +1,16 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"gateway/conf"
 	"gateway/generated"
 	"gateway/middleware"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	service_handler "gateway/handler"
 
@@ -24,22 +25,37 @@ import (
 func runGatewayService(configPath string) {
 	conf.Init(configPath)
 	service_handler.InitGRPCConn()
-	// dao.Init()
 	middleware.InitAuth()
-	registerSignalHandler()
 
 	// Setting up Gin
-	r := gin.Default()
-	r.Use(middleware.GinContextToContextMiddleware())
-	r.Use(middleware.QueryDeepMiddleware(conf.Cfg.QueryDeep))
-	r.Use(middleware.AuthMiddleware())
+	engine := gin.Default()
+	engine.Use(middleware.GinContextToContextMiddleware())
+	engine.Use(middleware.QueryDeepMiddleware(conf.Cfg.QueryDeep))
+	engine.Use(middleware.AuthMiddleware())
 	// r.Use(middleware.JWTMiddleware(conf.Cfg.SignKey, conf.Cfg.QueryDeep))
 	// r.Use(dataloader.LoaderMiddleware())
 
-	r.POST("/graphql", graphqlHandler())
-	r.GET("/", playgroundHandler())
+	engine.POST("/graphql", graphqlHandler())
+	engine.GET("/", playgroundHandler())
 
-	r.Run(fmt.Sprintf(":%d", conf.Cfg.Port))
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%d", conf.Cfg.Port),
+		Handler: engine,
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("run service fatal: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Infof("signal %d received and shutdown service", quit)
+	srv.Shutdown(context.Background())
+	service_handler.StopGRPCConn()
 }
 
 // Defining the Playground handler
@@ -61,28 +77,16 @@ func graphqlHandler() gin.HandlerFunc {
 			Resolvers: &Resolver{},
 		},
 	))
+	// srv.SetRecoverFunc(func(ctx context.Context, err interface{}) error {
+	// 	log.Errorf("service panic: %+v", err)
+	// 	log.Error(string(debug.Stack()))
+	// 	return errors.New("Internal system error")
+	// })
 	srv.Use(extension.FixedComplexityLimit(20))
 
 	return func(c *gin.Context) {
 		srv.ServeHTTP(c.Writer, c.Request)
 	}
-}
-
-func registerSignalHandler() {
-	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-		for {
-			sig := <-c
-			log.Infof("Signal %d received", sig)
-			switch sig {
-			case syscall.SIGINT, syscall.SIGTERM:
-				service_handler.StopGRPCConn()
-				time.Sleep(time.Second)
-				os.Exit(0)
-			}
-		}
-	}()
 }
 
 func main() {
