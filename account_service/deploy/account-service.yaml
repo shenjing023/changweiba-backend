@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
         - name: account-service
-          image: account-service:v2
+          image: account-service:v1
           imagePullPolicy: Never
           ports:
             - containerPort: 8018

@@ -26,6 +26,8 @@
   -  Run service
   -  Install [Kiali dashboard](https://istio.io/latest/docs/setup/getting-started/#dashboard), along with Prometheus, [Grafana](https://istio.io/latest/docs/tasks/observability/metrics/using-istio-dashboard/), and Jaeger
      ```bash
+     // move to istio directory
+     cd istio-1.9.0
      kubectl apply -f samples/addons
      kubectl rollout status deployment/kiali -n istio-system
      ```

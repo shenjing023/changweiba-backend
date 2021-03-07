@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
         - name: gateway-service
-          image: gateway-service:v2
+          image: gateway-service:v1
           imagePullPolicy: Never
           ports:
             - containerPort: 8020
