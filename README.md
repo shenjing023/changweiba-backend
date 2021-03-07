@@ -24,6 +24,10 @@
      ```
   -  Set service config in yaml config file
   -  Run service
+     Apply each service yaml file, and finally apply changweiba-gateway.yaml
+     ```bash
+     kubectl apply -f changweiba-gateway.yaml
+     ``` 
   -  Install [Kiali dashboard](https://istio.io/latest/docs/setup/getting-started/#dashboard), along with Prometheus, [Grafana](https://istio.io/latest/docs/tasks/observability/metrics/using-istio-dashboard/), and Jaeger
      ```bash
      // move to istio directory
@@ -40,6 +44,9 @@
      istioctl dashboard grafana
      ```
   -  Install loki
+     ```bash
+     kubectl apply -f loki-deploy.yaml
+     ```
       
 
 ## Doc
