@@ -6,7 +6,6 @@ import (
 	"net"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"os"
 
@@ -24,16 +23,29 @@ import (
 func runPostService(configPath string) {
 	conf.Init(configPath)
 	repository.Init()
-	registerSignalHandler()
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", conf.Cfg.Port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
 	pb.RegisterPostServiceServer(s, &handler.PostService{})
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Infof("signal %d received and shutdown service", quit)
+	s.GracefulStop()
+	stopService()
+}
+
+func stopService() {
+	repository.Close()
 }
 
 func main() {
@@ -41,19 +53,4 @@ func main() {
 	execDir := flag.String("d", pwd, "execute directory")
 	flag.Parse()
 	runPostService(*execDir + "/conf/config.yaml")
-}
-
-func registerSignalHandler() {
-	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-		sig := <-c
-		log.Infof("Signal %d received", sig)
-		switch sig {
-		case syscall.SIGINT, syscall.SIGTERM:
-			repository.Close()
-			time.Sleep(time.Second)
-			os.Exit(0)
-		}
-	}()
 }
