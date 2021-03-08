@@ -14,6 +14,7 @@ import (
 	log "github.com/shenjing023/llog"
 	"golang.org/x/crypto/scrypt"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -70,6 +71,10 @@ func (u *User) SignUp(ctx context.Context, sr *pb.SignUpRequest) (*pb.SignUpResp
 
 // SignIn 登录
 func (u *User) SignIn(ctx context.Context, sr *pb.SignInRequest) (*pb.SignInResponse, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if ok {
+		log.Info("md: ", md)
+	}
 	dbUser, err := repository.GetUserByName(sr.Name)
 	if err != nil {
 		return nil, ServiceErr2GRPCErr(err)
