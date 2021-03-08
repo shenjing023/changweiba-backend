@@ -105,8 +105,18 @@ func GetPost(postID int64) (*Post, error) {
 func GetPosts(page, pageSize int) ([]*Post, error) {
 	var posts []*Post
 	// TODO 待优化
-	if err := dbOrm.Where("status=?", 0).Offset(pageSize * (page - 1)).Limit(pageSize).Order("last_update desc").Error; err != nil {
+	rows, err := dbOrm.Raw(`SELECT t1.* FROM cw_post t1, 
+		(SELECT id FROM cw_post WHERE status=? ORDER BY last_update,id DESC LIMIT ?,?) t2 
+		WHERE t1.id=t2.id`,
+		0, pageSize, pageSize*(page-1)).Rows()
+	if err != nil {
 		return nil, common.NewServiceErr(common.Internal, err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var p Post
+		dbOrm.ScanRows(rows, &p)
+		posts = append(posts, &p)
 	}
 	return posts, nil
 }
