@@ -13,7 +13,8 @@ CREATE TABLE `cw_post` (
     `reply_num` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '帖子评论+回复总数',
     `status` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '状态,(0正常1删除)',
     PRIMARY KEY (`id`) USING BTREE,
-    KEY `ids_user_id` (`user_id`)
+    INDEX `idx_user_id`(`user_id`) USING BTREE,
+    INDEX `idx_status_update_id`(`status`, `last_update`, `id`) USING BTREE /*帖子翻页查询时使用索引优化*/
 ) ENGINE=InnoDB AUTO_INCREMENT = 10000 CHARACTER SET =utf8 COLLATE = utf8_general_ci COMMENT = '帖子表' ROW_FORMAT = Compact;
 
 /*

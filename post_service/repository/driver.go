@@ -106,7 +106,7 @@ func GetPosts(page, pageSize int) ([]*Post, error) {
 	var posts []*Post
 	// TODO 待优化
 	rows, err := dbOrm.Raw(`SELECT t1.* FROM cw_post t1, 
-		(SELECT id FROM cw_post WHERE status=? ORDER BY last_update,id DESC LIMIT ?,?) t2 
+		(SELECT id FROM cw_post WHERE status=? ORDER BY last_update DESC, id DESC LIMIT ?,?) t2 
 		WHERE t1.id=t2.id`,
 		0, pageSize, pageSize*(page-1)).Rows()
 	if err != nil {
