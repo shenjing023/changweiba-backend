@@ -1,29 +1,21 @@
 syntax = "proto3";
 
+import "enums.proto";
+
 option go_package = ".;pb";
-package pb;
-
-enum UserStatus{
-    NORMAL=0;
-    BANNED=1;
-}
-
-enum Role{
-    ROLE_NORMAL=0;
-    ROLE_ADMIN=1;
-}
+package account;
 
 message User {
     int64 id = 1;
     string name = 2;
     string password = 3;
     string avatar = 4;
-    UserStatus status = 5;
+    enums.UserStatusEnum.Status status = 5;
     int64 score = 6;
     string banned_reason = 7;
     int64 create_time = 8;
     int64 last_update=9;
-    Role role=10;
+    enums.UserRoleEnum.Role role=10;
 }
 
 message UserRequest {

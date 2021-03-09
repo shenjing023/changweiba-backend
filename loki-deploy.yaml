@@ -171,6 +171,11 @@ data:
             labels:
               app: gateway-service
               __path__: /var/log/pods/*_gateway-service-*/gateway-service/*.log
+          - targets:
+            - localhost
+            labels:
+              app: post-service
+              __path__: /var/log/pods/*_post-service-*/post-service/*.log
 ---
 apiVersion: apps/v1
 kind: Deployment

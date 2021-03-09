@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"cw_post_service/conf"
@@ -12,6 +13,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	log "github.com/shenjing023/llog"
 	"golang.org/x/net/context"
+	"golang.org/x/sync/singleflight"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -19,8 +21,14 @@ import (
 )
 
 var (
-	redisClient *redis.Client
-	dbOrm       *gorm.DB
+	redisClient     *redis.Client
+	dbOrm           *gorm.DB
+	postsCountCache singleflight.Group
+)
+
+const (
+	// POSTSCOUNTKEY redis 保存当前帖子总数
+	POSTSCOUNTKEY = "posts_count_key"
 )
 
 // Init init mysql and redis orm
@@ -74,6 +82,7 @@ func Close() {
 
 // InsertPost insert new post
 func InsertPost(userID int64, topic, content string) (int64, error) {
+	session := dbOrm.Begin()
 	now := time.Now().Unix()
 	post := Post{
 		UserID:     userID,
@@ -83,7 +92,11 @@ func InsertPost(userID int64, topic, content string) (int64, error) {
 		ReplyNum:   0,
 		Status:     0,
 	}
-	if err := dbOrm.Create(&post).Error; err != nil {
+	if err := session.Create(&post).Error; err != nil {
+		return 0, common.NewServiceErr(common.Internal, err)
+	}
+	if err := redisClient.Incr(context.Background(), POSTSCOUNTKEY).Err(); err != nil {
+		session.Rollback()
 		return 0, common.NewServiceErr(common.Internal, err)
 	}
 	return post.ID, nil
@@ -108,7 +121,7 @@ func GetPosts(page, pageSize int) ([]*Post, error) {
 	rows, err := dbOrm.Raw(`SELECT t1.* FROM cw_post t1, 
 		(SELECT id FROM cw_post WHERE status=? ORDER BY last_update DESC, id DESC LIMIT ?,?) t2 
 		WHERE t1.id=t2.id`,
-		0, pageSize, pageSize*(page-1)).Rows()
+		0, pageSize*(page-1), pageSize).Rows()
 	if err != nil {
 		return nil, common.NewServiceErr(common.Internal, err)
 	}
@@ -119,4 +132,27 @@ func GetPosts(page, pageSize int) ([]*Post, error) {
 		posts = append(posts, &p)
 	}
 	return posts, nil
+}
+
+// GetPostsTotalCount get all post count
+func GetPostsTotalCount() (int64, error) {
+	total, err := redisClient.Get(context.Background(), POSTSCOUNTKEY).Result()
+	if err == redis.Nil {
+		// 不存在，防穿透
+		value, err, _ := postsCountCache.Do("posts_count", func() (ret interface{}, err error) {
+			var count int64
+			if err := dbOrm.Raw("select count(*) from cw_post where status=0").Scan(&count).Error; err != nil {
+				return 0, err
+			}
+			redisClient.Set(context.Background(), POSTSCOUNTKEY, count, 0)
+			return count, nil
+		})
+		if err != nil {
+			return 0, common.NewServiceErr(common.Internal, err)
+		}
+		return value.(int64), nil
+	} else if err != nil {
+		return 0, common.NewServiceErr(common.Internal, err)
+	}
+	return strconv.ParseInt(total, 10, 64)
 }

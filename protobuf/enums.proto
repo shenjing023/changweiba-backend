@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+option go_package = ".;pb";
+package enums;
+
+message UserStatusEnum{
+    enum Status{
+        NORMAL=0;
+        BANNED=1;
+    }
+}
+
+message UserRoleEnum{
+    enum Role{
+        NORMAL=0;
+        ADMIN=1;
+    }
+}
+
+message PostStatusEnum{
+    enum Status{
+        NORMAL=0;
+        DELETE=1;
+    }
+}

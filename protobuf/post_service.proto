@@ -1,12 +1,9 @@
 syntax = "proto3";
 
-option go_package = ".;pb";
-package pb;
+import "enums.proto";
 
-enum PostStatus{
-    NORMAL=0;
-    DELETE=1;
-}
+option go_package = ".;pb";
+package post;
 
 message Post {
     int64 id = 1;
@@ -15,7 +12,7 @@ message Post {
     int64 create_time = 4;
     int64 last_update = 5;
     int64 reply_num = 6;
-    PostStatus status = 7;
+    enums.PostStatusEnum.Status status = 7;
 }
 
 message Comment {
@@ -25,7 +22,7 @@ message Comment {
     string content = 4;
     int64 create_time = 5;
     int64 floor = 6;
-    PostStatus status = 7;
+    enums.PostStatusEnum.Status status = 7;
 }
 
 message Reply {
@@ -37,7 +34,7 @@ message Reply {
     int64 create_time = 6;
     int64 parent_id = 7;
     int64 floor = 8;
-    PostStatus status = 9;
+    enums.PostStatusEnum.Status status = 9;
 }
 
 message NewPostRequest {

@@ -26,16 +26,6 @@ type User{
     ):ReplyConnection
 }
 
-enum UserStatus{
-    NORMAL
-    BANNED
-}
-
-enum UserRole{
-    NORMAL
-    ADMIN
-}
-
 input NewUser{
     name: String!
     password: String!
@@ -50,12 +40,12 @@ input EditUser{
 }
 
 input ReportUser{
-    user_id: Int!
-    reported_user_id: ID!
+    userId: Int!
+    reportedUserId: ID!
     reason: String!
 }
 
 type AuthToken {
-    access_token: String!
-    refresh_token: String!
+    accessToken: String!
+    refreshToken: String!
 }

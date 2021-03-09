@@ -2,34 +2,34 @@ type Post{
     id: Int!
     user: User!
     topic: String!
-    create_at: Int!
+    createdAt: Int!
     """最后回复时间"""
-    last_at: Int!
+    updatedAt: Int!
     """帖子评论+回复的总数"""
-    reply_num: Int!
-    status: Status!
+    replyNum: Int!
+    status: PostStatus!
     comments(
         page:Int!
         pageSize:Int!
     ): CommentConnection!
     """最后评论或回复的用户"""
-    last_reply_user:User!
+    lastReplyUser:User!
 }
 
 type PostConnection{
     nodes:[Post]
-    total_count:Int!
+    totalCount:Int!
 }
 
 type Comment{
     id: Int!
     user: User!
-    post_id: Int!
+    postId: Int!
     content: String!
-    create_at: Int!
+    createdAt: Int!
     """第几楼"""
     floor: Int!
-    status: Status!
+    status: PostStatus!
     replies(
         page:Int!
         pageSize:Int!
@@ -38,33 +38,27 @@ type Comment{
 
 type CommentConnection{
     nodes:[Comment]
-    total_count:Int!
+    totalCount:Int!
 }
 
 type Reply{
     id: Int!
     user: User!
-    post_id: Int!
-    comment_id: Int!
+    postId: Int!
+    commentId: Int!
     content: String!
-    create_at: Int!
+    createdAt: Int!
     """父回复"""
     parent: Reply!
     """楼中楼的第几楼"""
     floor: Int!
-    status: Status!
+    status: PostStatus!
 }
 
 type ReplyConnection{
     nodes:[Reply]
-    total_count:Int!
+    totalCount:Int!
 }
-
-enum Status{
-    NORMAL
-    BANNED
-}
-
 
 input NewPost{
     topic: String!
@@ -72,15 +66,15 @@ input NewPost{
 }
 
 input NewComment{
-    post_id: Int!
+    postId: Int!
     content: String!
 }
 
 input NewReply{
-    post_id: Int!
-    comment_id: Int!
+    postId: Int!
+    commentId: Int!
     content: String!
-    parent_id: Int!
+    parentId: Int!
 }
 
 input DeletePost{

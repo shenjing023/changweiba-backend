@@ -54,6 +54,10 @@ func (r *mutationResolver) DeletePost(ctx context.Context, input int) (bool, err
 	panic("not implemented")
 }
 
+func (r *mutationResolver) GetAccessToken(ctx context.Context, input string) (string, error) {
+	panic("not implemented")
+}
+
 func (r *postResolver) User(ctx context.Context, obj *models.Post) (*models.User, error) {
 	panic("not implemented")
 }
@@ -75,7 +79,7 @@ func (r *queryResolver) Post(ctx context.Context, postID int) (*models.Post, err
 }
 
 func (r *queryResolver) Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error) {
-	panic("not implemented")
+	return handler.Posts(ctx, page, pageSize)
 }
 
 func (r *queryResolver) Comment(ctx context.Context, commentID int) (*models.Comment, error) {

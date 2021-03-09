@@ -1,0 +1,14 @@
+enum UserStatus{
+    NORMAL
+    BANNED
+}
+
+enum UserRole{
+    NORMAL
+    ADMIN
+}
+
+enum PostStatus{
+    NORMAL
+    DELETE
+}

@@ -58,11 +58,16 @@ func (PostService) GetPosts(ctx context.Context, pr *pb.PostsRequest) (*pb.Posts
 			CreateTime: v.CreateTime,
 			LastUpdate: v.LastUpdate,
 			ReplyNum:   v.ReplyNum,
-			Status:     pb.PostStatus(v.Status),
+			Status:     pb.PostStatusEnum_Status(v.Status),
 		})
+	}
+	totalCount, err := repository.GetPostsTotalCount()
+	if err != nil {
+		log.Error("get posts total count failed: ", err.Error())
+		return nil, status.Error(codes.Internal, ServiceError)
 	}
 	return &pb.PostsResponse{
 		Posts:      posts,
-		TotalCount: 0,
+		TotalCount: totalCount,
 	}, nil
 }

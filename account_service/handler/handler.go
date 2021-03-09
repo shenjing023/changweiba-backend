@@ -100,10 +100,10 @@ func (u *User) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 		Id:           dbUser.ID,
 		Name:         dbUser.Name,
 		Avatar:       dbUser.Avatar,
-		Status:       pb.UserStatus(dbUser.Status),
+		Status:       pb.UserStatusEnum_Status(dbUser.Status),
 		Score:        dbUser.Score,
 		BannedReason: dbUser.BannedReason,
-		Role:         pb.Role(dbUser.Role),
+		Role:         pb.UserRoleEnum_Role(dbUser.Role),
 	}, nil
 }
 
