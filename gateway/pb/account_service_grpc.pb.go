@@ -35,7 +35,7 @@ func NewAccountClient(cc grpc.ClientConnInterface) AccountClient {
 
 func (c *accountClient) GetUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error) {
 	out := new(User)
-	err := c.cc.Invoke(ctx, "/pb.Account/GetUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/account.Account/GetUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (c *accountClient) GetUser(ctx context.Context, in *User, opts ...grpc.Call
 
 func (c *accountClient) SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpResponse, error) {
 	out := new(SignUpResponse)
-	err := c.cc.Invoke(ctx, "/pb.Account/SignUp", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/account.Account/SignUp", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (c *accountClient) SignUp(ctx context.Context, in *SignUpRequest, opts ...g
 
 func (c *accountClient) EditUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error) {
 	out := new(User)
-	err := c.cc.Invoke(ctx, "/pb.Account/EditUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/account.Account/EditUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (c *accountClient) EditUser(ctx context.Context, in *User, opts ...grpc.Cal
 
 func (c *accountClient) SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*SignInResponse, error) {
 	out := new(SignInResponse)
-	err := c.cc.Invoke(ctx, "/pb.Account/SignIn", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/account.Account/SignIn", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (c *accountClient) SignIn(ctx context.Context, in *SignInRequest, opts ...g
 
 func (c *accountClient) GetUsersByIds(ctx context.Context, in *UsersRequest, opts ...grpc.CallOption) (*UsersResponse, error) {
 	out := new(UsersResponse)
-	err := c.cc.Invoke(ctx, "/pb.Account/GetUsersByIds", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/account.Account/GetUsersByIds", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (c *accountClient) GetUsersByIds(ctx context.Context, in *UsersRequest, opt
 
 func (c *accountClient) GetUsersByUserIds(ctx context.Context, in *UsersByUserIdsRequest, opts ...grpc.CallOption) (*UsersByUserIdsResponse, error) {
 	out := new(UsersByUserIdsResponse)
-	err := c.cc.Invoke(ctx, "/pb.Account/GetUsersByUserIds", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/account.Account/GetUsersByUserIds", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func _Account_GetUser_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.Account/GetUser",
+		FullMethod: "/account.Account/GetUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServer).GetUser(ctx, req.(*User))
@@ -163,7 +163,7 @@ func _Account_SignUp_Handler(srv interface{}, ctx context.Context, dec func(inte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.Account/SignUp",
+		FullMethod: "/account.Account/SignUp",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServer).SignUp(ctx, req.(*SignUpRequest))
@@ -181,7 +181,7 @@ func _Account_EditUser_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.Account/EditUser",
+		FullMethod: "/account.Account/EditUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServer).EditUser(ctx, req.(*User))
@@ -199,7 +199,7 @@ func _Account_SignIn_Handler(srv interface{}, ctx context.Context, dec func(inte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.Account/SignIn",
+		FullMethod: "/account.Account/SignIn",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServer).SignIn(ctx, req.(*SignInRequest))
@@ -217,7 +217,7 @@ func _Account_GetUsersByIds_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.Account/GetUsersByIds",
+		FullMethod: "/account.Account/GetUsersByIds",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServer).GetUsersByIds(ctx, req.(*UsersRequest))
@@ -235,7 +235,7 @@ func _Account_GetUsersByUserIds_Handler(srv interface{}, ctx context.Context, de
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.Account/GetUsersByUserIds",
+		FullMethod: "/account.Account/GetUsersByUserIds",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServer).GetUsersByUserIds(ctx, req.(*UsersByUserIdsRequest))
@@ -244,7 +244,7 @@ func _Account_GetUsersByUserIds_Handler(srv interface{}, ctx context.Context, de
 }
 
 var _Account_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "pb.Account",
+	ServiceName: "account.Account",
 	HandlerType: (*AccountServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
