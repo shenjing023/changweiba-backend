@@ -167,3 +167,43 @@ func BytesToInt32(buf []byte) int32 {
 	r, _ := strconv.ParseInt(string(buf), 10, 32)
 	return int32(r)
 }
+
+// GetUsers 批量获取用户信息
+func GetUsers(ids []int64) ([]*User, error) {
+	sql := `
+		SELECT 
+			id,
+			name,
+			avatar,
+			score,
+			role,
+			banned_reason,
+			create_time,
+			last_update 
+		FROM 
+			cw_user 
+		WHERE 
+			id IN (?) 
+		ORDER BY FIELD(id,?)
+	`
+	var results []*User
+	if err := dbOrm.Raw(sql, ids, ids).Scan(&results).Error; err != nil {
+		return nil, common.NewServiceErr(common.Internal, err)
+	}
+	//可能有的id不存在或重复,需要再排序
+	var (
+		users []*User
+		m     = make(map[int64]*User)
+	)
+	for _, v := range results {
+		m[v.ID] = v
+	}
+	for _, id := range ids {
+		if _, ok := m[id]; ok {
+			users = append(users, m[id])
+		} else {
+			users = append(users, &User{})
+		}
+	}
+	return users, nil
+}

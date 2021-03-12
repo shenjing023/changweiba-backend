@@ -107,6 +107,36 @@ func (u *User) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 	}, nil
 }
 
+// GetUsersByUserIds 通过用户id批量获取用户信息
+func (u *User) GetUsersByUserIds(ctx context.Context, ur *pb.UsersByUserIdsRequest) (*pb.UsersByUserIdsResponse, error) {
+	dbUsers, err := repository.GetUsers(ur.Ids)
+	if err != nil {
+		return nil, ServiceErr2GRPCErr(err)
+	}
+	var users []*pb.User
+	for _, v := range dbUsers {
+		status, role := pb.UserStatusEnum_Status(v.Status), pb.UserRoleEnum_Role(v.Role)
+		if v.Status == 1 {
+			status = pb.UserStatusEnum_BANNED
+		}
+		if v.Role == 1 {
+			role = pb.UserRoleEnum_ADMIN
+		}
+		users = append(users, &pb.User{
+			Id:           v.ID,
+			Name:         v.Name,
+			Avatar:       v.Avatar,
+			Status:       status,
+			Score:        v.Score,
+			BannedReason: v.BannedReason,
+			Role:         role,
+		})
+	}
+	return &pb.UsersByUserIdsResponse{
+		Users: users,
+	}, nil
+}
+
 func checkNewUser(sr *pb.SignUpRequest) error {
 	if len(strings.TrimSpace(sr.Name)) == 0 || len(strings.TrimSpace(sr.Password)) == 0 {
 		return common.NewServiceErr(common.InvalidArgument,
