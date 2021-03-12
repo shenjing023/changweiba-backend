@@ -110,3 +110,35 @@ func SignIn(ctx context.Context, input models.NewUser) (*models.AuthToken, error
 		RefreshToken: refreshToken,
 	}, nil
 }
+
+// UsersByIDsLoaderFunc 批量获取用户的dataloader func
+func UsersByIDsLoaderFunc(ctx context.Context, keys []int64) (users []*models.User, errs []error) {
+	client := pb.NewAccountClient(AccountConn)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	ur := pb.UsersByUserIdsRequest{
+		Ids: keys,
+	}
+	resp, err := client.GetUsersByUserIds(ctx, &ur)
+	if err != nil {
+		log.Error("get user by ids error: ", err)
+		for i := 0; i < len(keys); i++ {
+			errs = append(errs, err)
+		}
+		return
+	}
+
+	for _, v := range resp.Users {
+		users = append(users, &models.User{
+			ID:           int(v.Id),
+			Name:         v.Name,
+			Avatar:       v.Avatar,
+			Status:       models.UserStatus(v.Status.String()),
+			Role:         models.UserRole(v.Role.String()),
+			Score:        int(v.Score),
+			BannedReason: v.BannedReason,
+		})
+	}
+	return
+}

@@ -7,6 +7,7 @@ package main
 
 import (
 	"context"
+	"gateway/dataloader"
 	"gateway/generated"
 	"gateway/handler"
 	"gateway/models"
@@ -59,7 +60,7 @@ func (r *mutationResolver) GetAccessToken(ctx context.Context, input string) (st
 }
 
 func (r *postResolver) User(ctx context.Context, obj *models.Post) (*models.User, error) {
-	panic("not implemented")
+	return dataloader.Loader.UsersByIDs.Load(ctx, int64(obj.User.ID))
 }
 
 func (r *postResolver) Comments(ctx context.Context, obj *models.Post, page int, pageSize int) (*models.CommentConnection, error) {
