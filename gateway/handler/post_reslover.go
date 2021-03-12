@@ -67,7 +67,7 @@ func Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection,
 			},
 		})
 	}
-	log.Info("posts:", posts)
+
 	return &models.PostConnection{
 		Nodes:      posts,
 		TotalCount: int(r.TotalCount),
