@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"gateway/conf"
+	"gateway/dataloader"
 	"gateway/generated"
 	"gateway/middleware"
 	"net/http"
@@ -26,6 +27,7 @@ func runGatewayService(configPath string) {
 	conf.Init(configPath)
 	service_handler.InitGRPCConn()
 	middleware.InitAuth()
+	dataloader.Init()
 
 	// Setting up Gin
 	engine := gin.Default()
