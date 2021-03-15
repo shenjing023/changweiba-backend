@@ -16,7 +16,6 @@ import (
 	service_handler "gateway/handler"
 
 	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gin-gonic/gin"
 	log "github.com/shenjing023/llog"
@@ -34,8 +33,6 @@ func runGatewayService(configPath string) {
 	engine.Use(middleware.GinContextToContextMiddleware())
 	engine.Use(middleware.QueryDeepMiddleware(conf.Cfg.QueryDeep))
 	engine.Use(middleware.AuthMiddleware())
-	// r.Use(middleware.JWTMiddleware(conf.Cfg.SignKey, conf.Cfg.QueryDeep))
-	// r.Use(dataloader.LoaderMiddleware())
 
 	engine.POST("/graphql", graphqlHandler())
 	engine.GET("/", playgroundHandler())
@@ -62,7 +59,6 @@ func runGatewayService(configPath string) {
 
 // Defining the Playground handler
 func playgroundHandler() gin.HandlerFunc {
-	//h := handler.Playground("GraphQL", "/graphql")
 	h := playground.Handler("GraphQL", "/graphql")
 
 	return func(c *gin.Context) {
@@ -84,7 +80,7 @@ func graphqlHandler() gin.HandlerFunc {
 	// 	log.Error(string(debug.Stack()))
 	// 	return errors.New("Internal system error")
 	// })
-	srv.Use(extension.FixedComplexityLimit(20))
+	// srv.Use(extension.FixedComplexityLimit(20))
 
 	return func(c *gin.Context) {
 		srv.ServeHTTP(c.Writer, c.Request)

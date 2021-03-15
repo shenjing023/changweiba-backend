@@ -156,3 +156,93 @@ func GetPostsTotalCount() (int64, error) {
 	}
 	return strconv.ParseInt(total, 10, 64)
 }
+
+// InsertComment add new comment
+func InsertComment(userID int64, postID int64, content string) (int64, error) {
+	var (
+		floor int64
+		ctx   = context.Background()
+		key   = fmt.Sprintf("comment_count_post_%d", postID)
+	)
+	//先获取楼层数
+	_, err := redisClient.Get(ctx, key).Result()
+	if err == redis.Nil {
+		// 不存在
+		sql := "SELECT count(*) AS total FROM cw_comment WHERE post_id=?"
+		if err := dbOrm.Raw(sql, postID).Scan(&floor).Error; err != nil {
+			return 0, common.NewServiceErr(common.Internal, err)
+		}
+		floor += 1
+		r, err := redisClient.SetNX(ctx, key, floor, 0).Result()
+		if err != nil {
+			return 0, common.NewServiceErr(common.Internal, err)
+		}
+		if !r {
+			// 已存在
+			floor, err = redisClient.Incr(ctx, key).Result()
+			if err != nil {
+				return 0, common.NewServiceErr(common.Internal, err)
+			}
+		}
+	} else if err != nil {
+		return 0, common.NewServiceErr(common.Internal, err)
+	} else {
+		floor, err = redisClient.Incr(ctx, key).Result()
+		if err != nil {
+			return 0, common.NewServiceErr(common.Internal, err)
+		}
+	}
+
+	now := time.Now().Unix()
+	comment := Comment{
+		UserID:     userID,
+		PostID:     postID,
+		Content:    content,
+		CreateTime: now,
+		Floor:      floor,
+		Status:     0,
+	}
+	if err := dbOrm.Create(&comment).Error; err != nil {
+		return 0, common.NewServiceErr(common.Internal, err)
+	}
+	go increasePostReplyNum(postID)
+	return comment.ID, nil
+}
+
+//帖子回复数+1
+func increasePostReplyNum(postID int64) {
+	sql := "UPDATE cw_post SET reply_num=reply_num+1,last_update=UNIX_TIMESTAMP() WHERE id=?"
+	dbOrm.Exec(sql, postID)
+}
+
+// InsertReply add new reply
+func InsertReply(userID, postID, commentID, parentID int64, content string) (int64, error) {
+	session := dbOrm.Begin()
+	//先获取楼层数
+	var floor int64
+	// 行锁
+	sql := "SELECT count(*) AS total FROM reply WHERE comment_id=? FOR UPDATE"
+	if err := session.Raw(sql, commentID).Scan(&floor).Error; err != nil {
+		session.Rollback()
+		return 0, common.NewServiceErr(common.Internal, err)
+	}
+
+	reply := Reply{
+		UserID:     userID,
+		PostID:     postID,
+		Content:    content,
+		ParentID:   parentID,
+		CommentID:  commentID,
+		CreateTime: time.Now().Unix(),
+		Status:     0,
+		Floor:      floor + 1,
+	}
+	if err := session.Create(&reply).Error; err != nil {
+		session.Rollback()
+		return 0, common.NewServiceErr(common.Internal, err)
+	}
+
+	session.Commit()
+	go increasePostReplyNum(postID)
+	return reply.ID, nil
+}
