@@ -28,7 +28,7 @@ require (
 	github.com/vektah/gqlparser/v2 v2.1.0
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
 	golang.org/x/net v0.0.0-20210220033124-5f55cee0dc0d // indirect
-	golang.org/x/sys v0.0.0-20210220050731-9a76102bfb43 // indirect
+	golang.org/x/sys v0.0.0-20210317225723-c4fcb01b228e // indirect
 	golang.org/x/text v0.3.5 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/genproto v0.0.0-20210219173056-d891e3cb3b5b // indirect

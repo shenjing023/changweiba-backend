@@ -33,6 +33,7 @@ type PostServiceClient interface {
 	GetPostsByUserId(ctx context.Context, in *PostsByUserIdRequest, opts ...grpc.CallOption) (*PostsByUserIdResponse, error)
 	GetCommentsByUserId(ctx context.Context, in *CommentsByUserIdRequest, opts ...grpc.CallOption) (*CommentsByUserIdResponse, error)
 	GetRepliesByUserId(ctx context.Context, in *RepliesByUserIdRequest, opts ...grpc.CallOption) (*RepliesByUserIdResponse, error)
+	GetPostFirstComment(ctx context.Context, in *FirstCommentRequest, opts ...grpc.CallOption) (*FirstCommentResponse, error)
 }
 
 type postServiceClient struct {
@@ -178,6 +179,15 @@ func (c *postServiceClient) GetRepliesByUserId(ctx context.Context, in *RepliesB
 	return out, nil
 }
 
+func (c *postServiceClient) GetPostFirstComment(ctx context.Context, in *FirstCommentRequest, opts ...grpc.CallOption) (*FirstCommentResponse, error) {
+	out := new(FirstCommentResponse)
+	err := c.cc.Invoke(ctx, "/post.PostService/GetPostFirstComment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PostServiceServer is the server API for PostService service.
 // All implementations must embed UnimplementedPostServiceServer
 // for forward compatibility
@@ -198,6 +208,7 @@ type PostServiceServer interface {
 	GetPostsByUserId(context.Context, *PostsByUserIdRequest) (*PostsByUserIdResponse, error)
 	GetCommentsByUserId(context.Context, *CommentsByUserIdRequest) (*CommentsByUserIdResponse, error)
 	GetRepliesByUserId(context.Context, *RepliesByUserIdRequest) (*RepliesByUserIdResponse, error)
+	GetPostFirstComment(context.Context, *FirstCommentRequest) (*FirstCommentResponse, error)
 	mustEmbedUnimplementedPostServiceServer()
 }
 
@@ -249,6 +260,9 @@ func (UnimplementedPostServiceServer) GetCommentsByUserId(context.Context, *Comm
 }
 func (UnimplementedPostServiceServer) GetRepliesByUserId(context.Context, *RepliesByUserIdRequest) (*RepliesByUserIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRepliesByUserId not implemented")
+}
+func (UnimplementedPostServiceServer) GetPostFirstComment(context.Context, *FirstCommentRequest) (*FirstCommentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPostFirstComment not implemented")
 }
 func (UnimplementedPostServiceServer) mustEmbedUnimplementedPostServiceServer() {}
 
@@ -533,6 +547,24 @@ func _PostService_GetRepliesByUserId_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PostService_GetPostFirstComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FirstCommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).GetPostFirstComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/post.PostService/GetPostFirstComment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).GetPostFirstComment(ctx, req.(*FirstCommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _PostService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "post.PostService",
 	HandlerType: (*PostServiceServer)(nil),
@@ -596,6 +628,10 @@ var _PostService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetRepliesByUserId",
 			Handler:    _PostService_GetRepliesByUserId_Handler,
+		},
+		{
+			MethodName: "GetPostFirstComment",
+			Handler:    _PostService_GetPostFirstComment_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

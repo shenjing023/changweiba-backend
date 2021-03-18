@@ -83,6 +83,7 @@ type ComplexityRoot struct {
 	Post struct {
 		Comments      func(childComplexity int, page int, pageSize int) int
 		CreatedAt     func(childComplexity int) int
+		FirstComment  func(childComplexity int) int
 		ID            func(childComplexity int) int
 		LastReplyUser func(childComplexity int) int
 		ReplyNum      func(childComplexity int) int
@@ -159,6 +160,8 @@ type PostResolver interface {
 	User(ctx context.Context, obj *models.Post) (*models.User, error)
 
 	Comments(ctx context.Context, obj *models.Post, page int, pageSize int) (*models.CommentConnection, error)
+	LastReplyUser(ctx context.Context, obj *models.Post) (*models.User, error)
+	FirstComment(ctx context.Context, obj *models.Post) (*models.Comment, error)
 }
 type QueryResolver interface {
 	User(ctx context.Context, userID int) (*models.User, error)
@@ -408,6 +411,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Post.CreatedAt(childComplexity), true
+
+	case "Post.firstComment":
+		if e.complexity.Post.FirstComment == nil {
+			break
+		}
+
+		return e.complexity.Post.FirstComment(childComplexity), true
 
 	case "Post.id":
 		if e.complexity.Post.ID == nil {
@@ -869,7 +879,9 @@ enum PostStatus{
         pageSize:Int!
     ): CommentConnection!
     """最后评论或回复的用户"""
-    lastReplyUser:User!
+    lastReplyUser: User!
+    """一楼的评论，首页会用到"""
+    firstComment: Comment!
 }
 
 type PostConnection{
@@ -2544,14 +2556,14 @@ func (ec *executionContext) _Post_lastReplyUser(ctx context.Context, field graph
 		Object:     "Post",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.LastReplyUser, nil
+		return ec.resolvers.Post().LastReplyUser(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2566,6 +2578,41 @@ func (ec *executionContext) _Post_lastReplyUser(ctx context.Context, field graph
 	res := resTmp.(*models.User)
 	fc.Result = res
 	return ec.marshalNUser2ᚖgatewayᚋmodelsᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Post_firstComment(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Post().FirstComment(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Comment)
+	fc.Result = res
+	return ec.marshalNComment2ᚖgatewayᚋmodelsᚐComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PostConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.PostConnection) (ret graphql.Marshaler) {
@@ -5389,10 +5436,33 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 				return res
 			})
 		case "lastReplyUser":
-			out.Values[i] = ec._Post_lastReplyUser(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_lastReplyUser(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "firstComment":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_firstComment(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

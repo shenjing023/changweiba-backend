@@ -77,6 +77,8 @@ type Post struct {
 	Comments *CommentConnection `json:"comments"`
 	// 最后评论或回复的用户
 	LastReplyUser *User `json:"lastReplyUser"`
+	// 一楼的评论，首页会用到
+	FirstComment *Comment `json:"firstComment"`
 }
 
 type PostConnection struct {

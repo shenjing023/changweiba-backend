@@ -13,7 +13,9 @@ type Post{
         pageSize:Int!
     ): CommentConnection!
     """最后评论或回复的用户"""
-    lastReplyUser:User!
+    lastReplyUser: User!
+    """一楼的评论，首页会用到"""
+    firstComment: Comment!
 }
 
 type PostConnection{

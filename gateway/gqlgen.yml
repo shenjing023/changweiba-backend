@@ -18,7 +18,9 @@ models:
         resolver: true
       user:
         resolver: true
-      last_reply_user:
+      lastReplyUser:
+        resolver: true
+      firstComment:
         resolver: true
   Comment:
     fields:

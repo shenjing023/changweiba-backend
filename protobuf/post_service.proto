@@ -181,6 +181,14 @@ message RepliesByUserIdResponse{
     int64 total_count=2;
 }
 
+message FirstCommentRequest{
+    repeated int64 post_ids=1;
+}
+
+message FirstCommentResponse{
+    repeated Comment comments=1;
+}
+
 
 service PostService{
     rpc NewPost(NewPostRequest) returns(NewPostResponse){}
@@ -199,4 +207,5 @@ service PostService{
     rpc GetPostsByUserId(PostsByUserIdRequest) returns(PostsByUserIdResponse){}
     rpc GetCommentsByUserId(CommentsByUserIdRequest) returns(CommentsByUserIdResponse){}
     rpc GetRepliesByUserId(RepliesByUserIdRequest) returns(RepliesByUserIdResponse){}
+    rpc GetPostFirstComment(FirstCommentRequest) returns(FirstCommentResponse){}
 }

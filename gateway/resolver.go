@@ -71,6 +71,10 @@ func (r *postResolver) LastReplyUser(ctx context.Context, obj *models.Post) (*mo
 	panic("not implemented")
 }
 
+func (r *postResolver) FirstComment(ctx context.Context, obj *models.Post) (*models.Comment, error) {
+	return dataloader.Loader.FirstComment.Load(ctx, int64(obj.FirstComment.PostID))
+}
+
 func (r *queryResolver) User(ctx context.Context, userID int) (*models.User, error) {
 	panic("not implemented")
 }

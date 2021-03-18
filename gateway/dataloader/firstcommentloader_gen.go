@@ -10,10 +10,10 @@ import (
 	"gateway/models"
 )
 
-// UserLoaderConfig captures the config to create a new UserLoader
-type UserLoaderConfig struct {
+// FirstCommentLoaderConfig captures the config to create a new FirstCommentLoader
+type FirstCommentLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
-	Fetch func(ctx context.Context, keys []int64) ([]*models.User, []error)
+	Fetch func(ctx context.Context, keys []int64) ([]*models.Comment, []error)
 
 	// Wait is how long wait before sending a batch
 	Wait time.Duration
@@ -22,24 +22,24 @@ type UserLoaderConfig struct {
 	MaxBatch int
 }
 
-type UserLoaderCacheItem struct {
+type FirstCommentLoaderCacheItem struct {
 	expire time.Time
-	value  *models.User
+	value  *models.Comment
 }
 
-// NewUserLoader creates a new UserLoader given a fetch, wait, and maxBatch
-func NewUserLoader(config UserLoaderConfig) *UserLoader {
-	return &UserLoader{
+// NewFirstCommentLoader creates a new FirstCommentLoader given a fetch, wait, and maxBatch
+func NewFirstCommentLoader(config FirstCommentLoaderConfig) *FirstCommentLoader {
+	return &FirstCommentLoader{
 		fetch:    config.Fetch,
 		wait:     config.Wait,
 		maxBatch: config.MaxBatch,
 	}
 }
 
-// UserLoader batches and caches requests
-type UserLoader struct {
+// FirstCommentLoader batches and caches requests
+type FirstCommentLoader struct {
 	// this method provides the data for the loader
-	fetch func(ctx context.Context, keys []int64) ([]*models.User, []error)
+	fetch func(ctx context.Context, keys []int64) ([]*models.Comment, []error)
 
 	// how long to done before sending a batch
 	wait time.Duration
@@ -50,11 +50,11 @@ type UserLoader struct {
 	// INTERNAL
 
 	// lazily created cache
-	cache map[int64]*UserLoaderCacheItem
+	cache map[int64]*FirstCommentLoaderCacheItem
 
 	// the current batch. keys will continue to be collected until timeout is hit,
 	// then everything will be sent to the fetch method and out to the listeners
-	batch *userLoaderBatch
+	batch *firstCommentLoaderBatch
 
 	// mutex to prevent races
 	mu sync.Mutex
@@ -63,23 +63,23 @@ type UserLoader struct {
 	expiration time.Duration
 }
 
-type userLoaderBatch struct {
+type firstCommentLoaderBatch struct {
 	keys    []int64
-	data    []*models.User
+	data    []*models.Comment
 	error   []error
 	closing bool
 	done    chan struct{}
 }
 
-// Load a User by key, batching and caching will be applied automatically
-func (l *UserLoader) Load(ctx context.Context, key int64) (*models.User, error) {
+// Load a Comment by key, batching and caching will be applied automatically
+func (l *FirstCommentLoader) Load(ctx context.Context, key int64) (*models.Comment, error) {
 	return l.LoadThunk(ctx, key)()
 }
 
-// LoadThunk returns a function that when called will block waiting for a User.
+// LoadThunk returns a function that when called will block waiting for a Comment.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *UserLoader) LoadThunk(ctx context.Context, key int64) func() (*models.User, error) {
+func (l *FirstCommentLoader) LoadThunk(ctx context.Context, key int64) func() (*models.Comment, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	if it, ok := l.cache[key]; ok {
@@ -87,28 +87,28 @@ func (l *UserLoader) LoadThunk(ctx context.Context, key int64) func() (*models.U
 			// had set expire
 			if time.Now().Before(it.expire) {
 				// not expire
-				return func() (*models.User, error) {
+				return func() (*models.Comment, error) {
 					return it.value, nil
 				}
 			}
 			delete(l.cache, key)
 		} else {
-			return func() (*models.User, error) {
+			return func() (*models.Comment, error) {
 				return it.value, nil
 			}
 		}
 	}
 
 	if l.batch == nil {
-		l.batch = &userLoaderBatch{done: make(chan struct{})}
+		l.batch = &firstCommentLoaderBatch{done: make(chan struct{})}
 	}
 	batch := l.batch
 	pos := batch.keyIndex(ctx, l, key)
 
-	return func() (*models.User, error) {
+	return func() (*models.Comment, error) {
 		<-batch.done
 
-		var data *models.User
+		var data *models.Comment
 		if pos < len(batch.data) {
 			data = batch.data[pos]
 		}
@@ -133,43 +133,43 @@ func (l *UserLoader) LoadThunk(ctx context.Context, key int64) func() (*models.U
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *UserLoader) LoadAll(ctx context.Context, keys []int64) ([]*models.User, []error) {
-	results := make([]func() (*models.User, error), len(keys))
+func (l *FirstCommentLoader) LoadAll(ctx context.Context, keys []int64) ([]*models.Comment, []error) {
+	results := make([]func() (*models.Comment, error), len(keys))
 
 	for i, key := range keys {
 		results[i] = l.LoadThunk(ctx, key)
 	}
 
-	users := make([]*models.User, len(keys))
+	comments := make([]*models.Comment, len(keys))
 	errors := make([]error, len(keys))
 	for i, thunk := range results {
-		users[i], errors[i] = thunk()
+		comments[i], errors[i] = thunk()
 	}
-	return users, errors
+	return comments, errors
 }
 
-// LoadAllThunk returns a function that when called will block waiting for a Users.
+// LoadAllThunk returns a function that when called will block waiting for a Comments.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *UserLoader) LoadAllThunk(ctx context.Context, keys []int64) func() ([]*models.User, []error) {
-	results := make([]func() (*models.User, error), len(keys))
+func (l *FirstCommentLoader) LoadAllThunk(ctx context.Context, keys []int64) func() ([]*models.Comment, []error) {
+	results := make([]func() (*models.Comment, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(ctx, key)
 	}
-	return func() ([]*models.User, []error) {
-		users := make([]*models.User, len(keys))
+	return func() ([]*models.Comment, []error) {
+		comments := make([]*models.Comment, len(keys))
 		errors := make([]error, len(keys))
 		for i, thunk := range results {
-			users[i], errors[i] = thunk()
+			comments[i], errors[i] = thunk()
 		}
-		return users, errors
+		return comments, errors
 	}
 }
 
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *UserLoader) Prime(key int64, value *models.User) bool {
+func (l *FirstCommentLoader) Prime(key int64, value *models.Comment) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -183,17 +183,17 @@ func (l *UserLoader) Prime(key int64, value *models.User) bool {
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *UserLoader) Clear(key int64) {
+func (l *FirstCommentLoader) Clear(key int64) {
 	l.mu.Lock()
 	delete(l.cache, key)
 	l.mu.Unlock()
 }
 
-func (l *UserLoader) unsafeSet(key int64, value *models.User) {
+func (l *FirstCommentLoader) unsafeSet(key int64, value *models.Comment) {
 	if l.cache == nil {
-		l.cache = map[int64]*UserLoaderCacheItem{}
+		l.cache = map[int64]*FirstCommentLoaderCacheItem{}
 	}
-	l.cache[key] = &UserLoaderCacheItem{
+	l.cache[key] = &FirstCommentLoaderCacheItem{
 		expire: time.Now().Add(l.expiration),
 		value:  value,
 	}
@@ -201,7 +201,7 @@ func (l *UserLoader) unsafeSet(key int64, value *models.User) {
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *userLoaderBatch) keyIndex(ctx context.Context, l *UserLoader, key int64) int {
+func (b *firstCommentLoaderBatch) keyIndex(ctx context.Context, l *FirstCommentLoader, key int64) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -225,7 +225,7 @@ func (b *userLoaderBatch) keyIndex(ctx context.Context, l *UserLoader, key int64
 	return pos
 }
 
-func (b *userLoaderBatch) startTimer(ctx context.Context, l *UserLoader) {
+func (b *firstCommentLoaderBatch) startTimer(ctx context.Context, l *FirstCommentLoader) {
 	// wait all goroutine append key to b.keys
 	time.Sleep(l.wait)
 	l.mu.Lock()
@@ -242,7 +242,7 @@ func (b *userLoaderBatch) startTimer(ctx context.Context, l *UserLoader) {
 	b.end(ctx, l)
 }
 
-func (b *userLoaderBatch) end(ctx context.Context, l *UserLoader) {
+func (b *firstCommentLoaderBatch) end(ctx context.Context, l *FirstCommentLoader) {
 	b.data, b.error = l.fetch(ctx, b.keys)
 	close(b.done)
 }

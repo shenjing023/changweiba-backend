@@ -65,6 +65,9 @@ func Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection,
 			User: &models.User{
 				ID: int(v.UserId),
 			},
+			FirstComment: &models.Comment{
+				PostID: int(v.Id),
+			},
 		})
 	}
 
@@ -72,4 +75,34 @@ func Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection,
 		Nodes:      posts,
 		TotalCount: int(r.TotalCount),
 	}, nil
+}
+
+// FirstCommentLoaderFunc 批量获取帖子第一个评论的dataloader func
+func FirstCommentLoaderFunc(ctx context.Context, keys []int64) (comments []*models.Comment, errs []error) {
+	client := pb.NewPostServiceClient(PostConn)
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	defer cancel()
+
+	request := pb.FirstCommentRequest{
+		PostIds: keys,
+	}
+	r, err := client.GetPostFirstComment(ctx, &request)
+	if err != nil {
+		log.Error("get first comment error: ", err)
+		for i := 0; i < len(keys); i++ {
+			errs = append(errs, err)
+		}
+		return
+	}
+	for _, v := range r.Comments {
+		if v.Id == 0 && v.Content == "" {
+			comments = append(comments, nil)
+		} else {
+			comments = append(comments, &models.Comment{
+				ID:      int(v.Id),
+				Content: v.Content,
+			})
+		}
+	}
+	return
 }

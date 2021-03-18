@@ -205,6 +205,14 @@ func InsertComment(userID int64, postID int64, content string) (int64, error) {
 	if err := dbOrm.Create(&comment).Error; err != nil {
 		return 0, common.NewServiceErr(common.Internal, err)
 	}
+	if floor == 1 {
+		// 一楼，保存到redis
+		go SaveFirstComment(postID, map[string]interface{}{
+			"id":      comment.ID,
+			"content": content,
+			"status":  0,
+		})
+	}
 	go increasePostReplyNum(postID)
 	return comment.ID, nil
 }
@@ -245,4 +253,102 @@ func InsertReply(userID, postID, commentID, parentID int64, content string) (int
 	session.Commit()
 	go increasePostReplyNum(postID)
 	return reply.ID, nil
+}
+
+// FirstComment
+type FirstComment struct {
+	ID      int64  `redis:"id"`
+	Content string `redis:"content"`
+	Status  int    `redis:"status"`
+}
+
+// GetPostFirstComment 获取帖子的第一条评论
+// 先从redis中查，记录redis中没有的id，然后再到mysql查，最后拼接结果
+func GetPostFirstComment(postIDs []int64) ([]*Comment, error) {
+	var (
+		ctx  = context.Background()
+		pipe = redisClient.Pipeline()
+	)
+	// TODO redis集群时使用需谨慎
+	for id := range postIDs {
+		pipe.HMGet(ctx, fmt.Sprintf("first_comment_post_%d", id), "id", "content", "status")
+	}
+	cmders, err := pipe.Exec(ctx)
+	if err != nil {
+		return nil, common.NewServiceErr(common.Internal, err)
+	}
+
+	var (
+		// 保存redis中不存在的key的id
+		ids     []int64
+		results = make([]*Comment, len(postIDs))
+		// redis不存在的key的id对应的最后结果的索引
+		idsIndex = make(map[int64]int)
+	)
+	for i, cmder := range cmders {
+		cmd := cmder.(*redis.SliceCmd)
+		var t FirstComment
+		cmd.Scan(&t)
+		if t.ID == 0 && t.Content == "" {
+			// redis HMGet 返回的err不能判断key是否存在,所以用这个方法
+			ids = append(ids, postIDs[i])
+			idsIndex[postIDs[i]] = i
+		} else {
+			results[i] = &Comment{
+				ID:      t.ID,
+				Content: t.Content,
+				Status:  int64(t.Status),
+			}
+		}
+	}
+	if len(ids) == 0 {
+		return results, nil
+	}
+
+	sql := `
+		SELECT 
+			id,
+			content,
+			status   
+		FROM 
+			cw_comment 
+		WHERE 
+			floor=1 AND post_id IN (?)
+		ORDER BY FIELD(id,?)
+	`
+	var (
+		m   = make(map[int64]*Comment)
+		tmp []*Comment
+	)
+	if err := dbOrm.Raw(sql, ids, ids).Scan(&tmp).Error; err != nil {
+		return nil, common.NewServiceErr(common.Internal, err)
+	}
+
+	for _, v := range tmp {
+		m[v.ID] = v
+	}
+	for _, id := range ids {
+		if _, ok := m[id]; ok {
+			results[idsIndex[id]] = m[id]
+			go SaveFirstComment(id, map[string]interface{}{
+				"id":      m[id].ID,
+				"content": m[id].Content,
+				"status":  m[id].Status,
+			})
+		} else {
+			results[idsIndex[id]] = &Comment{}
+		}
+	}
+	return results, nil
+}
+
+func SaveFirstComment(postID int64, data map[string]interface{}) error {
+	var (
+		key = fmt.Sprintf("first_comment_post_%d", postID)
+		ctx = context.Background()
+	)
+	if err := redisClient.HSet(ctx, key, data).Err(); err != nil {
+		return err
+	}
+	return redisClient.Expire(ctx, key, time.Hour*24*7).Err()
 }
