@@ -170,6 +170,7 @@ func BytesToInt32(buf []byte) int32 {
 
 // GetUsers 批量获取用户信息
 func GetUsers(ids []int64) ([]*User, error) {
+	// TODO redis
 	sql := `
 		SELECT 
 			id,

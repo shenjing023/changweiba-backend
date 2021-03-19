@@ -106,3 +106,129 @@ func FirstCommentLoaderFunc(ctx context.Context, keys []int64) (comments []*mode
 	}
 	return
 }
+
+func NewComment(ctx context.Context, input models.NewComment) (int, error) {
+	userID, err := common.GetUserIDFromContext(ctx)
+	if err != nil {
+		log.Error("new comment get userID from context error: ", err)
+		return 0, err
+	}
+	client := pb.NewPostServiceClient(PostConn)
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	defer cancel()
+	request := pb.NewCommentRequest{
+		UserId:  userID,
+		PostId:  int64(input.PostID),
+		Content: input.Content,
+	}
+	r, err := client.NewComment(ctx, &request)
+	if err != nil {
+		log.Error("new comment error: ", err)
+		return 0, common.GRPCErrorConvert(err, map[codes.Code]string{
+			codes.Internal: ServiceError,
+		})
+	}
+	return int(r.CommentId), nil
+}
+
+func NewReply(ctx context.Context, input models.NewReply) (int, error) {
+	userID, err := common.GetUserIDFromContext(ctx)
+	if err != nil {
+		log.Error("new reply get userID from context error: ", err)
+		return 0, err
+	}
+	client := pb.NewPostServiceClient(PostConn)
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	defer cancel()
+	request := pb.NewReplyRequest{
+		UserId:    userID,
+		PostId:    int64(input.PostID),
+		Content:   input.Content,
+		CommentId: int64(input.CommentID),
+		ParentId:  int64(input.ParentID),
+	}
+	r, err := client.NewReply(ctx, &request)
+	if err != nil {
+		log.Error("new reply error: ", err)
+		return 0, common.GRPCErrorConvert(err, map[codes.Code]string{
+			codes.Internal: ServiceError,
+		})
+	}
+	return int(r.ReplyId), nil
+}
+
+func GetCommentsByPostID(ctx context.Context, postID int, page int, pageSize int) (*models.CommentConnection, error) {
+	client := pb.NewPostServiceClient(PostConn)
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	defer cancel()
+
+	request := pb.CommentsRequest{
+		Page:     int64(page),
+		PageSize: int64(pageSize),
+		PostId:   int64(postID),
+	}
+	r, err := client.GetCommentsByPostId(ctx, &request)
+	if err != nil {
+		log.Error("get post comments error: ", err)
+		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
+			codes.Internal: ServiceError,
+		})
+	}
+	var comments []*models.Comment
+	for _, v := range r.Comments {
+		comments = append(comments, &models.Comment{
+			ID: int(v.Id),
+			User: &models.User{
+				ID: int(v.UserId),
+			},
+			PostID:    int(v.PostId),
+			Content:   v.Content,
+			CreatedAt: int(v.CreateTime),
+			Floor:     int(v.Floor),
+		})
+	}
+	return &models.CommentConnection{
+		Nodes:      comments,
+		TotalCount: int(r.TotalCount),
+	}, nil
+}
+
+func GetRepliesByCommentID(ctx context.Context, commentID int, page int, pageSize int) (*models.ReplyConnection, error) {
+	client := pb.NewPostServiceClient(PostConn)
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	defer cancel()
+
+	request := pb.RepliesRequest{
+		Page:      int64(page),
+		PageSize:  int64(pageSize),
+		CommentId: int64(commentID),
+	}
+	r, err := client.GetRepliesByCommentId(ctx, &request)
+	if err != nil {
+		log.Error("get comment replies error: ", err)
+		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
+			codes.Internal: ServiceError,
+		})
+	}
+	var replies []*models.Reply
+	for _, v := range r.Replies {
+		replies = append(replies, &models.Reply{
+			ID: int(v.Id),
+			User: &models.User{
+				ID: int(v.UserId),
+			},
+			PostID:    int(v.PostId),
+			Content:   v.Content,
+			CreatedAt: int(v.CreateTime),
+			Floor:     int(v.Floor),
+			CommentID: int(v.CommentId),
+			Parent: &models.Reply{
+				ID: int(v.ParentId),
+			},
+		})
+	}
+	return &models.ReplyConnection{
+		Nodes:      replies,
+		TotalCount: int(r.TotalCount),
+	}, nil
+}

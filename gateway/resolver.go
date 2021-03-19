@@ -16,11 +16,11 @@ import (
 type Resolver struct{}
 
 func (r *commentResolver) User(ctx context.Context, obj *models.Comment) (*models.User, error) {
-	panic("not implemented")
+	return dataloader.Loader.UsersByIDs.Load(ctx, int64(obj.User.ID))
 }
 
 func (r *commentResolver) Replies(ctx context.Context, obj *models.Comment, page int, pageSize int) (*models.ReplyConnection, error) {
-	panic("not implemented")
+	return handler.GetRepliesByCommentID(ctx, obj.ID, page, pageSize)
 }
 
 func (r *mutationResolver) SignUp(ctx context.Context, input models.NewUser) (*models.AuthToken, error) {
@@ -44,7 +44,7 @@ func (r *mutationResolver) NewPost(ctx context.Context, input models.NewPost) (i
 }
 
 func (r *mutationResolver) NewComment(ctx context.Context, input models.NewComment) (int, error) {
-	panic("not implemented")
+	return handler.NewComment(ctx, input)
 }
 
 func (r *mutationResolver) NewReply(ctx context.Context, input models.NewReply) (int, error) {
@@ -64,7 +64,7 @@ func (r *postResolver) User(ctx context.Context, obj *models.Post) (*models.User
 }
 
 func (r *postResolver) Comments(ctx context.Context, obj *models.Post, page int, pageSize int) (*models.CommentConnection, error) {
-	panic("not implemented")
+	return handler.GetCommentsByPostID(ctx, obj.ID, page, pageSize)
 }
 
 func (r *postResolver) LastReplyUser(ctx context.Context, obj *models.Post) (*models.User, error) {
@@ -104,7 +104,7 @@ func (r *queryResolver) Replies(ctx context.Context, commentID int, page int, pa
 }
 
 func (r *replyResolver) User(ctx context.Context, obj *models.Reply) (*models.User, error) {
-	panic("not implemented")
+	return dataloader.Loader.UsersByIDs.Load(ctx, int64(obj.User.ID))
 }
 
 func (r *userResolver) Posts(ctx context.Context, obj *models.User, page int, pageSize int) (*models.PostConnection, error) {

@@ -23,12 +23,12 @@ func Init() {
 		wait:       1 * time.Millisecond,
 		maxBatch:   100,
 		fetch:      handler.UsersByIDsLoaderFunc,
-		expiration: time.Minute,
+		expiration: time.Hour,
 	}
 	Loader.FirstComment = &FirstCommentLoader{
 		wait:       1 * time.Millisecond,
 		maxBatch:   100,
 		fetch:      handler.FirstCommentLoaderFunc,
-		expiration: time.Minute,
+		expiration: time.Hour,
 	}
 }
