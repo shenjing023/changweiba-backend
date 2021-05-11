@@ -7,39 +7,40 @@
 ## Install steps
 
   -  Install [Docker](https://www.docker.com/)   
-     Install Docker if you don't have it installed
   -  Install [kind](https://kind.sigs.k8s.io/)   
-     If you already have a K8S cluster, skip it. Install kind, and then create cluster, like this 
+     这里使用kind来安装k8s单节点集群 
      ```bash
      kind create cluster --name changweiba
      ```
   -  Install [Istio](https://istio.io/latest/)   
-     Install istio follow the official documentation, and set automatic sidecar injection 
+     按照官方的安装步骤来
      ```bash
      kubectl label namespace default istio-injection=enabled
-     ```
-     and then 
-     ```bash
+     
      istioctl install
      ```
-  -  Set service config in yaml config file
-  -  Run service
-     Apply each service yaml file, and finally apply changweiba-gateway.yaml
+  -  Set service config in yaml file
      ```bash
+     //设置一下服务的配置
+     ```
+  -  Run service   
+     ```bash
+     // 服务网关
      kubectl apply -f changweiba-gateway.yaml
      ``` 
-  -  Install [Kiali dashboard](https://istio.io/latest/docs/setup/getting-started/#dashboard), along with Prometheus, [Grafana](https://istio.io/latest/docs/tasks/observability/metrics/using-istio-dashboard/), and Jaeger
+  -  Install [Kiali dashboard](https://istio.io/latest/docs/setup/getting-started/#dashboard), along with Prometheus, [Grafana](https://istio.io/latest/docs/tasks/observability/metrics/using-istio-dashboard/), and Jaeger   
+     还是参照官网，安装kiali和prometheus相关，jaeger安装后不管用，有时间再弄
      ```bash
      // move to istio directory
      cd istio-1.9.0
      kubectl apply -f samples/addons
      kubectl rollout status deployment/kiali -n istio-system
      ```
-     and use port forwarding to access grafana in cluster
+     然后grafana端口映射
      ```bash
      kubectl -n istio-system port-forward $(kubectl -n istio-system get pod -l app=grafana -o jsonpath='{.items[0].metadata.name}') 3000:3000
      ```
-     or
+     或者这样也行
      ```bash
      istioctl dashboard grafana
      ```
