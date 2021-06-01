@@ -48,7 +48,7 @@ func (r *mutationResolver) NewComment(ctx context.Context, input models.NewComme
 }
 
 func (r *mutationResolver) NewReply(ctx context.Context, input models.NewReply) (int, error) {
-	panic("not implemented")
+	return handler.NewReply(ctx, input)
 }
 
 func (r *mutationResolver) DeletePost(ctx context.Context, input int) (bool, error) {
