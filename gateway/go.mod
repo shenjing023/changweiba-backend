@@ -5,10 +5,10 @@ go 1.16
 require (
 	github.com/99designs/gqlgen v0.13.0
 	github.com/agnivade/levenshtein v1.1.1 // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dgryski/trifles v0.0.0-20210119233746-37d926d5de6c // indirect
 	github.com/gin-gonic/gin v1.7.3
 	github.com/go-playground/validator/v10 v10.8.0 // indirect
+	github.com/golang-jwt/jwt/v4 v4.0.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
