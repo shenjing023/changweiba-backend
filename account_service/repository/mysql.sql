@@ -15,7 +15,7 @@ CREATE TABLE `cw_user`  (
   `banned_reason` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '被封原因',
   `create_time` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建时间',
   `last_update` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '最后更新时间',
-  `ip` int(10) UNSIGNED NOT NULL DEFAULT 0 COMMENT '该账号注册时的ip地址',
+  -- `ip` int(10) UNSIGNED NOT NULL DEFAULT 0 COMMENT '该账号注册时的ip地址',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `idx_name`(`name`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 10000 CHARACTER SET = utf8 COLLATE = utf8_general_ci COMMENT = '用户表' ROW_FORMAT = Compact;

@@ -8,7 +8,6 @@ import (
 	"cw_account_service/repository"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"strings"
 
 	log "github.com/shenjing023/llog"
@@ -58,7 +57,7 @@ func (u *User) SignUp(ctx context.Context, sr *pb.SignUpRequest) (*pb.SignUpResp
 		log.Error("get random avatar error:", err.Error())
 		return nil, ServiceErr2GRPCErr(err)
 	}
-	id, err := repository.InsertUser(sr.Name, password, sr.Ip, avatar)
+	id, err := repository.InsertUser(sr.Name, password, avatar)
 	if err != nil {
 		log.Error("insert user error:", err.Error())
 		return nil, ServiceErr2GRPCErr(err)
@@ -148,8 +147,6 @@ func checkNewUser(sr *pb.SignUpRequest) error {
 		return common.NewServiceErr(common.AlreadyExists,
 			errors.New("user name already exist"))
 	}
-	//检查该ip下的账号
-	fmt.Println(sr.Ip)
 	return nil
 }
 

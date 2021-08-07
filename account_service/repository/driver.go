@@ -92,12 +92,11 @@ func GetRandomAvatar() (url string, err error) {
 }
 
 // InsertUser insert new user
-func InsertUser(userName, password, ip, avatar string) (int64, error) {
+func InsertUser(userName, password, avatar string) (int64, error) {
 	now := time.Now().Unix()
 	user := User{
 		Name:       userName,
 		Password:   password,
-		IP:         InetAtoi(ip),
 		CreateTime: now,
 		LastUpdate: now,
 		Avatar:     avatar,

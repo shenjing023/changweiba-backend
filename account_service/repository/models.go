@@ -12,7 +12,6 @@ type User struct {
 	CreateTime   int64
 	LastUpdate   int64
 	Role         uint8
-	IP           int64 `grom:"column:ip"`
 }
 
 func (User) TableName() string {
