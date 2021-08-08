@@ -48,6 +48,11 @@
      ```bash
      kubectl apply -f loki-deploy.yaml
      ```
+  -  server port-forward
+     ```bash
+     kubectl -n istio-system port-forward svc/istio-ingressgateway --address 0.0.0.0 8080:80 
+     ```
+     或者nginx来代理也行
       
 
 ## Doc
