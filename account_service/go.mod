@@ -3,7 +3,8 @@ module cw_account_service
 go 1.16
 
 require (
-	github.com/go-redis/redis/v8 v8.11.2
+	entgo.io/ent v0.9.1 // indirect
+	github.com/go-redis/redis/v8 v8.11.4
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
