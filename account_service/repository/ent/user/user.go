@@ -62,9 +62,9 @@ var (
 	// StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	StatusValidator func(int8) error
 	// DefaultScore holds the default value on creation for the "score" field.
-	DefaultScore int
+	DefaultScore int64
 	// ScoreValidator is a validator for the "score" field. It is called by the builders before save.
-	ScoreValidator func(int) error
+	ScoreValidator func(int64) error
 	// DefaultRole holds the default value on creation for the "role" field.
 	DefaultRole int8
 	// RoleValidator is a validator for the "role" field. It is called by the builders before save.
@@ -78,5 +78,5 @@ var (
 	// UpdateAtValidator is a validator for the "update_at" field. It is called by the builders before save.
 	UpdateAtValidator func(int64) error
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
-	IDValidator func(int) error
+	IDValidator func(int64) error
 )

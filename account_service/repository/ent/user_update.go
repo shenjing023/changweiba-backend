@@ -66,14 +66,14 @@ func (uu *UserUpdate) AddStatus(i int8) *UserUpdate {
 }
 
 // SetScore sets the "score" field.
-func (uu *UserUpdate) SetScore(i int) *UserUpdate {
+func (uu *UserUpdate) SetScore(i int64) *UserUpdate {
 	uu.mutation.ResetScore()
 	uu.mutation.SetScore(i)
 	return uu
 }
 
 // SetNillableScore sets the "score" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableScore(i *int) *UserUpdate {
+func (uu *UserUpdate) SetNillableScore(i *int64) *UserUpdate {
 	if i != nil {
 		uu.SetScore(*i)
 	}
@@ -81,7 +81,7 @@ func (uu *UserUpdate) SetNillableScore(i *int) *UserUpdate {
 }
 
 // AddScore adds i to the "score" field.
-func (uu *UserUpdate) AddScore(i int) *UserUpdate {
+func (uu *UserUpdate) AddScore(i int64) *UserUpdate {
 	uu.mutation.AddScore(i)
 	return uu
 }
@@ -265,7 +265,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   user.Table,
 			Columns: user.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: user.FieldID,
 			},
 		},
@@ -314,14 +314,14 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := uu.mutation.Score(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
+			Type:   field.TypeInt64,
 			Value:  value,
 			Column: user.FieldScore,
 		})
 	}
 	if value, ok := uu.mutation.AddedScore(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
+			Type:   field.TypeInt64,
 			Value:  value,
 			Column: user.FieldScore,
 		})
@@ -427,14 +427,14 @@ func (uuo *UserUpdateOne) AddStatus(i int8) *UserUpdateOne {
 }
 
 // SetScore sets the "score" field.
-func (uuo *UserUpdateOne) SetScore(i int) *UserUpdateOne {
+func (uuo *UserUpdateOne) SetScore(i int64) *UserUpdateOne {
 	uuo.mutation.ResetScore()
 	uuo.mutation.SetScore(i)
 	return uuo
 }
 
 // SetNillableScore sets the "score" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableScore(i *int) *UserUpdateOne {
+func (uuo *UserUpdateOne) SetNillableScore(i *int64) *UserUpdateOne {
 	if i != nil {
 		uuo.SetScore(*i)
 	}
@@ -442,7 +442,7 @@ func (uuo *UserUpdateOne) SetNillableScore(i *int) *UserUpdateOne {
 }
 
 // AddScore adds i to the "score" field.
-func (uuo *UserUpdateOne) AddScore(i int) *UserUpdateOne {
+func (uuo *UserUpdateOne) AddScore(i int64) *UserUpdateOne {
 	uuo.mutation.AddScore(i)
 	return uuo
 }
@@ -633,7 +633,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Table:   user.Table,
 			Columns: user.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: user.FieldID,
 			},
 		},
@@ -699,14 +699,14 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if value, ok := uuo.mutation.Score(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
+			Type:   field.TypeInt64,
 			Value:  value,
 			Column: user.FieldScore,
 		})
 	}
 	if value, ok := uuo.mutation.AddedScore(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
+			Type:   field.TypeInt64,
 			Value:  value,
 			Column: user.FieldScore,
 		})

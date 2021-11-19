@@ -95,13 +95,17 @@ func (u *User) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 	if err != nil {
 		return nil, ServiceErr2GRPCErr(err)
 	}
+	ban := ""
+	if dbUser.Status != 0 {
+		ban, _ = repository.GetBannedReason(int64(dbUser.Status))
+	}
 	return &pb.User{
 		Id:           dbUser.ID,
-		Name:         dbUser.Name,
+		Name:         dbUser.NickName,
 		Avatar:       dbUser.Avatar,
 		Status:       pb.UserStatusEnum_Status(dbUser.Status),
 		Score:        dbUser.Score,
-		BannedReason: dbUser.BannedReason,
+		BannedReason: ban,
 		Role:         pb.UserRoleEnum_Role(dbUser.Role),
 	}, nil
 }
@@ -114,20 +118,21 @@ func (u *User) GetUsersByUserIds(ctx context.Context, ur *pb.UsersByUserIdsReque
 	}
 	var users []*pb.User
 	for _, v := range dbUsers {
-		status, role := pb.UserStatusEnum_Status(v.Status), pb.UserRoleEnum_Role(v.Role)
-		if v.Status == 1 {
-			status = pb.UserStatusEnum_BANNED
-		}
+		role := pb.UserRoleEnum_Role(v.Role)
 		if v.Role == 1 {
 			role = pb.UserRoleEnum_ADMIN
 		}
+		ban := ""
+		if v.Status != 0 {
+			ban, _ = repository.GetBannedReason(int64(v.Status))
+		}
 		users = append(users, &pb.User{
 			Id:           v.ID,
-			Name:         v.Name,
+			Name:         v.NickName,
 			Avatar:       v.Avatar,
-			Status:       status,
+			Status:       pb.UserStatusEnum_Status(v.Status),
 			Score:        v.Score,
-			BannedReason: v.BannedReason,
+			BannedReason: ban,
 			Role:         role,
 		})
 	}

@@ -52,13 +52,13 @@ func (uc *UserCreate) SetNillableStatus(i *int8) *UserCreate {
 }
 
 // SetScore sets the "score" field.
-func (uc *UserCreate) SetScore(i int) *UserCreate {
+func (uc *UserCreate) SetScore(i int64) *UserCreate {
 	uc.mutation.SetScore(i)
 	return uc
 }
 
 // SetNillableScore sets the "score" field if the given value is not nil.
-func (uc *UserCreate) SetNillableScore(i *int) *UserCreate {
+func (uc *UserCreate) SetNillableScore(i *int64) *UserCreate {
 	if i != nil {
 		uc.SetScore(*i)
 	}
@@ -108,7 +108,7 @@ func (uc *UserCreate) SetNillableUpdateAt(i *int64) *UserCreate {
 }
 
 // SetID sets the "id" field.
-func (uc *UserCreate) SetID(i int) *UserCreate {
+func (uc *UserCreate) SetID(i int64) *UserCreate {
 	uc.mutation.SetID(i)
 	return uc
 }
@@ -290,7 +290,7 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 	}
 	if _spec.ID.Value != _node.ID {
 		id := _spec.ID.Value.(int64)
-		_node.ID = int(id)
+		_node.ID = int64(id)
 	}
 	return _node, nil
 }
@@ -301,7 +301,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: user.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: user.FieldID,
 			},
 		}
@@ -344,7 +344,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := uc.mutation.Score(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
+			Type:   field.TypeInt64,
 			Value:  value,
 			Column: user.FieldScore,
 		})
@@ -421,7 +421,7 @@ func (ucb *UserCreateBulk) Save(ctx context.Context) ([]*User, error) {
 				mutation.done = true
 				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
+					nodes[i].ID = int64(id)
 				}
 				return nodes[i], nil
 			})

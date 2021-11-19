@@ -14,7 +14,7 @@ import (
 type Avatar struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
 	// URL holds the value of the "url" field.
 	// 头像url
 	URL string `json:"url,omitempty"`
@@ -52,7 +52,7 @@ func (a *Avatar) assignValues(columns []string, values []interface{}) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			a.ID = int(value.Int64)
+			a.ID = int64(value.Int64)
 		case avatar.FieldURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field url", values[i])

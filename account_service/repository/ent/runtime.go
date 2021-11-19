@@ -28,7 +28,7 @@ func init() {
 	// avatarDescID is the schema descriptor for id field.
 	avatarDescID := avatarFields[0].Descriptor()
 	// avatar.IDValidator is a validator for the "id" field. It is called by the builders before save.
-	avatar.IDValidator = avatarDescID.Validators[0].(func(int) error)
+	avatar.IDValidator = avatarDescID.Validators[0].(func(int64) error)
 	bantypeFields := schema.BanType{}.Fields()
 	_ = bantypeFields
 	// bantypeDescContent is the schema descriptor for content field.
@@ -38,7 +38,7 @@ func init() {
 	// bantypeDescID is the schema descriptor for id field.
 	bantypeDescID := bantypeFields[0].Descriptor()
 	// bantype.IDValidator is a validator for the "id" field. It is called by the builders before save.
-	bantype.IDValidator = bantypeDescID.Validators[0].(func(int) error)
+	bantype.IDValidator = bantypeDescID.Validators[0].(func(int64) error)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescNickName is the schema descriptor for nick_name field.
@@ -62,9 +62,9 @@ func init() {
 	// userDescScore is the schema descriptor for score field.
 	userDescScore := userFields[5].Descriptor()
 	// user.DefaultScore holds the default value on creation for the score field.
-	user.DefaultScore = userDescScore.Default.(int)
+	user.DefaultScore = userDescScore.Default.(int64)
 	// user.ScoreValidator is a validator for the "score" field. It is called by the builders before save.
-	user.ScoreValidator = userDescScore.Validators[0].(func(int) error)
+	user.ScoreValidator = userDescScore.Validators[0].(func(int64) error)
 	// userDescRole is the schema descriptor for role field.
 	userDescRole := userFields[6].Descriptor()
 	// user.DefaultRole holds the default value on creation for the role field.
@@ -86,5 +86,5 @@ func init() {
 	// userDescID is the schema descriptor for id field.
 	userDescID := userFields[0].Descriptor()
 	// user.IDValidator is a validator for the "id" field. It is called by the builders before save.
-	user.IDValidator = userDescID.Validators[0].(func(int) error)
+	user.IDValidator = userDescID.Validators[0].(func(int64) error)
 }

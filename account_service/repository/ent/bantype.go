@@ -14,7 +14,7 @@ import (
 type BanType struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
 	// Content holds the value of the "content" field.
 	// 具体ban的内容
 	Content string `json:"content,omitempty"`
@@ -49,7 +49,7 @@ func (bt *BanType) assignValues(columns []string, values []interface{}) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			bt.ID = int(value.Int64)
+			bt.ID = int64(value.Int64)
 		case bantype.FieldContent:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field content", values[i])

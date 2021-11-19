@@ -16,7 +16,7 @@ type User struct {
 // Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("id").SchemaType(map[string]string{
+		field.Int64("id").SchemaType(map[string]string{
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.
 		}).Positive().Comment("用户id").Unique(),
 
@@ -36,7 +36,7 @@ func (User) Fields() []ent.Field {
 			dialect.MySQL: "tinyint unsigned", // Override MySQL.
 		}).NonNegative().Default(0).Comment("状态,是否被封，0：正常，大于0被封"),
 
-		field.Int("score").SchemaType(map[string]string{
+		field.Int64("score").SchemaType(map[string]string{
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.
 		}).NonNegative().Default(0).Comment("分数"),
 

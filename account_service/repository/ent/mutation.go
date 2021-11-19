@@ -33,7 +33,7 @@ type AvatarMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *int
+	id            *int64
 	url           *string
 	status        *int8
 	addstatus     *int8
@@ -63,7 +63,7 @@ func newAvatarMutation(c config, op Op, opts ...avatarOption) *AvatarMutation {
 }
 
 // withAvatarID sets the ID field of the mutation.
-func withAvatarID(id int) avatarOption {
+func withAvatarID(id int64) avatarOption {
 	return func(m *AvatarMutation) {
 		var (
 			err   error
@@ -115,13 +115,13 @@ func (m AvatarMutation) Tx() (*Tx, error) {
 
 // SetID sets the value of the id field. Note that this
 // operation is only accepted on creation of Avatar entities.
-func (m *AvatarMutation) SetID(id int) {
+func (m *AvatarMutation) SetID(id int64) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *AvatarMutation) ID() (id int, exists bool) {
+func (m *AvatarMutation) ID() (id int64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -421,7 +421,7 @@ type BanTypeMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *int
+	id            *int64
 	content       *string
 	clearedFields map[string]struct{}
 	done          bool
@@ -449,7 +449,7 @@ func newBanTypeMutation(c config, op Op, opts ...bantypeOption) *BanTypeMutation
 }
 
 // withBanTypeID sets the ID field of the mutation.
-func withBanTypeID(id int) bantypeOption {
+func withBanTypeID(id int64) bantypeOption {
 	return func(m *BanTypeMutation) {
 		var (
 			err   error
@@ -501,13 +501,13 @@ func (m BanTypeMutation) Tx() (*Tx, error) {
 
 // SetID sets the value of the id field. Note that this
 // operation is only accepted on creation of BanType entities.
-func (m *BanTypeMutation) SetID(id int) {
+func (m *BanTypeMutation) SetID(id int64) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *BanTypeMutation) ID() (id int, exists bool) {
+func (m *BanTypeMutation) ID() (id int64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -719,14 +719,14 @@ type UserMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *int
+	id            *int64
 	nick_name     *string
 	password      *string
 	avatar        *string
 	status        *int8
 	addstatus     *int8
-	score         *int
-	addscore      *int
+	score         *int64
+	addscore      *int64
 	role          *int8
 	addrole       *int8
 	create_at     *int64
@@ -759,7 +759,7 @@ func newUserMutation(c config, op Op, opts ...userOption) *UserMutation {
 }
 
 // withUserID sets the ID field of the mutation.
-func withUserID(id int) userOption {
+func withUserID(id int64) userOption {
 	return func(m *UserMutation) {
 		var (
 			err   error
@@ -811,13 +811,13 @@ func (m UserMutation) Tx() (*Tx, error) {
 
 // SetID sets the value of the id field. Note that this
 // operation is only accepted on creation of User entities.
-func (m *UserMutation) SetID(id int) {
+func (m *UserMutation) SetID(id int64) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *UserMutation) ID() (id int, exists bool) {
+func (m *UserMutation) ID() (id int64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -989,13 +989,13 @@ func (m *UserMutation) ResetStatus() {
 }
 
 // SetScore sets the "score" field.
-func (m *UserMutation) SetScore(i int) {
+func (m *UserMutation) SetScore(i int64) {
 	m.score = &i
 	m.addscore = nil
 }
 
 // Score returns the value of the "score" field in the mutation.
-func (m *UserMutation) Score() (r int, exists bool) {
+func (m *UserMutation) Score() (r int64, exists bool) {
 	v := m.score
 	if v == nil {
 		return
@@ -1006,7 +1006,7 @@ func (m *UserMutation) Score() (r int, exists bool) {
 // OldScore returns the old "score" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldScore(ctx context.Context) (v int, err error) {
+func (m *UserMutation) OldScore(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, fmt.Errorf("OldScore is only allowed on UpdateOne operations")
 	}
@@ -1021,7 +1021,7 @@ func (m *UserMutation) OldScore(ctx context.Context) (v int, err error) {
 }
 
 // AddScore adds i to the "score" field.
-func (m *UserMutation) AddScore(i int) {
+func (m *UserMutation) AddScore(i int64) {
 	if m.addscore != nil {
 		*m.addscore += i
 	} else {
@@ -1030,7 +1030,7 @@ func (m *UserMutation) AddScore(i int) {
 }
 
 // AddedScore returns the value that was added to the "score" field in this mutation.
-func (m *UserMutation) AddedScore() (r int, exists bool) {
+func (m *UserMutation) AddedScore() (r int64, exists bool) {
 	v := m.addscore
 	if v == nil {
 		return
@@ -1343,7 +1343,7 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		m.SetStatus(v)
 		return nil
 	case user.FieldScore:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1428,7 +1428,7 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 		m.AddStatus(v)
 		return nil
 	case user.FieldScore:
-		v, ok := value.(int)
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

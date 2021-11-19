@@ -11,7 +11,7 @@ import (
 var (
 	// AvatarColumns holds the columns for the "avatar" table.
 	AvatarColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
+		{Name: "id", Type: field.TypeInt64, Increment: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 		{Name: "url", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(255)"}},
 		{Name: "status", Type: field.TypeInt8, Default: 0, SchemaType: map[string]string{"mysql": "tinyint unsigned"}},
 	}
@@ -23,7 +23,7 @@ var (
 	}
 	// BanTypeColumns holds the columns for the "ban_type" table.
 	BanTypeColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
+		{Name: "id", Type: field.TypeInt64, Increment: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 		{Name: "content", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(255)"}},
 	}
 	// BanTypeTable holds the schema information for the "ban_type" table.
@@ -34,12 +34,12 @@ var (
 	}
 	// UserColumns holds the columns for the "user" table.
 	UserColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
+		{Name: "id", Type: field.TypeInt64, Increment: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 		{Name: "nick_name", Type: field.TypeString, Unique: true, SchemaType: map[string]string{"mysql": "varchar(20)"}},
 		{Name: "password", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(32)"}},
 		{Name: "avatar", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(255)"}},
 		{Name: "status", Type: field.TypeInt8, Default: 0, SchemaType: map[string]string{"mysql": "tinyint unsigned"}},
-		{Name: "score", Type: field.TypeInt, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
+		{Name: "score", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 		{Name: "role", Type: field.TypeInt8, Default: 0, SchemaType: map[string]string{"mysql": "tinyint UNSIGNED"}},
 		{Name: "create_at", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 		{Name: "update_at", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},

@@ -40,7 +40,7 @@ func (ac *AvatarCreate) SetNillableStatus(i *int8) *AvatarCreate {
 }
 
 // SetID sets the "id" field.
-func (ac *AvatarCreate) SetID(i int) *AvatarCreate {
+func (ac *AvatarCreate) SetID(i int64) *AvatarCreate {
 	ac.mutation.SetID(i)
 	return ac
 }
@@ -158,7 +158,7 @@ func (ac *AvatarCreate) sqlSave(ctx context.Context) (*Avatar, error) {
 	}
 	if _spec.ID.Value != _node.ID {
 		id := _spec.ID.Value.(int64)
-		_node.ID = int(id)
+		_node.ID = int64(id)
 	}
 	return _node, nil
 }
@@ -169,7 +169,7 @@ func (ac *AvatarCreate) createSpec() (*Avatar, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: avatar.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: avatar.FieldID,
 			},
 		}
@@ -241,7 +241,7 @@ func (acb *AvatarCreateBulk) Save(ctx context.Context) ([]*Avatar, error) {
 				mutation.done = true
 				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
+					nodes[i].ID = int64(id)
 				}
 				return nodes[i], nil
 			})

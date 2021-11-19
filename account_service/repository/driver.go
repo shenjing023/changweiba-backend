@@ -81,7 +81,7 @@ func GetRandomAvatar() (url string, err error) {
 }
 
 // InsertUser insert new user
-func InsertUser(userName, password, avatar string) (int, error) {
+func InsertUser(userName, password, avatar string) (int64, error) {
 	now := time.Now().Unix()
 	user, err := entClient.User.Create().
 		SetNickName(userName).
@@ -97,7 +97,7 @@ func InsertUser(userName, password, avatar string) (int, error) {
 }
 
 // GetUserByID get user by user_id
-func GetUserByID(id int) (*ent.User, error) {
+func GetUserByID(id int64) (*ent.User, error) {
 	user, err := entClient.User.Get(context.Background(), id)
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -155,7 +155,7 @@ func BytesToInt32(buf []byte) int32 {
 }
 
 // GetUsers 批量获取用户信息
-func GetUsers(ids []int) ([]*ent.User, error) {
+func GetUsers(ids []int64) ([]*ent.User, error) {
 	// TODO redis
 	users, err := entClient.User.Query().Where(user.IDIn(ids...)).Order(func(s *sql.Selector) {
 		s.OrderBy(user.FieldID)
@@ -167,7 +167,7 @@ func GetUsers(ids []int) ([]*ent.User, error) {
 	//可能有的id不存在或重复,需要再排序
 	var (
 		results []*ent.User
-		m       = make(map[int]*ent.User)
+		m       = make(map[int64]*ent.User)
 	)
 	for _, v := range users {
 		m[v.ID] = v
@@ -180,4 +180,14 @@ func GetUsers(ids []int) ([]*ent.User, error) {
 		}
 	}
 	return results, nil
+}
+
+// GetBannedReason 获取禁言原因
+func GetBannedReason(bannedType int64) (string, error) {
+	// TODO redis
+	ban, err := entClient.BanType.Get(context.Background(), bannedType)
+	if err != nil {
+		return "", common.NewServiceErr(common.Internal, err)
+	}
+	return ban.Content, nil
 }

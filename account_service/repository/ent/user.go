@@ -15,7 +15,7 @@ type User struct {
 	config `json:"-"`
 	// ID of the ent.
 	// 用户id
-	ID int `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
 	// NickName holds the value of the "nick_name" field.
 	// 名称
 	NickName string `json:"nick_name,omitempty"`
@@ -30,7 +30,7 @@ type User struct {
 	Status int8 `json:"status,omitempty"`
 	// Score holds the value of the "score" field.
 	// 分数
-	Score int `json:"score,omitempty"`
+	Score int64 `json:"score,omitempty"`
 	// Role holds the value of the "role" field.
 	// 用户的角色，0：普通用户，1：admin
 	Role int8 `json:"role,omitempty"`
@@ -71,7 +71,7 @@ func (u *User) assignValues(columns []string, values []interface{}) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			u.ID = int(value.Int64)
+			u.ID = int64(value.Int64)
 		case user.FieldNickName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field nick_name", values[i])
@@ -100,7 +100,7 @@ func (u *User) assignValues(columns []string, values []interface{}) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field score", values[i])
 			} else if value.Valid {
-				u.Score = int(value.Int64)
+				u.Score = value.Int64
 			}
 		case user.FieldRole:
 			if value, ok := values[i].(*sql.NullInt64); !ok {

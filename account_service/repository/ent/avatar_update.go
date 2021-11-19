@@ -139,7 +139,7 @@ func (au *AvatarUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   avatar.Table,
 			Columns: avatar.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: avatar.FieldID,
 			},
 		},
@@ -311,7 +311,7 @@ func (auo *AvatarUpdateOne) sqlSave(ctx context.Context) (_node *Avatar, err err
 			Table:   avatar.Table,
 			Columns: avatar.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: avatar.FieldID,
 			},
 		},

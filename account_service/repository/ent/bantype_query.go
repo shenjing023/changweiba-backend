@@ -84,8 +84,8 @@ func (btq *BanTypeQuery) FirstX(ctx context.Context) *BanType {
 
 // FirstID returns the first BanType ID from the query.
 // Returns a *NotFoundError when no BanType ID was found.
-func (btq *BanTypeQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (btq *BanTypeQuery) FirstID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = btq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -97,7 +97,7 @@ func (btq *BanTypeQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (btq *BanTypeQuery) FirstIDX(ctx context.Context) int {
+func (btq *BanTypeQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := btq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -135,8 +135,8 @@ func (btq *BanTypeQuery) OnlyX(ctx context.Context) *BanType {
 // OnlyID is like Only, but returns the only BanType ID in the query.
 // Returns a *NotSingularError when exactly one BanType ID is not found.
 // Returns a *NotFoundError when no entities are found.
-func (btq *BanTypeQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (btq *BanTypeQuery) OnlyID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = btq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -152,7 +152,7 @@ func (btq *BanTypeQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (btq *BanTypeQuery) OnlyIDX(ctx context.Context) int {
+func (btq *BanTypeQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := btq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -178,8 +178,8 @@ func (btq *BanTypeQuery) AllX(ctx context.Context) []*BanType {
 }
 
 // IDs executes the query and returns a list of BanType IDs.
-func (btq *BanTypeQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
+func (btq *BanTypeQuery) IDs(ctx context.Context) ([]int64, error) {
+	var ids []int64
 	if err := btq.Select(bantype.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func (btq *BanTypeQuery) IDs(ctx context.Context) ([]int, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (btq *BanTypeQuery) IDsX(ctx context.Context) []int {
+func (btq *BanTypeQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := btq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -353,7 +353,7 @@ func (btq *BanTypeQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   bantype.Table,
 			Columns: bantype.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeInt64,
 				Column: bantype.FieldID,
 			},
 		},
