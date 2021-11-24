@@ -19,11 +19,11 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AccountClient interface {
 	GetUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error)
-	SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpResponse, error)
+	SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpReply, error)
 	EditUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error)
-	SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*SignInResponse, error)
-	GetUsersByIds(ctx context.Context, in *UsersRequest, opts ...grpc.CallOption) (*UsersResponse, error)
-	GetUsersByUserIds(ctx context.Context, in *UsersByUserIdsRequest, opts ...grpc.CallOption) (*UsersByUserIdsResponse, error)
+	SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*SignInReply, error)
+	GetUsersByIds(ctx context.Context, in *UsersRequest, opts ...grpc.CallOption) (*UsersReply, error)
+	GetUsersByUserIds(ctx context.Context, in *UsersByUserIdsRequest, opts ...grpc.CallOption) (*UsersByUserIdsReply, error)
 }
 
 type accountClient struct {
@@ -43,8 +43,8 @@ func (c *accountClient) GetUser(ctx context.Context, in *User, opts ...grpc.Call
 	return out, nil
 }
 
-func (c *accountClient) SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpResponse, error) {
-	out := new(SignUpResponse)
+func (c *accountClient) SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpReply, error) {
+	out := new(SignUpReply)
 	err := c.cc.Invoke(ctx, "/account.Account/SignUp", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -61,8 +61,8 @@ func (c *accountClient) EditUser(ctx context.Context, in *User, opts ...grpc.Cal
 	return out, nil
 }
 
-func (c *accountClient) SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*SignInResponse, error) {
-	out := new(SignInResponse)
+func (c *accountClient) SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*SignInReply, error) {
+	out := new(SignInReply)
 	err := c.cc.Invoke(ctx, "/account.Account/SignIn", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -70,8 +70,8 @@ func (c *accountClient) SignIn(ctx context.Context, in *SignInRequest, opts ...g
 	return out, nil
 }
 
-func (c *accountClient) GetUsersByIds(ctx context.Context, in *UsersRequest, opts ...grpc.CallOption) (*UsersResponse, error) {
-	out := new(UsersResponse)
+func (c *accountClient) GetUsersByIds(ctx context.Context, in *UsersRequest, opts ...grpc.CallOption) (*UsersReply, error) {
+	out := new(UsersReply)
 	err := c.cc.Invoke(ctx, "/account.Account/GetUsersByIds", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -79,8 +79,8 @@ func (c *accountClient) GetUsersByIds(ctx context.Context, in *UsersRequest, opt
 	return out, nil
 }
 
-func (c *accountClient) GetUsersByUserIds(ctx context.Context, in *UsersByUserIdsRequest, opts ...grpc.CallOption) (*UsersByUserIdsResponse, error) {
-	out := new(UsersByUserIdsResponse)
+func (c *accountClient) GetUsersByUserIds(ctx context.Context, in *UsersByUserIdsRequest, opts ...grpc.CallOption) (*UsersByUserIdsReply, error) {
+	out := new(UsersByUserIdsReply)
 	err := c.cc.Invoke(ctx, "/account.Account/GetUsersByUserIds", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -93,11 +93,11 @@ func (c *accountClient) GetUsersByUserIds(ctx context.Context, in *UsersByUserId
 // for forward compatibility
 type AccountServer interface {
 	GetUser(context.Context, *User) (*User, error)
-	SignUp(context.Context, *SignUpRequest) (*SignUpResponse, error)
+	SignUp(context.Context, *SignUpRequest) (*SignUpReply, error)
 	EditUser(context.Context, *User) (*User, error)
-	SignIn(context.Context, *SignInRequest) (*SignInResponse, error)
-	GetUsersByIds(context.Context, *UsersRequest) (*UsersResponse, error)
-	GetUsersByUserIds(context.Context, *UsersByUserIdsRequest) (*UsersByUserIdsResponse, error)
+	SignIn(context.Context, *SignInRequest) (*SignInReply, error)
+	GetUsersByIds(context.Context, *UsersRequest) (*UsersReply, error)
+	GetUsersByUserIds(context.Context, *UsersByUserIdsRequest) (*UsersByUserIdsReply, error)
 	mustEmbedUnimplementedAccountServer()
 }
 
@@ -108,19 +108,19 @@ type UnimplementedAccountServer struct {
 func (UnimplementedAccountServer) GetUser(context.Context, *User) (*User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }
-func (UnimplementedAccountServer) SignUp(context.Context, *SignUpRequest) (*SignUpResponse, error) {
+func (UnimplementedAccountServer) SignUp(context.Context, *SignUpRequest) (*SignUpReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SignUp not implemented")
 }
 func (UnimplementedAccountServer) EditUser(context.Context, *User) (*User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EditUser not implemented")
 }
-func (UnimplementedAccountServer) SignIn(context.Context, *SignInRequest) (*SignInResponse, error) {
+func (UnimplementedAccountServer) SignIn(context.Context, *SignInRequest) (*SignInReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SignIn not implemented")
 }
-func (UnimplementedAccountServer) GetUsersByIds(context.Context, *UsersRequest) (*UsersResponse, error) {
+func (UnimplementedAccountServer) GetUsersByIds(context.Context, *UsersRequest) (*UsersReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsersByIds not implemented")
 }
-func (UnimplementedAccountServer) GetUsersByUserIds(context.Context, *UsersByUserIdsRequest) (*UsersByUserIdsResponse, error) {
+func (UnimplementedAccountServer) GetUsersByUserIds(context.Context, *UsersByUserIdsRequest) (*UsersByUserIdsReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsersByUserIds not implemented")
 }
 func (UnimplementedAccountServer) mustEmbedUnimplementedAccountServer() {}

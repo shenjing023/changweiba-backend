@@ -28,7 +28,7 @@ message SignUpRequest {
     // string ip = 3;
 }
 
-message SignUpResponse {
+message SignUpReply {
     int64 id=1;
 }
 
@@ -37,7 +37,7 @@ message SignInRequest{
     string password=2;
 }
 
-message SignInResponse{
+message SignInReply{
     int64 id=1;
 }
 
@@ -48,7 +48,7 @@ message UsersRequest{
     int64 idType=2;
 }
 
-message UsersResponse{
+message UsersReply{
     repeated User users=1;
 }
 
@@ -57,7 +57,7 @@ message UsersByUserIdsRequest{
     repeated int64 ids=1 [packed=true];
 }
 
-message UsersByUserIdsResponse{
+message UsersByUserIdsReply{
     repeated User users=1;
 }
 
@@ -65,12 +65,12 @@ message UsersByUserIdsResponse{
 service Account {
     rpc GetUser (User) returns (User) {
     }
-    rpc SignUp (SignUpRequest) returns (SignUpResponse) {
+    rpc SignUp (SignUpRequest) returns (SignUpReply) {
     }
     rpc EditUser (User) returns (User) {
     }
-    rpc SignIn (SignInRequest) returns (SignInResponse){
+    rpc SignIn (SignInRequest) returns (SignInReply){
     }
-    rpc GetUsersByIds(UsersRequest) returns(UsersResponse){}
-    rpc GetUsersByUserIds(UsersByUserIdsRequest) returns(UsersByUserIdsResponse){}
+    rpc GetUsersByIds(UsersRequest) returns(UsersReply){}
+    rpc GetUsersByUserIds(UsersByUserIdsRequest) returns(UsersByUserIdsReply){}
 }

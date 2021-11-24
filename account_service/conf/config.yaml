@@ -13,5 +13,8 @@ redis:
   host: "your redis host"
   port: 6379
   password: ""
+etcd:
+  host: "127.0.0.1"
+  port: 2379
 log_dir: ""
 salt: "asdah#!2sddh"

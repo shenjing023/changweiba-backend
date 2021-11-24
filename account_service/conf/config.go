@@ -29,6 +29,10 @@ type YamlConf struct {
 		Port     int    `yaml:"port"`
 		Password string `yaml:"password"`
 	} `yaml:"redis"`
+	Etcd struct {
+		Host string `yaml:"host"`
+		Port int    `yaml:"port"`
+	} `yaml:"etcd"`
 	LogDir string `yaml:"log_dir"`
 	Salt   string `yaml:"salt"`
 }

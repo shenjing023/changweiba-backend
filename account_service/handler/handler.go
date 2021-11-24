@@ -41,7 +41,7 @@ func ServiceErr2GRPCErr(err error) error {
 }
 
 // SignUp 注册
-func (u *User) SignUp(ctx context.Context, sr *pb.SignUpRequest) (*pb.SignUpResponse, error) {
+func (u *User) SignUp(ctx context.Context, sr *pb.SignUpRequest) (*pb.SignUpReply, error) {
 	if err := checkNewUser(sr); err != nil {
 		return nil, ServiceErr2GRPCErr(err)
 	}
@@ -62,14 +62,14 @@ func (u *User) SignUp(ctx context.Context, sr *pb.SignUpRequest) (*pb.SignUpResp
 		log.Error("insert user error:", err.Error())
 		return nil, ServiceErr2GRPCErr(err)
 	}
-	resp := &pb.SignUpResponse{
+	resp := &pb.SignUpReply{
 		Id: id,
 	}
 	return resp, nil
 }
 
 // SignIn 登录
-func (u *User) SignIn(ctx context.Context, sr *pb.SignInRequest) (*pb.SignInResponse, error) {
+func (u *User) SignIn(ctx context.Context, sr *pb.SignInRequest) (*pb.SignInReply, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
 		log.Info("md: ", md)
@@ -84,7 +84,7 @@ func (u *User) SignIn(ctx context.Context, sr *pb.SignInRequest) (*pb.SignInResp
 		return nil, ServiceErr2GRPCErr(common.NewServiceErr(common.InvalidArgument,
 			errors.New("password incorrect")))
 	}
-	return &pb.SignInResponse{
+	return &pb.SignInReply{
 		Id: dbUser.ID,
 	}, nil
 }
@@ -111,7 +111,7 @@ func (u *User) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 }
 
 // GetUsersByUserIds 通过用户id批量获取用户信息
-func (u *User) GetUsersByUserIds(ctx context.Context, ur *pb.UsersByUserIdsRequest) (*pb.UsersByUserIdsResponse, error) {
+func (u *User) GetUsersByUserIds(ctx context.Context, ur *pb.UsersByUserIdsRequest) (*pb.UsersByUserIdsReply, error) {
 	dbUsers, err := repository.GetUsers(ur.Ids)
 	if err != nil {
 		return nil, ServiceErr2GRPCErr(err)
@@ -136,7 +136,7 @@ func (u *User) GetUsersByUserIds(ctx context.Context, ur *pb.UsersByUserIdsReque
 			Role:         role,
 		})
 	}
-	return &pb.UsersByUserIdsResponse{
+	return &pb.UsersByUserIdsReply{
 		Users: users,
 	}, nil
 }
