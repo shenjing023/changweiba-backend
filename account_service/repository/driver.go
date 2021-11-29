@@ -18,6 +18,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/go-redis/redis/v8"
+	_ "github.com/go-sql-driver/mysql"
 	log "github.com/shenjing023/llog"
 	"golang.org/x/net/context"
 )

@@ -41,10 +41,11 @@ func runAccountService(configPath string) {
 		Endpoints:   []string{fmt.Sprintf("%s:%d", conf.Cfg.Etcd.Host, conf.Cfg.Etcd.Port)},
 		DialTimeout: time.Second * 5,
 	}
-	r, err := NewRegister(etcdConf, "svc", "account", "127.0.0.1", fmt.Sprintf(":%d", conf.Cfg.Port))
+	r, err := NewRegister(etcdConf, "svc", conf.Cfg.SrvName, "127.0.0.1", fmt.Sprintf(":%d", conf.Cfg.Port))
 	if err != nil {
 		log.Fatalf("failed register serve: %v", err)
 	}
+	log.Info("service start success")
 
 	// Wait for interrupt signal to gracefully shutdown the server
 	quit := make(chan os.Signal, 1)
