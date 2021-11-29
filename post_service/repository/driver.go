@@ -2,7 +2,7 @@ package repository
 
 import (
 	"cw_post_service/common"
-	"errors"
+	"cw_post_service/repository/ent"
 	"fmt"
 	"os"
 	"strconv"
@@ -10,33 +10,33 @@ import (
 
 	"cw_post_service/conf"
 
+	"entgo.io/ent/dialect/sql"
 	"github.com/go-redis/redis/v8"
+	_ "github.com/go-sql-driver/mysql"
 	log "github.com/shenjing023/llog"
 	"golang.org/x/net/context"
 	"golang.org/x/sync/singleflight"
-	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
-	"gorm.io/gorm/schema"
 )
 
 var (
 	redisClient     *redis.Client
-	dbOrm           *gorm.DB
+	entClient       *ent.Client
 	postsCountCache singleflight.Group
+	dbOrm           *gorm.DB
 )
 
 const (
 	// POSTSCOUNTKEY redis 保存当前帖子总数
-	POSTSCOUNTKEY = "posts_count_key"
+	POSTSCOUNTKEY = "post:post:totalcount"
 	// 帖子下共有多少楼
-	COMMENTFLOORKEY = "comment_floor_post"
+	COMMENTFLOORKEY = "post:comment:totalcount"
 	// 帖子的一楼评论
-	FIRSTCOMMENTKEY = "first_comment_post"
+	FIRSTCOMMENTKEY = "post:post:first_comment"
 	// 帖子的总评论数
-	COMMENTCOUNTKEY = "comment_count_post"
+	COMMENTCOUNTKEY = "post:comments_allcount"
 	// 评论的总回复数
-	REPLYCOUNTKEY = "reply_count_comment"
+	REPLYCOUNTKEY = "post:reply_count_comment"
 )
 
 // Init init mysql and redis orm
@@ -51,93 +51,78 @@ func Init() {
 		os.Exit(1)
 	}
 
-	var err error
 	dsn := fmt.Sprintf("%s:%s@(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		conf.Cfg.DB.User, conf.Cfg.DB.Password, conf.Cfg.DB.Host, conf.Cfg.DB.Port, conf.Cfg.DB.Dbname)
-	c := gorm.Config{
-		NamingStrategy: schema.NamingStrategy{
-			SingularTable: true, // 全局禁用表名复数形式
-		},
-	}
-	if conf.Cfg.Debug {
-		// default log
-		c.Logger = logger.Default
-	}
-	dbOrm, err = gorm.Open(mysql.Open(dsn), &c)
+
+	drv, err := sql.Open("mysql", dsn)
 	if err != nil {
 		log.Error("mysql connection error: ", err)
 		os.Exit(1)
 	}
-	sqlDB, err := dbOrm.DB()
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
-	}
+	// 获取数据库驱动中的sql.DB对象。
+	db := drv.DB()
 	if conf.Cfg.DB.MaxIdle > 0 {
-		sqlDB.SetMaxIdleConns(conf.Cfg.DB.MaxIdle)
+		db.SetMaxIdleConns(conf.Cfg.DB.MaxIdle)
 	}
 	if conf.Cfg.DB.MaxOpen > 0 {
-		sqlDB.SetMaxOpenConns(conf.Cfg.DB.MaxOpen)
+		db.SetMaxOpenConns(conf.Cfg.DB.MaxOpen)
 	}
+	entClient = ent.NewClient(ent.Driver(drv))
 }
 
 // Close close db connection
 func Close() {
-	sqlDB, _ := dbOrm.DB()
-	sqlDB.Close()
+	entClient.Close()
 	redisClient.Close()
 }
 
 // InsertPost insert new post
 func InsertPost(userID int64, topic string) (int64, error) {
-	session := dbOrm.Begin()
+	ctx := context.Background()
+	tx, err := entClient.Tx(ctx)
+	if err != nil {
+		return 0, common.NewServiceErr(common.Internal, fmt.Errorf("starting a transaction: %w", err))
+	}
 	now := time.Now().Unix()
-	post := Post{
-		UserID:     userID,
-		Topic:      topic,
-		CreateTime: now,
-		LastUpdate: now,
-		ReplyNum:   0,
-		Status:     0,
+	post, err := tx.Post.Create().
+		SetUserID(userID).
+		SetTopic(topic).
+		SetStatus(0).
+		SetCreateAt(now).
+		SetUpdateAt(now).
+		SetReplyNum(0).
+		Save(ctx)
+	if err != nil {
+		tx.Rollback()
+		return 0, common.NewServiceErr(common.Internal, fmt.Errorf("insert post: %w", err))
 	}
-	if err := session.Create(&post).Error; err != nil {
+	if err := redisClient.Incr(ctx, POSTSCOUNTKEY).Err(); err != nil {
+		tx.Rollback()
 		return 0, common.NewServiceErr(common.Internal, err)
 	}
-	if err := redisClient.Incr(context.Background(), POSTSCOUNTKEY).Err(); err != nil {
-		session.Rollback()
-		return 0, common.NewServiceErr(common.Internal, err)
+	if err := tx.Commit(); err != nil {
+		return 0, common.NewServiceErr(common.Internal, fmt.Errorf("commit transaction: %w", err))
 	}
 	return post.ID, nil
 }
 
-// GetPost get post
-func GetPost(postID int64) (*Post, error) {
-	var post Post
-	if err := dbOrm.First(&post, postID).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+// GetPostByID get post by postID
+func GetPostByID(id int64) (*ent.Post, error) {
+	post, err := entClient.Post.Get(context.Background(), id)
+	if err != nil {
+		if ent.IsNotFound(err) {
 			return nil, common.NewServiceErr(common.NotFound, err)
 		}
 		return nil, common.NewServiceErr(common.Internal, err)
 	}
-	return &post, nil
+	return post, nil
 }
 
 // GetPosts get posts by page and page_size
-func GetPosts(page, pageSize int) ([]*Post, error) {
-	var posts []*Post
-	// TODO 待优化
-	rows, err := dbOrm.Raw(`SELECT t1.* FROM cw_post t1, 
-		(SELECT id FROM cw_post WHERE status=? ORDER BY last_update DESC, id DESC LIMIT ?,?) t2 
-		WHERE t1.id=t2.id`,
-		0, pageSize*(page-1), pageSize).Rows()
+func GetPosts(page, pageSize int) ([]*ent.Post, error) {
+	posts, err := ent.GetPosts(context.Background(), entClient, page, pageSize)
 	if err != nil {
 		return nil, common.NewServiceErr(common.Internal, err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var p Post
-		dbOrm.ScanRows(rows, &p)
-		posts = append(posts, &p)
 	}
 	return posts, nil
 }

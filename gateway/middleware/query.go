@@ -34,7 +34,6 @@ func QueryDeepMiddleware(queryDeep int) gin.HandlerFunc {
 			systemError(c)
 		}
 
-		//陷阱，不能是doc,err:= 目前还不知原因
 		doc, err_ := parser.ParseQuery(&ast.Source{Input: param.Query})
 		//spew.Dump(err)
 		if err_ != nil {
@@ -88,19 +87,6 @@ func getQueryFieldDeep(set ast.SelectionSet, deep int) int {
 	return max
 }
 
-/*
-	指定的请求路径是否在queryName里
-*/
-func checkQuery(c *gin.Context) bool {
-	queryName := c.GetStringSlice("queryName")
-	for _, v := range queryName {
-		if v == "posts" || v == "signIn" || v == "signUp" {
-			return true
-		}
-	}
-	return false
-}
-
 type postParams struct {
 	Query         string                 `json:"query"`
 	OperationName string                 `json:"operationName"`
@@ -113,5 +99,4 @@ func systemError(ctx *gin.Context) {
 		"msg":  "system error",
 	})
 	ctx.Abort()
-	return
 }

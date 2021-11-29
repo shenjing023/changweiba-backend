@@ -34,7 +34,11 @@ type YamlConf struct {
 			Expire  int    `yaml:"expire"`
 		} `yaml:"refresh"`
 	} `yaml:"auth_token"`
-	Salt      string `yaml:"salt"`
+	Etcd struct {
+		Host string `yaml:"host"`
+		Port int    `yaml:"port"`
+	} `yaml:"etcd"`
+	SrvName   string `yaml:"srv_name"`
 	QueryDeep int    `yaml:"query_deep"`
 }
 

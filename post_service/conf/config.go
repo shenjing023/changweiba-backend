@@ -29,7 +29,12 @@ type YamlConf struct {
 		Port     int    `yaml:"port"`
 		Password string `yaml:"password"`
 	} `yaml:"redis"`
-	LogDir string `yaml:"log_dir"`
+	Etcd struct {
+		Host string `yaml:"host"`
+		Port int    `yaml:"port"`
+	} `yaml:"etcd"`
+	SrvName string `yaml:"srv_name"`
+	LogDir  string `yaml:"log_dir"`
 }
 
 // Cfg global config variate

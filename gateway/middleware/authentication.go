@@ -97,3 +97,16 @@ func InitAuth() {
 		common.WithExpired(conf.Cfg.AuthToken.Refresh.Expire),
 	)
 }
+
+/*
+	指定的请求路径是否在queryName里
+*/
+func checkQuery(c *gin.Context) bool {
+	queryName := c.GetStringSlice("queryName")
+	for _, v := range queryName {
+		if v == "posts" || v == "signIn" || v == "signUp" {
+			return true
+		}
+	}
+	return false
+}

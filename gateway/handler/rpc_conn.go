@@ -4,13 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"gateway/common"
 	"gateway/conf"
 
 	log "github.com/shenjing023/llog"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/resolver"
 )
 
 //rpc连接
@@ -22,6 +25,22 @@ var (
 // InitGRPCConn init grpc conn
 func InitGRPCConn() {
 	var err error
+	etcdConf := clientv3.Config{
+		Endpoints:   []string{fmt.Sprintf("%s:%d", conf.Cfg.Etcd.Host, conf.Cfg.Etcd.Port)},
+		DialTimeout: time.Second * 5,
+	}
+	account, err := NewDiscovery(etcdConf, "svc", "account")
+	if err != nil {
+		panic(err)
+	}
+	resolver.Register(account)
+
+	post, err := NewDiscovery(etcdConf, "svc", "account")
+	if err != nil {
+		panic(err)
+	}
+	resolver.Register(account)
+
 	AccountConn, err = grpc.Dial(fmt.Sprintf("%s:%d", conf.Cfg.Account.Host, conf.Cfg.Account.Port),
 		grpc.WithInsecure(), grpc.WithUnaryInterceptor(unaryHeaderInterceptor))
 	if err != nil {

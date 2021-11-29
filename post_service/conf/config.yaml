@@ -13,5 +13,8 @@ redis:
   host: "your redis host"
   port: 6379
   password: ""
+etcd:
+  host: "10.0.0.215"
+  port: 2379
 log_dir: ""
-salt: "asdah#!2sddh"
+srv_name: "post"
