@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 )
 
 // Comment holds the schema definition for the Comment entity.
@@ -54,5 +55,12 @@ func (Comment) Edges() []ent.Edge {
 func (Comment) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "comment"},
+	}
+}
+
+func (Comment) Indexes() []ent.Index {
+	return []ent.Index{
+		// 非唯一约束索引
+		index.Fields("user_id", "post_id"),
 	}
 }

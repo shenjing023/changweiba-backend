@@ -24,6 +24,13 @@ var (
 		Name:       "comment",
 		Columns:    CommentColumns,
 		PrimaryKey: []*schema.Column{CommentColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "comment_user_id_post_id",
+				Unique:  false,
+				Columns: []*schema.Column{CommentColumns[1], CommentColumns[2]},
+			},
+		},
 	}
 	// PostColumns holds the columns for the "post" table.
 	PostColumns = []*schema.Column{
@@ -40,6 +47,13 @@ var (
 		Name:       "post",
 		Columns:    PostColumns,
 		PrimaryKey: []*schema.Column{PostColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "post_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{PostColumns[1]},
+			},
+		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
