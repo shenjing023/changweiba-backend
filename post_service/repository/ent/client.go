@@ -11,9 +11,11 @@ import (
 
 	"cw_post_service/repository/ent/comment"
 	"cw_post_service/repository/ent/post"
+	"cw_post_service/repository/ent/reply"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // Client is the client that holds all ent builders.
@@ -25,6 +27,8 @@ type Client struct {
 	Comment *CommentClient
 	// Post is the client for interacting with the Post builders.
 	Post *PostClient
+	// Reply is the client for interacting with the Reply builders.
+	Reply *ReplyClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -40,6 +44,7 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Comment = NewCommentClient(c.config)
 	c.Post = NewPostClient(c.config)
+	c.Reply = NewReplyClient(c.config)
 }
 
 // Open opens a database/sql.DB specified by the driver name and
@@ -75,6 +80,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:  cfg,
 		Comment: NewCommentClient(cfg),
 		Post:    NewPostClient(cfg),
+		Reply:   NewReplyClient(cfg),
 	}, nil
 }
 
@@ -95,6 +101,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:  cfg,
 		Comment: NewCommentClient(cfg),
 		Post:    NewPostClient(cfg),
+		Reply:   NewReplyClient(cfg),
 	}, nil
 }
 
@@ -126,6 +133,7 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	c.Comment.Use(hooks...)
 	c.Post.Use(hooks...)
+	c.Reply.Use(hooks...)
 }
 
 // CommentClient is a client for the Comment schema.
@@ -211,6 +219,38 @@ func (c *CommentClient) GetX(ctx context.Context, id int64) *Comment {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryOwner queries the owner edge of a Comment.
+func (c *CommentClient) QueryOwner(co *Comment) *PostQuery {
+	query := &PostQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := co.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(comment.Table, comment.FieldID, id),
+			sqlgraph.To(post.Table, post.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, comment.OwnerTable, comment.OwnerColumn),
+		)
+		fromV = sqlgraph.Neighbors(co.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReplies queries the replies edge of a Comment.
+func (c *CommentClient) QueryReplies(co *Comment) *ReplyQuery {
+	query := &ReplyQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := co.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(comment.Table, comment.FieldID, id),
+			sqlgraph.To(reply.Table, reply.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, comment.RepliesTable, comment.RepliesColumn),
+		)
+		fromV = sqlgraph.Neighbors(co.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.
@@ -303,7 +343,129 @@ func (c *PostClient) GetX(ctx context.Context, id int64) *Post {
 	return obj
 }
 
+// QueryComments queries the comments edge of a Post.
+func (c *PostClient) QueryComments(po *Post) *CommentQuery {
+	query := &CommentQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := po.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(post.Table, post.FieldID, id),
+			sqlgraph.To(comment.Table, comment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, post.CommentsTable, post.CommentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(po.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *PostClient) Hooks() []Hook {
 	return c.hooks.Post
+}
+
+// ReplyClient is a client for the Reply schema.
+type ReplyClient struct {
+	config
+}
+
+// NewReplyClient returns a client for the Reply from the given config.
+func NewReplyClient(c config) *ReplyClient {
+	return &ReplyClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `reply.Hooks(f(g(h())))`.
+func (c *ReplyClient) Use(hooks ...Hook) {
+	c.hooks.Reply = append(c.hooks.Reply, hooks...)
+}
+
+// Create returns a create builder for Reply.
+func (c *ReplyClient) Create() *ReplyCreate {
+	mutation := newReplyMutation(c.config, OpCreate)
+	return &ReplyCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Reply entities.
+func (c *ReplyClient) CreateBulk(builders ...*ReplyCreate) *ReplyCreateBulk {
+	return &ReplyCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Reply.
+func (c *ReplyClient) Update() *ReplyUpdate {
+	mutation := newReplyMutation(c.config, OpUpdate)
+	return &ReplyUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ReplyClient) UpdateOne(r *Reply) *ReplyUpdateOne {
+	mutation := newReplyMutation(c.config, OpUpdateOne, withReply(r))
+	return &ReplyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ReplyClient) UpdateOneID(id int64) *ReplyUpdateOne {
+	mutation := newReplyMutation(c.config, OpUpdateOne, withReplyID(id))
+	return &ReplyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Reply.
+func (c *ReplyClient) Delete() *ReplyDelete {
+	mutation := newReplyMutation(c.config, OpDelete)
+	return &ReplyDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *ReplyClient) DeleteOne(r *Reply) *ReplyDeleteOne {
+	return c.DeleteOneID(r.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *ReplyClient) DeleteOneID(id int64) *ReplyDeleteOne {
+	builder := c.Delete().Where(reply.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ReplyDeleteOne{builder}
+}
+
+// Query returns a query builder for Reply.
+func (c *ReplyClient) Query() *ReplyQuery {
+	return &ReplyQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Reply entity by its id.
+func (c *ReplyClient) Get(ctx context.Context, id int64) (*Reply, error) {
+	return c.Query().Where(reply.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ReplyClient) GetX(ctx context.Context, id int64) *Reply {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryOwner queries the owner edge of a Reply.
+func (c *ReplyClient) QueryOwner(r *Reply) *CommentQuery {
+	query := &CommentQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(reply.Table, reply.FieldID, id),
+			sqlgraph.To(comment.Table, comment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, reply.OwnerTable, reply.OwnerColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ReplyClient) Hooks() []Hook {
+	return c.hooks.Reply
 }

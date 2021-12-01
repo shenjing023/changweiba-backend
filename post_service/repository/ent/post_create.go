@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"cw_post_service/repository/ent/comment"
 	"cw_post_service/repository/ent/post"
 	"errors"
 	"fmt"
@@ -91,6 +92,21 @@ func (pc *PostCreate) SetNillableUpdateAt(i *int64) *PostCreate {
 func (pc *PostCreate) SetID(i int64) *PostCreate {
 	pc.mutation.SetID(i)
 	return pc
+}
+
+// AddCommentIDs adds the "comments" edge to the Comment entity by IDs.
+func (pc *PostCreate) AddCommentIDs(ids ...int64) *PostCreate {
+	pc.mutation.AddCommentIDs(ids...)
+	return pc
+}
+
+// AddComments adds the "comments" edges to the Comment entity.
+func (pc *PostCreate) AddComments(c ...*Comment) *PostCreate {
+	ids := make([]int64, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return pc.AddCommentIDs(ids...)
 }
 
 // Mutation returns the PostMutation object of the builder.
@@ -317,6 +333,25 @@ func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 			Column: post.FieldUpdateAt,
 		})
 		_node.UpdateAt = value
+	}
+	if nodes := pc.mutation.CommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   post.CommentsTable,
+			Columns: []string{post.CommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: comment.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

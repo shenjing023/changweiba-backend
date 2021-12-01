@@ -5,6 +5,7 @@ import (
 	"cw_post_service/repository/ent"
 	"cw_post_service/repository/ent/comment"
 	"cw_post_service/repository/ent/post"
+	"cw_post_service/repository/ent/reply"
 	"fmt"
 	"os"
 	"strconv"
@@ -250,9 +251,10 @@ func increaseCommentReplyNum(commentID int64) {
 	var (
 		ctx   = context.Background()
 		key   = fmt.Sprintf("%s_%d", REPLYCOUNTKEY, commentID)
-		count int64
+		count int
 	)
-	if err := dbOrm.Raw("select count(*) from cw_reply where comment_id=? and status=0", commentID).Scan(&count).Error; err != nil {
+	count, err := entClient.Reply.Query().Where(reply.CommentID(commentID), reply.Status(0)).Count(ctx)
+	if err != nil {
 		return
 	}
 	redisClient.SetEX(ctx, key, count, time.Hour*24)
@@ -260,47 +262,25 @@ func increaseCommentReplyNum(commentID int64) {
 
 // InsertReply add new reply
 func InsertReply(userID, postID, commentID, parentID int64, content string) (int64, error) {
-	session := dbOrm.Begin()
-	//先获取楼层数
-	var floor int64
-	// 行锁
-	sql := "SELECT count(*) AS total FROM cw_reply WHERE comment_id=? FOR UPDATE"
-	if err := session.Raw(sql, commentID).Scan(&floor).Error; err != nil {
-		session.Rollback()
+	id, err := ent.InsertReply(context.Background(), entClient, userID, postID, commentID, parentID, content)
+	if err != nil {
 		return 0, common.NewServiceErr(common.Internal, err)
 	}
-
-	reply := Reply{
-		UserID:     userID,
-		PostID:     postID,
-		Content:    content,
-		ParentID:   parentID,
-		CommentID:  commentID,
-		CreateTime: time.Now().Unix(),
-		Status:     0,
-		Floor:      floor + 1,
-	}
-	if err := session.Create(&reply).Error; err != nil {
-		session.Rollback()
-		return 0, common.NewServiceErr(common.Internal, err)
-	}
-
-	session.Commit()
 	go increasePostReplyNum(postID)
 	go increaseCommentReplyNum(commentID)
-	return reply.ID, nil
+	return id, nil
 }
 
 // FirstComment
 type FirstComment struct {
 	ID      int64  `redis:"id"`
 	Content string `redis:"content"`
-	Status  int    `redis:"status"`
+	Status  int8   `redis:"status"`
 }
 
 // GetPostFirstComment 获取帖子的第一条评论
 // 先从redis中查，记录redis中没有的id，然后再到mysql查，最后拼接结果
-func GetPostFirstComment(postIDs []int64) ([]*Comment, error) {
+func GetPostFirstComment(postIDs []int64) ([]*ent.Comment, error) {
 	var (
 		ctx  = context.Background()
 		pipe = redisClient.Pipeline()
@@ -317,7 +297,7 @@ func GetPostFirstComment(postIDs []int64) ([]*Comment, error) {
 	var (
 		// 保存redis中不存在的key的id
 		ids     []int64
-		results = make([]*Comment, len(postIDs))
+		results = make([]*ent.Comment, len(postIDs))
 		// redis不存在的key的id对应的最后结果的索引
 		idsIndex = make(map[int64]int)
 	)
@@ -330,10 +310,10 @@ func GetPostFirstComment(postIDs []int64) ([]*Comment, error) {
 			ids = append(ids, postIDs[i])
 			idsIndex[postIDs[i]] = i
 		} else {
-			results[i] = &Comment{
+			results[i] = &ent.Comment{
 				ID:      t.ID,
 				Content: t.Content,
-				Status:  int64(t.Status),
+				Status:  t.Status,
 			}
 		}
 	}
@@ -341,25 +321,14 @@ func GetPostFirstComment(postIDs []int64) ([]*Comment, error) {
 		return results, nil
 	}
 
-	sql := `
-		SELECT 
-			id,
-			content,
-			status   
-		FROM 
-			cw_comment 
-		WHERE 
-			floor=1 AND post_id IN (?)
-		ORDER BY FIELD(id,?)
-	`
-	var (
-		m   = make(map[int64]*Comment)
-		tmp []*Comment
-	)
-	if err := dbOrm.Raw(sql, ids, ids).Scan(&tmp).Error; err != nil {
+	tmp, err := entClient.Comment.Query().Where(comment.PostIDIn(ids...), comment.Floor(1)).Order(func(s *sql.Selector) {
+		s.OrderBy(comment.FieldID)
+	}).All(ctx)
+	if err != nil {
 		return nil, common.NewServiceErr(common.Internal, err)
 	}
 
+	var m = make(map[int64]*ent.Comment)
 	for _, v := range tmp {
 		m[v.ID] = v
 	}
@@ -372,7 +341,7 @@ func GetPostFirstComment(postIDs []int64) ([]*Comment, error) {
 				"status":  m[id].Status,
 			})
 		} else {
-			results[idsIndex[id]] = &Comment{}
+			results[idsIndex[id]] = &ent.Comment{}
 		}
 	}
 	return results, nil
@@ -390,8 +359,11 @@ func SaveFirstComment(postID int64, data map[string]interface{}) error {
 }
 
 func DeletePost(postID int64) error {
-	sql := "UPDATE cw_post SET status=1 WHERE id=?"
-	if err := dbOrm.Exec(sql, postID).Error; err != nil {
+	_, err := entClient.Post.UpdateOneID(postID).
+		SetStatus(1).
+		SetUpdateAt(time.Now().Unix()).
+		Save(context.Background())
+	if err != nil {
 		return common.NewServiceErr(common.Internal, err)
 	}
 	if err := redisClient.IncrBy(context.Background(), POSTSCOUNTKEY, -1).Err(); err != nil {

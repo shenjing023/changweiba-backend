@@ -5,6 +5,8 @@ package ent
 import (
 	"context"
 	"cw_post_service/repository/ent/comment"
+	"cw_post_service/repository/ent/post"
+	"cw_post_service/repository/ent/reply"
 	"errors"
 	"fmt"
 
@@ -83,6 +85,40 @@ func (cc *CommentCreate) SetNillableCreateAt(i *int64) *CommentCreate {
 func (cc *CommentCreate) SetID(i int64) *CommentCreate {
 	cc.mutation.SetID(i)
 	return cc
+}
+
+// SetOwnerID sets the "owner" edge to the Post entity by ID.
+func (cc *CommentCreate) SetOwnerID(id int64) *CommentCreate {
+	cc.mutation.SetOwnerID(id)
+	return cc
+}
+
+// SetNillableOwnerID sets the "owner" edge to the Post entity by ID if the given value is not nil.
+func (cc *CommentCreate) SetNillableOwnerID(id *int64) *CommentCreate {
+	if id != nil {
+		cc = cc.SetOwnerID(*id)
+	}
+	return cc
+}
+
+// SetOwner sets the "owner" edge to the Post entity.
+func (cc *CommentCreate) SetOwner(p *Post) *CommentCreate {
+	return cc.SetOwnerID(p.ID)
+}
+
+// AddReplyIDs adds the "replies" edge to the Reply entity by IDs.
+func (cc *CommentCreate) AddReplyIDs(ids ...int64) *CommentCreate {
+	cc.mutation.AddReplyIDs(ids...)
+	return cc
+}
+
+// AddReplies adds the "replies" edges to the Reply entity.
+func (cc *CommentCreate) AddReplies(r ...*Reply) *CommentCreate {
+	ids := make([]int64, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return cc.AddReplyIDs(ids...)
 }
 
 // Mutation returns the CommentMutation object of the builder.
@@ -305,6 +341,45 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 			Column: comment.FieldCreateAt,
 		})
 		_node.CreateAt = value
+	}
+	if nodes := cc.mutation.OwnerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   comment.OwnerTable,
+			Columns: []string{comment.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: post.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.post_comments = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := cc.mutation.RepliesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   comment.RepliesTable,
+			Columns: []string{comment.RepliesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

@@ -26,6 +26,7 @@ type config struct {
 type hooks struct {
 	Comment []ent.Hook
 	Post    []ent.Hook
+	Reply   []ent.Hook
 }
 
 // Options applies the options on the config object.

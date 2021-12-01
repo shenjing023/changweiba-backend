@@ -33,6 +33,27 @@ type Post struct {
 	// UpdateAt holds the value of the "update_at" field.
 	// 最后更新时间
 	UpdateAt int64 `json:"update_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the PostQuery when eager-loading is set.
+	Edges PostEdges `json:"edges"`
+}
+
+// PostEdges holds the relations/edges for other nodes in the graph.
+type PostEdges struct {
+	// Comments holds the value of the comments edge.
+	Comments []*Comment `json:"comments,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// CommentsOrErr returns the Comments value or an error if the edge
+// was not loaded in eager-loading.
+func (e PostEdges) CommentsOrErr() ([]*Comment, error) {
+	if e.loadedTypes[0] {
+		return e.Comments, nil
+	}
+	return nil, &NotLoadedError{edge: "comments"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -104,6 +125,11 @@ func (po *Post) assignValues(columns []string, values []interface{}) error {
 		}
 	}
 	return nil
+}
+
+// QueryComments queries the "comments" edge of the Post entity.
+func (po *Post) QueryComments() *CommentQuery {
+	return (&PostClient{config: po.config}).QueryComments(po)
 }
 
 // Update returns a builder for updating this Post.

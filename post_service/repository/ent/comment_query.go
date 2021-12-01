@@ -5,7 +5,10 @@ package ent
 import (
 	"context"
 	"cw_post_service/repository/ent/comment"
+	"cw_post_service/repository/ent/post"
 	"cw_post_service/repository/ent/predicate"
+	"cw_post_service/repository/ent/reply"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"math"
@@ -24,6 +27,10 @@ type CommentQuery struct {
 	order      []OrderFunc
 	fields     []string
 	predicates []predicate.Comment
+	// eager-loading edges.
+	withOwner   *PostQuery
+	withReplies *ReplyQuery
+	withFKs     bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -58,6 +65,50 @@ func (cq *CommentQuery) Unique(unique bool) *CommentQuery {
 func (cq *CommentQuery) Order(o ...OrderFunc) *CommentQuery {
 	cq.order = append(cq.order, o...)
 	return cq
+}
+
+// QueryOwner chains the current query on the "owner" edge.
+func (cq *CommentQuery) QueryOwner() *PostQuery {
+	query := &PostQuery{config: cq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(comment.Table, comment.FieldID, selector),
+			sqlgraph.To(post.Table, post.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, comment.OwnerTable, comment.OwnerColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryReplies chains the current query on the "replies" edge.
+func (cq *CommentQuery) QueryReplies() *ReplyQuery {
+	query := &ReplyQuery{config: cq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(comment.Table, comment.FieldID, selector),
+			sqlgraph.To(reply.Table, reply.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, comment.RepliesTable, comment.RepliesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Comment entity from the query.
@@ -236,15 +287,39 @@ func (cq *CommentQuery) Clone() *CommentQuery {
 		return nil
 	}
 	return &CommentQuery{
-		config:     cq.config,
-		limit:      cq.limit,
-		offset:     cq.offset,
-		order:      append([]OrderFunc{}, cq.order...),
-		predicates: append([]predicate.Comment{}, cq.predicates...),
+		config:      cq.config,
+		limit:       cq.limit,
+		offset:      cq.offset,
+		order:       append([]OrderFunc{}, cq.order...),
+		predicates:  append([]predicate.Comment{}, cq.predicates...),
+		withOwner:   cq.withOwner.Clone(),
+		withReplies: cq.withReplies.Clone(),
 		// clone intermediate query.
 		sql:  cq.sql.Clone(),
 		path: cq.path,
 	}
+}
+
+// WithOwner tells the query-builder to eager-load the nodes that are connected to
+// the "owner" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *CommentQuery) WithOwner(opts ...func(*PostQuery)) *CommentQuery {
+	query := &PostQuery{config: cq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withOwner = query
+	return cq
+}
+
+// WithReplies tells the query-builder to eager-load the nodes that are connected to
+// the "replies" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *CommentQuery) WithReplies(opts ...func(*ReplyQuery)) *CommentQuery {
+	query := &ReplyQuery{config: cq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withReplies = query
+	return cq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -310,9 +385,20 @@ func (cq *CommentQuery) prepareQuery(ctx context.Context) error {
 
 func (cq *CommentQuery) sqlAll(ctx context.Context) ([]*Comment, error) {
 	var (
-		nodes = []*Comment{}
-		_spec = cq.querySpec()
+		nodes       = []*Comment{}
+		withFKs     = cq.withFKs
+		_spec       = cq.querySpec()
+		loadedTypes = [2]bool{
+			cq.withOwner != nil,
+			cq.withReplies != nil,
+		}
 	)
+	if cq.withOwner != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, comment.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Comment{config: cq.config}
 		nodes = append(nodes, node)
@@ -323,6 +409,7 @@ func (cq *CommentQuery) sqlAll(ctx context.Context) ([]*Comment, error) {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	if err := sqlgraph.QueryNodes(ctx, cq.driver, _spec); err != nil {
@@ -331,6 +418,65 @@ func (cq *CommentQuery) sqlAll(ctx context.Context) ([]*Comment, error) {
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+
+	if query := cq.withOwner; query != nil {
+		ids := make([]int64, 0, len(nodes))
+		nodeids := make(map[int64][]*Comment)
+		for i := range nodes {
+			if nodes[i].post_comments == nil {
+				continue
+			}
+			fk := *nodes[i].post_comments
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
+		}
+		query.Where(post.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "post_comments" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Owner = n
+			}
+		}
+	}
+
+	if query := cq.withReplies; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int64]*Comment)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.Replies = []*Reply{}
+		}
+		query.withFKs = true
+		query.Where(predicate.Reply(func(s *sql.Selector) {
+			s.Where(sql.InValues(comment.RepliesColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.comment_replies
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "comment_replies" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "comment_replies" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.Replies = append(node.Edges.Replies, n)
+		}
+	}
+
 	return nodes, nil
 }
 

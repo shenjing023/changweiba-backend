@@ -5,6 +5,7 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -49,7 +50,12 @@ func (Comment) Fields() []ent.Field {
 
 // Edges of the Comment.
 func (Comment) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.From("owner", Post.Type).
+			Ref("comments").
+			Unique(),
+		edge.To("replies", Reply.Type),
+	}
 }
 
 func (Comment) Annotations() []schema.Annotation {

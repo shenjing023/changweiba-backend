@@ -5,7 +5,9 @@ package ent
 import (
 	"context"
 	"cw_post_service/repository/ent/comment"
+	"cw_post_service/repository/ent/post"
 	"cw_post_service/repository/ent/predicate"
+	"cw_post_service/repository/ent/reply"
 	"fmt"
 
 	"entgo.io/ent/dialect/sql"
@@ -121,9 +123,70 @@ func (cu *CommentUpdate) AddCreateAt(i int64) *CommentUpdate {
 	return cu
 }
 
+// SetOwnerID sets the "owner" edge to the Post entity by ID.
+func (cu *CommentUpdate) SetOwnerID(id int64) *CommentUpdate {
+	cu.mutation.SetOwnerID(id)
+	return cu
+}
+
+// SetNillableOwnerID sets the "owner" edge to the Post entity by ID if the given value is not nil.
+func (cu *CommentUpdate) SetNillableOwnerID(id *int64) *CommentUpdate {
+	if id != nil {
+		cu = cu.SetOwnerID(*id)
+	}
+	return cu
+}
+
+// SetOwner sets the "owner" edge to the Post entity.
+func (cu *CommentUpdate) SetOwner(p *Post) *CommentUpdate {
+	return cu.SetOwnerID(p.ID)
+}
+
+// AddReplyIDs adds the "replies" edge to the Reply entity by IDs.
+func (cu *CommentUpdate) AddReplyIDs(ids ...int64) *CommentUpdate {
+	cu.mutation.AddReplyIDs(ids...)
+	return cu
+}
+
+// AddReplies adds the "replies" edges to the Reply entity.
+func (cu *CommentUpdate) AddReplies(r ...*Reply) *CommentUpdate {
+	ids := make([]int64, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return cu.AddReplyIDs(ids...)
+}
+
 // Mutation returns the CommentMutation object of the builder.
 func (cu *CommentUpdate) Mutation() *CommentMutation {
 	return cu.mutation
+}
+
+// ClearOwner clears the "owner" edge to the Post entity.
+func (cu *CommentUpdate) ClearOwner() *CommentUpdate {
+	cu.mutation.ClearOwner()
+	return cu
+}
+
+// ClearReplies clears all "replies" edges to the Reply entity.
+func (cu *CommentUpdate) ClearReplies() *CommentUpdate {
+	cu.mutation.ClearReplies()
+	return cu
+}
+
+// RemoveReplyIDs removes the "replies" edge to Reply entities by IDs.
+func (cu *CommentUpdate) RemoveReplyIDs(ids ...int64) *CommentUpdate {
+	cu.mutation.RemoveReplyIDs(ids...)
+	return cu
+}
+
+// RemoveReplies removes "replies" edges to Reply entities.
+func (cu *CommentUpdate) RemoveReplies(r ...*Reply) *CommentUpdate {
+	ids := make([]int64, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return cu.RemoveReplyIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -316,6 +379,95 @@ func (cu *CommentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: comment.FieldCreateAt,
 		})
 	}
+	if cu.mutation.OwnerCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   comment.OwnerTable,
+			Columns: []string{comment.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: post.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.OwnerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   comment.OwnerTable,
+			Columns: []string{comment.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: post.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cu.mutation.RepliesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   comment.RepliesTable,
+			Columns: []string{comment.RepliesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.RemovedRepliesIDs(); len(nodes) > 0 && !cu.mutation.RepliesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   comment.RepliesTable,
+			Columns: []string{comment.RepliesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.RepliesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   comment.RepliesTable,
+			Columns: []string{comment.RepliesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, cu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{comment.Label}
@@ -430,9 +582,70 @@ func (cuo *CommentUpdateOne) AddCreateAt(i int64) *CommentUpdateOne {
 	return cuo
 }
 
+// SetOwnerID sets the "owner" edge to the Post entity by ID.
+func (cuo *CommentUpdateOne) SetOwnerID(id int64) *CommentUpdateOne {
+	cuo.mutation.SetOwnerID(id)
+	return cuo
+}
+
+// SetNillableOwnerID sets the "owner" edge to the Post entity by ID if the given value is not nil.
+func (cuo *CommentUpdateOne) SetNillableOwnerID(id *int64) *CommentUpdateOne {
+	if id != nil {
+		cuo = cuo.SetOwnerID(*id)
+	}
+	return cuo
+}
+
+// SetOwner sets the "owner" edge to the Post entity.
+func (cuo *CommentUpdateOne) SetOwner(p *Post) *CommentUpdateOne {
+	return cuo.SetOwnerID(p.ID)
+}
+
+// AddReplyIDs adds the "replies" edge to the Reply entity by IDs.
+func (cuo *CommentUpdateOne) AddReplyIDs(ids ...int64) *CommentUpdateOne {
+	cuo.mutation.AddReplyIDs(ids...)
+	return cuo
+}
+
+// AddReplies adds the "replies" edges to the Reply entity.
+func (cuo *CommentUpdateOne) AddReplies(r ...*Reply) *CommentUpdateOne {
+	ids := make([]int64, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return cuo.AddReplyIDs(ids...)
+}
+
 // Mutation returns the CommentMutation object of the builder.
 func (cuo *CommentUpdateOne) Mutation() *CommentMutation {
 	return cuo.mutation
+}
+
+// ClearOwner clears the "owner" edge to the Post entity.
+func (cuo *CommentUpdateOne) ClearOwner() *CommentUpdateOne {
+	cuo.mutation.ClearOwner()
+	return cuo
+}
+
+// ClearReplies clears all "replies" edges to the Reply entity.
+func (cuo *CommentUpdateOne) ClearReplies() *CommentUpdateOne {
+	cuo.mutation.ClearReplies()
+	return cuo
+}
+
+// RemoveReplyIDs removes the "replies" edge to Reply entities by IDs.
+func (cuo *CommentUpdateOne) RemoveReplyIDs(ids ...int64) *CommentUpdateOne {
+	cuo.mutation.RemoveReplyIDs(ids...)
+	return cuo
+}
+
+// RemoveReplies removes "replies" edges to Reply entities.
+func (cuo *CommentUpdateOne) RemoveReplies(r ...*Reply) *CommentUpdateOne {
+	ids := make([]int64, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return cuo.RemoveReplyIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -648,6 +861,95 @@ func (cuo *CommentUpdateOne) sqlSave(ctx context.Context) (_node *Comment, err e
 			Value:  value,
 			Column: comment.FieldCreateAt,
 		})
+	}
+	if cuo.mutation.OwnerCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   comment.OwnerTable,
+			Columns: []string{comment.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: post.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.OwnerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   comment.OwnerTable,
+			Columns: []string{comment.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: post.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cuo.mutation.RepliesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   comment.RepliesTable,
+			Columns: []string{comment.RepliesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.RemovedRepliesIDs(); len(nodes) > 0 && !cuo.mutation.RepliesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   comment.RepliesTable,
+			Columns: []string{comment.RepliesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.RepliesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   comment.RepliesTable,
+			Columns: []string{comment.RepliesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Comment{config: cuo.config}
 	_spec.Assign = _node.assignValues

@@ -5,6 +5,7 @@ package ent
 import (
 	"cw_post_service/repository/ent/comment"
 	"cw_post_service/repository/ent/post"
+	"cw_post_service/repository/ent/reply"
 	"errors"
 	"fmt"
 
@@ -32,6 +33,7 @@ func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
 		comment.Table: comment.ValidColumn,
 		post.Table:    post.ValidColumn,
+		reply.Table:   reply.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {

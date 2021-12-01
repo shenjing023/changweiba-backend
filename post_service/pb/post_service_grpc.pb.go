@@ -18,23 +18,23 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PostServiceClient interface {
-	NewPost(ctx context.Context, in *NewPostRequest, opts ...grpc.CallOption) (*NewPostResponse, error)
-	NewComment(ctx context.Context, in *NewCommentRequest, opts ...grpc.CallOption) (*NewCommentResponse, error)
-	NewReply(ctx context.Context, in *NewReplyRequest, opts ...grpc.CallOption) (*NewReplyResponse, error)
-	DeletePost(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
-	DeleteComment(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
-	DeleteReply(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
-	GetPost(ctx context.Context, in *PostRequest, opts ...grpc.CallOption) (*PostResponse, error)
-	GetComment(ctx context.Context, in *CommentRequest, opts ...grpc.CallOption) (*CommentResponse, error)
-	GetReply(ctx context.Context, in *ReplyRequest, opts ...grpc.CallOption) (*ReplyResponse, error)
-	GetCommentsByPostId(ctx context.Context, in *CommentsRequest, opts ...grpc.CallOption) (*CommentsResponse, error)
-	GetRepliesByCommentId(ctx context.Context, in *RepliesRequest, opts ...grpc.CallOption) (*RepliesResponse, error)
-	GetPosts(ctx context.Context, in *PostsRequest, opts ...grpc.CallOption) (*PostsResponse, error)
-	//rpc GetRepliesByCommentIds(RepliesByCommentsRequest) returns(RepliesByCommentsResponse){}
-	GetPostsByUserId(ctx context.Context, in *PostsByUserIdRequest, opts ...grpc.CallOption) (*PostsByUserIdResponse, error)
-	GetCommentsByUserId(ctx context.Context, in *CommentsByUserIdRequest, opts ...grpc.CallOption) (*CommentsByUserIdResponse, error)
-	GetRepliesByUserId(ctx context.Context, in *RepliesByUserIdRequest, opts ...grpc.CallOption) (*RepliesByUserIdResponse, error)
-	GetPostFirstComment(ctx context.Context, in *FirstCommentRequest, opts ...grpc.CallOption) (*FirstCommentResponse, error)
+	NewPost(ctx context.Context, in *NewPostRequest, opts ...grpc.CallOption) (*NewPostReply, error)
+	NewComment(ctx context.Context, in *NewCommentRequest, opts ...grpc.CallOption) (*NewCommentReply, error)
+	NewReply(ctx context.Context, in *NewReplyRequest, opts ...grpc.CallOption) (*NewReplyReply, error)
+	DeletePosts(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteReply, error)
+	DeleteComments(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteReply, error)
+	DeleteReplies(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteReply, error)
+	GetPost(ctx context.Context, in *PostRequest, opts ...grpc.CallOption) (*PostReply, error)
+	GetComment(ctx context.Context, in *CommentRequest, opts ...grpc.CallOption) (*CommentReply, error)
+	GetReply(ctx context.Context, in *ReplyRequest, opts ...grpc.CallOption) (*ReplyReply, error)
+	GetCommentsByPostId(ctx context.Context, in *CommentsRequest, opts ...grpc.CallOption) (*CommentsReply, error)
+	GetRepliesByCommentId(ctx context.Context, in *RepliesRequest, opts ...grpc.CallOption) (*RepliesReply, error)
+	GetPosts(ctx context.Context, in *PostsRequest, opts ...grpc.CallOption) (*PostsReply, error)
+	//rpc GetRepliesByCommentIds(RepliesByCommentsRequest) returns(RepliesByCommentsReply){}
+	GetPostsByUserId(ctx context.Context, in *PostsByUserIdRequest, opts ...grpc.CallOption) (*PostsByUserIdReply, error)
+	GetCommentsByUserId(ctx context.Context, in *CommentsByUserIdRequest, opts ...grpc.CallOption) (*CommentsByUserIdReply, error)
+	GetRepliesByUserId(ctx context.Context, in *RepliesByUserIdRequest, opts ...grpc.CallOption) (*RepliesByUserIdReply, error)
+	GetPostFirstComment(ctx context.Context, in *FirstCommentRequest, opts ...grpc.CallOption) (*FirstCommentReply, error)
 }
 
 type postServiceClient struct {
@@ -45,8 +45,8 @@ func NewPostServiceClient(cc grpc.ClientConnInterface) PostServiceClient {
 	return &postServiceClient{cc}
 }
 
-func (c *postServiceClient) NewPost(ctx context.Context, in *NewPostRequest, opts ...grpc.CallOption) (*NewPostResponse, error) {
-	out := new(NewPostResponse)
+func (c *postServiceClient) NewPost(ctx context.Context, in *NewPostRequest, opts ...grpc.CallOption) (*NewPostReply, error) {
+	out := new(NewPostReply)
 	err := c.cc.Invoke(ctx, "/post.PostService/NewPost", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -54,8 +54,8 @@ func (c *postServiceClient) NewPost(ctx context.Context, in *NewPostRequest, opt
 	return out, nil
 }
 
-func (c *postServiceClient) NewComment(ctx context.Context, in *NewCommentRequest, opts ...grpc.CallOption) (*NewCommentResponse, error) {
-	out := new(NewCommentResponse)
+func (c *postServiceClient) NewComment(ctx context.Context, in *NewCommentRequest, opts ...grpc.CallOption) (*NewCommentReply, error) {
+	out := new(NewCommentReply)
 	err := c.cc.Invoke(ctx, "/post.PostService/NewComment", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -63,8 +63,8 @@ func (c *postServiceClient) NewComment(ctx context.Context, in *NewCommentReques
 	return out, nil
 }
 
-func (c *postServiceClient) NewReply(ctx context.Context, in *NewReplyRequest, opts ...grpc.CallOption) (*NewReplyResponse, error) {
-	out := new(NewReplyResponse)
+func (c *postServiceClient) NewReply(ctx context.Context, in *NewReplyRequest, opts ...grpc.CallOption) (*NewReplyReply, error) {
+	out := new(NewReplyReply)
 	err := c.cc.Invoke(ctx, "/post.PostService/NewReply", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -72,35 +72,35 @@ func (c *postServiceClient) NewReply(ctx context.Context, in *NewReplyRequest, o
 	return out, nil
 }
 
-func (c *postServiceClient) DeletePost(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
-	out := new(DeleteResponse)
-	err := c.cc.Invoke(ctx, "/post.PostService/DeletePost", in, out, opts...)
+func (c *postServiceClient) DeletePosts(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteReply, error) {
+	out := new(DeleteReply)
+	err := c.cc.Invoke(ctx, "/post.PostService/DeletePosts", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *postServiceClient) DeleteComment(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
-	out := new(DeleteResponse)
-	err := c.cc.Invoke(ctx, "/post.PostService/DeleteComment", in, out, opts...)
+func (c *postServiceClient) DeleteComments(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteReply, error) {
+	out := new(DeleteReply)
+	err := c.cc.Invoke(ctx, "/post.PostService/DeleteComments", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *postServiceClient) DeleteReply(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
-	out := new(DeleteResponse)
-	err := c.cc.Invoke(ctx, "/post.PostService/DeleteReply", in, out, opts...)
+func (c *postServiceClient) DeleteReplies(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteReply, error) {
+	out := new(DeleteReply)
+	err := c.cc.Invoke(ctx, "/post.PostService/DeleteReplies", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *postServiceClient) GetPost(ctx context.Context, in *PostRequest, opts ...grpc.CallOption) (*PostResponse, error) {
-	out := new(PostResponse)
+func (c *postServiceClient) GetPost(ctx context.Context, in *PostRequest, opts ...grpc.CallOption) (*PostReply, error) {
+	out := new(PostReply)
 	err := c.cc.Invoke(ctx, "/post.PostService/GetPost", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -108,8 +108,8 @@ func (c *postServiceClient) GetPost(ctx context.Context, in *PostRequest, opts .
 	return out, nil
 }
 
-func (c *postServiceClient) GetComment(ctx context.Context, in *CommentRequest, opts ...grpc.CallOption) (*CommentResponse, error) {
-	out := new(CommentResponse)
+func (c *postServiceClient) GetComment(ctx context.Context, in *CommentRequest, opts ...grpc.CallOption) (*CommentReply, error) {
+	out := new(CommentReply)
 	err := c.cc.Invoke(ctx, "/post.PostService/GetComment", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -117,8 +117,8 @@ func (c *postServiceClient) GetComment(ctx context.Context, in *CommentRequest, 
 	return out, nil
 }
 
-func (c *postServiceClient) GetReply(ctx context.Context, in *ReplyRequest, opts ...grpc.CallOption) (*ReplyResponse, error) {
-	out := new(ReplyResponse)
+func (c *postServiceClient) GetReply(ctx context.Context, in *ReplyRequest, opts ...grpc.CallOption) (*ReplyReply, error) {
+	out := new(ReplyReply)
 	err := c.cc.Invoke(ctx, "/post.PostService/GetReply", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -126,8 +126,8 @@ func (c *postServiceClient) GetReply(ctx context.Context, in *ReplyRequest, opts
 	return out, nil
 }
 
-func (c *postServiceClient) GetCommentsByPostId(ctx context.Context, in *CommentsRequest, opts ...grpc.CallOption) (*CommentsResponse, error) {
-	out := new(CommentsResponse)
+func (c *postServiceClient) GetCommentsByPostId(ctx context.Context, in *CommentsRequest, opts ...grpc.CallOption) (*CommentsReply, error) {
+	out := new(CommentsReply)
 	err := c.cc.Invoke(ctx, "/post.PostService/GetCommentsByPostId", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -135,8 +135,8 @@ func (c *postServiceClient) GetCommentsByPostId(ctx context.Context, in *Comment
 	return out, nil
 }
 
-func (c *postServiceClient) GetRepliesByCommentId(ctx context.Context, in *RepliesRequest, opts ...grpc.CallOption) (*RepliesResponse, error) {
-	out := new(RepliesResponse)
+func (c *postServiceClient) GetRepliesByCommentId(ctx context.Context, in *RepliesRequest, opts ...grpc.CallOption) (*RepliesReply, error) {
+	out := new(RepliesReply)
 	err := c.cc.Invoke(ctx, "/post.PostService/GetRepliesByCommentId", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -144,8 +144,8 @@ func (c *postServiceClient) GetRepliesByCommentId(ctx context.Context, in *Repli
 	return out, nil
 }
 
-func (c *postServiceClient) GetPosts(ctx context.Context, in *PostsRequest, opts ...grpc.CallOption) (*PostsResponse, error) {
-	out := new(PostsResponse)
+func (c *postServiceClient) GetPosts(ctx context.Context, in *PostsRequest, opts ...grpc.CallOption) (*PostsReply, error) {
+	out := new(PostsReply)
 	err := c.cc.Invoke(ctx, "/post.PostService/GetPosts", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -153,8 +153,8 @@ func (c *postServiceClient) GetPosts(ctx context.Context, in *PostsRequest, opts
 	return out, nil
 }
 
-func (c *postServiceClient) GetPostsByUserId(ctx context.Context, in *PostsByUserIdRequest, opts ...grpc.CallOption) (*PostsByUserIdResponse, error) {
-	out := new(PostsByUserIdResponse)
+func (c *postServiceClient) GetPostsByUserId(ctx context.Context, in *PostsByUserIdRequest, opts ...grpc.CallOption) (*PostsByUserIdReply, error) {
+	out := new(PostsByUserIdReply)
 	err := c.cc.Invoke(ctx, "/post.PostService/GetPostsByUserId", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -162,8 +162,8 @@ func (c *postServiceClient) GetPostsByUserId(ctx context.Context, in *PostsByUse
 	return out, nil
 }
 
-func (c *postServiceClient) GetCommentsByUserId(ctx context.Context, in *CommentsByUserIdRequest, opts ...grpc.CallOption) (*CommentsByUserIdResponse, error) {
-	out := new(CommentsByUserIdResponse)
+func (c *postServiceClient) GetCommentsByUserId(ctx context.Context, in *CommentsByUserIdRequest, opts ...grpc.CallOption) (*CommentsByUserIdReply, error) {
+	out := new(CommentsByUserIdReply)
 	err := c.cc.Invoke(ctx, "/post.PostService/GetCommentsByUserId", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -171,8 +171,8 @@ func (c *postServiceClient) GetCommentsByUserId(ctx context.Context, in *Comment
 	return out, nil
 }
 
-func (c *postServiceClient) GetRepliesByUserId(ctx context.Context, in *RepliesByUserIdRequest, opts ...grpc.CallOption) (*RepliesByUserIdResponse, error) {
-	out := new(RepliesByUserIdResponse)
+func (c *postServiceClient) GetRepliesByUserId(ctx context.Context, in *RepliesByUserIdRequest, opts ...grpc.CallOption) (*RepliesByUserIdReply, error) {
+	out := new(RepliesByUserIdReply)
 	err := c.cc.Invoke(ctx, "/post.PostService/GetRepliesByUserId", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -180,8 +180,8 @@ func (c *postServiceClient) GetRepliesByUserId(ctx context.Context, in *RepliesB
 	return out, nil
 }
 
-func (c *postServiceClient) GetPostFirstComment(ctx context.Context, in *FirstCommentRequest, opts ...grpc.CallOption) (*FirstCommentResponse, error) {
-	out := new(FirstCommentResponse)
+func (c *postServiceClient) GetPostFirstComment(ctx context.Context, in *FirstCommentRequest, opts ...grpc.CallOption) (*FirstCommentReply, error) {
+	out := new(FirstCommentReply)
 	err := c.cc.Invoke(ctx, "/post.PostService/GetPostFirstComment", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -193,23 +193,23 @@ func (c *postServiceClient) GetPostFirstComment(ctx context.Context, in *FirstCo
 // All implementations must embed UnimplementedPostServiceServer
 // for forward compatibility
 type PostServiceServer interface {
-	NewPost(context.Context, *NewPostRequest) (*NewPostResponse, error)
-	NewComment(context.Context, *NewCommentRequest) (*NewCommentResponse, error)
-	NewReply(context.Context, *NewReplyRequest) (*NewReplyResponse, error)
-	DeletePost(context.Context, *DeleteRequest) (*DeleteResponse, error)
-	DeleteComment(context.Context, *DeleteRequest) (*DeleteResponse, error)
-	DeleteReply(context.Context, *DeleteRequest) (*DeleteResponse, error)
-	GetPost(context.Context, *PostRequest) (*PostResponse, error)
-	GetComment(context.Context, *CommentRequest) (*CommentResponse, error)
-	GetReply(context.Context, *ReplyRequest) (*ReplyResponse, error)
-	GetCommentsByPostId(context.Context, *CommentsRequest) (*CommentsResponse, error)
-	GetRepliesByCommentId(context.Context, *RepliesRequest) (*RepliesResponse, error)
-	GetPosts(context.Context, *PostsRequest) (*PostsResponse, error)
-	//rpc GetRepliesByCommentIds(RepliesByCommentsRequest) returns(RepliesByCommentsResponse){}
-	GetPostsByUserId(context.Context, *PostsByUserIdRequest) (*PostsByUserIdResponse, error)
-	GetCommentsByUserId(context.Context, *CommentsByUserIdRequest) (*CommentsByUserIdResponse, error)
-	GetRepliesByUserId(context.Context, *RepliesByUserIdRequest) (*RepliesByUserIdResponse, error)
-	GetPostFirstComment(context.Context, *FirstCommentRequest) (*FirstCommentResponse, error)
+	NewPost(context.Context, *NewPostRequest) (*NewPostReply, error)
+	NewComment(context.Context, *NewCommentRequest) (*NewCommentReply, error)
+	NewReply(context.Context, *NewReplyRequest) (*NewReplyReply, error)
+	DeletePosts(context.Context, *DeleteRequest) (*DeleteReply, error)
+	DeleteComments(context.Context, *DeleteRequest) (*DeleteReply, error)
+	DeleteReplies(context.Context, *DeleteRequest) (*DeleteReply, error)
+	GetPost(context.Context, *PostRequest) (*PostReply, error)
+	GetComment(context.Context, *CommentRequest) (*CommentReply, error)
+	GetReply(context.Context, *ReplyRequest) (*ReplyReply, error)
+	GetCommentsByPostId(context.Context, *CommentsRequest) (*CommentsReply, error)
+	GetRepliesByCommentId(context.Context, *RepliesRequest) (*RepliesReply, error)
+	GetPosts(context.Context, *PostsRequest) (*PostsReply, error)
+	//rpc GetRepliesByCommentIds(RepliesByCommentsRequest) returns(RepliesByCommentsReply){}
+	GetPostsByUserId(context.Context, *PostsByUserIdRequest) (*PostsByUserIdReply, error)
+	GetCommentsByUserId(context.Context, *CommentsByUserIdRequest) (*CommentsByUserIdReply, error)
+	GetRepliesByUserId(context.Context, *RepliesByUserIdRequest) (*RepliesByUserIdReply, error)
+	GetPostFirstComment(context.Context, *FirstCommentRequest) (*FirstCommentReply, error)
 	mustEmbedUnimplementedPostServiceServer()
 }
 
@@ -217,52 +217,52 @@ type PostServiceServer interface {
 type UnimplementedPostServiceServer struct {
 }
 
-func (UnimplementedPostServiceServer) NewPost(context.Context, *NewPostRequest) (*NewPostResponse, error) {
+func (UnimplementedPostServiceServer) NewPost(context.Context, *NewPostRequest) (*NewPostReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NewPost not implemented")
 }
-func (UnimplementedPostServiceServer) NewComment(context.Context, *NewCommentRequest) (*NewCommentResponse, error) {
+func (UnimplementedPostServiceServer) NewComment(context.Context, *NewCommentRequest) (*NewCommentReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NewComment not implemented")
 }
-func (UnimplementedPostServiceServer) NewReply(context.Context, *NewReplyRequest) (*NewReplyResponse, error) {
+func (UnimplementedPostServiceServer) NewReply(context.Context, *NewReplyRequest) (*NewReplyReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NewReply not implemented")
 }
-func (UnimplementedPostServiceServer) DeletePost(context.Context, *DeleteRequest) (*DeleteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeletePost not implemented")
+func (UnimplementedPostServiceServer) DeletePosts(context.Context, *DeleteRequest) (*DeleteReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeletePosts not implemented")
 }
-func (UnimplementedPostServiceServer) DeleteComment(context.Context, *DeleteRequest) (*DeleteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteComment not implemented")
+func (UnimplementedPostServiceServer) DeleteComments(context.Context, *DeleteRequest) (*DeleteReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteComments not implemented")
 }
-func (UnimplementedPostServiceServer) DeleteReply(context.Context, *DeleteRequest) (*DeleteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteReply not implemented")
+func (UnimplementedPostServiceServer) DeleteReplies(context.Context, *DeleteRequest) (*DeleteReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteReplies not implemented")
 }
-func (UnimplementedPostServiceServer) GetPost(context.Context, *PostRequest) (*PostResponse, error) {
+func (UnimplementedPostServiceServer) GetPost(context.Context, *PostRequest) (*PostReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPost not implemented")
 }
-func (UnimplementedPostServiceServer) GetComment(context.Context, *CommentRequest) (*CommentResponse, error) {
+func (UnimplementedPostServiceServer) GetComment(context.Context, *CommentRequest) (*CommentReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetComment not implemented")
 }
-func (UnimplementedPostServiceServer) GetReply(context.Context, *ReplyRequest) (*ReplyResponse, error) {
+func (UnimplementedPostServiceServer) GetReply(context.Context, *ReplyRequest) (*ReplyReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetReply not implemented")
 }
-func (UnimplementedPostServiceServer) GetCommentsByPostId(context.Context, *CommentsRequest) (*CommentsResponse, error) {
+func (UnimplementedPostServiceServer) GetCommentsByPostId(context.Context, *CommentsRequest) (*CommentsReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCommentsByPostId not implemented")
 }
-func (UnimplementedPostServiceServer) GetRepliesByCommentId(context.Context, *RepliesRequest) (*RepliesResponse, error) {
+func (UnimplementedPostServiceServer) GetRepliesByCommentId(context.Context, *RepliesRequest) (*RepliesReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRepliesByCommentId not implemented")
 }
-func (UnimplementedPostServiceServer) GetPosts(context.Context, *PostsRequest) (*PostsResponse, error) {
+func (UnimplementedPostServiceServer) GetPosts(context.Context, *PostsRequest) (*PostsReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPosts not implemented")
 }
-func (UnimplementedPostServiceServer) GetPostsByUserId(context.Context, *PostsByUserIdRequest) (*PostsByUserIdResponse, error) {
+func (UnimplementedPostServiceServer) GetPostsByUserId(context.Context, *PostsByUserIdRequest) (*PostsByUserIdReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPostsByUserId not implemented")
 }
-func (UnimplementedPostServiceServer) GetCommentsByUserId(context.Context, *CommentsByUserIdRequest) (*CommentsByUserIdResponse, error) {
+func (UnimplementedPostServiceServer) GetCommentsByUserId(context.Context, *CommentsByUserIdRequest) (*CommentsByUserIdReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCommentsByUserId not implemented")
 }
-func (UnimplementedPostServiceServer) GetRepliesByUserId(context.Context, *RepliesByUserIdRequest) (*RepliesByUserIdResponse, error) {
+func (UnimplementedPostServiceServer) GetRepliesByUserId(context.Context, *RepliesByUserIdRequest) (*RepliesByUserIdReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRepliesByUserId not implemented")
 }
-func (UnimplementedPostServiceServer) GetPostFirstComment(context.Context, *FirstCommentRequest) (*FirstCommentResponse, error) {
+func (UnimplementedPostServiceServer) GetPostFirstComment(context.Context, *FirstCommentRequest) (*FirstCommentReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPostFirstComment not implemented")
 }
 func (UnimplementedPostServiceServer) mustEmbedUnimplementedPostServiceServer() {}
@@ -332,56 +332,56 @@ func _PostService_NewReply_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PostService_DeletePost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PostService_DeletePosts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PostServiceServer).DeletePost(ctx, in)
+		return srv.(PostServiceServer).DeletePosts(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/post.PostService/DeletePost",
+		FullMethod: "/post.PostService/DeletePosts",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServiceServer).DeletePost(ctx, req.(*DeleteRequest))
+		return srv.(PostServiceServer).DeletePosts(ctx, req.(*DeleteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PostService_DeleteComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PostService_DeleteComments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PostServiceServer).DeleteComment(ctx, in)
+		return srv.(PostServiceServer).DeleteComments(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/post.PostService/DeleteComment",
+		FullMethod: "/post.PostService/DeleteComments",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServiceServer).DeleteComment(ctx, req.(*DeleteRequest))
+		return srv.(PostServiceServer).DeleteComments(ctx, req.(*DeleteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PostService_DeleteReply_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PostService_DeleteReplies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PostServiceServer).DeleteReply(ctx, in)
+		return srv.(PostServiceServer).DeleteReplies(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/post.PostService/DeleteReply",
+		FullMethod: "/post.PostService/DeleteReplies",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServiceServer).DeleteReply(ctx, req.(*DeleteRequest))
+		return srv.(PostServiceServer).DeleteReplies(ctx, req.(*DeleteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -586,16 +586,16 @@ var PostService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _PostService_NewReply_Handler,
 		},
 		{
-			MethodName: "DeletePost",
-			Handler:    _PostService_DeletePost_Handler,
+			MethodName: "DeletePosts",
+			Handler:    _PostService_DeletePosts_Handler,
 		},
 		{
-			MethodName: "DeleteComment",
-			Handler:    _PostService_DeleteComment_Handler,
+			MethodName: "DeleteComments",
+			Handler:    _PostService_DeleteComments_Handler,
 		},
 		{
-			MethodName: "DeleteReply",
-			Handler:    _PostService_DeleteReply_Handler,
+			MethodName: "DeleteReplies",
+			Handler:    _PostService_DeleteReplies_Handler,
 		},
 		{
 			MethodName: "GetPost",

@@ -16,6 +16,8 @@ type Tx struct {
 	Comment *CommentClient
 	// Post is the client for interacting with the Post builders.
 	Post *PostClient
+	// Reply is the client for interacting with the Reply builders.
+	Reply *ReplyClient
 
 	// lazily loaded.
 	client     *Client
@@ -153,6 +155,7 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Comment = NewCommentClient(tx.config)
 	tx.Post = NewPostClient(tx.config)
+	tx.Reply = NewReplyClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

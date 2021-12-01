@@ -19,8 +19,17 @@ const (
 	FieldCreateAt = "create_at"
 	// FieldUpdateAt holds the string denoting the update_at field in the database.
 	FieldUpdateAt = "update_at"
+	// EdgeComments holds the string denoting the comments edge name in mutations.
+	EdgeComments = "comments"
 	// Table holds the table name of the post in the database.
 	Table = "post"
+	// CommentsTable is the table that holds the comments relation/edge.
+	CommentsTable = "comment"
+	// CommentsInverseTable is the table name for the Comment entity.
+	// It exists in this package in order to avoid circular dependency with the "comment" package.
+	CommentsInverseTable = "comment"
+	// CommentsColumn is the table column denoting the comments relation/edge.
+	CommentsColumn = "post_comments"
 )
 
 // Columns holds all SQL columns for post fields.

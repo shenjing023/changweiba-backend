@@ -4,15 +4,15 @@ package ent
 
 import (
 	"cw_post_service/repository/ent/comment"
-	"cw_post_service/repository/ent/post"
+	"cw_post_service/repository/ent/reply"
 	"fmt"
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
 )
 
-// Comment is the model entity for the Comment schema.
-type Comment struct {
+// Reply is the model entity for the Reply schema.
+type Reply struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int64 `json:"id,omitempty"`
@@ -22,6 +22,12 @@ type Comment struct {
 	// PostID holds the value of the "post_id" field.
 	// The post that the message is associated with.
 	PostID int64 `json:"post_id,omitempty"`
+	// CommentID holds the value of the "comment_id" field.
+	// The comment that the message is associated with.
+	CommentID int64 `json:"comment_id,omitempty"`
+	// ParentID holds the value of the "parent_id" field.
+	// 回复哪个回复的id
+	ParentID int64 `json:"parent_id,omitempty"`
 	// Content holds the value of the "content" field.
 	// The content of the message.
 	Content string `json:"content,omitempty"`
@@ -35,179 +41,179 @@ type Comment struct {
 	// 创建时间
 	CreateAt int64 `json:"create_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
-	// The values are being populated by the CommentQuery when eager-loading is set.
-	Edges         CommentEdges `json:"edges"`
-	post_comments *int64
+	// The values are being populated by the ReplyQuery when eager-loading is set.
+	Edges           ReplyEdges `json:"edges"`
+	comment_replies *int64
 }
 
-// CommentEdges holds the relations/edges for other nodes in the graph.
-type CommentEdges struct {
+// ReplyEdges holds the relations/edges for other nodes in the graph.
+type ReplyEdges struct {
 	// Owner holds the value of the owner edge.
-	Owner *Post `json:"owner,omitempty"`
-	// Replies holds the value of the replies edge.
-	Replies []*Reply `json:"replies,omitempty"`
+	Owner *Comment `json:"owner,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [1]bool
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e CommentEdges) OwnerOrErr() (*Post, error) {
+func (e ReplyEdges) OwnerOrErr() (*Comment, error) {
 	if e.loadedTypes[0] {
 		if e.Owner == nil {
 			// The edge owner was loaded in eager-loading,
 			// but was not found.
-			return nil, &NotFoundError{label: post.Label}
+			return nil, &NotFoundError{label: comment.Label}
 		}
 		return e.Owner, nil
 	}
 	return nil, &NotLoadedError{edge: "owner"}
 }
 
-// RepliesOrErr returns the Replies value or an error if the edge
-// was not loaded in eager-loading.
-func (e CommentEdges) RepliesOrErr() ([]*Reply, error) {
-	if e.loadedTypes[1] {
-		return e.Replies, nil
-	}
-	return nil, &NotLoadedError{edge: "replies"}
-}
-
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Comment) scanValues(columns []string) ([]interface{}, error) {
+func (*Reply) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case comment.FieldID, comment.FieldUserID, comment.FieldPostID, comment.FieldStatus, comment.FieldFloor, comment.FieldCreateAt:
+		case reply.FieldID, reply.FieldUserID, reply.FieldPostID, reply.FieldCommentID, reply.FieldParentID, reply.FieldStatus, reply.FieldFloor, reply.FieldCreateAt:
 			values[i] = new(sql.NullInt64)
-		case comment.FieldContent:
+		case reply.FieldContent:
 			values[i] = new(sql.NullString)
-		case comment.ForeignKeys[0]: // post_comments
+		case reply.ForeignKeys[0]: // comment_replies
 			values[i] = new(sql.NullInt64)
 		default:
-			return nil, fmt.Errorf("unexpected column %q for type Comment", columns[i])
+			return nil, fmt.Errorf("unexpected column %q for type Reply", columns[i])
 		}
 	}
 	return values, nil
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the Comment fields.
-func (c *Comment) assignValues(columns []string, values []interface{}) error {
+// to the Reply fields.
+func (r *Reply) assignValues(columns []string, values []interface{}) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case comment.FieldID:
+		case reply.FieldID:
 			value, ok := values[i].(*sql.NullInt64)
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			c.ID = int64(value.Int64)
-		case comment.FieldUserID:
+			r.ID = int64(value.Int64)
+		case reply.FieldUserID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field user_id", values[i])
 			} else if value.Valid {
-				c.UserID = value.Int64
+				r.UserID = value.Int64
 			}
-		case comment.FieldPostID:
+		case reply.FieldPostID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field post_id", values[i])
 			} else if value.Valid {
-				c.PostID = value.Int64
+				r.PostID = value.Int64
 			}
-		case comment.FieldContent:
+		case reply.FieldCommentID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field comment_id", values[i])
+			} else if value.Valid {
+				r.CommentID = value.Int64
+			}
+		case reply.FieldParentID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field parent_id", values[i])
+			} else if value.Valid {
+				r.ParentID = value.Int64
+			}
+		case reply.FieldContent:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field content", values[i])
 			} else if value.Valid {
-				c.Content = value.String
+				r.Content = value.String
 			}
-		case comment.FieldStatus:
+		case reply.FieldStatus:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
-				c.Status = int8(value.Int64)
+				r.Status = int8(value.Int64)
 			}
-		case comment.FieldFloor:
+		case reply.FieldFloor:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field floor", values[i])
 			} else if value.Valid {
-				c.Floor = value.Int64
+				r.Floor = value.Int64
 			}
-		case comment.FieldCreateAt:
+		case reply.FieldCreateAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field create_at", values[i])
 			} else if value.Valid {
-				c.CreateAt = value.Int64
+				r.CreateAt = value.Int64
 			}
-		case comment.ForeignKeys[0]:
+		case reply.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field post_comments", value)
+				return fmt.Errorf("unexpected type %T for edge-field comment_replies", value)
 			} else if value.Valid {
-				c.post_comments = new(int64)
-				*c.post_comments = int64(value.Int64)
+				r.comment_replies = new(int64)
+				*r.comment_replies = int64(value.Int64)
 			}
 		}
 	}
 	return nil
 }
 
-// QueryOwner queries the "owner" edge of the Comment entity.
-func (c *Comment) QueryOwner() *PostQuery {
-	return (&CommentClient{config: c.config}).QueryOwner(c)
+// QueryOwner queries the "owner" edge of the Reply entity.
+func (r *Reply) QueryOwner() *CommentQuery {
+	return (&ReplyClient{config: r.config}).QueryOwner(r)
 }
 
-// QueryReplies queries the "replies" edge of the Comment entity.
-func (c *Comment) QueryReplies() *ReplyQuery {
-	return (&CommentClient{config: c.config}).QueryReplies(c)
-}
-
-// Update returns a builder for updating this Comment.
-// Note that you need to call Comment.Unwrap() before calling this method if this Comment
+// Update returns a builder for updating this Reply.
+// Note that you need to call Reply.Unwrap() before calling this method if this Reply
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (c *Comment) Update() *CommentUpdateOne {
-	return (&CommentClient{config: c.config}).UpdateOne(c)
+func (r *Reply) Update() *ReplyUpdateOne {
+	return (&ReplyClient{config: r.config}).UpdateOne(r)
 }
 
-// Unwrap unwraps the Comment entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the Reply entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (c *Comment) Unwrap() *Comment {
-	tx, ok := c.config.driver.(*txDriver)
+func (r *Reply) Unwrap() *Reply {
+	tx, ok := r.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: Comment is not a transactional entity")
+		panic("ent: Reply is not a transactional entity")
 	}
-	c.config.driver = tx.drv
-	return c
+	r.config.driver = tx.drv
+	return r
 }
 
 // String implements the fmt.Stringer.
-func (c *Comment) String() string {
+func (r *Reply) String() string {
 	var builder strings.Builder
-	builder.WriteString("Comment(")
-	builder.WriteString(fmt.Sprintf("id=%v", c.ID))
+	builder.WriteString("Reply(")
+	builder.WriteString(fmt.Sprintf("id=%v", r.ID))
 	builder.WriteString(", user_id=")
-	builder.WriteString(fmt.Sprintf("%v", c.UserID))
+	builder.WriteString(fmt.Sprintf("%v", r.UserID))
 	builder.WriteString(", post_id=")
-	builder.WriteString(fmt.Sprintf("%v", c.PostID))
+	builder.WriteString(fmt.Sprintf("%v", r.PostID))
+	builder.WriteString(", comment_id=")
+	builder.WriteString(fmt.Sprintf("%v", r.CommentID))
+	builder.WriteString(", parent_id=")
+	builder.WriteString(fmt.Sprintf("%v", r.ParentID))
 	builder.WriteString(", content=")
-	builder.WriteString(c.Content)
+	builder.WriteString(r.Content)
 	builder.WriteString(", status=")
-	builder.WriteString(fmt.Sprintf("%v", c.Status))
+	builder.WriteString(fmt.Sprintf("%v", r.Status))
 	builder.WriteString(", floor=")
-	builder.WriteString(fmt.Sprintf("%v", c.Floor))
+	builder.WriteString(fmt.Sprintf("%v", r.Floor))
 	builder.WriteString(", create_at=")
-	builder.WriteString(fmt.Sprintf("%v", c.CreateAt))
+	builder.WriteString(fmt.Sprintf("%v", r.CreateAt))
 	builder.WriteByte(')')
 	return builder.String()
 }
 
-// Comments is a parsable slice of Comment.
-type Comments []*Comment
+// Replies is a parsable slice of Reply.
+type Replies []*Reply
 
-func (c Comments) config(cfg config) {
-	for _i := range c {
-		c[_i].config = cfg
+func (r Replies) config(cfg config) {
+	for _i := range r {
+		r[_i].config = cfg
 	}
 }

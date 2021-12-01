@@ -22,7 +22,7 @@ type PostService struct {
 }
 
 // NewPost new post
-func (PostService) NewPost(ctx context.Context, pr *pb.NewPostRequest) (*pb.NewPostResponse, error) {
+func (PostService) NewPost(ctx context.Context, pr *pb.NewPostRequest) (*pb.NewPostReply, error) {
 	if len(strings.TrimSpace(pr.Topic)) == 0 || len(strings.TrimSpace(pr.Content)) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "topic or content can not be empty")
 	}
@@ -37,18 +37,18 @@ func (PostService) NewPost(ctx context.Context, pr *pb.NewPostRequest) (*pb.NewP
 		go repository.DeletePost(postID)
 		return nil, status.Error(codes.Internal, ServiceError)
 	}
-	return &pb.NewPostResponse{
+	return &pb.NewPostReply{
 		PostId: postID,
 	}, nil
 }
 
 // GetPost get post info
-func (PostService) GetPost(ctx context.Context, pr *pb.PostRequest) (*pb.PostResponse, error) {
+func (PostService) GetPost(ctx context.Context, pr *pb.PostRequest) (*pb.PostReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPost not implemented")
 }
 
 // GetPosts get posts info by page and page_size
-func (PostService) GetPosts(ctx context.Context, pr *pb.PostsRequest) (*pb.PostsResponse, error) {
+func (PostService) GetPosts(ctx context.Context, pr *pb.PostsRequest) (*pb.PostsReply, error) {
 	dbPosts, err := repository.GetPosts(int(pr.Page), int(pr.PageSize))
 	if err != nil {
 		log.Error("get posts error: ", err.Error())
@@ -72,37 +72,37 @@ func (PostService) GetPosts(ctx context.Context, pr *pb.PostsRequest) (*pb.Posts
 		log.Error("get posts total count error: ", err.Error())
 		return nil, status.Error(codes.Internal, ServiceError)
 	}
-	return &pb.PostsResponse{
+	return &pb.PostsReply{
 		Posts:      posts,
 		TotalCount: totalCount,
 	}, nil
 }
 
-func (PostService) NewComment(ctx context.Context, pr *pb.NewCommentRequest) (*pb.NewCommentResponse, error) {
+func (PostService) NewComment(ctx context.Context, pr *pb.NewCommentRequest) (*pb.NewCommentReply, error) {
 	// TODO 解析content 文本 图片 视频
 	commentID, err := repository.InsertComment(pr.UserId, pr.PostId, pr.Content)
 	if err != nil {
 		log.Error("insert comment error: ", err.Error())
 		return nil, status.Error(codes.Internal, ServiceError)
 	}
-	return &pb.NewCommentResponse{
+	return &pb.NewCommentReply{
 		CommentId: commentID,
 	}, nil
 }
 
-func (PostService) NewReply(ctx context.Context, pr *pb.NewReplyRequest) (*pb.NewReplyResponse, error) {
+func (PostService) NewReply(ctx context.Context, pr *pb.NewReplyRequest) (*pb.NewReplyReply, error) {
 	replyID, err := repository.InsertReply(pr.UserId, pr.PostId,
 		pr.CommentId, pr.ParentId, pr.Content)
 	if err != nil {
 		log.Error("insert reply error: ", err.Error())
 		return nil, status.Error(codes.Internal, ServiceError)
 	}
-	return &pb.NewReplyResponse{
+	return &pb.NewReplyReply{
 		ReplyId: replyID,
 	}, nil
 }
 
-func (PostService) GetPostFirstComment(ctx context.Context, pr *pb.FirstCommentRequest) (*pb.FirstCommentResponse, error) {
+func (PostService) GetPostFirstComment(ctx context.Context, pr *pb.FirstCommentRequest) (*pb.FirstCommentReply, error) {
 	dbComments, err := repository.GetPostFirstComment(pr.PostIds)
 	if err != nil {
 		log.Error("get first comment error: ", err.Error())
@@ -121,12 +121,12 @@ func (PostService) GetPostFirstComment(ctx context.Context, pr *pb.FirstCommentR
 			})
 		}
 	}
-	return &pb.FirstCommentResponse{
+	return &pb.FirstCommentReply{
 		Comments: comments,
 	}, nil
 }
 
-func (PostService) GetCommentsByPostId(ctx context.Context, pr *pb.CommentsRequest) (*pb.CommentsResponse, error) {
+func (PostService) GetCommentsByPostId(ctx context.Context, pr *pb.CommentsRequest) (*pb.CommentsReply, error) {
 	dbComments, err := repository.GetCommentsByPostID(pr.PostId, pr.Page, pr.PageSize)
 	if err != nil {
 		log.Error("get post comments error: ", err.Error())
@@ -145,13 +145,13 @@ func (PostService) GetCommentsByPostId(ctx context.Context, pr *pb.CommentsReque
 		log.Error("get post comments total count error: ", err.Error())
 		return nil, status.Error(codes.Internal, ServiceError)
 	}
-	return &pb.CommentsResponse{
+	return &pb.CommentsReply{
 		TotalCount: totalCount,
 		Comments:   comments,
 	}, nil
 }
 
-func (PostService) GetRepliesByCommentId(ctx context.Context, pr *pb.RepliesRequest) (*pb.RepliesResponse, error) {
+func (PostService) GetRepliesByCommentId(ctx context.Context, pr *pb.RepliesRequest) (*pb.RepliesReply, error) {
 	dbReplies, err := repository.GetRepliesByCommentID(pr.CommentId, pr.Page, pr.PageSize)
 	if err != nil {
 		log.Error("get comment replies error: ", err.Error())
@@ -176,7 +176,7 @@ func (PostService) GetRepliesByCommentId(ctx context.Context, pr *pb.RepliesRequ
 		log.Error("get comment replies total count error: ", err.Error())
 		return nil, status.Error(codes.Internal, ServiceError)
 	}
-	return &pb.RepliesResponse{
+	return &pb.RepliesReply{
 		TotalCount: totalCount,
 		Replies:    replies,
 	}, nil

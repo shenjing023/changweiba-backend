@@ -4,8 +4,10 @@ package ent
 
 import (
 	"context"
+	"cw_post_service/repository/ent/comment"
 	"cw_post_service/repository/ent/post"
 	"cw_post_service/repository/ent/predicate"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"math"
@@ -24,6 +26,8 @@ type PostQuery struct {
 	order      []OrderFunc
 	fields     []string
 	predicates []predicate.Post
+	// eager-loading edges.
+	withComments *CommentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -58,6 +62,28 @@ func (pq *PostQuery) Unique(unique bool) *PostQuery {
 func (pq *PostQuery) Order(o ...OrderFunc) *PostQuery {
 	pq.order = append(pq.order, o...)
 	return pq
+}
+
+// QueryComments chains the current query on the "comments" edge.
+func (pq *PostQuery) QueryComments() *CommentQuery {
+	query := &CommentQuery{config: pq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(post.Table, post.FieldID, selector),
+			sqlgraph.To(comment.Table, comment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, post.CommentsTable, post.CommentsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Post entity from the query.
@@ -236,15 +262,27 @@ func (pq *PostQuery) Clone() *PostQuery {
 		return nil
 	}
 	return &PostQuery{
-		config:     pq.config,
-		limit:      pq.limit,
-		offset:     pq.offset,
-		order:      append([]OrderFunc{}, pq.order...),
-		predicates: append([]predicate.Post{}, pq.predicates...),
+		config:       pq.config,
+		limit:        pq.limit,
+		offset:       pq.offset,
+		order:        append([]OrderFunc{}, pq.order...),
+		predicates:   append([]predicate.Post{}, pq.predicates...),
+		withComments: pq.withComments.Clone(),
 		// clone intermediate query.
 		sql:  pq.sql.Clone(),
 		path: pq.path,
 	}
+}
+
+// WithComments tells the query-builder to eager-load the nodes that are connected to
+// the "comments" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *PostQuery) WithComments(opts ...func(*CommentQuery)) *PostQuery {
+	query := &CommentQuery{config: pq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withComments = query
+	return pq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -310,8 +348,11 @@ func (pq *PostQuery) prepareQuery(ctx context.Context) error {
 
 func (pq *PostQuery) sqlAll(ctx context.Context) ([]*Post, error) {
 	var (
-		nodes = []*Post{}
-		_spec = pq.querySpec()
+		nodes       = []*Post{}
+		_spec       = pq.querySpec()
+		loadedTypes = [1]bool{
+			pq.withComments != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Post{config: pq.config}
@@ -323,6 +364,7 @@ func (pq *PostQuery) sqlAll(ctx context.Context) ([]*Post, error) {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	if err := sqlgraph.QueryNodes(ctx, pq.driver, _spec); err != nil {
@@ -331,6 +373,36 @@ func (pq *PostQuery) sqlAll(ctx context.Context) ([]*Post, error) {
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+
+	if query := pq.withComments; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int64]*Post)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.Comments = []*Comment{}
+		}
+		query.withFKs = true
+		query.Where(predicate.Comment(func(s *sql.Selector) {
+			s.Where(sql.InValues(post.CommentsColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.post_comments
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "post_comments" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "post_comments" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.Comments = append(node.Edges.Comments, n)
+		}
+	}
+
 	return nodes, nil
 }
 
