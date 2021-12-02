@@ -29,7 +29,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "comment" package.
 	CommentsInverseTable = "comment"
 	// CommentsColumn is the table column denoting the comments relation/edge.
-	CommentsColumn = "post_comments"
+	CommentsColumn = "post_id"
 )
 
 // Columns holds all SQL columns for post fields.

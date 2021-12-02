@@ -382,7 +382,6 @@ func (pq *PostQuery) sqlAll(ctx context.Context) ([]*Post, error) {
 			nodeids[nodes[i].ID] = nodes[i]
 			nodes[i].Edges.Comments = []*Comment{}
 		}
-		query.withFKs = true
 		query.Where(predicate.Comment(func(s *sql.Selector) {
 			s.Where(sql.InValues(post.CommentsColumn, fks...))
 		}))
@@ -391,13 +390,10 @@ func (pq *PostQuery) sqlAll(ctx context.Context) ([]*Post, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.post_comments
-			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "post_comments" is nil for node %v`, n.ID)
-			}
-			node, ok := nodeids[*fk]
+			fk := n.PostID
+			node, ok := nodeids[fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "post_comments" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "post_id" returned %v for node %v`, fk, n.ID)
 			}
 			node.Edges.Comments = append(node.Edges.Comments, n)
 		}

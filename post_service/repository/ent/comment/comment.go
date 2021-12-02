@@ -31,14 +31,14 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "post" package.
 	OwnerInverseTable = "post"
 	// OwnerColumn is the table column denoting the owner relation/edge.
-	OwnerColumn = "post_comments"
+	OwnerColumn = "post_id"
 	// RepliesTable is the table that holds the replies relation/edge.
 	RepliesTable = "reply"
 	// RepliesInverseTable is the table name for the Reply entity.
 	// It exists in this package in order to avoid circular dependency with the "reply" package.
 	RepliesInverseTable = "reply"
 	// RepliesColumn is the table column denoting the replies relation/edge.
-	RepliesColumn = "comment_replies"
+	RepliesColumn = "comment_id"
 )
 
 // Columns holds all SQL columns for comment fields.
@@ -52,21 +52,10 @@ var Columns = []string{
 	FieldCreateAt,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "comment"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"post_comments",
-}
-
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}

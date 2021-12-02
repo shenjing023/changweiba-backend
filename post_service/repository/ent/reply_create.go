@@ -26,21 +26,31 @@ func (rc *ReplyCreate) SetUserID(i int64) *ReplyCreate {
 	return rc
 }
 
-// SetPostID sets the "post_id" field.
-func (rc *ReplyCreate) SetPostID(i int64) *ReplyCreate {
-	rc.mutation.SetPostID(i)
-	return rc
-}
-
 // SetCommentID sets the "comment_id" field.
 func (rc *ReplyCreate) SetCommentID(i int64) *ReplyCreate {
 	rc.mutation.SetCommentID(i)
 	return rc
 }
 
+// SetNillableCommentID sets the "comment_id" field if the given value is not nil.
+func (rc *ReplyCreate) SetNillableCommentID(i *int64) *ReplyCreate {
+	if i != nil {
+		rc.SetCommentID(*i)
+	}
+	return rc
+}
+
 // SetParentID sets the "parent_id" field.
 func (rc *ReplyCreate) SetParentID(i int64) *ReplyCreate {
 	rc.mutation.SetParentID(i)
+	return rc
+}
+
+// SetNillableParentID sets the "parent_id" field if the given value is not nil.
+func (rc *ReplyCreate) SetNillableParentID(i *int64) *ReplyCreate {
+	if i != nil {
+		rc.SetParentID(*i)
+	}
 	return rc
 }
 
@@ -115,6 +125,26 @@ func (rc *ReplyCreate) SetNillableOwnerID(id *int64) *ReplyCreate {
 // SetOwner sets the "owner" edge to the Comment entity.
 func (rc *ReplyCreate) SetOwner(c *Comment) *ReplyCreate {
 	return rc.SetOwnerID(c.ID)
+}
+
+// SetParent sets the "parent" edge to the Reply entity.
+func (rc *ReplyCreate) SetParent(r *Reply) *ReplyCreate {
+	return rc.SetParentID(r.ID)
+}
+
+// AddChildIDs adds the "children" edge to the Reply entity by IDs.
+func (rc *ReplyCreate) AddChildIDs(ids ...int64) *ReplyCreate {
+	rc.mutation.AddChildIDs(ids...)
+	return rc
+}
+
+// AddChildren adds the "children" edges to the Reply entity.
+func (rc *ReplyCreate) AddChildren(r ...*Reply) *ReplyCreate {
+	ids := make([]int64, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return rc.AddChildIDs(ids...)
 }
 
 // Mutation returns the ReplyMutation object of the builder.
@@ -212,24 +242,10 @@ func (rc *ReplyCreate) check() error {
 			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "user_id": %w`, err)}
 		}
 	}
-	if _, ok := rc.mutation.PostID(); !ok {
-		return &ValidationError{Name: "post_id", err: errors.New(`ent: missing required field "post_id"`)}
-	}
-	if v, ok := rc.mutation.PostID(); ok {
-		if err := reply.PostIDValidator(v); err != nil {
-			return &ValidationError{Name: "post_id", err: fmt.Errorf(`ent: validator failed for field "post_id": %w`, err)}
-		}
-	}
-	if _, ok := rc.mutation.CommentID(); !ok {
-		return &ValidationError{Name: "comment_id", err: errors.New(`ent: missing required field "comment_id"`)}
-	}
 	if v, ok := rc.mutation.CommentID(); ok {
 		if err := reply.CommentIDValidator(v); err != nil {
 			return &ValidationError{Name: "comment_id", err: fmt.Errorf(`ent: validator failed for field "comment_id": %w`, err)}
 		}
-	}
-	if _, ok := rc.mutation.ParentID(); !ok {
-		return &ValidationError{Name: "parent_id", err: errors.New(`ent: missing required field "parent_id"`)}
 	}
 	if v, ok := rc.mutation.ParentID(); ok {
 		if err := reply.ParentIDValidator(v); err != nil {
@@ -314,30 +330,6 @@ func (rc *ReplyCreate) createSpec() (*Reply, *sqlgraph.CreateSpec) {
 		})
 		_node.UserID = value
 	}
-	if value, ok := rc.mutation.PostID(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldPostID,
-		})
-		_node.PostID = value
-	}
-	if value, ok := rc.mutation.CommentID(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldCommentID,
-		})
-		_node.CommentID = value
-	}
-	if value, ok := rc.mutation.ParentID(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldParentID,
-		})
-		_node.ParentID = value
-	}
 	if value, ok := rc.mutation.Content(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -387,7 +379,46 @@ func (rc *ReplyCreate) createSpec() (*Reply, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.comment_replies = &nodes[0]
+		_node.CommentID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := rc.mutation.ParentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   reply.ParentTable,
+			Columns: []string{reply.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.ParentID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := rc.mutation.ChildrenIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   reply.ChildrenTable,
+			Columns: []string{reply.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

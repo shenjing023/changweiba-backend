@@ -28,7 +28,7 @@ func (Comment) Fields() []ent.Field {
 
 		field.Int64("post_id").SchemaType(map[string]string{
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).Positive().Comment("The post that the message is associated with."),
+		}).Positive().Comment("The post that the message belongs to.").Optional(),
 
 		field.String("content").SchemaType(map[string]string{
 			dialect.MySQL: "varchar(1024)", // Override MySQL.
@@ -53,7 +53,8 @@ func (Comment) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("owner", Post.Type).
 			Ref("comments").
-			Unique(),
+			Unique().
+			Field("post_id"),
 		edge.To("replies", Reply.Type),
 	}
 }
@@ -67,6 +68,6 @@ func (Comment) Annotations() []schema.Annotation {
 func (Comment) Indexes() []ent.Index {
 	return []ent.Index{
 		// 非唯一约束索引
-		index.Fields("user_id", "post_id"),
+		index.Fields("user_id"),
 	}
 }

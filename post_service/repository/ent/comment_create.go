@@ -33,6 +33,14 @@ func (cc *CommentCreate) SetPostID(i int64) *CommentCreate {
 	return cc
 }
 
+// SetNillablePostID sets the "post_id" field if the given value is not nil.
+func (cc *CommentCreate) SetNillablePostID(i *int64) *CommentCreate {
+	if i != nil {
+		cc.SetPostID(*i)
+	}
+	return cc
+}
+
 // SetContent sets the "content" field.
 func (cc *CommentCreate) SetContent(s string) *CommentCreate {
 	cc.mutation.SetContent(s)
@@ -216,9 +224,6 @@ func (cc *CommentCreate) check() error {
 			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "user_id": %w`, err)}
 		}
 	}
-	if _, ok := cc.mutation.PostID(); !ok {
-		return &ValidationError{Name: "post_id", err: errors.New(`ent: missing required field "post_id"`)}
-	}
 	if v, ok := cc.mutation.PostID(); ok {
 		if err := comment.PostIDValidator(v); err != nil {
 			return &ValidationError{Name: "post_id", err: fmt.Errorf(`ent: validator failed for field "post_id": %w`, err)}
@@ -302,14 +307,6 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 		})
 		_node.UserID = value
 	}
-	if value, ok := cc.mutation.PostID(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: comment.FieldPostID,
-		})
-		_node.PostID = value
-	}
 	if value, ok := cc.mutation.Content(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -359,7 +356,7 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.post_comments = &nodes[0]
+		_node.PostID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := cc.mutation.RepliesIDs(); len(nodes) > 0 {

@@ -61,8 +61,8 @@ func (PostService) GetPosts(ctx context.Context, pr *pb.PostsRequest) (*pb.Posts
 			Id:         v.ID,
 			UserId:     v.UserID,
 			Topic:      v.Topic,
-			CreateTime: v.CreateTime,
-			LastUpdate: v.LastUpdate,
+			CreateTime: v.CreateAt,
+			LastUpdate: v.UpdateAt,
 			ReplyNum:   v.ReplyNum,
 			Status:     pb.PostStatusEnum_Status(v.Status),
 		})
@@ -127,7 +127,7 @@ func (PostService) GetPostFirstComment(ctx context.Context, pr *pb.FirstCommentR
 }
 
 func (PostService) GetCommentsByPostId(ctx context.Context, pr *pb.CommentsRequest) (*pb.CommentsReply, error) {
-	dbComments, err := repository.GetCommentsByPostID(pr.PostId, pr.Page, pr.PageSize)
+	dbComments, err := repository.GetCommentsByPostID(pr.PostId, int(pr.Page), int(pr.PageSize))
 	if err != nil {
 		log.Error("get post comments error: ", err.Error())
 		return nil, status.Error(codes.Internal, ServiceError)
@@ -152,7 +152,7 @@ func (PostService) GetCommentsByPostId(ctx context.Context, pr *pb.CommentsReque
 }
 
 func (PostService) GetRepliesByCommentId(ctx context.Context, pr *pb.RepliesRequest) (*pb.RepliesReply, error) {
-	dbReplies, err := repository.GetRepliesByCommentID(pr.CommentId, pr.Page, pr.PageSize)
+	dbReplies, err := repository.GetRepliesByCommentID(pr.CommentId, int(pr.Page), int(pr.PageSize))
 	if err != nil {
 		log.Error("get comment replies error: ", err.Error())
 		return nil, status.Error(codes.Internal, ServiceError)
@@ -163,12 +163,11 @@ func (PostService) GetRepliesByCommentId(ctx context.Context, pr *pb.RepliesRequ
 			Id:         v.ID,
 			Content:    v.Content,
 			Status:     pb.PostStatusEnum_Status(v.Status),
-			CreateTime: v.CreateTime,
+			CreateTime: v.CreateAt,
 			ParentId:   v.ParentID,
 			Floor:      v.Floor,
 			UserId:     v.UserID,
-			PostId:     v.PostID,
-			CommentId:  v.CommentID,
+			CommentId:  pr.CommentId,
 		})
 	}
 	totalCount, err := repository.GetCommentReplyTotalCount(pr.CommentId)

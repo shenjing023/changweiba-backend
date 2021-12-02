@@ -99,13 +99,6 @@ func UserID(v int64) predicate.Reply {
 	})
 }
 
-// PostID applies equality check predicate on the "post_id" field. It's identical to PostIDEQ.
-func PostID(v int64) predicate.Reply {
-	return predicate.Reply(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldPostID), v))
-	})
-}
-
 // CommentID applies equality check predicate on the "comment_id" field. It's identical to CommentIDEQ.
 func CommentID(v int64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
@@ -224,82 +217,6 @@ func UserIDLTE(v int64) predicate.Reply {
 	})
 }
 
-// PostIDEQ applies the EQ predicate on the "post_id" field.
-func PostIDEQ(v int64) predicate.Reply {
-	return predicate.Reply(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldPostID), v))
-	})
-}
-
-// PostIDNEQ applies the NEQ predicate on the "post_id" field.
-func PostIDNEQ(v int64) predicate.Reply {
-	return predicate.Reply(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldPostID), v))
-	})
-}
-
-// PostIDIn applies the In predicate on the "post_id" field.
-func PostIDIn(vs ...int64) predicate.Reply {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Reply(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.In(s.C(FieldPostID), v...))
-	})
-}
-
-// PostIDNotIn applies the NotIn predicate on the "post_id" field.
-func PostIDNotIn(vs ...int64) predicate.Reply {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Reply(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.NotIn(s.C(FieldPostID), v...))
-	})
-}
-
-// PostIDGT applies the GT predicate on the "post_id" field.
-func PostIDGT(v int64) predicate.Reply {
-	return predicate.Reply(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldPostID), v))
-	})
-}
-
-// PostIDGTE applies the GTE predicate on the "post_id" field.
-func PostIDGTE(v int64) predicate.Reply {
-	return predicate.Reply(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldPostID), v))
-	})
-}
-
-// PostIDLT applies the LT predicate on the "post_id" field.
-func PostIDLT(v int64) predicate.Reply {
-	return predicate.Reply(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldPostID), v))
-	})
-}
-
-// PostIDLTE applies the LTE predicate on the "post_id" field.
-func PostIDLTE(v int64) predicate.Reply {
-	return predicate.Reply(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldPostID), v))
-	})
-}
-
 // CommentIDEQ applies the EQ predicate on the "comment_id" field.
 func CommentIDEQ(v int64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
@@ -348,31 +265,17 @@ func CommentIDNotIn(vs ...int64) predicate.Reply {
 	})
 }
 
-// CommentIDGT applies the GT predicate on the "comment_id" field.
-func CommentIDGT(v int64) predicate.Reply {
+// CommentIDIsNil applies the IsNil predicate on the "comment_id" field.
+func CommentIDIsNil() predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldCommentID), v))
+		s.Where(sql.IsNull(s.C(FieldCommentID)))
 	})
 }
 
-// CommentIDGTE applies the GTE predicate on the "comment_id" field.
-func CommentIDGTE(v int64) predicate.Reply {
+// CommentIDNotNil applies the NotNil predicate on the "comment_id" field.
+func CommentIDNotNil() predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldCommentID), v))
-	})
-}
-
-// CommentIDLT applies the LT predicate on the "comment_id" field.
-func CommentIDLT(v int64) predicate.Reply {
-	return predicate.Reply(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldCommentID), v))
-	})
-}
-
-// CommentIDLTE applies the LTE predicate on the "comment_id" field.
-func CommentIDLTE(v int64) predicate.Reply {
-	return predicate.Reply(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldCommentID), v))
+		s.Where(sql.NotNull(s.C(FieldCommentID)))
 	})
 }
 
@@ -424,31 +327,17 @@ func ParentIDNotIn(vs ...int64) predicate.Reply {
 	})
 }
 
-// ParentIDGT applies the GT predicate on the "parent_id" field.
-func ParentIDGT(v int64) predicate.Reply {
+// ParentIDIsNil applies the IsNil predicate on the "parent_id" field.
+func ParentIDIsNil() predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldParentID), v))
+		s.Where(sql.IsNull(s.C(FieldParentID)))
 	})
 }
 
-// ParentIDGTE applies the GTE predicate on the "parent_id" field.
-func ParentIDGTE(v int64) predicate.Reply {
+// ParentIDNotNil applies the NotNil predicate on the "parent_id" field.
+func ParentIDNotNil() predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldParentID), v))
-	})
-}
-
-// ParentIDLT applies the LT predicate on the "parent_id" field.
-func ParentIDLT(v int64) predicate.Reply {
-	return predicate.Reply(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldParentID), v))
-	})
-}
-
-// ParentIDLTE applies the LTE predicate on the "parent_id" field.
-func ParentIDLTE(v int64) predicate.Reply {
-	return predicate.Reply(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldParentID), v))
+		s.Where(sql.NotNull(s.C(FieldParentID)))
 	})
 }
 
@@ -810,6 +699,62 @@ func HasOwnerWith(preds ...predicate.Comment) predicate.Reply {
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(OwnerInverseTable, FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, OwnerTable, OwnerColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasParent applies the HasEdge predicate on the "parent" edge.
+func HasParent() predicate.Reply {
+	return predicate.Reply(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ParentTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ParentTable, ParentColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasParentWith applies the HasEdge predicate on the "parent" edge with a given conditions (other predicates).
+func HasParentWith(preds ...predicate.Reply) predicate.Reply {
+	return predicate.Reply(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ParentTable, ParentColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasChildren applies the HasEdge predicate on the "children" edge.
+func HasChildren() predicate.Reply {
+	return predicate.Reply(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ChildrenTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ChildrenTable, ChildrenColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasChildrenWith applies the HasEdge predicate on the "children" edge with a given conditions (other predicates).
+func HasChildrenWith(preds ...predicate.Reply) predicate.Reply {
+	return predicate.Reply(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ChildrenTable, ChildrenColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

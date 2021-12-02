@@ -11,8 +11,8 @@ import (
 // TODO 待优化
 func GetPosts(ctx context.Context, c *Client, page, pageSize int) ([]*Post, error) {
 	db := c.driver.(*sql.Driver).DB()
-	sql := `SELECT t1.* FROM cw_post t1, 
-	(SELECT id FROM cw_post WHERE status=? ORDER BY last_update DESC, id DESC LIMIT ?,?) t2 
+	sql := `SELECT t1.* FROM post t1, 
+	(SELECT id FROM post WHERE status=? ORDER BY update_at DESC, id DESC LIMIT ?,?) t2 
 	WHERE t1.id=t2.id`
 	rows, err := db.QueryContext(ctx, sql, 0, pageSize*(page-1), pageSize)
 	if err != nil {
@@ -28,12 +28,12 @@ func GetPosts(ctx context.Context, c *Client, page, pageSize int) ([]*Post, erro
 	return posts, nil
 }
 
-func InsertReply(ctx context.Context, c *Client, userID, postID, commentID, parentID int64, content string) (int64, error) {
+func InsertReply(ctx context.Context, c *Client, userID, commentID, parentID int64, content string) (int64, error) {
 	db := c.driver.(*sql.Driver).DB()
 	//先获取楼层数
 	var floor int64
 	// 行锁
-	sql := "SELECT count(*) AS total FROM cw_reply WHERE comment_id=? FOR UPDATE"
+	sql := "SELECT count(*) AS total FROM reply WHERE comment_id=? FOR UPDATE"
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, err
@@ -47,13 +47,12 @@ func InsertReply(ctx context.Context, c *Client, userID, postID, commentID, pare
 	// 再插入
 	r, err := c.Reply.Create().
 		SetUserID(userID).
-		SetPostID(postID).
-		SetCommentID(commentID).
 		SetParentID(parentID).
 		SetFloor(floor + 1).
 		SetContent(content).
 		SetStatus(0).
 		SetCreateAt(time.Now().Unix()).
+		SetOwnerID(commentID).
 		Save(ctx)
 	if err != nil {
 		tx.Rollback()
@@ -61,4 +60,52 @@ func InsertReply(ctx context.Context, c *Client, userID, postID, commentID, pare
 	}
 	tx.Commit()
 	return r.ID, nil
+}
+
+// GetCommentsByPostID 获取帖子所属的评论
+// TODO 待优化
+func GetCommentsByPostID(ctx context.Context, c *Client, postID int64, page, pageSize int) ([]*Comment, error) {
+	db := c.driver.(*sql.Driver).DB()
+	sql := `SELECT 
+				t1.*
+			FROM 
+				comment t1, 
+			(SELECT id FROM comment WHERE status=? AND post_id=? LIMIT ?,?) t2 
+			WHERE t1.id=t2.id`
+	rows, err := db.QueryContext(ctx, sql, 0, pageSize*(page-1), pageSize)
+	if err != nil {
+		return nil, err
+	}
+	var comments []*Comment
+	defer rows.Close()
+	for rows.Next() {
+		var c Comment
+		rows.Scan(&c)
+		comments = append(comments, &c)
+	}
+	return comments, nil
+}
+
+// GetCommentsByPostID 获取帖子所属的评论
+// TODO 待优化
+func GetCommentsByPostID1(ctx context.Context, c *Client, postID int64, page, pageSize int) ([]*Comment, error) {
+	db := c.driver.(*sql.Driver).DB()
+	sql := `SELECT 
+				t1.*
+			FROM 
+				comment t1, 
+			(SELECT id FROM comment WHERE status=? AND post_id=? LIMIT ?,?) t2 
+			WHERE t1.id=t2.id`
+	rows, err := db.QueryContext(ctx, sql, 0, pageSize*(page-1), pageSize)
+	if err != nil {
+		return nil, err
+	}
+	var comments []*Comment
+	defer rows.Close()
+	for rows.Next() {
+		var c Comment
+		rows.Scan(&c)
+		comments = append(comments, &c)
+	}
+	return comments, nil
 }

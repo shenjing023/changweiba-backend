@@ -19,14 +19,12 @@ import (
 	log "github.com/shenjing023/llog"
 	"golang.org/x/net/context"
 	"golang.org/x/sync/singleflight"
-	"gorm.io/gorm"
 )
 
 var (
 	redisClient     *redis.Client
 	entClient       *ent.Client
 	postsCountCache singleflight.Group
-	dbOrm           *gorm.DB
 )
 
 const (
@@ -166,7 +164,7 @@ func InsertComment(userID int64, postID int64, content string) (int64, error) {
 	_, err := redisClient.Get(ctx, key).Result()
 	if err == redis.Nil {
 		// 不存在
-		t, err := entClient.Comment.Query().Where(comment.PostID(postID)).Count(ctx)
+		t, err := entClient.Post.Query().Where(post.ID(postID)).QueryComments().Count(ctx)
 		if err != nil {
 			return 0, common.NewServiceErr(common.Internal, err)
 		}
@@ -201,11 +199,11 @@ func InsertComment(userID int64, postID int64, content string) (int64, error) {
 	now := time.Now().Unix()
 	comment, err := entClient.Comment.Create().
 		SetUserID(userID).
-		SetPostID(postID).
 		SetContent(content).
 		SetFloor(floor).
 		SetCreateAt(now).
 		SetStatus(0).
+		SetOwnerID(postID).
 		Save(ctx)
 	if err != nil {
 		return 0, common.NewServiceErr(common.Internal, err)
@@ -239,7 +237,8 @@ func increasePostCommentNum(postID int64) {
 		key   = fmt.Sprintf("%s_%d", COMMENTCOUNTKEY, postID)
 		count int
 	)
-	count, err := entClient.Comment.Query().Where(comment.PostID(postID), comment.Status(0)).Count(ctx)
+	count, err := entClient.Post.Query().Where(post.ID(postID)).QueryComments().Where(comment.Status(0)).Count(ctx)
+	// count, err := entClient.Comment.Query().Where(comment.PostID(postID), comment.Status(0)).Count(ctx)
 	if err != nil {
 		return
 	}
@@ -253,7 +252,8 @@ func increaseCommentReplyNum(commentID int64) {
 		key   = fmt.Sprintf("%s_%d", REPLYCOUNTKEY, commentID)
 		count int
 	)
-	count, err := entClient.Reply.Query().Where(reply.CommentID(commentID), reply.Status(0)).Count(ctx)
+	count, err := entClient.Comment.Query().Where(comment.ID(commentID)).QueryReplies().Where(reply.Status(0)).Count(ctx)
+	// count, err := entClient.Reply.Query().Where(reply.CommentID(commentID), reply.Status(0)).Count(ctx)
 	if err != nil {
 		return
 	}
@@ -262,7 +262,7 @@ func increaseCommentReplyNum(commentID int64) {
 
 // InsertReply add new reply
 func InsertReply(userID, postID, commentID, parentID int64, content string) (int64, error) {
-	id, err := ent.InsertReply(context.Background(), entClient, userID, postID, commentID, parentID, content)
+	id, err := ent.InsertReply(context.Background(), entClient, userID, commentID, parentID, content)
 	if err != nil {
 		return 0, common.NewServiceErr(common.Internal, err)
 	}
@@ -321,9 +321,12 @@ func GetPostFirstComment(postIDs []int64) ([]*ent.Comment, error) {
 		return results, nil
 	}
 
-	tmp, err := entClient.Comment.Query().Where(comment.PostIDIn(ids...), comment.Floor(1)).Order(func(s *sql.Selector) {
+	tmp, err := entClient.Post.Query().Where(post.IDIn(ids...)).QueryComments().Where(comment.Status(0), comment.Floor(1)).Order(func(s *sql.Selector) {
 		s.OrderBy(comment.FieldID)
 	}).All(ctx)
+	// tmp, err := entClient.Comment.Query().Where(comment.PostIDIn(ids...), comment.Floor(1)).Order(func(s *sql.Selector) {
+	// 	s.OrderBy(comment.FieldID)
+	// }).All(ctx)
 	if err != nil {
 		return nil, common.NewServiceErr(common.Internal, err)
 	}
@@ -373,24 +376,13 @@ func DeletePost(postID int64) error {
 }
 
 // GetCommentsByPostID 获取帖子所属的评论
-func GetCommentsByPostID(postID int64, page int64, pageSize int64) (comments []*Comment, err error) {
-	sql := `
-		SELECT 
-			t1.*
-		FROM 
-			cw_comment t1, 
-			(SELECT id FROM cw_comment WHERE status=? AND post_id=? LIMIT ?,?) t2 
-		WHERE t1.id=t2.id
-	`
-	rows, err := dbOrm.Raw(sql, 0, postID, pageSize*(page-1), pageSize).Rows()
+func GetCommentsByPostID(postID int64, page, pageSize int) (comments []*ent.Comment, err error) {
+	comments, err = entClient.Post.Query().Where(post.ID(postID)).
+		QueryComments().Where(comment.Status(0)).Offset(pageSize * (page - 1)).
+		Limit(pageSize).All(context.Background())
+	// comments, err = ent.GetCommentsByPostID(context.Background(), entClient, postID, page, pageSize)
 	if err != nil {
 		return nil, common.NewServiceErr(common.Internal, err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var c Comment
-		dbOrm.ScanRows(rows, &c)
-		comments = append(comments, &c)
 	}
 	return
 }
@@ -401,9 +393,13 @@ func GetPostCommentTotalCount(postID int64) (count int64, err error) {
 	total, err := redisClient.Get(context.Background(), key).Result()
 	if err == redis.Nil {
 		// 不存在
-		if err := dbOrm.Raw("select count(*) from cw_comment where post_id=? and status=0", postID).Scan(&count).Error; err != nil {
+		t, err := entClient.Post.Query().Where(post.ID(postID)).
+			QueryComments().Where(comment.Status(0)).Count(context.Background())
+		// t, err := entClient.Comment.Query().Where(comment.PostID(postID), comment.Status(0)).Count(context.Background())
+		if err != nil {
 			return 0, common.NewServiceErr(common.Internal, err)
 		}
+		count = int64(t)
 		redisClient.Set(context.Background(), key, count, time.Hour*24)
 		return count, nil
 	} else if err != nil {
@@ -413,25 +409,13 @@ func GetPostCommentTotalCount(postID int64) (count int64, err error) {
 }
 
 // GetRepliesByCommentID 获取评论所属的回复
-func GetRepliesByCommentID(commentID int64, page int64, pageSize int64) (replies []*Reply, err error) {
+func GetRepliesByCommentID(commentID int64, page int, pageSize int) (replies []*ent.Reply, err error) {
 	// TODO 前几个回复使用 redis list元素保存json格式的hash
-	sql := `
-		SELECT 
-			t1.*
-		FROM 
-			cw_reply t1, 
-			(SELECT id FROM cw_reply WHERE status=? AND comment_id=? LIMIT ?,?) t2 
-		WHERE t1.id=t2.id
-	`
-	rows, err := dbOrm.Raw(sql, 0, commentID, pageSize*(page-1), pageSize).Rows()
+	replies, err = entClient.Comment.Query().Where(comment.ID(commentID)).
+		QueryReplies().Where(reply.Status(0)).Offset(pageSize * (page - 1)).
+		Limit(pageSize).All(context.Background())
 	if err != nil {
 		return nil, common.NewServiceErr(common.Internal, err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var r Reply
-		dbOrm.ScanRows(rows, &r)
-		replies = append(replies, &r)
 	}
 	return
 }
@@ -442,9 +426,11 @@ func GetCommentReplyTotalCount(commentID int64) (count int64, err error) {
 	total, err := redisClient.Get(context.Background(), key).Result()
 	if err == redis.Nil {
 		// 不存在
-		if err := dbOrm.Raw("select count(*) from cw_reply where comment_id=? and status=0", commentID).Scan(&count).Error; err != nil {
+		t, err := entClient.Comment.Query().Where(comment.ID(commentID)).QueryReplies().Where(reply.Status(0)).Count(context.Background())
+		if err != nil {
 			return 0, common.NewServiceErr(common.Internal, err)
 		}
+		count = int64(t)
 		redisClient.Set(context.Background(), key, count, time.Hour*24)
 		return count, nil
 	} else if err != nil {

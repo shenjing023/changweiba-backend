@@ -20,7 +20,7 @@ type Comment struct {
 	// The user that posted the message.
 	UserID int64 `json:"user_id,omitempty"`
 	// PostID holds the value of the "post_id" field.
-	// The post that the message is associated with.
+	// The post that the message belongs to.
 	PostID int64 `json:"post_id,omitempty"`
 	// Content holds the value of the "content" field.
 	// The content of the message.
@@ -36,8 +36,7 @@ type Comment struct {
 	CreateAt int64 `json:"create_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the CommentQuery when eager-loading is set.
-	Edges         CommentEdges `json:"edges"`
-	post_comments *int64
+	Edges CommentEdges `json:"edges"`
 }
 
 // CommentEdges holds the relations/edges for other nodes in the graph.
@@ -83,8 +82,6 @@ func (*Comment) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullInt64)
 		case comment.FieldContent:
 			values[i] = new(sql.NullString)
-		case comment.ForeignKeys[0]: // post_comments
-			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Comment", columns[i])
 		}
@@ -141,13 +138,6 @@ func (c *Comment) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field create_at", values[i])
 			} else if value.Valid {
 				c.CreateAt = value.Int64
-			}
-		case comment.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field post_comments", value)
-			} else if value.Valid {
-				c.post_comments = new(int64)
-				*c.post_comments = int64(value.Int64)
 			}
 		}
 	}

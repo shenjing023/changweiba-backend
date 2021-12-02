@@ -258,31 +258,17 @@ func PostIDNotIn(vs ...int64) predicate.Comment {
 	})
 }
 
-// PostIDGT applies the GT predicate on the "post_id" field.
-func PostIDGT(v int64) predicate.Comment {
+// PostIDIsNil applies the IsNil predicate on the "post_id" field.
+func PostIDIsNil() predicate.Comment {
 	return predicate.Comment(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldPostID), v))
+		s.Where(sql.IsNull(s.C(FieldPostID)))
 	})
 }
 
-// PostIDGTE applies the GTE predicate on the "post_id" field.
-func PostIDGTE(v int64) predicate.Comment {
+// PostIDNotNil applies the NotNil predicate on the "post_id" field.
+func PostIDNotNil() predicate.Comment {
 	return predicate.Comment(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldPostID), v))
-	})
-}
-
-// PostIDLT applies the LT predicate on the "post_id" field.
-func PostIDLT(v int64) predicate.Comment {
-	return predicate.Comment(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldPostID), v))
-	})
-}
-
-// PostIDLTE applies the LTE predicate on the "post_id" field.
-func PostIDLTE(v int64) predicate.Comment {
-	return predicate.Comment(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldPostID), v))
+		s.Where(sql.NotNull(s.C(FieldPostID)))
 	})
 }
 

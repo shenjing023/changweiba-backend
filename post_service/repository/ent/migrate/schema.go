@@ -13,12 +13,11 @@ var (
 	CommentColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 		{Name: "user_id", Type: field.TypeInt64, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
-		{Name: "post_id", Type: field.TypeInt64, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 		{Name: "content", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(1024)"}},
 		{Name: "status", Type: field.TypeInt8, Default: 0, SchemaType: map[string]string{"mysql": "tinyint unsigned"}},
 		{Name: "floor", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 		{Name: "create_at", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
-		{Name: "post_comments", Type: field.TypeInt64, Nullable: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
+		{Name: "post_id", Type: field.TypeInt64, Nullable: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 	}
 	// CommentTable holds the schema information for the "comment" table.
 	CommentTable = &schema.Table{
@@ -28,16 +27,16 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "comment_post_comments",
-				Columns:    []*schema.Column{CommentColumns[7]},
+				Columns:    []*schema.Column{CommentColumns[6]},
 				RefColumns: []*schema.Column{PostColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "comment_user_id_post_id",
+				Name:    "comment_user_id",
 				Unique:  false,
-				Columns: []*schema.Column{CommentColumns[1], CommentColumns[2]},
+				Columns: []*schema.Column{CommentColumns[1]},
 			},
 		},
 	}
@@ -68,14 +67,12 @@ var (
 	ReplyColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 		{Name: "user_id", Type: field.TypeInt64, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
-		{Name: "post_id", Type: field.TypeInt64, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
-		{Name: "comment_id", Type: field.TypeInt64, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
-		{Name: "parent_id", Type: field.TypeInt64, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 		{Name: "content", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(1024)"}},
 		{Name: "status", Type: field.TypeInt8, Default: 0, SchemaType: map[string]string{"mysql": "tinyint unsigned"}},
 		{Name: "floor", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 		{Name: "create_at", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
-		{Name: "comment_replies", Type: field.TypeInt64, Nullable: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
+		{Name: "comment_id", Type: field.TypeInt64, Nullable: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
+		{Name: "parent_id", Type: field.TypeInt64, Nullable: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 	}
 	// ReplyTable holds the schema information for the "reply" table.
 	ReplyTable = &schema.Table{
@@ -85,16 +82,22 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "reply_comment_replies",
-				Columns:    []*schema.Column{ReplyColumns[9]},
+				Columns:    []*schema.Column{ReplyColumns[6]},
 				RefColumns: []*schema.Column{CommentColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "reply_reply_children",
+				Columns:    []*schema.Column{ReplyColumns[7]},
+				RefColumns: []*schema.Column{ReplyColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "reply_user_id_post_id_comment_id",
+				Name:    "reply_user_id",
 				Unique:  false,
-				Columns: []*schema.Column{ReplyColumns[1], ReplyColumns[2], ReplyColumns[3]},
+				Columns: []*schema.Column{ReplyColumns[1]},
 			},
 		},
 	}
@@ -115,6 +118,7 @@ func init() {
 		Table: "post",
 	}
 	ReplyTable.ForeignKeys[0].RefTable = CommentTable
+	ReplyTable.ForeignKeys[1].RefTable = ReplyTable
 	ReplyTable.Annotation = &entsql.Annotation{
 		Table: "reply",
 	}

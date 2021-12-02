@@ -30,7 +30,6 @@ type CommentQuery struct {
 	// eager-loading edges.
 	withOwner   *PostQuery
 	withReplies *ReplyQuery
-	withFKs     bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -386,19 +385,12 @@ func (cq *CommentQuery) prepareQuery(ctx context.Context) error {
 func (cq *CommentQuery) sqlAll(ctx context.Context) ([]*Comment, error) {
 	var (
 		nodes       = []*Comment{}
-		withFKs     = cq.withFKs
 		_spec       = cq.querySpec()
 		loadedTypes = [2]bool{
 			cq.withOwner != nil,
 			cq.withReplies != nil,
 		}
 	)
-	if cq.withOwner != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, comment.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Comment{config: cq.config}
 		nodes = append(nodes, node)
@@ -423,10 +415,7 @@ func (cq *CommentQuery) sqlAll(ctx context.Context) ([]*Comment, error) {
 		ids := make([]int64, 0, len(nodes))
 		nodeids := make(map[int64][]*Comment)
 		for i := range nodes {
-			if nodes[i].post_comments == nil {
-				continue
-			}
-			fk := *nodes[i].post_comments
+			fk := nodes[i].PostID
 			if _, ok := nodeids[fk]; !ok {
 				ids = append(ids, fk)
 			}
@@ -440,7 +429,7 @@ func (cq *CommentQuery) sqlAll(ctx context.Context) ([]*Comment, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "post_comments" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "post_id" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Owner = n
@@ -456,7 +445,6 @@ func (cq *CommentQuery) sqlAll(ctx context.Context) ([]*Comment, error) {
 			nodeids[nodes[i].ID] = nodes[i]
 			nodes[i].Edges.Replies = []*Reply{}
 		}
-		query.withFKs = true
 		query.Where(predicate.Reply(func(s *sql.Selector) {
 			s.Where(sql.InValues(comment.RepliesColumn, fks...))
 		}))
@@ -465,13 +453,10 @@ func (cq *CommentQuery) sqlAll(ctx context.Context) ([]*Comment, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.comment_replies
-			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "comment_replies" is nil for node %v`, n.ID)
-			}
-			node, ok := nodeids[*fk]
+			fk := n.CommentID
+			node, ok := nodeids[fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "comment_replies" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "comment_id" returned %v for node %v`, fk, n.ID)
 			}
 			node.Edges.Replies = append(node.Edges.Replies, n)
 		}

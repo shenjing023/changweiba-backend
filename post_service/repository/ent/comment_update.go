@@ -43,14 +43,21 @@ func (cu *CommentUpdate) AddUserID(i int64) *CommentUpdate {
 
 // SetPostID sets the "post_id" field.
 func (cu *CommentUpdate) SetPostID(i int64) *CommentUpdate {
-	cu.mutation.ResetPostID()
 	cu.mutation.SetPostID(i)
 	return cu
 }
 
-// AddPostID adds i to the "post_id" field.
-func (cu *CommentUpdate) AddPostID(i int64) *CommentUpdate {
-	cu.mutation.AddPostID(i)
+// SetNillablePostID sets the "post_id" field if the given value is not nil.
+func (cu *CommentUpdate) SetNillablePostID(i *int64) *CommentUpdate {
+	if i != nil {
+		cu.SetPostID(*i)
+	}
+	return cu
+}
+
+// ClearPostID clears the value of the "post_id" field.
+func (cu *CommentUpdate) ClearPostID() *CommentUpdate {
+	cu.mutation.ClearPostID()
 	return cu
 }
 
@@ -316,20 +323,6 @@ func (cu *CommentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: comment.FieldUserID,
 		})
 	}
-	if value, ok := cu.mutation.PostID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: comment.FieldPostID,
-		})
-	}
-	if value, ok := cu.mutation.AddedPostID(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: comment.FieldPostID,
-		})
-	}
 	if value, ok := cu.mutation.Content(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -502,14 +495,21 @@ func (cuo *CommentUpdateOne) AddUserID(i int64) *CommentUpdateOne {
 
 // SetPostID sets the "post_id" field.
 func (cuo *CommentUpdateOne) SetPostID(i int64) *CommentUpdateOne {
-	cuo.mutation.ResetPostID()
 	cuo.mutation.SetPostID(i)
 	return cuo
 }
 
-// AddPostID adds i to the "post_id" field.
-func (cuo *CommentUpdateOne) AddPostID(i int64) *CommentUpdateOne {
-	cuo.mutation.AddPostID(i)
+// SetNillablePostID sets the "post_id" field if the given value is not nil.
+func (cuo *CommentUpdateOne) SetNillablePostID(i *int64) *CommentUpdateOne {
+	if i != nil {
+		cuo.SetPostID(*i)
+	}
+	return cuo
+}
+
+// ClearPostID clears the value of the "post_id" field.
+func (cuo *CommentUpdateOne) ClearPostID() *CommentUpdateOne {
+	cuo.mutation.ClearPostID()
 	return cuo
 }
 
@@ -797,20 +797,6 @@ func (cuo *CommentUpdateOne) sqlSave(ctx context.Context) (_node *Comment, err e
 			Type:   field.TypeInt64,
 			Value:  value,
 			Column: comment.FieldUserID,
-		})
-	}
-	if value, ok := cuo.mutation.PostID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: comment.FieldPostID,
-		})
-	}
-	if value, ok := cuo.mutation.AddedPostID(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: comment.FieldPostID,
 		})
 	}
 	if value, ok := cuo.mutation.Content(); ok {

@@ -36,8 +36,6 @@ type CommentMutation struct {
 	id             *int64
 	user_id        *int64
 	adduser_id     *int64
-	post_id        *int64
-	addpost_id     *int64
 	content        *string
 	status         *int8
 	addstatus      *int8
@@ -199,13 +197,12 @@ func (m *CommentMutation) ResetUserID() {
 
 // SetPostID sets the "post_id" field.
 func (m *CommentMutation) SetPostID(i int64) {
-	m.post_id = &i
-	m.addpost_id = nil
+	m.owner = &i
 }
 
 // PostID returns the value of the "post_id" field in the mutation.
 func (m *CommentMutation) PostID() (r int64, exists bool) {
-	v := m.post_id
+	v := m.owner
 	if v == nil {
 		return
 	}
@@ -229,28 +226,22 @@ func (m *CommentMutation) OldPostID(ctx context.Context) (v int64, err error) {
 	return oldValue.PostID, nil
 }
 
-// AddPostID adds i to the "post_id" field.
-func (m *CommentMutation) AddPostID(i int64) {
-	if m.addpost_id != nil {
-		*m.addpost_id += i
-	} else {
-		m.addpost_id = &i
-	}
+// ClearPostID clears the value of the "post_id" field.
+func (m *CommentMutation) ClearPostID() {
+	m.owner = nil
+	m.clearedFields[comment.FieldPostID] = struct{}{}
 }
 
-// AddedPostID returns the value that was added to the "post_id" field in this mutation.
-func (m *CommentMutation) AddedPostID() (r int64, exists bool) {
-	v := m.addpost_id
-	if v == nil {
-		return
-	}
-	return *v, true
+// PostIDCleared returns if the "post_id" field was cleared in this mutation.
+func (m *CommentMutation) PostIDCleared() bool {
+	_, ok := m.clearedFields[comment.FieldPostID]
+	return ok
 }
 
 // ResetPostID resets all changes to the "post_id" field.
 func (m *CommentMutation) ResetPostID() {
-	m.post_id = nil
-	m.addpost_id = nil
+	m.owner = nil
+	delete(m.clearedFields, comment.FieldPostID)
 }
 
 // SetContent sets the "content" field.
@@ -469,7 +460,7 @@ func (m *CommentMutation) ClearOwner() {
 
 // OwnerCleared reports if the "owner" edge to the Post entity was cleared.
 func (m *CommentMutation) OwnerCleared() bool {
-	return m.clearedowner
+	return m.PostIDCleared() || m.clearedowner
 }
 
 // OwnerID returns the "owner" edge ID in the mutation.
@@ -573,7 +564,7 @@ func (m *CommentMutation) Fields() []string {
 	if m.user_id != nil {
 		fields = append(fields, comment.FieldUserID)
 	}
-	if m.post_id != nil {
+	if m.owner != nil {
 		fields = append(fields, comment.FieldPostID)
 	}
 	if m.content != nil {
@@ -691,9 +682,6 @@ func (m *CommentMutation) AddedFields() []string {
 	if m.adduser_id != nil {
 		fields = append(fields, comment.FieldUserID)
 	}
-	if m.addpost_id != nil {
-		fields = append(fields, comment.FieldPostID)
-	}
 	if m.addstatus != nil {
 		fields = append(fields, comment.FieldStatus)
 	}
@@ -713,8 +701,6 @@ func (m *CommentMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
 	case comment.FieldUserID:
 		return m.AddedUserID()
-	case comment.FieldPostID:
-		return m.AddedPostID()
 	case comment.FieldStatus:
 		return m.AddedStatus()
 	case comment.FieldFloor:
@@ -736,13 +722,6 @@ func (m *CommentMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddUserID(v)
-		return nil
-	case comment.FieldPostID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddPostID(v)
 		return nil
 	case comment.FieldStatus:
 		v, ok := value.(int8)
@@ -772,7 +751,11 @@ func (m *CommentMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *CommentMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(comment.FieldPostID) {
+		fields = append(fields, comment.FieldPostID)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -785,6 +768,11 @@ func (m *CommentMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *CommentMutation) ClearField(name string) error {
+	switch name {
+	case comment.FieldPostID:
+		m.ClearPostID()
+		return nil
+	}
 	return fmt.Errorf("unknown Comment nullable field %s", name)
 }
 
@@ -1748,30 +1736,29 @@ func (m *PostMutation) ResetEdge(name string) error {
 // ReplyMutation represents an operation that mutates the Reply nodes in the graph.
 type ReplyMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int64
-	user_id       *int64
-	adduser_id    *int64
-	post_id       *int64
-	addpost_id    *int64
-	comment_id    *int64
-	addcomment_id *int64
-	parent_id     *int64
-	addparent_id  *int64
-	content       *string
-	status        *int8
-	addstatus     *int8
-	floor         *int64
-	addfloor      *int64
-	create_at     *int64
-	addcreate_at  *int64
-	clearedFields map[string]struct{}
-	owner         *int64
-	clearedowner  bool
-	done          bool
-	oldValue      func(context.Context) (*Reply, error)
-	predicates    []predicate.Reply
+	op              Op
+	typ             string
+	id              *int64
+	user_id         *int64
+	adduser_id      *int64
+	content         *string
+	status          *int8
+	addstatus       *int8
+	floor           *int64
+	addfloor        *int64
+	create_at       *int64
+	addcreate_at    *int64
+	clearedFields   map[string]struct{}
+	owner           *int64
+	clearedowner    bool
+	parent          *int64
+	clearedparent   bool
+	children        map[int64]struct{}
+	removedchildren map[int64]struct{}
+	clearedchildren bool
+	done            bool
+	oldValue        func(context.Context) (*Reply, error)
+	predicates      []predicate.Reply
 }
 
 var _ ent.Mutation = (*ReplyMutation)(nil)
@@ -1915,71 +1902,14 @@ func (m *ReplyMutation) ResetUserID() {
 	m.adduser_id = nil
 }
 
-// SetPostID sets the "post_id" field.
-func (m *ReplyMutation) SetPostID(i int64) {
-	m.post_id = &i
-	m.addpost_id = nil
-}
-
-// PostID returns the value of the "post_id" field in the mutation.
-func (m *ReplyMutation) PostID() (r int64, exists bool) {
-	v := m.post_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldPostID returns the old "post_id" field's value of the Reply entity.
-// If the Reply object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ReplyMutation) OldPostID(ctx context.Context) (v int64, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldPostID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldPostID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldPostID: %w", err)
-	}
-	return oldValue.PostID, nil
-}
-
-// AddPostID adds i to the "post_id" field.
-func (m *ReplyMutation) AddPostID(i int64) {
-	if m.addpost_id != nil {
-		*m.addpost_id += i
-	} else {
-		m.addpost_id = &i
-	}
-}
-
-// AddedPostID returns the value that was added to the "post_id" field in this mutation.
-func (m *ReplyMutation) AddedPostID() (r int64, exists bool) {
-	v := m.addpost_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ResetPostID resets all changes to the "post_id" field.
-func (m *ReplyMutation) ResetPostID() {
-	m.post_id = nil
-	m.addpost_id = nil
-}
-
 // SetCommentID sets the "comment_id" field.
 func (m *ReplyMutation) SetCommentID(i int64) {
-	m.comment_id = &i
-	m.addcomment_id = nil
+	m.owner = &i
 }
 
 // CommentID returns the value of the "comment_id" field in the mutation.
 func (m *ReplyMutation) CommentID() (r int64, exists bool) {
-	v := m.comment_id
+	v := m.owner
 	if v == nil {
 		return
 	}
@@ -2003,39 +1933,32 @@ func (m *ReplyMutation) OldCommentID(ctx context.Context) (v int64, err error) {
 	return oldValue.CommentID, nil
 }
 
-// AddCommentID adds i to the "comment_id" field.
-func (m *ReplyMutation) AddCommentID(i int64) {
-	if m.addcomment_id != nil {
-		*m.addcomment_id += i
-	} else {
-		m.addcomment_id = &i
-	}
+// ClearCommentID clears the value of the "comment_id" field.
+func (m *ReplyMutation) ClearCommentID() {
+	m.owner = nil
+	m.clearedFields[reply.FieldCommentID] = struct{}{}
 }
 
-// AddedCommentID returns the value that was added to the "comment_id" field in this mutation.
-func (m *ReplyMutation) AddedCommentID() (r int64, exists bool) {
-	v := m.addcomment_id
-	if v == nil {
-		return
-	}
-	return *v, true
+// CommentIDCleared returns if the "comment_id" field was cleared in this mutation.
+func (m *ReplyMutation) CommentIDCleared() bool {
+	_, ok := m.clearedFields[reply.FieldCommentID]
+	return ok
 }
 
 // ResetCommentID resets all changes to the "comment_id" field.
 func (m *ReplyMutation) ResetCommentID() {
-	m.comment_id = nil
-	m.addcomment_id = nil
+	m.owner = nil
+	delete(m.clearedFields, reply.FieldCommentID)
 }
 
 // SetParentID sets the "parent_id" field.
 func (m *ReplyMutation) SetParentID(i int64) {
-	m.parent_id = &i
-	m.addparent_id = nil
+	m.parent = &i
 }
 
 // ParentID returns the value of the "parent_id" field in the mutation.
 func (m *ReplyMutation) ParentID() (r int64, exists bool) {
-	v := m.parent_id
+	v := m.parent
 	if v == nil {
 		return
 	}
@@ -2059,28 +1982,22 @@ func (m *ReplyMutation) OldParentID(ctx context.Context) (v int64, err error) {
 	return oldValue.ParentID, nil
 }
 
-// AddParentID adds i to the "parent_id" field.
-func (m *ReplyMutation) AddParentID(i int64) {
-	if m.addparent_id != nil {
-		*m.addparent_id += i
-	} else {
-		m.addparent_id = &i
-	}
+// ClearParentID clears the value of the "parent_id" field.
+func (m *ReplyMutation) ClearParentID() {
+	m.parent = nil
+	m.clearedFields[reply.FieldParentID] = struct{}{}
 }
 
-// AddedParentID returns the value that was added to the "parent_id" field in this mutation.
-func (m *ReplyMutation) AddedParentID() (r int64, exists bool) {
-	v := m.addparent_id
-	if v == nil {
-		return
-	}
-	return *v, true
+// ParentIDCleared returns if the "parent_id" field was cleared in this mutation.
+func (m *ReplyMutation) ParentIDCleared() bool {
+	_, ok := m.clearedFields[reply.FieldParentID]
+	return ok
 }
 
 // ResetParentID resets all changes to the "parent_id" field.
 func (m *ReplyMutation) ResetParentID() {
-	m.parent_id = nil
-	m.addparent_id = nil
+	m.parent = nil
+	delete(m.clearedFields, reply.FieldParentID)
 }
 
 // SetContent sets the "content" field.
@@ -2299,7 +2216,7 @@ func (m *ReplyMutation) ClearOwner() {
 
 // OwnerCleared reports if the "owner" edge to the Comment entity was cleared.
 func (m *ReplyMutation) OwnerCleared() bool {
-	return m.clearedowner
+	return m.CommentIDCleared() || m.clearedowner
 }
 
 // OwnerID returns the "owner" edge ID in the mutation.
@@ -2326,6 +2243,86 @@ func (m *ReplyMutation) ResetOwner() {
 	m.clearedowner = false
 }
 
+// ClearParent clears the "parent" edge to the Reply entity.
+func (m *ReplyMutation) ClearParent() {
+	m.clearedparent = true
+}
+
+// ParentCleared reports if the "parent" edge to the Reply entity was cleared.
+func (m *ReplyMutation) ParentCleared() bool {
+	return m.ParentIDCleared() || m.clearedparent
+}
+
+// ParentIDs returns the "parent" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ParentID instead. It exists only for internal usage by the builders.
+func (m *ReplyMutation) ParentIDs() (ids []int64) {
+	if id := m.parent; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetParent resets all changes to the "parent" edge.
+func (m *ReplyMutation) ResetParent() {
+	m.parent = nil
+	m.clearedparent = false
+}
+
+// AddChildIDs adds the "children" edge to the Reply entity by ids.
+func (m *ReplyMutation) AddChildIDs(ids ...int64) {
+	if m.children == nil {
+		m.children = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.children[ids[i]] = struct{}{}
+	}
+}
+
+// ClearChildren clears the "children" edge to the Reply entity.
+func (m *ReplyMutation) ClearChildren() {
+	m.clearedchildren = true
+}
+
+// ChildrenCleared reports if the "children" edge to the Reply entity was cleared.
+func (m *ReplyMutation) ChildrenCleared() bool {
+	return m.clearedchildren
+}
+
+// RemoveChildIDs removes the "children" edge to the Reply entity by IDs.
+func (m *ReplyMutation) RemoveChildIDs(ids ...int64) {
+	if m.removedchildren == nil {
+		m.removedchildren = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.children, ids[i])
+		m.removedchildren[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedChildren returns the removed IDs of the "children" edge to the Reply entity.
+func (m *ReplyMutation) RemovedChildrenIDs() (ids []int64) {
+	for id := range m.removedchildren {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ChildrenIDs returns the "children" edge IDs in the mutation.
+func (m *ReplyMutation) ChildrenIDs() (ids []int64) {
+	for id := range m.children {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetChildren resets all changes to the "children" edge.
+func (m *ReplyMutation) ResetChildren() {
+	m.children = nil
+	m.clearedchildren = false
+	m.removedchildren = nil
+}
+
 // Where appends a list predicates to the ReplyMutation builder.
 func (m *ReplyMutation) Where(ps ...predicate.Reply) {
 	m.predicates = append(m.predicates, ps...)
@@ -2345,17 +2342,14 @@ func (m *ReplyMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ReplyMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 7)
 	if m.user_id != nil {
 		fields = append(fields, reply.FieldUserID)
 	}
-	if m.post_id != nil {
-		fields = append(fields, reply.FieldPostID)
-	}
-	if m.comment_id != nil {
+	if m.owner != nil {
 		fields = append(fields, reply.FieldCommentID)
 	}
-	if m.parent_id != nil {
+	if m.parent != nil {
 		fields = append(fields, reply.FieldParentID)
 	}
 	if m.content != nil {
@@ -2380,8 +2374,6 @@ func (m *ReplyMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case reply.FieldUserID:
 		return m.UserID()
-	case reply.FieldPostID:
-		return m.PostID()
 	case reply.FieldCommentID:
 		return m.CommentID()
 	case reply.FieldParentID:
@@ -2405,8 +2397,6 @@ func (m *ReplyMutation) OldField(ctx context.Context, name string) (ent.Value, e
 	switch name {
 	case reply.FieldUserID:
 		return m.OldUserID(ctx)
-	case reply.FieldPostID:
-		return m.OldPostID(ctx)
 	case reply.FieldCommentID:
 		return m.OldCommentID(ctx)
 	case reply.FieldParentID:
@@ -2434,13 +2424,6 @@ func (m *ReplyMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUserID(v)
-		return nil
-	case reply.FieldPostID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetPostID(v)
 		return nil
 	case reply.FieldCommentID:
 		v, ok := value.(int64)
@@ -2495,15 +2478,6 @@ func (m *ReplyMutation) AddedFields() []string {
 	if m.adduser_id != nil {
 		fields = append(fields, reply.FieldUserID)
 	}
-	if m.addpost_id != nil {
-		fields = append(fields, reply.FieldPostID)
-	}
-	if m.addcomment_id != nil {
-		fields = append(fields, reply.FieldCommentID)
-	}
-	if m.addparent_id != nil {
-		fields = append(fields, reply.FieldParentID)
-	}
 	if m.addstatus != nil {
 		fields = append(fields, reply.FieldStatus)
 	}
@@ -2523,12 +2497,6 @@ func (m *ReplyMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
 	case reply.FieldUserID:
 		return m.AddedUserID()
-	case reply.FieldPostID:
-		return m.AddedPostID()
-	case reply.FieldCommentID:
-		return m.AddedCommentID()
-	case reply.FieldParentID:
-		return m.AddedParentID()
 	case reply.FieldStatus:
 		return m.AddedStatus()
 	case reply.FieldFloor:
@@ -2550,27 +2518,6 @@ func (m *ReplyMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddUserID(v)
-		return nil
-	case reply.FieldPostID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddPostID(v)
-		return nil
-	case reply.FieldCommentID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddCommentID(v)
-		return nil
-	case reply.FieldParentID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddParentID(v)
 		return nil
 	case reply.FieldStatus:
 		v, ok := value.(int8)
@@ -2600,7 +2547,14 @@ func (m *ReplyMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *ReplyMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(reply.FieldCommentID) {
+		fields = append(fields, reply.FieldCommentID)
+	}
+	if m.FieldCleared(reply.FieldParentID) {
+		fields = append(fields, reply.FieldParentID)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -2613,6 +2567,14 @@ func (m *ReplyMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *ReplyMutation) ClearField(name string) error {
+	switch name {
+	case reply.FieldCommentID:
+		m.ClearCommentID()
+		return nil
+	case reply.FieldParentID:
+		m.ClearParentID()
+		return nil
+	}
 	return fmt.Errorf("unknown Reply nullable field %s", name)
 }
 
@@ -2622,9 +2584,6 @@ func (m *ReplyMutation) ResetField(name string) error {
 	switch name {
 	case reply.FieldUserID:
 		m.ResetUserID()
-		return nil
-	case reply.FieldPostID:
-		m.ResetPostID()
 		return nil
 	case reply.FieldCommentID:
 		m.ResetCommentID()
@@ -2650,9 +2609,15 @@ func (m *ReplyMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ReplyMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 3)
 	if m.owner != nil {
 		edges = append(edges, reply.EdgeOwner)
+	}
+	if m.parent != nil {
+		edges = append(edges, reply.EdgeParent)
+	}
+	if m.children != nil {
+		edges = append(edges, reply.EdgeChildren)
 	}
 	return edges
 }
@@ -2665,13 +2630,26 @@ func (m *ReplyMutation) AddedIDs(name string) []ent.Value {
 		if id := m.owner; id != nil {
 			return []ent.Value{*id}
 		}
+	case reply.EdgeParent:
+		if id := m.parent; id != nil {
+			return []ent.Value{*id}
+		}
+	case reply.EdgeChildren:
+		ids := make([]ent.Value, 0, len(m.children))
+		for id := range m.children {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ReplyMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 3)
+	if m.removedchildren != nil {
+		edges = append(edges, reply.EdgeChildren)
+	}
 	return edges
 }
 
@@ -2679,15 +2657,27 @@ func (m *ReplyMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *ReplyMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
+	case reply.EdgeChildren:
+		ids := make([]ent.Value, 0, len(m.removedchildren))
+		for id := range m.removedchildren {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ReplyMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 3)
 	if m.clearedowner {
 		edges = append(edges, reply.EdgeOwner)
+	}
+	if m.clearedparent {
+		edges = append(edges, reply.EdgeParent)
+	}
+	if m.clearedchildren {
+		edges = append(edges, reply.EdgeChildren)
 	}
 	return edges
 }
@@ -2698,6 +2688,10 @@ func (m *ReplyMutation) EdgeCleared(name string) bool {
 	switch name {
 	case reply.EdgeOwner:
 		return m.clearedowner
+	case reply.EdgeParent:
+		return m.clearedparent
+	case reply.EdgeChildren:
+		return m.clearedchildren
 	}
 	return false
 }
@@ -2709,6 +2703,9 @@ func (m *ReplyMutation) ClearEdge(name string) error {
 	case reply.EdgeOwner:
 		m.ClearOwner()
 		return nil
+	case reply.EdgeParent:
+		m.ClearParent()
+		return nil
 	}
 	return fmt.Errorf("unknown Reply unique edge %s", name)
 }
@@ -2719,6 +2716,12 @@ func (m *ReplyMutation) ResetEdge(name string) error {
 	switch name {
 	case reply.EdgeOwner:
 		m.ResetOwner()
+		return nil
+	case reply.EdgeParent:
+		m.ResetParent()
+		return nil
+	case reply.EdgeChildren:
+		m.ResetChildren()
 		return nil
 	}
 	return fmt.Errorf("unknown Reply edge %s", name)

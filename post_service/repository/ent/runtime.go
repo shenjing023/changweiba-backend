@@ -93,36 +93,32 @@ func init() {
 	replyDescUserID := replyFields[1].Descriptor()
 	// reply.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
 	reply.UserIDValidator = replyDescUserID.Validators[0].(func(int64) error)
-	// replyDescPostID is the schema descriptor for post_id field.
-	replyDescPostID := replyFields[2].Descriptor()
-	// reply.PostIDValidator is a validator for the "post_id" field. It is called by the builders before save.
-	reply.PostIDValidator = replyDescPostID.Validators[0].(func(int64) error)
 	// replyDescCommentID is the schema descriptor for comment_id field.
-	replyDescCommentID := replyFields[3].Descriptor()
+	replyDescCommentID := replyFields[2].Descriptor()
 	// reply.CommentIDValidator is a validator for the "comment_id" field. It is called by the builders before save.
 	reply.CommentIDValidator = replyDescCommentID.Validators[0].(func(int64) error)
 	// replyDescParentID is the schema descriptor for parent_id field.
-	replyDescParentID := replyFields[4].Descriptor()
+	replyDescParentID := replyFields[3].Descriptor()
 	// reply.ParentIDValidator is a validator for the "parent_id" field. It is called by the builders before save.
 	reply.ParentIDValidator = replyDescParentID.Validators[0].(func(int64) error)
 	// replyDescContent is the schema descriptor for content field.
-	replyDescContent := replyFields[5].Descriptor()
+	replyDescContent := replyFields[4].Descriptor()
 	// reply.ContentValidator is a validator for the "content" field. It is called by the builders before save.
 	reply.ContentValidator = replyDescContent.Validators[0].(func(string) error)
 	// replyDescStatus is the schema descriptor for status field.
-	replyDescStatus := replyFields[6].Descriptor()
+	replyDescStatus := replyFields[5].Descriptor()
 	// reply.DefaultStatus holds the default value on creation for the status field.
 	reply.DefaultStatus = replyDescStatus.Default.(int8)
 	// reply.StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	reply.StatusValidator = replyDescStatus.Validators[0].(func(int8) error)
 	// replyDescFloor is the schema descriptor for floor field.
-	replyDescFloor := replyFields[7].Descriptor()
+	replyDescFloor := replyFields[6].Descriptor()
 	// reply.DefaultFloor holds the default value on creation for the floor field.
 	reply.DefaultFloor = replyDescFloor.Default.(int64)
 	// reply.FloorValidator is a validator for the "floor" field. It is called by the builders before save.
 	reply.FloorValidator = replyDescFloor.Validators[0].(func(int64) error)
 	// replyDescCreateAt is the schema descriptor for create_at field.
-	replyDescCreateAt := replyFields[8].Descriptor()
+	replyDescCreateAt := replyFields[7].Descriptor()
 	// reply.DefaultCreateAt holds the default value on creation for the create_at field.
 	reply.DefaultCreateAt = replyDescCreateAt.Default.(int64)
 	// reply.CreateAtValidator is a validator for the "create_at" field. It is called by the builders before save.

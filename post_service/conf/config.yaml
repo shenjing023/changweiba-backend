@@ -2,16 +2,16 @@
 debug: false
 port: 8019
 db:
-  host: "your mysql host"
-  port: 3306
-  user: "cw"
+  host: "127.0.0.1"
+  port: 6033
+  user: "root"
   password: "123456"
-  dbname: "changweiba"
+  dbname: "liuwei1"
   max_idle_conns: 10
   max_open_conns: 10
 redis:
-  host: "your redis host"
-  port: 6379
+  host: "10.0.0.202"
+  port: 6383
   password: ""
 etcd:
   host: "10.0.0.215"

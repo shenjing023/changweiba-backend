@@ -6,6 +6,7 @@ import (
 	"net"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"os"
 
@@ -16,6 +17,7 @@ import (
 	"cw_post_service/handler"
 
 	log "github.com/shenjing023/llog"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc"
 )
 
@@ -35,11 +37,22 @@ func runPostService(configPath string) {
 		}
 	}()
 
+	etcdConf := clientv3.Config{
+		Endpoints:   []string{fmt.Sprintf("%s:%d", conf.Cfg.Etcd.Host, conf.Cfg.Etcd.Port)},
+		DialTimeout: time.Second * 5,
+	}
+	r, err := NewRegister(etcdConf, "svc", conf.Cfg.SrvName, "127.0.0.1", fmt.Sprintf(":%d", conf.Cfg.Port))
+	if err != nil {
+		log.Fatalf("failed register serve: %v", err)
+	}
+	log.Info("service start success")
+
 	// Wait for interrupt signal to gracefully shutdown the server
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Infof("signal %d received and shutdown service", quit)
+	r.Close()
 	s.GracefulStop()
 	stopService()
 }

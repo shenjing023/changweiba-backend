@@ -7,6 +7,7 @@ import (
 	"cw_post_service/repository/ent/comment"
 	"cw_post_service/repository/ent/predicate"
 	"cw_post_service/repository/ent/reply"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"math"
@@ -26,8 +27,9 @@ type ReplyQuery struct {
 	fields     []string
 	predicates []predicate.Reply
 	// eager-loading edges.
-	withOwner *CommentQuery
-	withFKs   bool
+	withOwner    *CommentQuery
+	withParent   *ReplyQuery
+	withChildren *ReplyQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -79,6 +81,50 @@ func (rq *ReplyQuery) QueryOwner() *CommentQuery {
 			sqlgraph.From(reply.Table, reply.FieldID, selector),
 			sqlgraph.To(comment.Table, comment.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, reply.OwnerTable, reply.OwnerColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryParent chains the current query on the "parent" edge.
+func (rq *ReplyQuery) QueryParent() *ReplyQuery {
+	query := &ReplyQuery{config: rq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(reply.Table, reply.FieldID, selector),
+			sqlgraph.To(reply.Table, reply.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, reply.ParentTable, reply.ParentColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryChildren chains the current query on the "children" edge.
+func (rq *ReplyQuery) QueryChildren() *ReplyQuery {
+	query := &ReplyQuery{config: rq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(reply.Table, reply.FieldID, selector),
+			sqlgraph.To(reply.Table, reply.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, reply.ChildrenTable, reply.ChildrenColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
 		return fromU, nil
@@ -262,12 +308,14 @@ func (rq *ReplyQuery) Clone() *ReplyQuery {
 		return nil
 	}
 	return &ReplyQuery{
-		config:     rq.config,
-		limit:      rq.limit,
-		offset:     rq.offset,
-		order:      append([]OrderFunc{}, rq.order...),
-		predicates: append([]predicate.Reply{}, rq.predicates...),
-		withOwner:  rq.withOwner.Clone(),
+		config:       rq.config,
+		limit:        rq.limit,
+		offset:       rq.offset,
+		order:        append([]OrderFunc{}, rq.order...),
+		predicates:   append([]predicate.Reply{}, rq.predicates...),
+		withOwner:    rq.withOwner.Clone(),
+		withParent:   rq.withParent.Clone(),
+		withChildren: rq.withChildren.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
 		path: rq.path,
@@ -282,6 +330,28 @@ func (rq *ReplyQuery) WithOwner(opts ...func(*CommentQuery)) *ReplyQuery {
 		opt(query)
 	}
 	rq.withOwner = query
+	return rq
+}
+
+// WithParent tells the query-builder to eager-load the nodes that are connected to
+// the "parent" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *ReplyQuery) WithParent(opts ...func(*ReplyQuery)) *ReplyQuery {
+	query := &ReplyQuery{config: rq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withParent = query
+	return rq
+}
+
+// WithChildren tells the query-builder to eager-load the nodes that are connected to
+// the "children" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *ReplyQuery) WithChildren(opts ...func(*ReplyQuery)) *ReplyQuery {
+	query := &ReplyQuery{config: rq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withChildren = query
 	return rq
 }
 
@@ -349,18 +419,13 @@ func (rq *ReplyQuery) prepareQuery(ctx context.Context) error {
 func (rq *ReplyQuery) sqlAll(ctx context.Context) ([]*Reply, error) {
 	var (
 		nodes       = []*Reply{}
-		withFKs     = rq.withFKs
 		_spec       = rq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [3]bool{
 			rq.withOwner != nil,
+			rq.withParent != nil,
+			rq.withChildren != nil,
 		}
 	)
-	if rq.withOwner != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, reply.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Reply{config: rq.config}
 		nodes = append(nodes, node)
@@ -385,10 +450,7 @@ func (rq *ReplyQuery) sqlAll(ctx context.Context) ([]*Reply, error) {
 		ids := make([]int64, 0, len(nodes))
 		nodeids := make(map[int64][]*Reply)
 		for i := range nodes {
-			if nodes[i].comment_replies == nil {
-				continue
-			}
-			fk := *nodes[i].comment_replies
+			fk := nodes[i].CommentID
 			if _, ok := nodeids[fk]; !ok {
 				ids = append(ids, fk)
 			}
@@ -402,11 +464,62 @@ func (rq *ReplyQuery) sqlAll(ctx context.Context) ([]*Reply, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "comment_replies" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "comment_id" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Owner = n
 			}
+		}
+	}
+
+	if query := rq.withParent; query != nil {
+		ids := make([]int64, 0, len(nodes))
+		nodeids := make(map[int64][]*Reply)
+		for i := range nodes {
+			fk := nodes[i].ParentID
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
+		}
+		query.Where(reply.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "parent_id" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Parent = n
+			}
+		}
+	}
+
+	if query := rq.withChildren; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int64]*Reply)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.Children = []*Reply{}
+		}
+		query.Where(predicate.Reply(func(s *sql.Selector) {
+			s.Where(sql.InValues(reply.ChildrenColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.ParentID
+			node, ok := nodeids[fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "parent_id" returned %v for node %v`, fk, n.ID)
+			}
+			node.Edges.Children = append(node.Edges.Children, n)
 		}
 	}
 

@@ -19,11 +19,8 @@ type Reply struct {
 	// UserID holds the value of the "user_id" field.
 	// The user that posted the message.
 	UserID int64 `json:"user_id,omitempty"`
-	// PostID holds the value of the "post_id" field.
-	// The post that the message is associated with.
-	PostID int64 `json:"post_id,omitempty"`
 	// CommentID holds the value of the "comment_id" field.
-	// The comment that the message is associated with.
+	// The comment that this reply is for.
 	CommentID int64 `json:"comment_id,omitempty"`
 	// ParentID holds the value of the "parent_id" field.
 	// 回复哪个回复的id
@@ -42,17 +39,20 @@ type Reply struct {
 	CreateAt int64 `json:"create_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ReplyQuery when eager-loading is set.
-	Edges           ReplyEdges `json:"edges"`
-	comment_replies *int64
+	Edges ReplyEdges `json:"edges"`
 }
 
 // ReplyEdges holds the relations/edges for other nodes in the graph.
 type ReplyEdges struct {
 	// Owner holds the value of the owner edge.
 	Owner *Comment `json:"owner,omitempty"`
+	// Parent holds the value of the parent edge.
+	Parent *Reply `json:"parent,omitempty"`
+	// Children holds the value of the children edge.
+	Children []*Reply `json:"children,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [3]bool
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
@@ -69,17 +69,38 @@ func (e ReplyEdges) OwnerOrErr() (*Comment, error) {
 	return nil, &NotLoadedError{edge: "owner"}
 }
 
+// ParentOrErr returns the Parent value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ReplyEdges) ParentOrErr() (*Reply, error) {
+	if e.loadedTypes[1] {
+		if e.Parent == nil {
+			// The edge parent was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: reply.Label}
+		}
+		return e.Parent, nil
+	}
+	return nil, &NotLoadedError{edge: "parent"}
+}
+
+// ChildrenOrErr returns the Children value or an error if the edge
+// was not loaded in eager-loading.
+func (e ReplyEdges) ChildrenOrErr() ([]*Reply, error) {
+	if e.loadedTypes[2] {
+		return e.Children, nil
+	}
+	return nil, &NotLoadedError{edge: "children"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Reply) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case reply.FieldID, reply.FieldUserID, reply.FieldPostID, reply.FieldCommentID, reply.FieldParentID, reply.FieldStatus, reply.FieldFloor, reply.FieldCreateAt:
+		case reply.FieldID, reply.FieldUserID, reply.FieldCommentID, reply.FieldParentID, reply.FieldStatus, reply.FieldFloor, reply.FieldCreateAt:
 			values[i] = new(sql.NullInt64)
 		case reply.FieldContent:
 			values[i] = new(sql.NullString)
-		case reply.ForeignKeys[0]: // comment_replies
-			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Reply", columns[i])
 		}
@@ -106,12 +127,6 @@ func (r *Reply) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field user_id", values[i])
 			} else if value.Valid {
 				r.UserID = value.Int64
-			}
-		case reply.FieldPostID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field post_id", values[i])
-			} else if value.Valid {
-				r.PostID = value.Int64
 			}
 		case reply.FieldCommentID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -149,13 +164,6 @@ func (r *Reply) assignValues(columns []string, values []interface{}) error {
 			} else if value.Valid {
 				r.CreateAt = value.Int64
 			}
-		case reply.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field comment_replies", value)
-			} else if value.Valid {
-				r.comment_replies = new(int64)
-				*r.comment_replies = int64(value.Int64)
-			}
 		}
 	}
 	return nil
@@ -164,6 +172,16 @@ func (r *Reply) assignValues(columns []string, values []interface{}) error {
 // QueryOwner queries the "owner" edge of the Reply entity.
 func (r *Reply) QueryOwner() *CommentQuery {
 	return (&ReplyClient{config: r.config}).QueryOwner(r)
+}
+
+// QueryParent queries the "parent" edge of the Reply entity.
+func (r *Reply) QueryParent() *ReplyQuery {
+	return (&ReplyClient{config: r.config}).QueryParent(r)
+}
+
+// QueryChildren queries the "children" edge of the Reply entity.
+func (r *Reply) QueryChildren() *ReplyQuery {
+	return (&ReplyClient{config: r.config}).QueryChildren(r)
 }
 
 // Update returns a builder for updating this Reply.
@@ -191,8 +209,6 @@ func (r *Reply) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v", r.ID))
 	builder.WriteString(", user_id=")
 	builder.WriteString(fmt.Sprintf("%v", r.UserID))
-	builder.WriteString(", post_id=")
-	builder.WriteString(fmt.Sprintf("%v", r.PostID))
 	builder.WriteString(", comment_id=")
 	builder.WriteString(fmt.Sprintf("%v", r.CommentID))
 	builder.WriteString(", parent_id=")

@@ -40,42 +40,43 @@ func (ru *ReplyUpdate) AddUserID(i int64) *ReplyUpdate {
 	return ru
 }
 
-// SetPostID sets the "post_id" field.
-func (ru *ReplyUpdate) SetPostID(i int64) *ReplyUpdate {
-	ru.mutation.ResetPostID()
-	ru.mutation.SetPostID(i)
-	return ru
-}
-
-// AddPostID adds i to the "post_id" field.
-func (ru *ReplyUpdate) AddPostID(i int64) *ReplyUpdate {
-	ru.mutation.AddPostID(i)
-	return ru
-}
-
 // SetCommentID sets the "comment_id" field.
 func (ru *ReplyUpdate) SetCommentID(i int64) *ReplyUpdate {
-	ru.mutation.ResetCommentID()
 	ru.mutation.SetCommentID(i)
 	return ru
 }
 
-// AddCommentID adds i to the "comment_id" field.
-func (ru *ReplyUpdate) AddCommentID(i int64) *ReplyUpdate {
-	ru.mutation.AddCommentID(i)
+// SetNillableCommentID sets the "comment_id" field if the given value is not nil.
+func (ru *ReplyUpdate) SetNillableCommentID(i *int64) *ReplyUpdate {
+	if i != nil {
+		ru.SetCommentID(*i)
+	}
+	return ru
+}
+
+// ClearCommentID clears the value of the "comment_id" field.
+func (ru *ReplyUpdate) ClearCommentID() *ReplyUpdate {
+	ru.mutation.ClearCommentID()
 	return ru
 }
 
 // SetParentID sets the "parent_id" field.
 func (ru *ReplyUpdate) SetParentID(i int64) *ReplyUpdate {
-	ru.mutation.ResetParentID()
 	ru.mutation.SetParentID(i)
 	return ru
 }
 
-// AddParentID adds i to the "parent_id" field.
-func (ru *ReplyUpdate) AddParentID(i int64) *ReplyUpdate {
-	ru.mutation.AddParentID(i)
+// SetNillableParentID sets the "parent_id" field if the given value is not nil.
+func (ru *ReplyUpdate) SetNillableParentID(i *int64) *ReplyUpdate {
+	if i != nil {
+		ru.SetParentID(*i)
+	}
+	return ru
+}
+
+// ClearParentID clears the value of the "parent_id" field.
+func (ru *ReplyUpdate) ClearParentID() *ReplyUpdate {
+	ru.mutation.ClearParentID()
 	return ru
 }
 
@@ -167,6 +168,26 @@ func (ru *ReplyUpdate) SetOwner(c *Comment) *ReplyUpdate {
 	return ru.SetOwnerID(c.ID)
 }
 
+// SetParent sets the "parent" edge to the Reply entity.
+func (ru *ReplyUpdate) SetParent(r *Reply) *ReplyUpdate {
+	return ru.SetParentID(r.ID)
+}
+
+// AddChildIDs adds the "children" edge to the Reply entity by IDs.
+func (ru *ReplyUpdate) AddChildIDs(ids ...int64) *ReplyUpdate {
+	ru.mutation.AddChildIDs(ids...)
+	return ru
+}
+
+// AddChildren adds the "children" edges to the Reply entity.
+func (ru *ReplyUpdate) AddChildren(r ...*Reply) *ReplyUpdate {
+	ids := make([]int64, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ru.AddChildIDs(ids...)
+}
+
 // Mutation returns the ReplyMutation object of the builder.
 func (ru *ReplyUpdate) Mutation() *ReplyMutation {
 	return ru.mutation
@@ -176,6 +197,33 @@ func (ru *ReplyUpdate) Mutation() *ReplyMutation {
 func (ru *ReplyUpdate) ClearOwner() *ReplyUpdate {
 	ru.mutation.ClearOwner()
 	return ru
+}
+
+// ClearParent clears the "parent" edge to the Reply entity.
+func (ru *ReplyUpdate) ClearParent() *ReplyUpdate {
+	ru.mutation.ClearParent()
+	return ru
+}
+
+// ClearChildren clears all "children" edges to the Reply entity.
+func (ru *ReplyUpdate) ClearChildren() *ReplyUpdate {
+	ru.mutation.ClearChildren()
+	return ru
+}
+
+// RemoveChildIDs removes the "children" edge to Reply entities by IDs.
+func (ru *ReplyUpdate) RemoveChildIDs(ids ...int64) *ReplyUpdate {
+	ru.mutation.RemoveChildIDs(ids...)
+	return ru
+}
+
+// RemoveChildren removes "children" edges to Reply entities.
+func (ru *ReplyUpdate) RemoveChildren(r ...*Reply) *ReplyUpdate {
+	ids := make([]int64, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ru.RemoveChildIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -245,11 +293,6 @@ func (ru *ReplyUpdate) check() error {
 			return &ValidationError{Name: "user_id", err: fmt.Errorf("ent: validator failed for field \"user_id\": %w", err)}
 		}
 	}
-	if v, ok := ru.mutation.PostID(); ok {
-		if err := reply.PostIDValidator(v); err != nil {
-			return &ValidationError{Name: "post_id", err: fmt.Errorf("ent: validator failed for field \"post_id\": %w", err)}
-		}
-	}
 	if v, ok := ru.mutation.CommentID(); ok {
 		if err := reply.CommentIDValidator(v); err != nil {
 			return &ValidationError{Name: "comment_id", err: fmt.Errorf("ent: validator failed for field \"comment_id\": %w", err)}
@@ -313,48 +356,6 @@ func (ru *ReplyUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeInt64,
 			Value:  value,
 			Column: reply.FieldUserID,
-		})
-	}
-	if value, ok := ru.mutation.PostID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldPostID,
-		})
-	}
-	if value, ok := ru.mutation.AddedPostID(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldPostID,
-		})
-	}
-	if value, ok := ru.mutation.CommentID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldCommentID,
-		})
-	}
-	if value, ok := ru.mutation.AddedCommentID(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldCommentID,
-		})
-	}
-	if value, ok := ru.mutation.ParentID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldParentID,
-		})
-	}
-	if value, ok := ru.mutation.AddedParentID(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldParentID,
 		})
 	}
 	if value, ok := ru.mutation.Content(); ok {
@@ -441,6 +442,95 @@ func (ru *ReplyUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if ru.mutation.ParentCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   reply.ParentTable,
+			Columns: []string{reply.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.ParentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   reply.ParentTable,
+			Columns: []string{reply.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ru.mutation.ChildrenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   reply.ChildrenTable,
+			Columns: []string{reply.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.RemovedChildrenIDs(); len(nodes) > 0 && !ru.mutation.ChildrenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   reply.ChildrenTable,
+			Columns: []string{reply.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.ChildrenIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   reply.ChildrenTable,
+			Columns: []string{reply.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, ru.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{reply.Label}
@@ -473,42 +563,43 @@ func (ruo *ReplyUpdateOne) AddUserID(i int64) *ReplyUpdateOne {
 	return ruo
 }
 
-// SetPostID sets the "post_id" field.
-func (ruo *ReplyUpdateOne) SetPostID(i int64) *ReplyUpdateOne {
-	ruo.mutation.ResetPostID()
-	ruo.mutation.SetPostID(i)
-	return ruo
-}
-
-// AddPostID adds i to the "post_id" field.
-func (ruo *ReplyUpdateOne) AddPostID(i int64) *ReplyUpdateOne {
-	ruo.mutation.AddPostID(i)
-	return ruo
-}
-
 // SetCommentID sets the "comment_id" field.
 func (ruo *ReplyUpdateOne) SetCommentID(i int64) *ReplyUpdateOne {
-	ruo.mutation.ResetCommentID()
 	ruo.mutation.SetCommentID(i)
 	return ruo
 }
 
-// AddCommentID adds i to the "comment_id" field.
-func (ruo *ReplyUpdateOne) AddCommentID(i int64) *ReplyUpdateOne {
-	ruo.mutation.AddCommentID(i)
+// SetNillableCommentID sets the "comment_id" field if the given value is not nil.
+func (ruo *ReplyUpdateOne) SetNillableCommentID(i *int64) *ReplyUpdateOne {
+	if i != nil {
+		ruo.SetCommentID(*i)
+	}
+	return ruo
+}
+
+// ClearCommentID clears the value of the "comment_id" field.
+func (ruo *ReplyUpdateOne) ClearCommentID() *ReplyUpdateOne {
+	ruo.mutation.ClearCommentID()
 	return ruo
 }
 
 // SetParentID sets the "parent_id" field.
 func (ruo *ReplyUpdateOne) SetParentID(i int64) *ReplyUpdateOne {
-	ruo.mutation.ResetParentID()
 	ruo.mutation.SetParentID(i)
 	return ruo
 }
 
-// AddParentID adds i to the "parent_id" field.
-func (ruo *ReplyUpdateOne) AddParentID(i int64) *ReplyUpdateOne {
-	ruo.mutation.AddParentID(i)
+// SetNillableParentID sets the "parent_id" field if the given value is not nil.
+func (ruo *ReplyUpdateOne) SetNillableParentID(i *int64) *ReplyUpdateOne {
+	if i != nil {
+		ruo.SetParentID(*i)
+	}
+	return ruo
+}
+
+// ClearParentID clears the value of the "parent_id" field.
+func (ruo *ReplyUpdateOne) ClearParentID() *ReplyUpdateOne {
+	ruo.mutation.ClearParentID()
 	return ruo
 }
 
@@ -600,6 +691,26 @@ func (ruo *ReplyUpdateOne) SetOwner(c *Comment) *ReplyUpdateOne {
 	return ruo.SetOwnerID(c.ID)
 }
 
+// SetParent sets the "parent" edge to the Reply entity.
+func (ruo *ReplyUpdateOne) SetParent(r *Reply) *ReplyUpdateOne {
+	return ruo.SetParentID(r.ID)
+}
+
+// AddChildIDs adds the "children" edge to the Reply entity by IDs.
+func (ruo *ReplyUpdateOne) AddChildIDs(ids ...int64) *ReplyUpdateOne {
+	ruo.mutation.AddChildIDs(ids...)
+	return ruo
+}
+
+// AddChildren adds the "children" edges to the Reply entity.
+func (ruo *ReplyUpdateOne) AddChildren(r ...*Reply) *ReplyUpdateOne {
+	ids := make([]int64, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ruo.AddChildIDs(ids...)
+}
+
 // Mutation returns the ReplyMutation object of the builder.
 func (ruo *ReplyUpdateOne) Mutation() *ReplyMutation {
 	return ruo.mutation
@@ -609,6 +720,33 @@ func (ruo *ReplyUpdateOne) Mutation() *ReplyMutation {
 func (ruo *ReplyUpdateOne) ClearOwner() *ReplyUpdateOne {
 	ruo.mutation.ClearOwner()
 	return ruo
+}
+
+// ClearParent clears the "parent" edge to the Reply entity.
+func (ruo *ReplyUpdateOne) ClearParent() *ReplyUpdateOne {
+	ruo.mutation.ClearParent()
+	return ruo
+}
+
+// ClearChildren clears all "children" edges to the Reply entity.
+func (ruo *ReplyUpdateOne) ClearChildren() *ReplyUpdateOne {
+	ruo.mutation.ClearChildren()
+	return ruo
+}
+
+// RemoveChildIDs removes the "children" edge to Reply entities by IDs.
+func (ruo *ReplyUpdateOne) RemoveChildIDs(ids ...int64) *ReplyUpdateOne {
+	ruo.mutation.RemoveChildIDs(ids...)
+	return ruo
+}
+
+// RemoveChildren removes "children" edges to Reply entities.
+func (ruo *ReplyUpdateOne) RemoveChildren(r ...*Reply) *ReplyUpdateOne {
+	ids := make([]int64, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ruo.RemoveChildIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -683,11 +821,6 @@ func (ruo *ReplyUpdateOne) check() error {
 	if v, ok := ruo.mutation.UserID(); ok {
 		if err := reply.UserIDValidator(v); err != nil {
 			return &ValidationError{Name: "user_id", err: fmt.Errorf("ent: validator failed for field \"user_id\": %w", err)}
-		}
-	}
-	if v, ok := ruo.mutation.PostID(); ok {
-		if err := reply.PostIDValidator(v); err != nil {
-			return &ValidationError{Name: "post_id", err: fmt.Errorf("ent: validator failed for field \"post_id\": %w", err)}
 		}
 	}
 	if v, ok := ruo.mutation.CommentID(); ok {
@@ -772,48 +905,6 @@ func (ruo *ReplyUpdateOne) sqlSave(ctx context.Context) (_node *Reply, err error
 			Column: reply.FieldUserID,
 		})
 	}
-	if value, ok := ruo.mutation.PostID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldPostID,
-		})
-	}
-	if value, ok := ruo.mutation.AddedPostID(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldPostID,
-		})
-	}
-	if value, ok := ruo.mutation.CommentID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldCommentID,
-		})
-	}
-	if value, ok := ruo.mutation.AddedCommentID(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldCommentID,
-		})
-	}
-	if value, ok := ruo.mutation.ParentID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldParentID,
-		})
-	}
-	if value, ok := ruo.mutation.AddedParentID(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldParentID,
-		})
-	}
 	if value, ok := ruo.mutation.Content(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -890,6 +981,95 @@ func (ruo *ReplyUpdateOne) sqlSave(ctx context.Context) (_node *Reply, err error
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt64,
 					Column: comment.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ruo.mutation.ParentCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   reply.ParentTable,
+			Columns: []string{reply.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.ParentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   reply.ParentTable,
+			Columns: []string{reply.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ruo.mutation.ChildrenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   reply.ChildrenTable,
+			Columns: []string{reply.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.RemovedChildrenIDs(); len(nodes) > 0 && !ruo.mutation.ChildrenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   reply.ChildrenTable,
+			Columns: []string{reply.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.ChildrenIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   reply.ChildrenTable,
+			Columns: []string{reply.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt64,
+					Column: reply.FieldID,
 				},
 			},
 		}

@@ -26,17 +26,13 @@ func (Reply) Fields() []ent.Field {
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.
 		}).Positive().Comment("The user that posted the message."),
 
-		field.Int64("post_id").SchemaType(map[string]string{
-			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).Positive().Comment("The post that the message is associated with."),
-
 		field.Int64("comment_id").SchemaType(map[string]string{
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).Positive().Comment("The comment that the message is associated with."),
+		}).Positive().Comment("The comment that this reply is for.").Optional(),
 
 		field.Int64("parent_id").SchemaType(map[string]string{
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).Positive().Comment("回复哪个回复的id"),
+		}).Positive().Comment("回复哪个回复的id").Optional(),
 
 		field.String("content").SchemaType(map[string]string{
 			dialect.MySQL: "varchar(1024)", // Override MySQL.
@@ -61,7 +57,12 @@ func (Reply) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("owner", Comment.Type).
 			Ref("replies").
-			Unique(),
+			Unique().
+			Field("comment_id"),
+		edge.To("children", Reply.Type).
+			From("parent").
+			Unique().
+			Field("parent_id"),
 	}
 }
 
@@ -74,6 +75,6 @@ func (Reply) Annotations() []schema.Annotation {
 func (Reply) Indexes() []ent.Index {
 	return []ent.Index{
 		// 非唯一约束索引
-		index.Fields("user_id", "post_id", "comment_id"),
+		index.Fields("user_id"),
 	}
 }

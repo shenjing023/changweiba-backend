@@ -18,9 +18,9 @@ FROM alpine as final
 RUN apk add --no-cache tzdata
 ENV TZ Asia/Shanghai
 
-WORKDIR /service
-COPY --from=builder /build/cw_post_service /service/
+WORKDIR /app
+COPY --from=builder /build/cw_post_service /app/
 
 EXPOSE 8019
 
-ENTRYPOINT ["/service/cw_post_service"]
+ENTRYPOINT ["/app/cw_post_service"]

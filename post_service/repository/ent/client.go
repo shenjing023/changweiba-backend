@@ -465,6 +465,38 @@ func (c *ReplyClient) QueryOwner(r *Reply) *CommentQuery {
 	return query
 }
 
+// QueryParent queries the parent edge of a Reply.
+func (c *ReplyClient) QueryParent(r *Reply) *ReplyQuery {
+	query := &ReplyQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(reply.Table, reply.FieldID, id),
+			sqlgraph.To(reply.Table, reply.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, reply.ParentTable, reply.ParentColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryChildren queries the children edge of a Reply.
+func (c *ReplyClient) QueryChildren(r *Reply) *ReplyQuery {
+	query := &ReplyQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(reply.Table, reply.FieldID, id),
+			sqlgraph.To(reply.Table, reply.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, reply.ChildrenTable, reply.ChildrenColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ReplyClient) Hooks() []Hook {
 	return c.hooks.Reply
