@@ -33,7 +33,7 @@ type YamlConf struct {
 		Host string `yaml:"host"`
 		Port int    `yaml:"port"`
 	} `yaml:"etcd"`
-	SrvName string `yaml:"srv_name"`
+	SvcName string `yaml:"svc_name"`
 	LogDir  string `yaml:"log_dir"`
 	Salt    string `yaml:"salt"`
 }

@@ -1,12 +1,8 @@
 #服务相关配置
 debug: false
 port: 8020
-account:
-  host: "account-service"
-  port: 8018
-post:
-  host: "post-service"
-  port: 8019
+account_svc_name: "account"
+post_svc_name: "post"
 auth_token:
   access:
     sign_key: "ssdadasd1"
@@ -19,4 +15,4 @@ log_dir: ""
 etcd:
   host: "10.0.0.215"
   port: 2379
-srv_name: "gateway"
+svc_name: "gateway"

@@ -37,6 +37,10 @@ func runGatewayService(configPath string) {
 	engine.POST("/graphql", graphqlHandler())
 	engine.GET("/", playgroundHandler())
 
+	if !conf.Cfg.Debug {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", conf.Cfg.Port),
 		Handler: engine,

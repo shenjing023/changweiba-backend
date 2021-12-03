@@ -18,4 +18,4 @@ etcd:
   port: 2379
 log_dir: ""
 salt: "asdah#!2sddh"
-srv_name: "account"
+svc_name: "account"

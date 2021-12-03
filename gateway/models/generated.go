@@ -89,7 +89,6 @@ type PostConnection struct {
 type Reply struct {
 	ID        int    `json:"id"`
 	User      *User  `json:"user"`
-	PostID    int    `json:"postId"`
 	CommentID int    `json:"commentId"`
 	Content   string `json:"content"`
 	CreatedAt int    `json:"createdAt"`

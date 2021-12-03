@@ -46,7 +46,6 @@ type CommentConnection{
 type Reply{
     id: Int!
     user: User!
-    postId: Int!
     commentId: Int!
     content: String!
     createdAt: Int!

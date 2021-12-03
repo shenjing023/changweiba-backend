@@ -217,7 +217,6 @@ func GetRepliesByCommentID(ctx context.Context, commentID int, page int, pageSiz
 			User: &models.User{
 				ID: int(v.UserId),
 			},
-			PostID:    int(v.PostId),
 			Content:   v.Content,
 			CreatedAt: int(v.CreateTime),
 			Floor:     int(v.Floor),

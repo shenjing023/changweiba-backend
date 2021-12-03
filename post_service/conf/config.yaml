@@ -17,4 +17,4 @@ etcd:
   host: "10.0.0.215"
   port: 2379
 log_dir: ""
-srv_name: "post"
+svc_name: "post"
