@@ -12,7 +12,7 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -ldflags="-s -w" -a -o cw_post_service .
 
-FROM alpine as final
+FROM scratch as final
 
 # 时区
 RUN apk add --no-cache tzdata
