@@ -22,6 +22,8 @@ var (
 	PostConn    *grpc.ClientConn
 )
 
+const serviceSchema = "svc"
+
 // InitGRPCConn init grpc conn
 func InitGRPCConn() {
 	var err error
@@ -29,20 +31,20 @@ func InitGRPCConn() {
 		Endpoints:   []string{fmt.Sprintf("%s:%d", conf.Cfg.Etcd.Host, conf.Cfg.Etcd.Port)},
 		DialTimeout: time.Second * 5,
 	}
-	account, err := NewDiscovery(etcdConf, "svc", conf.Cfg.AccountSvcName)
+	account, err := NewDiscovery(etcdConf, "svc-"+conf.Cfg.AccountSvcName, conf.Cfg.AccountSvcName)
 	if err != nil {
 		panic(err)
 	}
 	resolver.Register(account)
 
-	post, err := NewDiscovery(etcdConf, "svc", conf.Cfg.PostSvcName)
+	post, err := NewDiscovery(etcdConf, "svc-"+conf.Cfg.PostSvcName, conf.Cfg.PostSvcName)
 	if err != nil {
 		panic(err)
 	}
 	resolver.Register(post)
 
 	AccountConn, err = grpc.DialContext(context.Background(),
-		GetPrefix("svc", conf.Cfg.AccountSvcName),
+		GetPrefix("svc-"+conf.Cfg.AccountSvcName, conf.Cfg.AccountSvcName),
 		grpc.WithDefaultServiceConfig(`{"LoadBalancingPolicy": "round_robin"}`),
 		grpc.WithInsecure(),
 		// grpc.WithUnaryInterceptor(unaryHeaderInterceptor),
@@ -52,7 +54,7 @@ func InitGRPCConn() {
 	}
 
 	PostConn, err = grpc.DialContext(context.Background(),
-		GetPrefix("svc", conf.Cfg.PostSvcName),
+		GetPrefix("svc-"+conf.Cfg.PostSvcName, conf.Cfg.PostSvcName),
 		grpc.WithDefaultServiceConfig(`{"LoadBalancingPolicy": "round_robin"}`),
 		grpc.WithInsecure(),
 		// grpc.WithUnaryInterceptor(unaryHeaderInterceptor),
@@ -76,7 +78,7 @@ func StopGRPCConn() {
 func unaryHeaderInterceptor(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	gc, err := common.GinContextFromContext(ctx)
 	if err != nil {
-		log.Error("%+v", err)
+		log.Errorf("%+v", err)
 		return errors.New(ServiceError)
 	}
 	var (

@@ -145,7 +145,11 @@ func NewReply(ctx context.Context, input models.NewReply) (int, error) {
 		PostId:    int64(input.PostID),
 		Content:   input.Content,
 		CommentId: int64(input.CommentID),
-		ParentId:  int64(input.ParentID),
+	}
+	if input.ParentID == nil {
+		request.ParentId = 0
+	} else {
+		request.ParentId = int64(*input.ParentID)
 	}
 	r, err := client.NewReply(ctx, &request)
 	if err != nil {

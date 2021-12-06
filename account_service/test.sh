@@ -13,4 +13,4 @@ docker rmi account-service:v1
 docker build -t account-service:v1 .
 # run docker image
 
-docker run -d -it -p 8018:8018 --name account-service_v1  -v $HCONF/config.yaml:$CCONF/config.yaml account-service:v1
+docker run -d -it -p 8018:8018 --name account-service_v1  --network=host -v $HCONF/config.yaml:$CCONF/config.yaml account-service:v1

@@ -75,7 +75,7 @@ input NewReply{
     postId: Int!
     commentId: Int!
     content: String!
-    parentId: Int!
+    parentId: Int
 }
 
 input DeletePost{

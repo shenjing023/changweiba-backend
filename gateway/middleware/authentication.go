@@ -13,6 +13,7 @@ import (
 var (
 	accessTokenAuth  = common.NewJWTAuth()
 	refreshTokenAuth = common.NewJWTAuth()
+	queryNames       = []string{"posts", "signIn", "signUp", "user", "post", "comment", "comments", "reply", "replies"}
 )
 
 // AuthMiddleware authentication middleware
@@ -104,8 +105,10 @@ func InitAuth() {
 func checkQuery(c *gin.Context) bool {
 	queryName := c.GetStringSlice("queryName")
 	for _, v := range queryName {
-		if v == "posts" || v == "signIn" || v == "signUp" {
-			return true
+		for _, vv := range queryNames {
+			if v == vv {
+				return true
+			}
 		}
 	}
 	return false

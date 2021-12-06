@@ -933,7 +933,7 @@ input NewReply{
     postId: Int!
     commentId: Int!
     content: String!
-    parentId: Int!
+    parentId: Int
 }
 
 input DeletePost{
@@ -5081,7 +5081,7 @@ func (ec *executionContext) unmarshalInputNewReply(ctx context.Context, obj inte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentId"))
-			it.ParentID, err = ec.unmarshalNInt2int(ctx, v)
+			it.ParentID, err = ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6654,6 +6654,21 @@ func (ec *executionContext) marshalOCommentConnection2ᚖgatewayᚋmodelsᚐComm
 		return graphql.Null
 	}
 	return ec._CommentConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return graphql.MarshalInt(*v)
 }
 
 func (ec *executionContext) marshalOPost2ᚕᚖgatewayᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v []*models.Post) graphql.Marshaler {

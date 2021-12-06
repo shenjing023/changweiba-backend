@@ -56,7 +56,7 @@ type NewReply struct {
 	PostID    int    `json:"postId"`
 	CommentID int    `json:"commentId"`
 	Content   string `json:"content"`
-	ParentID  int    `json:"parentId"`
+	ParentID  *int   `json:"parentId"`
 }
 
 type NewUser struct {

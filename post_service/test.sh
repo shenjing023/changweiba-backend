@@ -13,4 +13,4 @@ docker rmi post-service:v1
 docker build -t post-service:v1 .
 # run docker image
 
-docker run -d -it -p 8019:8019 --name post-service_v1  -v $HCONF/config.yaml:$CCONF/config.yaml post-service:v1
+docker run -d -it -p 8019:8019 --name post-service_v1 --network=host -v $HCONF/config.yaml:$CCONF/config.yaml post-service:v1

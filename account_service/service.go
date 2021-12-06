@@ -41,7 +41,7 @@ func runAccountService(configPath string) {
 		Endpoints:   []string{fmt.Sprintf("%s:%d", conf.Cfg.Etcd.Host, conf.Cfg.Etcd.Port)},
 		DialTimeout: time.Second * 5,
 	}
-	r, err := NewRegister(etcdConf, "svc", conf.Cfg.SvcName, "127.0.0.1", fmt.Sprintf("%d", conf.Cfg.Port))
+	r, err := NewRegister(etcdConf, "svc-"+conf.Cfg.SvcName, conf.Cfg.SvcName, "127.0.0.1", fmt.Sprintf("%d", conf.Cfg.Port))
 	if err != nil {
 		log.Fatalf("failed register serve: %v", err)
 	}

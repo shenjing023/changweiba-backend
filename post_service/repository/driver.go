@@ -181,11 +181,6 @@ func InsertComment(userID int64, postID int64, content string) (int64, error) {
 			if err != nil {
 				return 0, common.NewServiceErr(common.Internal, err)
 			}
-		} else {
-			floor, err = redisClient.Incr(ctx, key).Result()
-			if err != nil {
-				return 0, common.NewServiceErr(common.Internal, err)
-			}
 		}
 	} else if err != nil {
 		return 0, common.NewServiceErr(common.Internal, err)

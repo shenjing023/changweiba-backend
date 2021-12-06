@@ -45,15 +45,17 @@ func InsertReply(ctx context.Context, c *Client, userID, commentID, parentID int
 	}
 
 	// 再插入
-	r, err := c.Reply.Create().
+	rc := c.Reply.Create().
 		SetUserID(userID).
-		SetParentID(parentID).
 		SetFloor(floor + 1).
 		SetContent(content).
 		SetStatus(0).
 		SetCreateAt(time.Now().Unix()).
-		SetOwnerID(commentID).
-		Save(ctx)
+		SetOwnerID(commentID)
+	if parentID != 0 {
+		rc.SetParentID(parentID)
+	}
+	r, err := rc.Save(ctx)
 	if err != nil {
 		tx.Rollback()
 		return 0, err
