@@ -51,7 +51,10 @@ jobs:
       packages: write
 
     steps:
-      - run: ls -la && cd ./account_service && echo "build account-service"
+      - run: |
+          ls -la
+          cd ./account_service 
+          echo "build account-service"
       # Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action
       - name: Extract Docker metadata
@@ -79,7 +82,10 @@ jobs:
       packages: write
 
     steps:
-      - run: ls -la && cd ./post_service && echo "build post-service"
+      - run: |
+          ls -la 
+          cd ./post_service 
+          echo "build post-service"
       # Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action
       - name: Extract Docker metadata
