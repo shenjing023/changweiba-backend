@@ -32,7 +32,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-  checkout:
+  # 用户服务镜像构建
+  build_account:
+    needs: docker_login
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -41,16 +43,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-
-  # 用户服务镜像构建
-  build_account:
-    needs: [docker_login, checkout]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
       - run: |
           ls -la
           cd ./account_service 
@@ -75,13 +67,15 @@ jobs:
 
   # post服务镜像构建
   build_post:
-    needs: [docker_login, checkout]
+    needs: docker_login
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
       - run: |
           ls -la 
           cd ./post_service 
