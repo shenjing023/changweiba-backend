@@ -1,4 +1,4 @@
-name: Docker-Publish-test4
+name: Docker-Publish-test5
 
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
@@ -31,7 +31,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Log into registry ${{ env.REGISTRY }}
-        uses: docker/login-action@v2
+        uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -70,7 +70,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Log into registry ${{ env.REGISTRY }}
-        uses: docker/login-action@v2
+        uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
