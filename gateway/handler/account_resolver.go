@@ -34,7 +34,6 @@ func SignUp(ctx context.Context, input models.NewUser) (*models.AuthToken, error
 	// }
 
 	client := pb.NewAccountClient(AccountConn)
-	log.Infof("account target:%s", AccountConn.Target())
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
