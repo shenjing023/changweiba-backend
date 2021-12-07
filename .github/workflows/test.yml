@@ -1,4 +1,4 @@
-name: Docker-Publish-test3
+name: Docker-Publish-test4
 
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
@@ -61,7 +61,6 @@ jobs:
 
   # post服务镜像构建
   build_post:
-    needs: docker_login
     runs-on: ubuntu-latest
     permissions:
       contents: read
