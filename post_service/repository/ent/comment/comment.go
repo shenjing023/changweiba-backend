@@ -64,23 +64,21 @@ func ValidColumn(column string) bool {
 
 var (
 	// UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
-	UserIDValidator func(int64) error
+	UserIDValidator func(uint64) error
 	// PostIDValidator is a validator for the "post_id" field. It is called by the builders before save.
-	PostIDValidator func(int64) error
+	PostIDValidator func(uint64) error
 	// ContentValidator is a validator for the "content" field. It is called by the builders before save.
 	ContentValidator func(string) error
 	// DefaultStatus holds the default value on creation for the "status" field.
 	DefaultStatus int8
 	// StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	StatusValidator func(int8) error
-	// DefaultFloor holds the default value on creation for the "floor" field.
-	DefaultFloor int64
 	// FloorValidator is a validator for the "floor" field. It is called by the builders before save.
-	FloorValidator func(int64) error
+	FloorValidator func(uint64) error
 	// DefaultCreateAt holds the default value on creation for the "create_at" field.
 	DefaultCreateAt int64
 	// CreateAtValidator is a validator for the "create_at" field. It is called by the builders before save.
 	CreateAtValidator func(int64) error
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
-	IDValidator func(int64) error
+	IDValidator func(uint64) error
 )

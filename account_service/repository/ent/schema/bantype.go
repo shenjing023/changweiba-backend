@@ -16,11 +16,7 @@ type BanType struct {
 // Fields of the BanType.
 func (BanType) Fields() []ent.Field {
 	return []ent.Field{
-
-		field.Int64("id").SchemaType(map[string]string{
-			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).NonNegative().Unique(),
-
+		field.Uint64("id").Positive().Unique(),
 		field.String("content").SchemaType(map[string]string{
 			dialect.MySQL: "varchar(255)", // Override MySQL.
 		}).NotEmpty().Comment("具体ban的内容"),

@@ -17,6 +17,7 @@ type Stock struct {
 // Fields of the Stock.
 func (Stock) Fields() []ent.Field {
 	return []ent.Field{
+		field.Uint64("id").Positive().Unique(),
 		field.String("symbol").SchemaType(map[string]string{
 			dialect.MySQL: "varchar(10)", // Override MySQL.
 		}).NotEmpty().Unique().Comment("股票代码"),
@@ -30,6 +31,7 @@ func (Stock) Fields() []ent.Field {
 func (Stock) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("trades", TradeDate.Type),
+		edge.To("subscribers", User.Type),
 	}
 }
 

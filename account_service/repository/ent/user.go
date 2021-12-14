@@ -14,14 +14,13 @@ import (
 type User struct {
 	config `json:"-"`
 	// ID of the ent.
-	// 用户id
-	ID int64 `json:"id,omitempty"`
+	ID uint64 `json:"id,omitempty"`
 	// NickName holds the value of the "nick_name" field.
 	// 名称
 	NickName string `json:"nick_name,omitempty"`
 	// Password holds the value of the "password" field.
 	// 密码
-	Password string `json:"password,omitempty"`
+	Password string `json:"-"`
 	// Avatar holds the value of the "avatar" field.
 	// 头像
 	Avatar string `json:"avatar,omitempty"`
@@ -71,7 +70,7 @@ func (u *User) assignValues(columns []string, values []interface{}) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			u.ID = int64(value.Int64)
+			u.ID = uint64(value.Int64)
 		case user.FieldNickName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field nick_name", values[i])
@@ -150,8 +149,7 @@ func (u *User) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v", u.ID))
 	builder.WriteString(", nick_name=")
 	builder.WriteString(u.NickName)
-	builder.WriteString(", password=")
-	builder.WriteString(u.Password)
+	builder.WriteString(", password=<sensitive>")
 	builder.WriteString(", avatar=")
 	builder.WriteString(u.Avatar)
 	builder.WriteString(", status=")

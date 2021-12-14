@@ -28,28 +28,28 @@ func (ru *ReplyUpdate) Where(ps ...predicate.Reply) *ReplyUpdate {
 }
 
 // SetUserID sets the "user_id" field.
-func (ru *ReplyUpdate) SetUserID(i int64) *ReplyUpdate {
+func (ru *ReplyUpdate) SetUserID(u uint64) *ReplyUpdate {
 	ru.mutation.ResetUserID()
-	ru.mutation.SetUserID(i)
+	ru.mutation.SetUserID(u)
 	return ru
 }
 
-// AddUserID adds i to the "user_id" field.
-func (ru *ReplyUpdate) AddUserID(i int64) *ReplyUpdate {
-	ru.mutation.AddUserID(i)
+// AddUserID adds u to the "user_id" field.
+func (ru *ReplyUpdate) AddUserID(u uint64) *ReplyUpdate {
+	ru.mutation.AddUserID(u)
 	return ru
 }
 
 // SetCommentID sets the "comment_id" field.
-func (ru *ReplyUpdate) SetCommentID(i int64) *ReplyUpdate {
-	ru.mutation.SetCommentID(i)
+func (ru *ReplyUpdate) SetCommentID(u uint64) *ReplyUpdate {
+	ru.mutation.SetCommentID(u)
 	return ru
 }
 
 // SetNillableCommentID sets the "comment_id" field if the given value is not nil.
-func (ru *ReplyUpdate) SetNillableCommentID(i *int64) *ReplyUpdate {
-	if i != nil {
-		ru.SetCommentID(*i)
+func (ru *ReplyUpdate) SetNillableCommentID(u *uint64) *ReplyUpdate {
+	if u != nil {
+		ru.SetCommentID(*u)
 	}
 	return ru
 }
@@ -61,15 +61,15 @@ func (ru *ReplyUpdate) ClearCommentID() *ReplyUpdate {
 }
 
 // SetParentID sets the "parent_id" field.
-func (ru *ReplyUpdate) SetParentID(i int64) *ReplyUpdate {
-	ru.mutation.SetParentID(i)
+func (ru *ReplyUpdate) SetParentID(u uint64) *ReplyUpdate {
+	ru.mutation.SetParentID(u)
 	return ru
 }
 
 // SetNillableParentID sets the "parent_id" field if the given value is not nil.
-func (ru *ReplyUpdate) SetNillableParentID(i *int64) *ReplyUpdate {
-	if i != nil {
-		ru.SetParentID(*i)
+func (ru *ReplyUpdate) SetNillableParentID(u *uint64) *ReplyUpdate {
+	if u != nil {
+		ru.SetParentID(*u)
 	}
 	return ru
 }
@@ -108,55 +108,26 @@ func (ru *ReplyUpdate) AddStatus(i int8) *ReplyUpdate {
 }
 
 // SetFloor sets the "floor" field.
-func (ru *ReplyUpdate) SetFloor(i int64) *ReplyUpdate {
+func (ru *ReplyUpdate) SetFloor(u uint64) *ReplyUpdate {
 	ru.mutation.ResetFloor()
-	ru.mutation.SetFloor(i)
+	ru.mutation.SetFloor(u)
 	return ru
 }
 
-// SetNillableFloor sets the "floor" field if the given value is not nil.
-func (ru *ReplyUpdate) SetNillableFloor(i *int64) *ReplyUpdate {
-	if i != nil {
-		ru.SetFloor(*i)
-	}
-	return ru
-}
-
-// AddFloor adds i to the "floor" field.
-func (ru *ReplyUpdate) AddFloor(i int64) *ReplyUpdate {
-	ru.mutation.AddFloor(i)
-	return ru
-}
-
-// SetCreateAt sets the "create_at" field.
-func (ru *ReplyUpdate) SetCreateAt(i int64) *ReplyUpdate {
-	ru.mutation.ResetCreateAt()
-	ru.mutation.SetCreateAt(i)
-	return ru
-}
-
-// SetNillableCreateAt sets the "create_at" field if the given value is not nil.
-func (ru *ReplyUpdate) SetNillableCreateAt(i *int64) *ReplyUpdate {
-	if i != nil {
-		ru.SetCreateAt(*i)
-	}
-	return ru
-}
-
-// AddCreateAt adds i to the "create_at" field.
-func (ru *ReplyUpdate) AddCreateAt(i int64) *ReplyUpdate {
-	ru.mutation.AddCreateAt(i)
+// AddFloor adds u to the "floor" field.
+func (ru *ReplyUpdate) AddFloor(u uint64) *ReplyUpdate {
+	ru.mutation.AddFloor(u)
 	return ru
 }
 
 // SetOwnerID sets the "owner" edge to the Comment entity by ID.
-func (ru *ReplyUpdate) SetOwnerID(id int64) *ReplyUpdate {
+func (ru *ReplyUpdate) SetOwnerID(id uint64) *ReplyUpdate {
 	ru.mutation.SetOwnerID(id)
 	return ru
 }
 
 // SetNillableOwnerID sets the "owner" edge to the Comment entity by ID if the given value is not nil.
-func (ru *ReplyUpdate) SetNillableOwnerID(id *int64) *ReplyUpdate {
+func (ru *ReplyUpdate) SetNillableOwnerID(id *uint64) *ReplyUpdate {
 	if id != nil {
 		ru = ru.SetOwnerID(*id)
 	}
@@ -174,14 +145,14 @@ func (ru *ReplyUpdate) SetParent(r *Reply) *ReplyUpdate {
 }
 
 // AddChildIDs adds the "children" edge to the Reply entity by IDs.
-func (ru *ReplyUpdate) AddChildIDs(ids ...int64) *ReplyUpdate {
+func (ru *ReplyUpdate) AddChildIDs(ids ...uint64) *ReplyUpdate {
 	ru.mutation.AddChildIDs(ids...)
 	return ru
 }
 
 // AddChildren adds the "children" edges to the Reply entity.
 func (ru *ReplyUpdate) AddChildren(r ...*Reply) *ReplyUpdate {
-	ids := make([]int64, len(r))
+	ids := make([]uint64, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -212,14 +183,14 @@ func (ru *ReplyUpdate) ClearChildren() *ReplyUpdate {
 }
 
 // RemoveChildIDs removes the "children" edge to Reply entities by IDs.
-func (ru *ReplyUpdate) RemoveChildIDs(ids ...int64) *ReplyUpdate {
+func (ru *ReplyUpdate) RemoveChildIDs(ids ...uint64) *ReplyUpdate {
 	ru.mutation.RemoveChildIDs(ids...)
 	return ru
 }
 
 // RemoveChildren removes "children" edges to Reply entities.
 func (ru *ReplyUpdate) RemoveChildren(r ...*Reply) *ReplyUpdate {
-	ids := make([]int64, len(r))
+	ids := make([]uint64, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -318,11 +289,6 @@ func (ru *ReplyUpdate) check() error {
 			return &ValidationError{Name: "floor", err: fmt.Errorf("ent: validator failed for field \"floor\": %w", err)}
 		}
 	}
-	if v, ok := ru.mutation.CreateAt(); ok {
-		if err := reply.CreateAtValidator(v); err != nil {
-			return &ValidationError{Name: "create_at", err: fmt.Errorf("ent: validator failed for field \"create_at\": %w", err)}
-		}
-	}
 	return nil
 }
 
@@ -332,7 +298,7 @@ func (ru *ReplyUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   reply.Table,
 			Columns: reply.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
+				Type:   field.TypeUint64,
 				Column: reply.FieldID,
 			},
 		},
@@ -346,14 +312,14 @@ func (ru *ReplyUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := ru.mutation.UserID(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeUint64,
 			Value:  value,
 			Column: reply.FieldUserID,
 		})
 	}
 	if value, ok := ru.mutation.AddedUserID(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeUint64,
 			Value:  value,
 			Column: reply.FieldUserID,
 		})
@@ -381,30 +347,16 @@ func (ru *ReplyUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := ru.mutation.Floor(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeUint64,
 			Value:  value,
 			Column: reply.FieldFloor,
 		})
 	}
 	if value, ok := ru.mutation.AddedFloor(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeUint64,
 			Value:  value,
 			Column: reply.FieldFloor,
-		})
-	}
-	if value, ok := ru.mutation.CreateAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldCreateAt,
-		})
-	}
-	if value, ok := ru.mutation.AddedCreateAt(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldCreateAt,
 		})
 	}
 	if ru.mutation.OwnerCleared() {
@@ -416,7 +368,7 @@ func (ru *ReplyUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: comment.FieldID,
 				},
 			},
@@ -432,7 +384,7 @@ func (ru *ReplyUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: comment.FieldID,
 				},
 			},
@@ -451,7 +403,7 @@ func (ru *ReplyUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: reply.FieldID,
 				},
 			},
@@ -467,7 +419,7 @@ func (ru *ReplyUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: reply.FieldID,
 				},
 			},
@@ -486,7 +438,7 @@ func (ru *ReplyUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: reply.FieldID,
 				},
 			},
@@ -502,7 +454,7 @@ func (ru *ReplyUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: reply.FieldID,
 				},
 			},
@@ -521,7 +473,7 @@ func (ru *ReplyUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: reply.FieldID,
 				},
 			},
@@ -551,28 +503,28 @@ type ReplyUpdateOne struct {
 }
 
 // SetUserID sets the "user_id" field.
-func (ruo *ReplyUpdateOne) SetUserID(i int64) *ReplyUpdateOne {
+func (ruo *ReplyUpdateOne) SetUserID(u uint64) *ReplyUpdateOne {
 	ruo.mutation.ResetUserID()
-	ruo.mutation.SetUserID(i)
+	ruo.mutation.SetUserID(u)
 	return ruo
 }
 
-// AddUserID adds i to the "user_id" field.
-func (ruo *ReplyUpdateOne) AddUserID(i int64) *ReplyUpdateOne {
-	ruo.mutation.AddUserID(i)
+// AddUserID adds u to the "user_id" field.
+func (ruo *ReplyUpdateOne) AddUserID(u uint64) *ReplyUpdateOne {
+	ruo.mutation.AddUserID(u)
 	return ruo
 }
 
 // SetCommentID sets the "comment_id" field.
-func (ruo *ReplyUpdateOne) SetCommentID(i int64) *ReplyUpdateOne {
-	ruo.mutation.SetCommentID(i)
+func (ruo *ReplyUpdateOne) SetCommentID(u uint64) *ReplyUpdateOne {
+	ruo.mutation.SetCommentID(u)
 	return ruo
 }
 
 // SetNillableCommentID sets the "comment_id" field if the given value is not nil.
-func (ruo *ReplyUpdateOne) SetNillableCommentID(i *int64) *ReplyUpdateOne {
-	if i != nil {
-		ruo.SetCommentID(*i)
+func (ruo *ReplyUpdateOne) SetNillableCommentID(u *uint64) *ReplyUpdateOne {
+	if u != nil {
+		ruo.SetCommentID(*u)
 	}
 	return ruo
 }
@@ -584,15 +536,15 @@ func (ruo *ReplyUpdateOne) ClearCommentID() *ReplyUpdateOne {
 }
 
 // SetParentID sets the "parent_id" field.
-func (ruo *ReplyUpdateOne) SetParentID(i int64) *ReplyUpdateOne {
-	ruo.mutation.SetParentID(i)
+func (ruo *ReplyUpdateOne) SetParentID(u uint64) *ReplyUpdateOne {
+	ruo.mutation.SetParentID(u)
 	return ruo
 }
 
 // SetNillableParentID sets the "parent_id" field if the given value is not nil.
-func (ruo *ReplyUpdateOne) SetNillableParentID(i *int64) *ReplyUpdateOne {
-	if i != nil {
-		ruo.SetParentID(*i)
+func (ruo *ReplyUpdateOne) SetNillableParentID(u *uint64) *ReplyUpdateOne {
+	if u != nil {
+		ruo.SetParentID(*u)
 	}
 	return ruo
 }
@@ -631,55 +583,26 @@ func (ruo *ReplyUpdateOne) AddStatus(i int8) *ReplyUpdateOne {
 }
 
 // SetFloor sets the "floor" field.
-func (ruo *ReplyUpdateOne) SetFloor(i int64) *ReplyUpdateOne {
+func (ruo *ReplyUpdateOne) SetFloor(u uint64) *ReplyUpdateOne {
 	ruo.mutation.ResetFloor()
-	ruo.mutation.SetFloor(i)
+	ruo.mutation.SetFloor(u)
 	return ruo
 }
 
-// SetNillableFloor sets the "floor" field if the given value is not nil.
-func (ruo *ReplyUpdateOne) SetNillableFloor(i *int64) *ReplyUpdateOne {
-	if i != nil {
-		ruo.SetFloor(*i)
-	}
-	return ruo
-}
-
-// AddFloor adds i to the "floor" field.
-func (ruo *ReplyUpdateOne) AddFloor(i int64) *ReplyUpdateOne {
-	ruo.mutation.AddFloor(i)
-	return ruo
-}
-
-// SetCreateAt sets the "create_at" field.
-func (ruo *ReplyUpdateOne) SetCreateAt(i int64) *ReplyUpdateOne {
-	ruo.mutation.ResetCreateAt()
-	ruo.mutation.SetCreateAt(i)
-	return ruo
-}
-
-// SetNillableCreateAt sets the "create_at" field if the given value is not nil.
-func (ruo *ReplyUpdateOne) SetNillableCreateAt(i *int64) *ReplyUpdateOne {
-	if i != nil {
-		ruo.SetCreateAt(*i)
-	}
-	return ruo
-}
-
-// AddCreateAt adds i to the "create_at" field.
-func (ruo *ReplyUpdateOne) AddCreateAt(i int64) *ReplyUpdateOne {
-	ruo.mutation.AddCreateAt(i)
+// AddFloor adds u to the "floor" field.
+func (ruo *ReplyUpdateOne) AddFloor(u uint64) *ReplyUpdateOne {
+	ruo.mutation.AddFloor(u)
 	return ruo
 }
 
 // SetOwnerID sets the "owner" edge to the Comment entity by ID.
-func (ruo *ReplyUpdateOne) SetOwnerID(id int64) *ReplyUpdateOne {
+func (ruo *ReplyUpdateOne) SetOwnerID(id uint64) *ReplyUpdateOne {
 	ruo.mutation.SetOwnerID(id)
 	return ruo
 }
 
 // SetNillableOwnerID sets the "owner" edge to the Comment entity by ID if the given value is not nil.
-func (ruo *ReplyUpdateOne) SetNillableOwnerID(id *int64) *ReplyUpdateOne {
+func (ruo *ReplyUpdateOne) SetNillableOwnerID(id *uint64) *ReplyUpdateOne {
 	if id != nil {
 		ruo = ruo.SetOwnerID(*id)
 	}
@@ -697,14 +620,14 @@ func (ruo *ReplyUpdateOne) SetParent(r *Reply) *ReplyUpdateOne {
 }
 
 // AddChildIDs adds the "children" edge to the Reply entity by IDs.
-func (ruo *ReplyUpdateOne) AddChildIDs(ids ...int64) *ReplyUpdateOne {
+func (ruo *ReplyUpdateOne) AddChildIDs(ids ...uint64) *ReplyUpdateOne {
 	ruo.mutation.AddChildIDs(ids...)
 	return ruo
 }
 
 // AddChildren adds the "children" edges to the Reply entity.
 func (ruo *ReplyUpdateOne) AddChildren(r ...*Reply) *ReplyUpdateOne {
-	ids := make([]int64, len(r))
+	ids := make([]uint64, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -735,14 +658,14 @@ func (ruo *ReplyUpdateOne) ClearChildren() *ReplyUpdateOne {
 }
 
 // RemoveChildIDs removes the "children" edge to Reply entities by IDs.
-func (ruo *ReplyUpdateOne) RemoveChildIDs(ids ...int64) *ReplyUpdateOne {
+func (ruo *ReplyUpdateOne) RemoveChildIDs(ids ...uint64) *ReplyUpdateOne {
 	ruo.mutation.RemoveChildIDs(ids...)
 	return ruo
 }
 
 // RemoveChildren removes "children" edges to Reply entities.
 func (ruo *ReplyUpdateOne) RemoveChildren(r ...*Reply) *ReplyUpdateOne {
-	ids := make([]int64, len(r))
+	ids := make([]uint64, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -848,11 +771,6 @@ func (ruo *ReplyUpdateOne) check() error {
 			return &ValidationError{Name: "floor", err: fmt.Errorf("ent: validator failed for field \"floor\": %w", err)}
 		}
 	}
-	if v, ok := ruo.mutation.CreateAt(); ok {
-		if err := reply.CreateAtValidator(v); err != nil {
-			return &ValidationError{Name: "create_at", err: fmt.Errorf("ent: validator failed for field \"create_at\": %w", err)}
-		}
-	}
 	return nil
 }
 
@@ -862,7 +780,7 @@ func (ruo *ReplyUpdateOne) sqlSave(ctx context.Context) (_node *Reply, err error
 			Table:   reply.Table,
 			Columns: reply.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
+				Type:   field.TypeUint64,
 				Column: reply.FieldID,
 			},
 		},
@@ -893,14 +811,14 @@ func (ruo *ReplyUpdateOne) sqlSave(ctx context.Context) (_node *Reply, err error
 	}
 	if value, ok := ruo.mutation.UserID(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeUint64,
 			Value:  value,
 			Column: reply.FieldUserID,
 		})
 	}
 	if value, ok := ruo.mutation.AddedUserID(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeUint64,
 			Value:  value,
 			Column: reply.FieldUserID,
 		})
@@ -928,30 +846,16 @@ func (ruo *ReplyUpdateOne) sqlSave(ctx context.Context) (_node *Reply, err error
 	}
 	if value, ok := ruo.mutation.Floor(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeUint64,
 			Value:  value,
 			Column: reply.FieldFloor,
 		})
 	}
 	if value, ok := ruo.mutation.AddedFloor(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeUint64,
 			Value:  value,
 			Column: reply.FieldFloor,
-		})
-	}
-	if value, ok := ruo.mutation.CreateAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldCreateAt,
-		})
-	}
-	if value, ok := ruo.mutation.AddedCreateAt(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: reply.FieldCreateAt,
 		})
 	}
 	if ruo.mutation.OwnerCleared() {
@@ -963,7 +867,7 @@ func (ruo *ReplyUpdateOne) sqlSave(ctx context.Context) (_node *Reply, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: comment.FieldID,
 				},
 			},
@@ -979,7 +883,7 @@ func (ruo *ReplyUpdateOne) sqlSave(ctx context.Context) (_node *Reply, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: comment.FieldID,
 				},
 			},
@@ -998,7 +902,7 @@ func (ruo *ReplyUpdateOne) sqlSave(ctx context.Context) (_node *Reply, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: reply.FieldID,
 				},
 			},
@@ -1014,7 +918,7 @@ func (ruo *ReplyUpdateOne) sqlSave(ctx context.Context) (_node *Reply, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: reply.FieldID,
 				},
 			},
@@ -1033,7 +937,7 @@ func (ruo *ReplyUpdateOne) sqlSave(ctx context.Context) (_node *Reply, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: reply.FieldID,
 				},
 			},
@@ -1049,7 +953,7 @@ func (ruo *ReplyUpdateOne) sqlSave(ctx context.Context) (_node *Reply, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: reply.FieldID,
 				},
 			},
@@ -1068,7 +972,7 @@ func (ruo *ReplyUpdateOne) sqlSave(ctx context.Context) (_node *Reply, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: reply.FieldID,
 				},
 			},

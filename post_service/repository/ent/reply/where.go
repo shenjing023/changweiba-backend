@@ -10,28 +10,28 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int64) predicate.Reply {
+func ID(id uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int64) predicate.Reply {
+func IDEQ(id uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int64) predicate.Reply {
+func IDNEQ(id uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldID), id))
 	})
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int64) predicate.Reply {
+func IDIn(ids ...uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		// if not arguments were provided, append the FALSE constants,
 		// since we can't apply "IN ()". This will make this predicate falsy.
@@ -48,7 +48,7 @@ func IDIn(ids ...int64) predicate.Reply {
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int64) predicate.Reply {
+func IDNotIn(ids ...uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		// if not arguments were provided, append the FALSE constants,
 		// since we can't apply "IN ()". This will make this predicate falsy.
@@ -65,49 +65,49 @@ func IDNotIn(ids ...int64) predicate.Reply {
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int64) predicate.Reply {
+func IDGT(id uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldID), id))
 	})
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int64) predicate.Reply {
+func IDGTE(id uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldID), id))
 	})
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int64) predicate.Reply {
+func IDLT(id uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldID), id))
 	})
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int64) predicate.Reply {
+func IDLTE(id uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldID), id))
 	})
 }
 
 // UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
-func UserID(v int64) predicate.Reply {
+func UserID(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldUserID), v))
 	})
 }
 
 // CommentID applies equality check predicate on the "comment_id" field. It's identical to CommentIDEQ.
-func CommentID(v int64) predicate.Reply {
+func CommentID(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldCommentID), v))
 	})
 }
 
 // ParentID applies equality check predicate on the "parent_id" field. It's identical to ParentIDEQ.
-func ParentID(v int64) predicate.Reply {
+func ParentID(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldParentID), v))
 	})
@@ -128,7 +128,7 @@ func Status(v int8) predicate.Reply {
 }
 
 // Floor applies equality check predicate on the "floor" field. It's identical to FloorEQ.
-func Floor(v int64) predicate.Reply {
+func Floor(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldFloor), v))
 	})
@@ -142,21 +142,21 @@ func CreateAt(v int64) predicate.Reply {
 }
 
 // UserIDEQ applies the EQ predicate on the "user_id" field.
-func UserIDEQ(v int64) predicate.Reply {
+func UserIDEQ(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldUserID), v))
 	})
 }
 
 // UserIDNEQ applies the NEQ predicate on the "user_id" field.
-func UserIDNEQ(v int64) predicate.Reply {
+func UserIDNEQ(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldUserID), v))
 	})
 }
 
 // UserIDIn applies the In predicate on the "user_id" field.
-func UserIDIn(vs ...int64) predicate.Reply {
+func UserIDIn(vs ...uint64) predicate.Reply {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -173,7 +173,7 @@ func UserIDIn(vs ...int64) predicate.Reply {
 }
 
 // UserIDNotIn applies the NotIn predicate on the "user_id" field.
-func UserIDNotIn(vs ...int64) predicate.Reply {
+func UserIDNotIn(vs ...uint64) predicate.Reply {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -190,49 +190,49 @@ func UserIDNotIn(vs ...int64) predicate.Reply {
 }
 
 // UserIDGT applies the GT predicate on the "user_id" field.
-func UserIDGT(v int64) predicate.Reply {
+func UserIDGT(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldUserID), v))
 	})
 }
 
 // UserIDGTE applies the GTE predicate on the "user_id" field.
-func UserIDGTE(v int64) predicate.Reply {
+func UserIDGTE(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldUserID), v))
 	})
 }
 
 // UserIDLT applies the LT predicate on the "user_id" field.
-func UserIDLT(v int64) predicate.Reply {
+func UserIDLT(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldUserID), v))
 	})
 }
 
 // UserIDLTE applies the LTE predicate on the "user_id" field.
-func UserIDLTE(v int64) predicate.Reply {
+func UserIDLTE(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldUserID), v))
 	})
 }
 
 // CommentIDEQ applies the EQ predicate on the "comment_id" field.
-func CommentIDEQ(v int64) predicate.Reply {
+func CommentIDEQ(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldCommentID), v))
 	})
 }
 
 // CommentIDNEQ applies the NEQ predicate on the "comment_id" field.
-func CommentIDNEQ(v int64) predicate.Reply {
+func CommentIDNEQ(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldCommentID), v))
 	})
 }
 
 // CommentIDIn applies the In predicate on the "comment_id" field.
-func CommentIDIn(vs ...int64) predicate.Reply {
+func CommentIDIn(vs ...uint64) predicate.Reply {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -249,7 +249,7 @@ func CommentIDIn(vs ...int64) predicate.Reply {
 }
 
 // CommentIDNotIn applies the NotIn predicate on the "comment_id" field.
-func CommentIDNotIn(vs ...int64) predicate.Reply {
+func CommentIDNotIn(vs ...uint64) predicate.Reply {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -280,21 +280,21 @@ func CommentIDNotNil() predicate.Reply {
 }
 
 // ParentIDEQ applies the EQ predicate on the "parent_id" field.
-func ParentIDEQ(v int64) predicate.Reply {
+func ParentIDEQ(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldParentID), v))
 	})
 }
 
 // ParentIDNEQ applies the NEQ predicate on the "parent_id" field.
-func ParentIDNEQ(v int64) predicate.Reply {
+func ParentIDNEQ(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldParentID), v))
 	})
 }
 
 // ParentIDIn applies the In predicate on the "parent_id" field.
-func ParentIDIn(vs ...int64) predicate.Reply {
+func ParentIDIn(vs ...uint64) predicate.Reply {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -311,7 +311,7 @@ func ParentIDIn(vs ...int64) predicate.Reply {
 }
 
 // ParentIDNotIn applies the NotIn predicate on the "parent_id" field.
-func ParentIDNotIn(vs ...int64) predicate.Reply {
+func ParentIDNotIn(vs ...uint64) predicate.Reply {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -529,21 +529,21 @@ func StatusLTE(v int8) predicate.Reply {
 }
 
 // FloorEQ applies the EQ predicate on the "floor" field.
-func FloorEQ(v int64) predicate.Reply {
+func FloorEQ(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldFloor), v))
 	})
 }
 
 // FloorNEQ applies the NEQ predicate on the "floor" field.
-func FloorNEQ(v int64) predicate.Reply {
+func FloorNEQ(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldFloor), v))
 	})
 }
 
 // FloorIn applies the In predicate on the "floor" field.
-func FloorIn(vs ...int64) predicate.Reply {
+func FloorIn(vs ...uint64) predicate.Reply {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -560,7 +560,7 @@ func FloorIn(vs ...int64) predicate.Reply {
 }
 
 // FloorNotIn applies the NotIn predicate on the "floor" field.
-func FloorNotIn(vs ...int64) predicate.Reply {
+func FloorNotIn(vs ...uint64) predicate.Reply {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -577,28 +577,28 @@ func FloorNotIn(vs ...int64) predicate.Reply {
 }
 
 // FloorGT applies the GT predicate on the "floor" field.
-func FloorGT(v int64) predicate.Reply {
+func FloorGT(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldFloor), v))
 	})
 }
 
 // FloorGTE applies the GTE predicate on the "floor" field.
-func FloorGTE(v int64) predicate.Reply {
+func FloorGTE(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldFloor), v))
 	})
 }
 
 // FloorLT applies the LT predicate on the "floor" field.
-func FloorLT(v int64) predicate.Reply {
+func FloorLT(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldFloor), v))
 	})
 }
 
 // FloorLTE applies the LTE predicate on the "floor" field.
-func FloorLTE(v int64) predicate.Reply {
+func FloorLTE(v uint64) predicate.Reply {
 	return predicate.Reply(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldFloor), v))
 	})

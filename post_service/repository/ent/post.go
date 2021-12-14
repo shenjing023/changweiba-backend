@@ -14,10 +14,10 @@ import (
 type Post struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int64 `json:"id,omitempty"`
+	ID uint64 `json:"id,omitempty"`
 	// UserID holds the value of the "user_id" field.
 	// The user that posted the message.
-	UserID int64 `json:"user_id,omitempty"`
+	UserID uint64 `json:"user_id,omitempty"`
 	// Topic holds the value of the "topic" field.
 	// The topic of the message.
 	Topic string `json:"topic,omitempty"`
@@ -85,12 +85,12 @@ func (po *Post) assignValues(columns []string, values []interface{}) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			po.ID = int64(value.Int64)
+			po.ID = uint64(value.Int64)
 		case post.FieldUserID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field user_id", values[i])
 			} else if value.Valid {
-				po.UserID = value.Int64
+				po.UserID = uint64(value.Int64)
 			}
 		case post.FieldTopic:
 			if value, ok := values[i].(*sql.NullString); !ok {

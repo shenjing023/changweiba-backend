@@ -72,7 +72,7 @@ func (cd *CommentDelete) sqlExec(ctx context.Context) (int, error) {
 		Node: &sqlgraph.NodeSpec{
 			Table: comment.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
+				Type:   field.TypeUint64,
 				Column: comment.FieldID,
 			},
 		},

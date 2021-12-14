@@ -18,17 +18,11 @@ type Comment struct {
 // Fields of the Comment.
 func (Comment) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("id").SchemaType(map[string]string{
-			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).Positive().Unique(),
+		field.Uint64("id").Positive().Unique(),
 
-		field.Int64("user_id").SchemaType(map[string]string{
-			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).Positive().Comment("The user that posted the message."),
+		field.Uint64("user_id").Positive().Comment("The user that posted the message."),
 
-		field.Int64("post_id").SchemaType(map[string]string{
-			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).Positive().Comment("The post that the message belongs to.").Optional(),
+		field.Uint64("post_id").Positive().Comment("The post that the message belongs to.").Optional(),
 
 		field.String("content").SchemaType(map[string]string{
 			dialect.MySQL: "varchar(1024)", // Override MySQL.
@@ -38,13 +32,11 @@ func (Comment) Fields() []ent.Field {
 			dialect.MySQL: "tinyint unsigned", // Override MySQL.
 		}).NonNegative().Default(0).Comment("状态,是否被封，0：正常，大于0被封"),
 
-		field.Int64("floor").SchemaType(map[string]string{
-			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).NonNegative().Default(0).Comment("第几楼"),
+		field.Uint64("floor").Positive().Comment("第几楼"),
 
 		field.Int64("create_at").SchemaType(map[string]string{
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).NonNegative().Default(0).Comment("创建时间"),
+		}).NonNegative().Default(0).Comment("创建时间").Immutable(),
 	}
 }
 

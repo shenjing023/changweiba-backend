@@ -26,6 +26,7 @@ type config struct {
 type hooks struct {
 	Stock     []ent.Hook
 	TradeDate []ent.Hook
+	User      []ent.Hook
 }
 
 // Options applies the options on the config object.

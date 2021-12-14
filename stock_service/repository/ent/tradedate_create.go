@@ -21,15 +21,15 @@ type TradeDateCreate struct {
 }
 
 // SetStockID sets the "stock_id" field.
-func (tdc *TradeDateCreate) SetStockID(i int) *TradeDateCreate {
-	tdc.mutation.SetStockID(i)
+func (tdc *TradeDateCreate) SetStockID(u uint64) *TradeDateCreate {
+	tdc.mutation.SetStockID(u)
 	return tdc
 }
 
 // SetNillableStockID sets the "stock_id" field if the given value is not nil.
-func (tdc *TradeDateCreate) SetNillableStockID(i *int) *TradeDateCreate {
-	if i != nil {
-		tdc.SetStockID(*i)
+func (tdc *TradeDateCreate) SetNillableStockID(u *uint64) *TradeDateCreate {
+	if u != nil {
+		tdc.SetStockID(*u)
 	}
 	return tdc
 }
@@ -43,6 +43,20 @@ func (tdc *TradeDateCreate) SetTDate(s string) *TradeDateCreate {
 // SetEndPrice sets the "end_price" field.
 func (tdc *TradeDateCreate) SetEndPrice(f float64) *TradeDateCreate {
 	tdc.mutation.SetEndPrice(f)
+	return tdc
+}
+
+// SetVolumn sets the "volumn" field.
+func (tdc *TradeDateCreate) SetVolumn(i int64) *TradeDateCreate {
+	tdc.mutation.SetVolumn(i)
+	return tdc
+}
+
+// SetNillableVolumn sets the "volumn" field if the given value is not nil.
+func (tdc *TradeDateCreate) SetNillableVolumn(i *int64) *TradeDateCreate {
+	if i != nil {
+		tdc.SetVolumn(*i)
+	}
 	return tdc
 }
 
@@ -85,6 +99,12 @@ func (tdc *TradeDateCreate) SetNillableXueqiuCommentCount(i *int64) *TradeDateCr
 	if i != nil {
 		tdc.SetXueqiuCommentCount(*i)
 	}
+	return tdc
+}
+
+// SetID sets the "id" field.
+func (tdc *TradeDateCreate) SetID(u uint64) *TradeDateCreate {
+	tdc.mutation.SetID(u)
 	return tdc
 }
 
@@ -164,6 +184,10 @@ func (tdc *TradeDateCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (tdc *TradeDateCreate) defaults() {
+	if _, ok := tdc.mutation.Volumn(); !ok {
+		v := tradedate.DefaultVolumn
+		tdc.mutation.SetVolumn(v)
+	}
 	if _, ok := tdc.mutation.CreateAt(); !ok {
 		v := tradedate.DefaultCreateAt
 		tdc.mutation.SetCreateAt(v)
@@ -196,6 +220,14 @@ func (tdc *TradeDateCreate) check() error {
 	if _, ok := tdc.mutation.EndPrice(); !ok {
 		return &ValidationError{Name: "end_price", err: errors.New(`ent: missing required field "end_price"`)}
 	}
+	if _, ok := tdc.mutation.Volumn(); !ok {
+		return &ValidationError{Name: "volumn", err: errors.New(`ent: missing required field "volumn"`)}
+	}
+	if v, ok := tdc.mutation.Volumn(); ok {
+		if err := tradedate.VolumnValidator(v); err != nil {
+			return &ValidationError{Name: "volumn", err: fmt.Errorf(`ent: validator failed for field "volumn": %w`, err)}
+		}
+	}
 	if _, ok := tdc.mutation.CreateAt(); !ok {
 		return &ValidationError{Name: "create_at", err: errors.New(`ent: missing required field "create_at"`)}
 	}
@@ -220,6 +252,11 @@ func (tdc *TradeDateCreate) check() error {
 			return &ValidationError{Name: "xueqiu_comment_count", err: fmt.Errorf(`ent: validator failed for field "xueqiu_comment_count": %w`, err)}
 		}
 	}
+	if v, ok := tdc.mutation.ID(); ok {
+		if err := tradedate.IDValidator(v); err != nil {
+			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "id": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -231,8 +268,10 @@ func (tdc *TradeDateCreate) sqlSave(ctx context.Context) (*TradeDate, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = uint64(id)
+	}
 	return _node, nil
 }
 
@@ -242,11 +281,15 @@ func (tdc *TradeDateCreate) createSpec() (*TradeDate, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: tradedate.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUint64,
 				Column: tradedate.FieldID,
 			},
 		}
 	)
+	if id, ok := tdc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := tdc.mutation.TDate(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -262,6 +305,14 @@ func (tdc *TradeDateCreate) createSpec() (*TradeDate, *sqlgraph.CreateSpec) {
 			Column: tradedate.FieldEndPrice,
 		})
 		_node.EndPrice = value
+	}
+	if value, ok := tdc.mutation.Volumn(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: tradedate.FieldVolumn,
+		})
+		_node.Volumn = value
 	}
 	if value, ok := tdc.mutation.CreateAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -296,7 +347,7 @@ func (tdc *TradeDateCreate) createSpec() (*TradeDate, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUint64,
 					Column: stock.FieldID,
 				},
 			},
@@ -352,9 +403,9 @@ func (tdcb *TradeDateCreateBulk) Save(ctx context.Context) ([]*TradeDate, error)
 				}
 				mutation.id = &nodes[i].ID
 				mutation.done = true
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
+					nodes[i].ID = uint64(id)
 				}
 				return nodes[i], nil
 			})

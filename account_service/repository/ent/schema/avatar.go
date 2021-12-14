@@ -16,10 +16,7 @@ type Avatar struct {
 // Fields of the Avatar.
 func (Avatar) Fields() []ent.Field {
 	return []ent.Field{
-
-		field.Int64("id").SchemaType(map[string]string{
-			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).NonNegative().Unique(),
+		field.Uint64("id").Positive().Unique(),
 
 		field.String("url").SchemaType(map[string]string{
 			dialect.MySQL: "varchar(255)", // Override MySQL.

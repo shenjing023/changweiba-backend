@@ -26,8 +26,8 @@ func (btc *BanTypeCreate) SetContent(s string) *BanTypeCreate {
 }
 
 // SetID sets the "id" field.
-func (btc *BanTypeCreate) SetID(i int64) *BanTypeCreate {
-	btc.mutation.SetID(i)
+func (btc *BanTypeCreate) SetID(u uint64) *BanTypeCreate {
+	btc.mutation.SetID(u)
 	return btc
 }
 
@@ -127,7 +127,7 @@ func (btc *BanTypeCreate) sqlSave(ctx context.Context) (*BanType, error) {
 	}
 	if _spec.ID.Value != _node.ID {
 		id := _spec.ID.Value.(int64)
-		_node.ID = int64(id)
+		_node.ID = uint64(id)
 	}
 	return _node, nil
 }
@@ -138,7 +138,7 @@ func (btc *BanTypeCreate) createSpec() (*BanType, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: bantype.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
+				Type:   field.TypeUint64,
 				Column: bantype.FieldID,
 			},
 		}
@@ -201,7 +201,7 @@ func (btcb *BanTypeCreateBulk) Save(ctx context.Context) ([]*BanType, error) {
 				mutation.done = true
 				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int64(id)
+					nodes[i].ID = uint64(id)
 				}
 				return nodes[i], nil
 			})

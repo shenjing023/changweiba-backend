@@ -78,5 +78,5 @@ var (
 	// UpdateAtValidator is a validator for the "update_at" field. It is called by the builders before save.
 	UpdateAtValidator func(int64) error
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
-	IDValidator func(int64) error
+	IDValidator func(uint64) error
 )

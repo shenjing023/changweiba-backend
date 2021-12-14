@@ -13,6 +13,8 @@ const (
 	FieldName = "name"
 	// EdgeTrades holds the string denoting the trades edge name in mutations.
 	EdgeTrades = "trades"
+	// EdgeSubscribers holds the string denoting the subscribers edge name in mutations.
+	EdgeSubscribers = "subscribers"
 	// Table holds the table name of the stock in the database.
 	Table = "stock"
 	// TradesTable is the table that holds the trades relation/edge.
@@ -22,6 +24,11 @@ const (
 	TradesInverseTable = "trade_date"
 	// TradesColumn is the table column denoting the trades relation/edge.
 	TradesColumn = "stock_id"
+	// SubscribersTable is the table that holds the subscribers relation/edge. The primary key declared below.
+	SubscribersTable = "stock_subscribers"
+	// SubscribersInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	SubscribersInverseTable = "user"
 )
 
 // Columns holds all SQL columns for stock fields.
@@ -30,6 +37,12 @@ var Columns = []string{
 	FieldSymbol,
 	FieldName,
 }
+
+var (
+	// SubscribersPrimaryKey and SubscribersColumn2 are the table columns denoting the
+	// primary key for the subscribers relation (M2M).
+	SubscribersPrimaryKey = []string{"stock_id", "user_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -46,4 +59,6 @@ var (
 	SymbolValidator func(string) error
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
+	// IDValidator is a validator for the "id" field. It is called by the builders before save.
+	IDValidator func(uint64) error
 )

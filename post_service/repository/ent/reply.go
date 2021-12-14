@@ -15,16 +15,16 @@ import (
 type Reply struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int64 `json:"id,omitempty"`
+	ID uint64 `json:"id,omitempty"`
 	// UserID holds the value of the "user_id" field.
 	// The user that posted the message.
-	UserID int64 `json:"user_id,omitempty"`
+	UserID uint64 `json:"user_id,omitempty"`
 	// CommentID holds the value of the "comment_id" field.
 	// The comment that this reply is for.
-	CommentID int64 `json:"comment_id,omitempty"`
+	CommentID uint64 `json:"comment_id,omitempty"`
 	// ParentID holds the value of the "parent_id" field.
 	// 回复哪个回复的id
-	ParentID int64 `json:"parent_id,omitempty"`
+	ParentID uint64 `json:"parent_id,omitempty"`
 	// Content holds the value of the "content" field.
 	// The content of the message.
 	Content string `json:"content,omitempty"`
@@ -33,7 +33,7 @@ type Reply struct {
 	Status int8 `json:"status,omitempty"`
 	// Floor holds the value of the "floor" field.
 	// 第几楼
-	Floor int64 `json:"floor,omitempty"`
+	Floor uint64 `json:"floor,omitempty"`
 	// CreateAt holds the value of the "create_at" field.
 	// 创建时间
 	CreateAt int64 `json:"create_at,omitempty"`
@@ -121,24 +121,24 @@ func (r *Reply) assignValues(columns []string, values []interface{}) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			r.ID = int64(value.Int64)
+			r.ID = uint64(value.Int64)
 		case reply.FieldUserID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field user_id", values[i])
 			} else if value.Valid {
-				r.UserID = value.Int64
+				r.UserID = uint64(value.Int64)
 			}
 		case reply.FieldCommentID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field comment_id", values[i])
 			} else if value.Valid {
-				r.CommentID = value.Int64
+				r.CommentID = uint64(value.Int64)
 			}
 		case reply.FieldParentID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field parent_id", values[i])
 			} else if value.Valid {
-				r.ParentID = value.Int64
+				r.ParentID = uint64(value.Int64)
 			}
 		case reply.FieldContent:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -156,7 +156,7 @@ func (r *Reply) assignValues(columns []string, values []interface{}) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field floor", values[i])
 			} else if value.Valid {
-				r.Floor = value.Int64
+				r.Floor = uint64(value.Int64)
 			}
 		case reply.FieldCreateAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {

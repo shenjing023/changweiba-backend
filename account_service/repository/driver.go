@@ -94,12 +94,12 @@ func InsertUser(userName, password, avatar string) (int64, error) {
 	if err != nil {
 		return 0, common.NewServiceErr(common.Internal, err)
 	}
-	return user.ID, nil
+	return int64(user.ID), nil
 }
 
 // GetUserByID get user by user_id
 func GetUserByID(id int64) (*ent.User, error) {
-	user, err := entClient.User.Get(context.Background(), id)
+	user, err := entClient.User.Get(context.Background(), uint64(id))
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return nil, common.NewServiceErr(common.NotFound, err)
@@ -158,7 +158,11 @@ func BytesToInt32(buf []byte) int32 {
 // GetUsers 批量获取用户信息
 func GetUsers(ids []int64) ([]*ent.User, error) {
 	// TODO redis
-	users, err := entClient.User.Query().Where(user.IDIn(ids...)).Order(func(s *sql.Selector) {
+	var _ids []uint64
+	for _, id := range ids {
+		_ids = append(_ids, uint64(id))
+	}
+	users, err := entClient.User.Query().Where(user.IDIn(_ids...)).Order(func(s *sql.Selector) {
 		s.OrderBy(user.FieldID)
 	}).All(context.Background())
 	if err != nil {
@@ -168,14 +172,14 @@ func GetUsers(ids []int64) ([]*ent.User, error) {
 	//可能有的id不存在或重复,需要再排序
 	var (
 		results []*ent.User
-		m       = make(map[int64]*ent.User)
+		m       = make(map[uint64]*ent.User)
 	)
 	for _, v := range users {
 		m[v.ID] = v
 	}
 	for _, id := range ids {
-		if _, ok := m[id]; ok {
-			results = append(results, m[id])
+		if _, ok := m[uint64(id)]; ok {
+			results = append(results, m[uint64(id)])
 		} else {
 			results = append(results, &ent.User{})
 		}
@@ -186,7 +190,7 @@ func GetUsers(ids []int64) ([]*ent.User, error) {
 // GetBannedReason 获取禁言原因
 func GetBannedReason(bannedType int64) (string, error) {
 	// TODO redis
-	ban, err := entClient.BanType.Get(context.Background(), bannedType)
+	ban, err := entClient.BanType.Get(context.Background(), uint64(bannedType))
 	if err != nil {
 		return "", common.NewServiceErr(common.Internal, err)
 	}

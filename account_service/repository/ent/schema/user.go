@@ -16,17 +16,14 @@ type User struct {
 // Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("id").SchemaType(map[string]string{
-			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).Positive().Comment("用户id").Unique(),
-
+		field.Uint64("id").Positive().Unique(),
 		field.String("nick_name").SchemaType(map[string]string{
 			dialect.MySQL: "varchar(20)", // Override MySQL.
 		}).NotEmpty().Unique().Comment("名称"),
 
 		field.String("password").SchemaType(map[string]string{
 			dialect.MySQL: "varchar(32)", // Override MySQL.
-		}).NotEmpty().Comment("密码"),
+		}).NotEmpty().Comment("密码").Sensitive(),
 
 		field.String("avatar").SchemaType(map[string]string{
 			dialect.MySQL: "varchar(255)", // Override MySQL.
@@ -46,7 +43,7 @@ func (User) Fields() []ent.Field {
 
 		field.Int64("create_at").SchemaType(map[string]string{
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).NonNegative().Default(0).Comment("创建时间"),
+		}).NonNegative().Default(0).Comment("创建时间").Immutable(),
 
 		field.Int64("update_at").SchemaType(map[string]string{
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.

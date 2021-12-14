@@ -18,13 +18,9 @@ type Post struct {
 // Fields of the Post.
 func (Post) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("id").SchemaType(map[string]string{
-			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).Positive().Unique(),
+		field.Uint64("id").Positive().Unique(),
 
-		field.Int64("user_id").SchemaType(map[string]string{
-			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).Positive().Comment("The user that posted the message."),
+		field.Uint64("user_id").Positive().Comment("The user that posted the message."),
 
 		field.String("topic").SchemaType(map[string]string{
 			dialect.MySQL: "varchar(1024)", // Override MySQL.
@@ -40,7 +36,7 @@ func (Post) Fields() []ent.Field {
 
 		field.Int64("create_at").SchemaType(map[string]string{
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).NonNegative().Default(0).Comment("创建时间"),
+		}).NonNegative().Default(0).Comment("创建时间").Immutable(),
 
 		field.Int64("update_at").SchemaType(map[string]string{
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.

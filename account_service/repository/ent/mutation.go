@@ -33,7 +33,7 @@ type AvatarMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *int64
+	id            *uint64
 	url           *string
 	status        *int8
 	addstatus     *int8
@@ -63,7 +63,7 @@ func newAvatarMutation(c config, op Op, opts ...avatarOption) *AvatarMutation {
 }
 
 // withAvatarID sets the ID field of the mutation.
-func withAvatarID(id int64) avatarOption {
+func withAvatarID(id uint64) avatarOption {
 	return func(m *AvatarMutation) {
 		var (
 			err   error
@@ -115,13 +115,13 @@ func (m AvatarMutation) Tx() (*Tx, error) {
 
 // SetID sets the value of the id field. Note that this
 // operation is only accepted on creation of Avatar entities.
-func (m *AvatarMutation) SetID(id int64) {
+func (m *AvatarMutation) SetID(id uint64) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *AvatarMutation) ID() (id int64, exists bool) {
+func (m *AvatarMutation) ID() (id uint64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -421,7 +421,7 @@ type BanTypeMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *int64
+	id            *uint64
 	content       *string
 	clearedFields map[string]struct{}
 	done          bool
@@ -449,7 +449,7 @@ func newBanTypeMutation(c config, op Op, opts ...bantypeOption) *BanTypeMutation
 }
 
 // withBanTypeID sets the ID field of the mutation.
-func withBanTypeID(id int64) bantypeOption {
+func withBanTypeID(id uint64) bantypeOption {
 	return func(m *BanTypeMutation) {
 		var (
 			err   error
@@ -501,13 +501,13 @@ func (m BanTypeMutation) Tx() (*Tx, error) {
 
 // SetID sets the value of the id field. Note that this
 // operation is only accepted on creation of BanType entities.
-func (m *BanTypeMutation) SetID(id int64) {
+func (m *BanTypeMutation) SetID(id uint64) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *BanTypeMutation) ID() (id int64, exists bool) {
+func (m *BanTypeMutation) ID() (id uint64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -719,7 +719,7 @@ type UserMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *int64
+	id            *uint64
 	nick_name     *string
 	password      *string
 	avatar        *string
@@ -759,7 +759,7 @@ func newUserMutation(c config, op Op, opts ...userOption) *UserMutation {
 }
 
 // withUserID sets the ID field of the mutation.
-func withUserID(id int64) userOption {
+func withUserID(id uint64) userOption {
 	return func(m *UserMutation) {
 		var (
 			err   error
@@ -811,13 +811,13 @@ func (m UserMutation) Tx() (*Tx, error) {
 
 // SetID sets the value of the id field. Note that this
 // operation is only accepted on creation of User entities.
-func (m *UserMutation) SetID(id int64) {
+func (m *UserMutation) SetID(id uint64) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *UserMutation) ID() (id int64, exists bool) {
+func (m *UserMutation) ID() (id uint64, exists bool) {
 	if m.id == nil {
 		return
 	}

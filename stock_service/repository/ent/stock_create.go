@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"stock_service/repository/ent/stock"
 	"stock_service/repository/ent/tradedate"
+	"stock_service/repository/ent/user"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -32,19 +33,40 @@ func (sc *StockCreate) SetName(s string) *StockCreate {
 	return sc
 }
 
+// SetID sets the "id" field.
+func (sc *StockCreate) SetID(u uint64) *StockCreate {
+	sc.mutation.SetID(u)
+	return sc
+}
+
 // AddTradeIDs adds the "trades" edge to the TradeDate entity by IDs.
-func (sc *StockCreate) AddTradeIDs(ids ...int) *StockCreate {
+func (sc *StockCreate) AddTradeIDs(ids ...uint64) *StockCreate {
 	sc.mutation.AddTradeIDs(ids...)
 	return sc
 }
 
 // AddTrades adds the "trades" edges to the TradeDate entity.
 func (sc *StockCreate) AddTrades(t ...*TradeDate) *StockCreate {
-	ids := make([]int, len(t))
+	ids := make([]uint64, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
 	return sc.AddTradeIDs(ids...)
+}
+
+// AddSubscriberIDs adds the "subscribers" edge to the User entity by IDs.
+func (sc *StockCreate) AddSubscriberIDs(ids ...uint64) *StockCreate {
+	sc.mutation.AddSubscriberIDs(ids...)
+	return sc
+}
+
+// AddSubscribers adds the "subscribers" edges to the User entity.
+func (sc *StockCreate) AddSubscribers(u ...*User) *StockCreate {
+	ids := make([]uint64, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return sc.AddSubscriberIDs(ids...)
 }
 
 // Mutation returns the StockMutation object of the builder.
@@ -133,6 +155,11 @@ func (sc *StockCreate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "name": %w`, err)}
 		}
 	}
+	if v, ok := sc.mutation.ID(); ok {
+		if err := stock.IDValidator(v); err != nil {
+			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "id": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -144,8 +171,10 @@ func (sc *StockCreate) sqlSave(ctx context.Context) (*Stock, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = uint64(id)
+	}
 	return _node, nil
 }
 
@@ -155,11 +184,15 @@ func (sc *StockCreate) createSpec() (*Stock, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: stock.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUint64,
 				Column: stock.FieldID,
 			},
 		}
 	)
+	if id, ok := sc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := sc.mutation.Symbol(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -185,8 +218,27 @@ func (sc *StockCreate) createSpec() (*Stock, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUint64,
 					Column: tradedate.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := sc.mutation.SubscribersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   stock.SubscribersTable,
+			Columns: stock.SubscribersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUint64,
+					Column: user.FieldID,
 				},
 			},
 		}
@@ -239,9 +291,9 @@ func (scb *StockCreateBulk) Save(ctx context.Context) ([]*Stock, error) {
 				}
 				mutation.id = &nodes[i].ID
 				mutation.done = true
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
+					nodes[i].ID = uint64(id)
 				}
 				return nodes[i], nil
 			})

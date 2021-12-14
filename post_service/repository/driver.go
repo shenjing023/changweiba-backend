@@ -86,7 +86,7 @@ func InsertPost(userID int64, topic string) (int64, error) {
 	}
 	now := time.Now().Unix()
 	post, err := tx.Post.Create().
-		SetUserID(userID).
+		SetUserID(uint64(userID)).
 		SetTopic(topic).
 		SetStatus(0).
 		SetCreateAt(now).
@@ -104,12 +104,12 @@ func InsertPost(userID int64, topic string) (int64, error) {
 	if err := tx.Commit(); err != nil {
 		return 0, common.NewServiceErr(common.Internal, fmt.Errorf("commit transaction: %w", err))
 	}
-	return post.ID, nil
+	return int64(post.ID), nil
 }
 
 // GetPostByID get post by postID
 func GetPostByID(id int64) (*ent.Post, error) {
-	post, err := entClient.Post.Get(context.Background(), id)
+	post, err := entClient.Post.Get(context.Background(), uint64(id))
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return nil, common.NewServiceErr(common.NotFound, err)
@@ -164,7 +164,7 @@ func InsertComment(userID int64, postID int64, content string) (int64, error) {
 	_, err := redisClient.Get(ctx, key).Result()
 	if err == redis.Nil {
 		// 不存在
-		t, err := entClient.Post.Query().Where(post.ID(postID)).QueryComments().Count(ctx)
+		t, err := entClient.Post.Query().Where(post.ID(uint64(postID))).QueryComments().Count(ctx)
 		if err != nil {
 			return 0, common.NewServiceErr(common.Internal, err)
 		}
@@ -193,12 +193,12 @@ func InsertComment(userID int64, postID int64, content string) (int64, error) {
 
 	now := time.Now().Unix()
 	comment, err := entClient.Comment.Create().
-		SetUserID(userID).
+		SetUserID(uint64(userID)).
 		SetContent(content).
-		SetFloor(floor).
+		SetFloor(uint64(floor)).
 		SetCreateAt(now).
 		SetStatus(0).
-		SetOwnerID(postID).
+		SetOwnerID(uint64(postID)).
 		Save(ctx)
 	if err != nil {
 		return 0, common.NewServiceErr(common.Internal, err)
@@ -214,12 +214,12 @@ func InsertComment(userID int64, postID int64, content string) (int64, error) {
 	}
 	go increasePostReplyNum(postID)
 	go increasePostCommentNum(postID)
-	return comment.ID, nil
+	return int64(comment.ID), nil
 }
 
 //帖子回复数+1
 func increasePostReplyNum(postID int64) {
-	entClient.Post.UpdateOneID(postID).
+	entClient.Post.UpdateOneID(uint64(postID)).
 		AddReplyNum(1).
 		SetUpdateAt(time.Now().Unix()).
 		Save(context.Background())
@@ -232,7 +232,7 @@ func increasePostCommentNum(postID int64) {
 		key   = fmt.Sprintf("%s_%d", COMMENTCOUNTKEY, postID)
 		count int
 	)
-	count, err := entClient.Post.Query().Where(post.ID(postID)).QueryComments().Where(comment.Status(0)).Count(ctx)
+	count, err := entClient.Post.Query().Where(post.ID(uint64(postID))).QueryComments().Where(comment.Status(0)).Count(ctx)
 	// count, err := entClient.Comment.Query().Where(comment.PostID(postID), comment.Status(0)).Count(ctx)
 	if err != nil {
 		return
@@ -247,7 +247,7 @@ func increaseCommentReplyNum(commentID int64) {
 		key   = fmt.Sprintf("%s_%d", REPLYCOUNTKEY, commentID)
 		count int
 	)
-	count, err := entClient.Comment.Query().Where(comment.ID(commentID)).QueryReplies().Where(reply.Status(0)).Count(ctx)
+	count, err := entClient.Comment.Query().Where(comment.ID(uint64(commentID))).QueryReplies().Where(reply.Status(0)).Count(ctx)
 	// count, err := entClient.Reply.Query().Where(reply.CommentID(commentID), reply.Status(0)).Count(ctx)
 	if err != nil {
 		return
@@ -257,7 +257,7 @@ func increaseCommentReplyNum(commentID int64) {
 
 // InsertReply add new reply
 func InsertReply(userID, postID, commentID, parentID int64, content string) (int64, error) {
-	id, err := ent.InsertReply(context.Background(), entClient, userID, commentID, parentID, content)
+	id, err := ent.InsertReply(context.Background(), entClient, uint64(userID), uint64(commentID), uint64(parentID), content)
 	if err != nil {
 		return 0, common.NewServiceErr(common.Internal, err)
 	}
@@ -306,7 +306,7 @@ func GetPostFirstComment(postIDs []int64) ([]*ent.Comment, error) {
 			idsIndex[postIDs[i]] = i
 		} else {
 			results[i] = &ent.Comment{
-				ID:      t.ID,
+				ID:      uint64(t.ID),
 				Content: t.Content,
 				Status:  t.Status,
 			}
@@ -316,7 +316,11 @@ func GetPostFirstComment(postIDs []int64) ([]*ent.Comment, error) {
 		return results, nil
 	}
 
-	tmp, err := entClient.Post.Query().Where(post.IDIn(ids...)).QueryComments().Where(comment.Status(0), comment.Floor(1)).Order(func(s *sql.Selector) {
+	var _ids []uint64
+	for _, id := range ids {
+		_ids = append(_ids, uint64(id))
+	}
+	tmp, err := entClient.Post.Query().Where(post.IDIn(_ids...)).QueryComments().Where(comment.Status(0), comment.Floor(1)).Order(func(s *sql.Selector) {
 		s.OrderBy(comment.FieldID)
 	}).All(ctx)
 	// tmp, err := entClient.Comment.Query().Where(comment.PostIDIn(ids...), comment.Floor(1)).Order(func(s *sql.Selector) {
@@ -326,17 +330,17 @@ func GetPostFirstComment(postIDs []int64) ([]*ent.Comment, error) {
 		return nil, common.NewServiceErr(common.Internal, err)
 	}
 
-	var m = make(map[int64]*ent.Comment)
+	var m = make(map[uint64]*ent.Comment)
 	for _, v := range tmp {
 		m[v.ID] = v
 	}
 	for _, id := range ids {
-		if _, ok := m[id]; ok {
-			results[idsIndex[id]] = m[id]
+		if _, ok := m[uint64(id)]; ok {
+			results[idsIndex[id]] = m[uint64(id)]
 			go SaveFirstComment(id, map[string]interface{}{
-				"id":      m[id].ID,
-				"content": m[id].Content,
-				"status":  m[id].Status,
+				"id":      m[uint64(id)].ID,
+				"content": m[uint64(id)].Content,
+				"status":  m[uint64(id)].Status,
 			})
 		} else {
 			results[idsIndex[id]] = &ent.Comment{}
@@ -357,7 +361,7 @@ func SaveFirstComment(postID int64, data map[string]interface{}) error {
 }
 
 func DeletePost(postID int64) error {
-	_, err := entClient.Post.UpdateOneID(postID).
+	_, err := entClient.Post.UpdateOneID(uint64(postID)).
 		SetStatus(1).
 		SetUpdateAt(time.Now().Unix()).
 		Save(context.Background())
@@ -372,7 +376,7 @@ func DeletePost(postID int64) error {
 
 // GetCommentsByPostID 获取帖子所属的评论
 func GetCommentsByPostID(postID int64, page, pageSize int) (comments []*ent.Comment, err error) {
-	comments, err = entClient.Post.Query().Where(post.ID(postID)).
+	comments, err = entClient.Post.Query().Where(post.ID(uint64(postID))).
 		QueryComments().Where(comment.Status(0)).Offset(pageSize * (page - 1)).
 		Limit(pageSize).All(context.Background())
 	// comments, err = ent.GetCommentsByPostID(context.Background(), entClient, postID, page, pageSize)
@@ -388,7 +392,7 @@ func GetPostCommentTotalCount(postID int64) (count int64, err error) {
 	total, err := redisClient.Get(context.Background(), key).Result()
 	if err == redis.Nil {
 		// 不存在
-		t, err := entClient.Post.Query().Where(post.ID(postID)).
+		t, err := entClient.Post.Query().Where(post.ID(uint64(postID))).
 			QueryComments().Where(comment.Status(0)).Count(context.Background())
 		// t, err := entClient.Comment.Query().Where(comment.PostID(postID), comment.Status(0)).Count(context.Background())
 		if err != nil {
@@ -406,7 +410,7 @@ func GetPostCommentTotalCount(postID int64) (count int64, err error) {
 // GetRepliesByCommentID 获取评论所属的回复
 func GetRepliesByCommentID(commentID int64, page int, pageSize int) (replies []*ent.Reply, err error) {
 	// TODO 前几个回复使用 redis list元素保存json格式的hash
-	replies, err = entClient.Comment.Query().Where(comment.ID(commentID)).
+	replies, err = entClient.Comment.Query().Where(comment.ID(uint64(commentID))).
 		QueryReplies().Where(reply.Status(0)).Offset(pageSize * (page - 1)).
 		Limit(pageSize).All(context.Background())
 	if err != nil {
@@ -421,7 +425,7 @@ func GetCommentReplyTotalCount(commentID int64) (count int64, err error) {
 	total, err := redisClient.Get(context.Background(), key).Result()
 	if err == redis.Nil {
 		// 不存在
-		t, err := entClient.Comment.Query().Where(comment.ID(commentID)).QueryReplies().Where(reply.Status(0)).Count(context.Background())
+		t, err := entClient.Comment.Query().Where(comment.ID(uint64(commentID))).QueryReplies().Where(reply.Status(0)).Count(context.Background())
 		if err != nil {
 			return 0, common.NewServiceErr(common.Internal, err)
 		}

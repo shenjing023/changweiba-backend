@@ -8,6 +8,7 @@ import (
 	"stock_service/repository/ent/predicate"
 	"stock_service/repository/ent/stock"
 	"stock_service/repository/ent/tradedate"
+	"stock_service/repository/ent/user"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -40,18 +41,33 @@ func (su *StockUpdate) SetName(s string) *StockUpdate {
 }
 
 // AddTradeIDs adds the "trades" edge to the TradeDate entity by IDs.
-func (su *StockUpdate) AddTradeIDs(ids ...int) *StockUpdate {
+func (su *StockUpdate) AddTradeIDs(ids ...uint64) *StockUpdate {
 	su.mutation.AddTradeIDs(ids...)
 	return su
 }
 
 // AddTrades adds the "trades" edges to the TradeDate entity.
 func (su *StockUpdate) AddTrades(t ...*TradeDate) *StockUpdate {
-	ids := make([]int, len(t))
+	ids := make([]uint64, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
 	return su.AddTradeIDs(ids...)
+}
+
+// AddSubscriberIDs adds the "subscribers" edge to the User entity by IDs.
+func (su *StockUpdate) AddSubscriberIDs(ids ...uint64) *StockUpdate {
+	su.mutation.AddSubscriberIDs(ids...)
+	return su
+}
+
+// AddSubscribers adds the "subscribers" edges to the User entity.
+func (su *StockUpdate) AddSubscribers(u ...*User) *StockUpdate {
+	ids := make([]uint64, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return su.AddSubscriberIDs(ids...)
 }
 
 // Mutation returns the StockMutation object of the builder.
@@ -66,18 +82,39 @@ func (su *StockUpdate) ClearTrades() *StockUpdate {
 }
 
 // RemoveTradeIDs removes the "trades" edge to TradeDate entities by IDs.
-func (su *StockUpdate) RemoveTradeIDs(ids ...int) *StockUpdate {
+func (su *StockUpdate) RemoveTradeIDs(ids ...uint64) *StockUpdate {
 	su.mutation.RemoveTradeIDs(ids...)
 	return su
 }
 
 // RemoveTrades removes "trades" edges to TradeDate entities.
 func (su *StockUpdate) RemoveTrades(t ...*TradeDate) *StockUpdate {
-	ids := make([]int, len(t))
+	ids := make([]uint64, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
 	return su.RemoveTradeIDs(ids...)
+}
+
+// ClearSubscribers clears all "subscribers" edges to the User entity.
+func (su *StockUpdate) ClearSubscribers() *StockUpdate {
+	su.mutation.ClearSubscribers()
+	return su
+}
+
+// RemoveSubscriberIDs removes the "subscribers" edge to User entities by IDs.
+func (su *StockUpdate) RemoveSubscriberIDs(ids ...uint64) *StockUpdate {
+	su.mutation.RemoveSubscriberIDs(ids...)
+	return su
+}
+
+// RemoveSubscribers removes "subscribers" edges to User entities.
+func (su *StockUpdate) RemoveSubscribers(u ...*User) *StockUpdate {
+	ids := make([]uint64, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return su.RemoveSubscriberIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -161,7 +198,7 @@ func (su *StockUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   stock.Table,
 			Columns: stock.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUint64,
 				Column: stock.FieldID,
 			},
 		},
@@ -196,7 +233,7 @@ func (su *StockUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUint64,
 					Column: tradedate.FieldID,
 				},
 			},
@@ -212,7 +249,7 @@ func (su *StockUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUint64,
 					Column: tradedate.FieldID,
 				},
 			},
@@ -231,8 +268,62 @@ func (su *StockUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUint64,
 					Column: tradedate.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if su.mutation.SubscribersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   stock.SubscribersTable,
+			Columns: stock.SubscribersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUint64,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.RemovedSubscribersIDs(); len(nodes) > 0 && !su.mutation.SubscribersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   stock.SubscribersTable,
+			Columns: stock.SubscribersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUint64,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.SubscribersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   stock.SubscribersTable,
+			Columns: stock.SubscribersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUint64,
+					Column: user.FieldID,
 				},
 			},
 		}
@@ -273,18 +364,33 @@ func (suo *StockUpdateOne) SetName(s string) *StockUpdateOne {
 }
 
 // AddTradeIDs adds the "trades" edge to the TradeDate entity by IDs.
-func (suo *StockUpdateOne) AddTradeIDs(ids ...int) *StockUpdateOne {
+func (suo *StockUpdateOne) AddTradeIDs(ids ...uint64) *StockUpdateOne {
 	suo.mutation.AddTradeIDs(ids...)
 	return suo
 }
 
 // AddTrades adds the "trades" edges to the TradeDate entity.
 func (suo *StockUpdateOne) AddTrades(t ...*TradeDate) *StockUpdateOne {
-	ids := make([]int, len(t))
+	ids := make([]uint64, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
 	return suo.AddTradeIDs(ids...)
+}
+
+// AddSubscriberIDs adds the "subscribers" edge to the User entity by IDs.
+func (suo *StockUpdateOne) AddSubscriberIDs(ids ...uint64) *StockUpdateOne {
+	suo.mutation.AddSubscriberIDs(ids...)
+	return suo
+}
+
+// AddSubscribers adds the "subscribers" edges to the User entity.
+func (suo *StockUpdateOne) AddSubscribers(u ...*User) *StockUpdateOne {
+	ids := make([]uint64, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return suo.AddSubscriberIDs(ids...)
 }
 
 // Mutation returns the StockMutation object of the builder.
@@ -299,18 +405,39 @@ func (suo *StockUpdateOne) ClearTrades() *StockUpdateOne {
 }
 
 // RemoveTradeIDs removes the "trades" edge to TradeDate entities by IDs.
-func (suo *StockUpdateOne) RemoveTradeIDs(ids ...int) *StockUpdateOne {
+func (suo *StockUpdateOne) RemoveTradeIDs(ids ...uint64) *StockUpdateOne {
 	suo.mutation.RemoveTradeIDs(ids...)
 	return suo
 }
 
 // RemoveTrades removes "trades" edges to TradeDate entities.
 func (suo *StockUpdateOne) RemoveTrades(t ...*TradeDate) *StockUpdateOne {
-	ids := make([]int, len(t))
+	ids := make([]uint64, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
 	return suo.RemoveTradeIDs(ids...)
+}
+
+// ClearSubscribers clears all "subscribers" edges to the User entity.
+func (suo *StockUpdateOne) ClearSubscribers() *StockUpdateOne {
+	suo.mutation.ClearSubscribers()
+	return suo
+}
+
+// RemoveSubscriberIDs removes the "subscribers" edge to User entities by IDs.
+func (suo *StockUpdateOne) RemoveSubscriberIDs(ids ...uint64) *StockUpdateOne {
+	suo.mutation.RemoveSubscriberIDs(ids...)
+	return suo
+}
+
+// RemoveSubscribers removes "subscribers" edges to User entities.
+func (suo *StockUpdateOne) RemoveSubscribers(u ...*User) *StockUpdateOne {
+	ids := make([]uint64, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return suo.RemoveSubscriberIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -401,7 +528,7 @@ func (suo *StockUpdateOne) sqlSave(ctx context.Context) (_node *Stock, err error
 			Table:   stock.Table,
 			Columns: stock.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUint64,
 				Column: stock.FieldID,
 			},
 		},
@@ -453,7 +580,7 @@ func (suo *StockUpdateOne) sqlSave(ctx context.Context) (_node *Stock, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUint64,
 					Column: tradedate.FieldID,
 				},
 			},
@@ -469,7 +596,7 @@ func (suo *StockUpdateOne) sqlSave(ctx context.Context) (_node *Stock, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUint64,
 					Column: tradedate.FieldID,
 				},
 			},
@@ -488,8 +615,62 @@ func (suo *StockUpdateOne) sqlSave(ctx context.Context) (_node *Stock, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUint64,
 					Column: tradedate.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if suo.mutation.SubscribersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   stock.SubscribersTable,
+			Columns: stock.SubscribersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUint64,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.RemovedSubscribersIDs(); len(nodes) > 0 && !suo.mutation.SubscribersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   stock.SubscribersTable,
+			Columns: stock.SubscribersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUint64,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.SubscribersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   stock.SubscribersTable,
+			Columns: stock.SubscribersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUint64,
+					Column: user.FieldID,
 				},
 			},
 		}

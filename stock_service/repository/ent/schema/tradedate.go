@@ -17,13 +17,15 @@ type TradeDate struct {
 // Fields of the TradeDate.
 func (TradeDate) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("stock_id").SchemaType(map[string]string{
-			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).Positive().Comment("Stock ID").Optional(),
+		field.Uint64("id").Positive().Unique(),
+		field.Uint64("stock_id").Positive().Comment("Stock ID").Optional(),
 		field.String("t_date").SchemaType(map[string]string{
 			dialect.MySQL: "date", // Override MySQL.
 		}).NotEmpty().Comment("交易日期"),
 		field.Float("end_price").Comment("收盘价"),
+		field.Int64("volumn").SchemaType(map[string]string{
+			dialect.MySQL: "int UNSIGNED", // Override MySQL.
+		}).NonNegative().Default(0).Comment("成交量"),
 		field.Int64("create_at").SchemaType(map[string]string{
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.
 		}).NonNegative().Default(0).Comment("创建时间"),

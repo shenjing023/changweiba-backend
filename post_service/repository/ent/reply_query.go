@@ -156,8 +156,8 @@ func (rq *ReplyQuery) FirstX(ctx context.Context) *Reply {
 
 // FirstID returns the first Reply ID from the query.
 // Returns a *NotFoundError when no Reply ID was found.
-func (rq *ReplyQuery) FirstID(ctx context.Context) (id int64, err error) {
-	var ids []int64
+func (rq *ReplyQuery) FirstID(ctx context.Context) (id uint64, err error) {
+	var ids []uint64
 	if ids, err = rq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -169,7 +169,7 @@ func (rq *ReplyQuery) FirstID(ctx context.Context) (id int64, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (rq *ReplyQuery) FirstIDX(ctx context.Context) int64 {
+func (rq *ReplyQuery) FirstIDX(ctx context.Context) uint64 {
 	id, err := rq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -207,8 +207,8 @@ func (rq *ReplyQuery) OnlyX(ctx context.Context) *Reply {
 // OnlyID is like Only, but returns the only Reply ID in the query.
 // Returns a *NotSingularError when exactly one Reply ID is not found.
 // Returns a *NotFoundError when no entities are found.
-func (rq *ReplyQuery) OnlyID(ctx context.Context) (id int64, err error) {
-	var ids []int64
+func (rq *ReplyQuery) OnlyID(ctx context.Context) (id uint64, err error) {
+	var ids []uint64
 	if ids, err = rq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -224,7 +224,7 @@ func (rq *ReplyQuery) OnlyID(ctx context.Context) (id int64, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (rq *ReplyQuery) OnlyIDX(ctx context.Context) int64 {
+func (rq *ReplyQuery) OnlyIDX(ctx context.Context) uint64 {
 	id, err := rq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -250,8 +250,8 @@ func (rq *ReplyQuery) AllX(ctx context.Context) []*Reply {
 }
 
 // IDs executes the query and returns a list of Reply IDs.
-func (rq *ReplyQuery) IDs(ctx context.Context) ([]int64, error) {
-	var ids []int64
+func (rq *ReplyQuery) IDs(ctx context.Context) ([]uint64, error) {
+	var ids []uint64
 	if err := rq.Select(reply.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -259,7 +259,7 @@ func (rq *ReplyQuery) IDs(ctx context.Context) ([]int64, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (rq *ReplyQuery) IDsX(ctx context.Context) []int64 {
+func (rq *ReplyQuery) IDsX(ctx context.Context) []uint64 {
 	ids, err := rq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -361,7 +361,7 @@ func (rq *ReplyQuery) WithChildren(opts ...func(*ReplyQuery)) *ReplyQuery {
 // Example:
 //
 //	var v []struct {
-//		UserID int64 `json:"user_id,omitempty"`
+//		UserID uint64 `json:"user_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -388,7 +388,7 @@ func (rq *ReplyQuery) GroupBy(field string, fields ...string) *ReplyGroupBy {
 // Example:
 //
 //	var v []struct {
-//		UserID int64 `json:"user_id,omitempty"`
+//		UserID uint64 `json:"user_id,omitempty"`
 //	}
 //
 //	client.Reply.Query().
@@ -447,8 +447,8 @@ func (rq *ReplyQuery) sqlAll(ctx context.Context) ([]*Reply, error) {
 	}
 
 	if query := rq.withOwner; query != nil {
-		ids := make([]int64, 0, len(nodes))
-		nodeids := make(map[int64][]*Reply)
+		ids := make([]uint64, 0, len(nodes))
+		nodeids := make(map[uint64][]*Reply)
 		for i := range nodes {
 			fk := nodes[i].CommentID
 			if _, ok := nodeids[fk]; !ok {
@@ -473,8 +473,8 @@ func (rq *ReplyQuery) sqlAll(ctx context.Context) ([]*Reply, error) {
 	}
 
 	if query := rq.withParent; query != nil {
-		ids := make([]int64, 0, len(nodes))
-		nodeids := make(map[int64][]*Reply)
+		ids := make([]uint64, 0, len(nodes))
+		nodeids := make(map[uint64][]*Reply)
 		for i := range nodes {
 			fk := nodes[i].ParentID
 			if _, ok := nodeids[fk]; !ok {
@@ -500,7 +500,7 @@ func (rq *ReplyQuery) sqlAll(ctx context.Context) ([]*Reply, error) {
 
 	if query := rq.withChildren; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		nodeids := make(map[int64]*Reply)
+		nodeids := make(map[uint64]*Reply)
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
@@ -545,7 +545,7 @@ func (rq *ReplyQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   reply.Table,
 			Columns: reply.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
+				Type:   field.TypeUint64,
 				Column: reply.FieldID,
 			},
 		},

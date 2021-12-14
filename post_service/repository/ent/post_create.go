@@ -21,8 +21,8 @@ type PostCreate struct {
 }
 
 // SetUserID sets the "user_id" field.
-func (pc *PostCreate) SetUserID(i int64) *PostCreate {
-	pc.mutation.SetUserID(i)
+func (pc *PostCreate) SetUserID(u uint64) *PostCreate {
+	pc.mutation.SetUserID(u)
 	return pc
 }
 
@@ -89,20 +89,20 @@ func (pc *PostCreate) SetNillableUpdateAt(i *int64) *PostCreate {
 }
 
 // SetID sets the "id" field.
-func (pc *PostCreate) SetID(i int64) *PostCreate {
-	pc.mutation.SetID(i)
+func (pc *PostCreate) SetID(u uint64) *PostCreate {
+	pc.mutation.SetID(u)
 	return pc
 }
 
 // AddCommentIDs adds the "comments" edge to the Comment entity by IDs.
-func (pc *PostCreate) AddCommentIDs(ids ...int64) *PostCreate {
+func (pc *PostCreate) AddCommentIDs(ids ...uint64) *PostCreate {
 	pc.mutation.AddCommentIDs(ids...)
 	return pc
 }
 
 // AddComments adds the "comments" edges to the Comment entity.
 func (pc *PostCreate) AddComments(c ...*Comment) *PostCreate {
-	ids := make([]int64, len(c))
+	ids := make([]uint64, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
@@ -266,7 +266,7 @@ func (pc *PostCreate) sqlSave(ctx context.Context) (*Post, error) {
 	}
 	if _spec.ID.Value != _node.ID {
 		id := _spec.ID.Value.(int64)
-		_node.ID = int64(id)
+		_node.ID = uint64(id)
 	}
 	return _node, nil
 }
@@ -277,7 +277,7 @@ func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: post.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
+				Type:   field.TypeUint64,
 				Column: post.FieldID,
 			},
 		}
@@ -288,7 +288,7 @@ func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := pc.mutation.UserID(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeUint64,
 			Value:  value,
 			Column: post.FieldUserID,
 		})
@@ -343,7 +343,7 @@ func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: comment.FieldID,
 				},
 			},
@@ -400,7 +400,7 @@ func (pcb *PostCreateBulk) Save(ctx context.Context) ([]*Post, error) {
 				mutation.done = true
 				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int64(id)
+					nodes[i].ID = uint64(id)
 				}
 				return nodes[i], nil
 			})

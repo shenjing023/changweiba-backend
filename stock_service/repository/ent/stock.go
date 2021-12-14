@@ -14,7 +14,7 @@ import (
 type Stock struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID uint64 `json:"id,omitempty"`
 	// Symbol holds the value of the "symbol" field.
 	// 股票代码
 	Symbol string `json:"symbol,omitempty"`
@@ -30,9 +30,11 @@ type Stock struct {
 type StockEdges struct {
 	// Trades holds the value of the trades edge.
 	Trades []*TradeDate `json:"trades,omitempty"`
+	// Subscribers holds the value of the subscribers edge.
+	Subscribers []*User `json:"subscribers,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // TradesOrErr returns the Trades value or an error if the edge
@@ -42,6 +44,15 @@ func (e StockEdges) TradesOrErr() ([]*TradeDate, error) {
 		return e.Trades, nil
 	}
 	return nil, &NotLoadedError{edge: "trades"}
+}
+
+// SubscribersOrErr returns the Subscribers value or an error if the edge
+// was not loaded in eager-loading.
+func (e StockEdges) SubscribersOrErr() ([]*User, error) {
+	if e.loadedTypes[1] {
+		return e.Subscribers, nil
+	}
+	return nil, &NotLoadedError{edge: "subscribers"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -73,7 +84,7 @@ func (s *Stock) assignValues(columns []string, values []interface{}) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			s.ID = int(value.Int64)
+			s.ID = uint64(value.Int64)
 		case stock.FieldSymbol:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field symbol", values[i])
@@ -94,6 +105,11 @@ func (s *Stock) assignValues(columns []string, values []interface{}) error {
 // QueryTrades queries the "trades" edge of the Stock entity.
 func (s *Stock) QueryTrades() *TradeDateQuery {
 	return (&StockClient{config: s.config}).QueryTrades(s)
+}
+
+// QuerySubscribers queries the "subscribers" edge of the Stock entity.
+func (s *Stock) QuerySubscribers() *UserQuery {
+	return (&StockClient{config: s.config}).QuerySubscribers(s)
 }
 
 // Update returns a builder for updating this Stock.

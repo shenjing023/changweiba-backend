@@ -15,16 +15,19 @@ import (
 type TradeDate struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID uint64 `json:"id,omitempty"`
 	// StockID holds the value of the "stock_id" field.
 	// Stock ID
-	StockID int `json:"stock_id,omitempty"`
+	StockID uint64 `json:"stock_id,omitempty"`
 	// TDate holds the value of the "t_date" field.
 	// 交易日期
 	TDate string `json:"t_date,omitempty"`
 	// EndPrice holds the value of the "end_price" field.
 	// 收盘价
 	EndPrice float64 `json:"end_price,omitempty"`
+	// Volumn holds the value of the "volumn" field.
+	// 成交量
+	Volumn int64 `json:"volumn,omitempty"`
 	// CreateAt holds the value of the "create_at" field.
 	// 创建时间
 	CreateAt int64 `json:"create_at,omitempty"`
@@ -69,7 +72,7 @@ func (*TradeDate) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case tradedate.FieldEndPrice:
 			values[i] = new(sql.NullFloat64)
-		case tradedate.FieldID, tradedate.FieldStockID, tradedate.FieldCreateAt, tradedate.FieldUpdateAt, tradedate.FieldXueqiuCommentCount:
+		case tradedate.FieldID, tradedate.FieldStockID, tradedate.FieldVolumn, tradedate.FieldCreateAt, tradedate.FieldUpdateAt, tradedate.FieldXueqiuCommentCount:
 			values[i] = new(sql.NullInt64)
 		case tradedate.FieldTDate:
 			values[i] = new(sql.NullString)
@@ -93,12 +96,12 @@ func (td *TradeDate) assignValues(columns []string, values []interface{}) error 
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			td.ID = int(value.Int64)
+			td.ID = uint64(value.Int64)
 		case tradedate.FieldStockID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field stock_id", values[i])
 			} else if value.Valid {
-				td.StockID = int(value.Int64)
+				td.StockID = uint64(value.Int64)
 			}
 		case tradedate.FieldTDate:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -111,6 +114,12 @@ func (td *TradeDate) assignValues(columns []string, values []interface{}) error 
 				return fmt.Errorf("unexpected type %T for field end_price", values[i])
 			} else if value.Valid {
 				td.EndPrice = value.Float64
+			}
+		case tradedate.FieldVolumn:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field volumn", values[i])
+			} else if value.Valid {
+				td.Volumn = value.Int64
 			}
 		case tradedate.FieldCreateAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -169,6 +178,8 @@ func (td *TradeDate) String() string {
 	builder.WriteString(td.TDate)
 	builder.WriteString(", end_price=")
 	builder.WriteString(fmt.Sprintf("%v", td.EndPrice))
+	builder.WriteString(", volumn=")
+	builder.WriteString(fmt.Sprintf("%v", td.Volumn))
 	builder.WriteString(", create_at=")
 	builder.WriteString(fmt.Sprintf("%v", td.CreateAt))
 	builder.WriteString(", update_at=")

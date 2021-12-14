@@ -11,6 +11,7 @@ import (
 
 	"stock_service/repository/ent/stock"
 	"stock_service/repository/ent/tradedate"
+	"stock_service/repository/ent/user"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
@@ -26,6 +27,8 @@ type Client struct {
 	Stock *StockClient
 	// TradeDate is the client for interacting with the TradeDate builders.
 	TradeDate *TradeDateClient
+	// User is the client for interacting with the User builders.
+	User *UserClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -41,6 +44,7 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Stock = NewStockClient(c.config)
 	c.TradeDate = NewTradeDateClient(c.config)
+	c.User = NewUserClient(c.config)
 }
 
 // Open opens a database/sql.DB specified by the driver name and
@@ -76,6 +80,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:    cfg,
 		Stock:     NewStockClient(cfg),
 		TradeDate: NewTradeDateClient(cfg),
+		User:      NewUserClient(cfg),
 	}, nil
 }
 
@@ -96,6 +101,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:    cfg,
 		Stock:     NewStockClient(cfg),
 		TradeDate: NewTradeDateClient(cfg),
+		User:      NewUserClient(cfg),
 	}, nil
 }
 
@@ -127,6 +133,7 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	c.Stock.Use(hooks...)
 	c.TradeDate.Use(hooks...)
+	c.User.Use(hooks...)
 }
 
 // StockClient is a client for the Stock schema.
@@ -169,7 +176,7 @@ func (c *StockClient) UpdateOne(s *Stock) *StockUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *StockClient) UpdateOneID(id int) *StockUpdateOne {
+func (c *StockClient) UpdateOneID(id uint64) *StockUpdateOne {
 	mutation := newStockMutation(c.config, OpUpdateOne, withStockID(id))
 	return &StockUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -186,7 +193,7 @@ func (c *StockClient) DeleteOne(s *Stock) *StockDeleteOne {
 }
 
 // DeleteOneID returns a delete builder for the given id.
-func (c *StockClient) DeleteOneID(id int) *StockDeleteOne {
+func (c *StockClient) DeleteOneID(id uint64) *StockDeleteOne {
 	builder := c.Delete().Where(stock.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -201,12 +208,12 @@ func (c *StockClient) Query() *StockQuery {
 }
 
 // Get returns a Stock entity by its id.
-func (c *StockClient) Get(ctx context.Context, id int) (*Stock, error) {
+func (c *StockClient) Get(ctx context.Context, id uint64) (*Stock, error) {
 	return c.Query().Where(stock.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *StockClient) GetX(ctx context.Context, id int) *Stock {
+func (c *StockClient) GetX(ctx context.Context, id uint64) *Stock {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -223,6 +230,22 @@ func (c *StockClient) QueryTrades(s *Stock) *TradeDateQuery {
 			sqlgraph.From(stock.Table, stock.FieldID, id),
 			sqlgraph.To(tradedate.Table, tradedate.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, stock.TradesTable, stock.TradesColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySubscribers queries the subscribers edge of a Stock.
+func (c *StockClient) QuerySubscribers(s *Stock) *UserQuery {
+	query := &UserQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(stock.Table, stock.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, stock.SubscribersTable, stock.SubscribersPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
 		return fromV, nil
@@ -275,7 +298,7 @@ func (c *TradeDateClient) UpdateOne(td *TradeDate) *TradeDateUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *TradeDateClient) UpdateOneID(id int) *TradeDateUpdateOne {
+func (c *TradeDateClient) UpdateOneID(id uint64) *TradeDateUpdateOne {
 	mutation := newTradeDateMutation(c.config, OpUpdateOne, withTradeDateID(id))
 	return &TradeDateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -292,7 +315,7 @@ func (c *TradeDateClient) DeleteOne(td *TradeDate) *TradeDateDeleteOne {
 }
 
 // DeleteOneID returns a delete builder for the given id.
-func (c *TradeDateClient) DeleteOneID(id int) *TradeDateDeleteOne {
+func (c *TradeDateClient) DeleteOneID(id uint64) *TradeDateDeleteOne {
 	builder := c.Delete().Where(tradedate.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -307,12 +330,12 @@ func (c *TradeDateClient) Query() *TradeDateQuery {
 }
 
 // Get returns a TradeDate entity by its id.
-func (c *TradeDateClient) Get(ctx context.Context, id int) (*TradeDate, error) {
+func (c *TradeDateClient) Get(ctx context.Context, id uint64) (*TradeDate, error) {
 	return c.Query().Where(tradedate.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *TradeDateClient) GetX(ctx context.Context, id int) *TradeDate {
+func (c *TradeDateClient) GetX(ctx context.Context, id uint64) *TradeDate {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -339,4 +362,110 @@ func (c *TradeDateClient) QueryStock(td *TradeDate) *StockQuery {
 // Hooks returns the client hooks.
 func (c *TradeDateClient) Hooks() []Hook {
 	return c.hooks.TradeDate
+}
+
+// UserClient is a client for the User schema.
+type UserClient struct {
+	config
+}
+
+// NewUserClient returns a client for the User from the given config.
+func NewUserClient(c config) *UserClient {
+	return &UserClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `user.Hooks(f(g(h())))`.
+func (c *UserClient) Use(hooks ...Hook) {
+	c.hooks.User = append(c.hooks.User, hooks...)
+}
+
+// Create returns a create builder for User.
+func (c *UserClient) Create() *UserCreate {
+	mutation := newUserMutation(c.config, OpCreate)
+	return &UserCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of User entities.
+func (c *UserClient) CreateBulk(builders ...*UserCreate) *UserCreateBulk {
+	return &UserCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for User.
+func (c *UserClient) Update() *UserUpdate {
+	mutation := newUserMutation(c.config, OpUpdate)
+	return &UserUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UserClient) UpdateOne(u *User) *UserUpdateOne {
+	mutation := newUserMutation(c.config, OpUpdateOne, withUser(u))
+	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UserClient) UpdateOneID(id uint64) *UserUpdateOne {
+	mutation := newUserMutation(c.config, OpUpdateOne, withUserID(id))
+	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for User.
+func (c *UserClient) Delete() *UserDelete {
+	mutation := newUserMutation(c.config, OpDelete)
+	return &UserDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
+	return c.DeleteOneID(u.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *UserClient) DeleteOneID(id uint64) *UserDeleteOne {
+	builder := c.Delete().Where(user.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &UserDeleteOne{builder}
+}
+
+// Query returns a query builder for User.
+func (c *UserClient) Query() *UserQuery {
+	return &UserQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a User entity by its id.
+func (c *UserClient) Get(ctx context.Context, id uint64) (*User, error) {
+	return c.Query().Where(user.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UserClient) GetX(ctx context.Context, id uint64) *User {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QuerySubscribeStocks queries the subscribe_stocks edge of a User.
+func (c *UserClient) QuerySubscribeStocks(u *User) *StockQuery {
+	query := &StockQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(stock.Table, stock.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, user.SubscribeStocksTable, user.SubscribeStocksPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *UserClient) Hooks() []Hook {
+	return c.hooks.User
 }

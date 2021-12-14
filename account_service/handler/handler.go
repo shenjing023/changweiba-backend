@@ -85,7 +85,7 @@ func (u *User) SignIn(ctx context.Context, sr *pb.SignInRequest) (*pb.SignInRepl
 			errors.New("password incorrect")))
 	}
 	return &pb.SignInReply{
-		Id: dbUser.ID,
+		Id: int64(dbUser.ID),
 	}, nil
 }
 
@@ -100,7 +100,7 @@ func (u *User) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 		ban, _ = repository.GetBannedReason(int64(dbUser.Status))
 	}
 	return &pb.User{
-		Id:           dbUser.ID,
+		Id:           int64(dbUser.ID),
 		Name:         dbUser.NickName,
 		Avatar:       dbUser.Avatar,
 		Status:       pb.UserStatusEnum_Status(dbUser.Status),
@@ -127,7 +127,7 @@ func (u *User) GetUsersByUserIds(ctx context.Context, ur *pb.UsersByUserIdsReque
 			ban, _ = repository.GetBannedReason(int64(v.Status))
 		}
 		users = append(users, &pb.User{
-			Id:           v.ID,
+			Id:           int64(v.ID),
 			Name:         v.NickName,
 			Avatar:       v.Avatar,
 			Status:       pb.UserStatusEnum_Status(v.Status),

@@ -84,8 +84,8 @@ func (aq *AvatarQuery) FirstX(ctx context.Context) *Avatar {
 
 // FirstID returns the first Avatar ID from the query.
 // Returns a *NotFoundError when no Avatar ID was found.
-func (aq *AvatarQuery) FirstID(ctx context.Context) (id int64, err error) {
-	var ids []int64
+func (aq *AvatarQuery) FirstID(ctx context.Context) (id uint64, err error) {
+	var ids []uint64
 	if ids, err = aq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -97,7 +97,7 @@ func (aq *AvatarQuery) FirstID(ctx context.Context) (id int64, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (aq *AvatarQuery) FirstIDX(ctx context.Context) int64 {
+func (aq *AvatarQuery) FirstIDX(ctx context.Context) uint64 {
 	id, err := aq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -135,8 +135,8 @@ func (aq *AvatarQuery) OnlyX(ctx context.Context) *Avatar {
 // OnlyID is like Only, but returns the only Avatar ID in the query.
 // Returns a *NotSingularError when exactly one Avatar ID is not found.
 // Returns a *NotFoundError when no entities are found.
-func (aq *AvatarQuery) OnlyID(ctx context.Context) (id int64, err error) {
-	var ids []int64
+func (aq *AvatarQuery) OnlyID(ctx context.Context) (id uint64, err error) {
+	var ids []uint64
 	if ids, err = aq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -152,7 +152,7 @@ func (aq *AvatarQuery) OnlyID(ctx context.Context) (id int64, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (aq *AvatarQuery) OnlyIDX(ctx context.Context) int64 {
+func (aq *AvatarQuery) OnlyIDX(ctx context.Context) uint64 {
 	id, err := aq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -178,8 +178,8 @@ func (aq *AvatarQuery) AllX(ctx context.Context) []*Avatar {
 }
 
 // IDs executes the query and returns a list of Avatar IDs.
-func (aq *AvatarQuery) IDs(ctx context.Context) ([]int64, error) {
-	var ids []int64
+func (aq *AvatarQuery) IDs(ctx context.Context) ([]uint64, error) {
+	var ids []uint64
 	if err := aq.Select(avatar.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func (aq *AvatarQuery) IDs(ctx context.Context) ([]int64, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (aq *AvatarQuery) IDsX(ctx context.Context) []int64 {
+func (aq *AvatarQuery) IDsX(ctx context.Context) []uint64 {
 	ids, err := aq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -353,7 +353,7 @@ func (aq *AvatarQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   avatar.Table,
 			Columns: avatar.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
+				Type:   field.TypeUint64,
 				Column: avatar.FieldID,
 			},
 		},

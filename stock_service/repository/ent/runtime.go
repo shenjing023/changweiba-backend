@@ -6,6 +6,7 @@ import (
 	"stock_service/repository/ent/schema"
 	"stock_service/repository/ent/stock"
 	"stock_service/repository/ent/tradedate"
+	"stock_service/repository/ent/user"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -15,39 +16,63 @@ func init() {
 	stockFields := schema.Stock{}.Fields()
 	_ = stockFields
 	// stockDescSymbol is the schema descriptor for symbol field.
-	stockDescSymbol := stockFields[0].Descriptor()
+	stockDescSymbol := stockFields[1].Descriptor()
 	// stock.SymbolValidator is a validator for the "symbol" field. It is called by the builders before save.
 	stock.SymbolValidator = stockDescSymbol.Validators[0].(func(string) error)
 	// stockDescName is the schema descriptor for name field.
-	stockDescName := stockFields[1].Descriptor()
+	stockDescName := stockFields[2].Descriptor()
 	// stock.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	stock.NameValidator = stockDescName.Validators[0].(func(string) error)
+	// stockDescID is the schema descriptor for id field.
+	stockDescID := stockFields[0].Descriptor()
+	// stock.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	stock.IDValidator = stockDescID.Validators[0].(func(uint64) error)
 	tradedateFields := schema.TradeDate{}.Fields()
 	_ = tradedateFields
 	// tradedateDescStockID is the schema descriptor for stock_id field.
-	tradedateDescStockID := tradedateFields[0].Descriptor()
+	tradedateDescStockID := tradedateFields[1].Descriptor()
 	// tradedate.StockIDValidator is a validator for the "stock_id" field. It is called by the builders before save.
-	tradedate.StockIDValidator = tradedateDescStockID.Validators[0].(func(int) error)
+	tradedate.StockIDValidator = tradedateDescStockID.Validators[0].(func(uint64) error)
 	// tradedateDescTDate is the schema descriptor for t_date field.
-	tradedateDescTDate := tradedateFields[1].Descriptor()
+	tradedateDescTDate := tradedateFields[2].Descriptor()
 	// tradedate.TDateValidator is a validator for the "t_date" field. It is called by the builders before save.
 	tradedate.TDateValidator = tradedateDescTDate.Validators[0].(func(string) error)
+	// tradedateDescVolumn is the schema descriptor for volumn field.
+	tradedateDescVolumn := tradedateFields[4].Descriptor()
+	// tradedate.DefaultVolumn holds the default value on creation for the volumn field.
+	tradedate.DefaultVolumn = tradedateDescVolumn.Default.(int64)
+	// tradedate.VolumnValidator is a validator for the "volumn" field. It is called by the builders before save.
+	tradedate.VolumnValidator = tradedateDescVolumn.Validators[0].(func(int64) error)
 	// tradedateDescCreateAt is the schema descriptor for create_at field.
-	tradedateDescCreateAt := tradedateFields[3].Descriptor()
+	tradedateDescCreateAt := tradedateFields[5].Descriptor()
 	// tradedate.DefaultCreateAt holds the default value on creation for the create_at field.
 	tradedate.DefaultCreateAt = tradedateDescCreateAt.Default.(int64)
 	// tradedate.CreateAtValidator is a validator for the "create_at" field. It is called by the builders before save.
 	tradedate.CreateAtValidator = tradedateDescCreateAt.Validators[0].(func(int64) error)
 	// tradedateDescUpdateAt is the schema descriptor for update_at field.
-	tradedateDescUpdateAt := tradedateFields[4].Descriptor()
+	tradedateDescUpdateAt := tradedateFields[6].Descriptor()
 	// tradedate.DefaultUpdateAt holds the default value on creation for the update_at field.
 	tradedate.DefaultUpdateAt = tradedateDescUpdateAt.Default.(int64)
 	// tradedate.UpdateAtValidator is a validator for the "update_at" field. It is called by the builders before save.
 	tradedate.UpdateAtValidator = tradedateDescUpdateAt.Validators[0].(func(int64) error)
 	// tradedateDescXueqiuCommentCount is the schema descriptor for xueqiu_comment_count field.
-	tradedateDescXueqiuCommentCount := tradedateFields[5].Descriptor()
+	tradedateDescXueqiuCommentCount := tradedateFields[7].Descriptor()
 	// tradedate.DefaultXueqiuCommentCount holds the default value on creation for the xueqiu_comment_count field.
 	tradedate.DefaultXueqiuCommentCount = tradedateDescXueqiuCommentCount.Default.(int64)
 	// tradedate.XueqiuCommentCountValidator is a validator for the "xueqiu_comment_count" field. It is called by the builders before save.
 	tradedate.XueqiuCommentCountValidator = tradedateDescXueqiuCommentCount.Validators[0].(func(int64) error)
+	// tradedateDescID is the schema descriptor for id field.
+	tradedateDescID := tradedateFields[0].Descriptor()
+	// tradedate.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	tradedate.IDValidator = tradedateDescID.Validators[0].(func(uint64) error)
+	userFields := schema.User{}.Fields()
+	_ = userFields
+	// userDescNickName is the schema descriptor for nick_name field.
+	userDescNickName := userFields[1].Descriptor()
+	// user.NickNameValidator is a validator for the "nick_name" field. It is called by the builders before save.
+	user.NickNameValidator = userDescNickName.Validators[0].(func(string) error)
+	// userDescID is the schema descriptor for id field.
+	userDescID := userFields[0].Descriptor()
+	// user.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	user.IDValidator = userDescID.Validators[0].(func(uint64) error)
 }

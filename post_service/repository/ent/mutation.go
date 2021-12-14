@@ -33,21 +33,21 @@ type CommentMutation struct {
 	config
 	op             Op
 	typ            string
-	id             *int64
-	user_id        *int64
-	adduser_id     *int64
+	id             *uint64
+	user_id        *uint64
+	adduser_id     *uint64
 	content        *string
 	status         *int8
 	addstatus      *int8
-	floor          *int64
-	addfloor       *int64
+	floor          *uint64
+	addfloor       *uint64
 	create_at      *int64
 	addcreate_at   *int64
 	clearedFields  map[string]struct{}
-	owner          *int64
+	owner          *uint64
 	clearedowner   bool
-	replies        map[int64]struct{}
-	removedreplies map[int64]struct{}
+	replies        map[uint64]struct{}
+	removedreplies map[uint64]struct{}
 	clearedreplies bool
 	done           bool
 	oldValue       func(context.Context) (*Comment, error)
@@ -74,7 +74,7 @@ func newCommentMutation(c config, op Op, opts ...commentOption) *CommentMutation
 }
 
 // withCommentID sets the ID field of the mutation.
-func withCommentID(id int64) commentOption {
+func withCommentID(id uint64) commentOption {
 	return func(m *CommentMutation) {
 		var (
 			err   error
@@ -126,13 +126,13 @@ func (m CommentMutation) Tx() (*Tx, error) {
 
 // SetID sets the value of the id field. Note that this
 // operation is only accepted on creation of Comment entities.
-func (m *CommentMutation) SetID(id int64) {
+func (m *CommentMutation) SetID(id uint64) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *CommentMutation) ID() (id int64, exists bool) {
+func (m *CommentMutation) ID() (id uint64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -140,13 +140,13 @@ func (m *CommentMutation) ID() (id int64, exists bool) {
 }
 
 // SetUserID sets the "user_id" field.
-func (m *CommentMutation) SetUserID(i int64) {
-	m.user_id = &i
+func (m *CommentMutation) SetUserID(u uint64) {
+	m.user_id = &u
 	m.adduser_id = nil
 }
 
 // UserID returns the value of the "user_id" field in the mutation.
-func (m *CommentMutation) UserID() (r int64, exists bool) {
+func (m *CommentMutation) UserID() (r uint64, exists bool) {
 	v := m.user_id
 	if v == nil {
 		return
@@ -157,7 +157,7 @@ func (m *CommentMutation) UserID() (r int64, exists bool) {
 // OldUserID returns the old "user_id" field's value of the Comment entity.
 // If the Comment object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CommentMutation) OldUserID(ctx context.Context) (v int64, err error) {
+func (m *CommentMutation) OldUserID(ctx context.Context) (v uint64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, fmt.Errorf("OldUserID is only allowed on UpdateOne operations")
 	}
@@ -171,17 +171,17 @@ func (m *CommentMutation) OldUserID(ctx context.Context) (v int64, err error) {
 	return oldValue.UserID, nil
 }
 
-// AddUserID adds i to the "user_id" field.
-func (m *CommentMutation) AddUserID(i int64) {
+// AddUserID adds u to the "user_id" field.
+func (m *CommentMutation) AddUserID(u uint64) {
 	if m.adduser_id != nil {
-		*m.adduser_id += i
+		*m.adduser_id += u
 	} else {
-		m.adduser_id = &i
+		m.adduser_id = &u
 	}
 }
 
 // AddedUserID returns the value that was added to the "user_id" field in this mutation.
-func (m *CommentMutation) AddedUserID() (r int64, exists bool) {
+func (m *CommentMutation) AddedUserID() (r uint64, exists bool) {
 	v := m.adduser_id
 	if v == nil {
 		return
@@ -196,12 +196,12 @@ func (m *CommentMutation) ResetUserID() {
 }
 
 // SetPostID sets the "post_id" field.
-func (m *CommentMutation) SetPostID(i int64) {
-	m.owner = &i
+func (m *CommentMutation) SetPostID(u uint64) {
+	m.owner = &u
 }
 
 // PostID returns the value of the "post_id" field in the mutation.
-func (m *CommentMutation) PostID() (r int64, exists bool) {
+func (m *CommentMutation) PostID() (r uint64, exists bool) {
 	v := m.owner
 	if v == nil {
 		return
@@ -212,7 +212,7 @@ func (m *CommentMutation) PostID() (r int64, exists bool) {
 // OldPostID returns the old "post_id" field's value of the Comment entity.
 // If the Comment object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CommentMutation) OldPostID(ctx context.Context) (v int64, err error) {
+func (m *CommentMutation) OldPostID(ctx context.Context) (v uint64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, fmt.Errorf("OldPostID is only allowed on UpdateOne operations")
 	}
@@ -337,13 +337,13 @@ func (m *CommentMutation) ResetStatus() {
 }
 
 // SetFloor sets the "floor" field.
-func (m *CommentMutation) SetFloor(i int64) {
-	m.floor = &i
+func (m *CommentMutation) SetFloor(u uint64) {
+	m.floor = &u
 	m.addfloor = nil
 }
 
 // Floor returns the value of the "floor" field in the mutation.
-func (m *CommentMutation) Floor() (r int64, exists bool) {
+func (m *CommentMutation) Floor() (r uint64, exists bool) {
 	v := m.floor
 	if v == nil {
 		return
@@ -354,7 +354,7 @@ func (m *CommentMutation) Floor() (r int64, exists bool) {
 // OldFloor returns the old "floor" field's value of the Comment entity.
 // If the Comment object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CommentMutation) OldFloor(ctx context.Context) (v int64, err error) {
+func (m *CommentMutation) OldFloor(ctx context.Context) (v uint64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, fmt.Errorf("OldFloor is only allowed on UpdateOne operations")
 	}
@@ -368,17 +368,17 @@ func (m *CommentMutation) OldFloor(ctx context.Context) (v int64, err error) {
 	return oldValue.Floor, nil
 }
 
-// AddFloor adds i to the "floor" field.
-func (m *CommentMutation) AddFloor(i int64) {
+// AddFloor adds u to the "floor" field.
+func (m *CommentMutation) AddFloor(u uint64) {
 	if m.addfloor != nil {
-		*m.addfloor += i
+		*m.addfloor += u
 	} else {
-		m.addfloor = &i
+		m.addfloor = &u
 	}
 }
 
 // AddedFloor returns the value that was added to the "floor" field in this mutation.
-func (m *CommentMutation) AddedFloor() (r int64, exists bool) {
+func (m *CommentMutation) AddedFloor() (r uint64, exists bool) {
 	v := m.addfloor
 	if v == nil {
 		return
@@ -449,7 +449,7 @@ func (m *CommentMutation) ResetCreateAt() {
 }
 
 // SetOwnerID sets the "owner" edge to the Post entity by id.
-func (m *CommentMutation) SetOwnerID(id int64) {
+func (m *CommentMutation) SetOwnerID(id uint64) {
 	m.owner = &id
 }
 
@@ -464,7 +464,7 @@ func (m *CommentMutation) OwnerCleared() bool {
 }
 
 // OwnerID returns the "owner" edge ID in the mutation.
-func (m *CommentMutation) OwnerID() (id int64, exists bool) {
+func (m *CommentMutation) OwnerID() (id uint64, exists bool) {
 	if m.owner != nil {
 		return *m.owner, true
 	}
@@ -474,7 +474,7 @@ func (m *CommentMutation) OwnerID() (id int64, exists bool) {
 // OwnerIDs returns the "owner" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // OwnerID instead. It exists only for internal usage by the builders.
-func (m *CommentMutation) OwnerIDs() (ids []int64) {
+func (m *CommentMutation) OwnerIDs() (ids []uint64) {
 	if id := m.owner; id != nil {
 		ids = append(ids, *id)
 	}
@@ -488,9 +488,9 @@ func (m *CommentMutation) ResetOwner() {
 }
 
 // AddReplyIDs adds the "replies" edge to the Reply entity by ids.
-func (m *CommentMutation) AddReplyIDs(ids ...int64) {
+func (m *CommentMutation) AddReplyIDs(ids ...uint64) {
 	if m.replies == nil {
-		m.replies = make(map[int64]struct{})
+		m.replies = make(map[uint64]struct{})
 	}
 	for i := range ids {
 		m.replies[ids[i]] = struct{}{}
@@ -508,9 +508,9 @@ func (m *CommentMutation) RepliesCleared() bool {
 }
 
 // RemoveReplyIDs removes the "replies" edge to the Reply entity by IDs.
-func (m *CommentMutation) RemoveReplyIDs(ids ...int64) {
+func (m *CommentMutation) RemoveReplyIDs(ids ...uint64) {
 	if m.removedreplies == nil {
-		m.removedreplies = make(map[int64]struct{})
+		m.removedreplies = make(map[uint64]struct{})
 	}
 	for i := range ids {
 		delete(m.replies, ids[i])
@@ -519,7 +519,7 @@ func (m *CommentMutation) RemoveReplyIDs(ids ...int64) {
 }
 
 // RemovedReplies returns the removed IDs of the "replies" edge to the Reply entity.
-func (m *CommentMutation) RemovedRepliesIDs() (ids []int64) {
+func (m *CommentMutation) RemovedRepliesIDs() (ids []uint64) {
 	for id := range m.removedreplies {
 		ids = append(ids, id)
 	}
@@ -527,7 +527,7 @@ func (m *CommentMutation) RemovedRepliesIDs() (ids []int64) {
 }
 
 // RepliesIDs returns the "replies" edge IDs in the mutation.
-func (m *CommentMutation) RepliesIDs() (ids []int64) {
+func (m *CommentMutation) RepliesIDs() (ids []uint64) {
 	for id := range m.replies {
 		ids = append(ids, id)
 	}
@@ -630,14 +630,14 @@ func (m *CommentMutation) OldField(ctx context.Context, name string) (ent.Value,
 func (m *CommentMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case comment.FieldUserID:
-		v, ok := value.(int64)
+		v, ok := value.(uint64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUserID(v)
 		return nil
 	case comment.FieldPostID:
-		v, ok := value.(int64)
+		v, ok := value.(uint64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -658,7 +658,7 @@ func (m *CommentMutation) SetField(name string, value ent.Value) error {
 		m.SetStatus(v)
 		return nil
 	case comment.FieldFloor:
-		v, ok := value.(int64)
+		v, ok := value.(uint64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -717,7 +717,7 @@ func (m *CommentMutation) AddedField(name string) (ent.Value, bool) {
 func (m *CommentMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case comment.FieldUserID:
-		v, ok := value.(int64)
+		v, ok := value.(uint64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -731,7 +731,7 @@ func (m *CommentMutation) AddField(name string, value ent.Value) error {
 		m.AddStatus(v)
 		return nil
 	case comment.FieldFloor:
-		v, ok := value.(int64)
+		v, ok := value.(uint64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -909,9 +909,9 @@ type PostMutation struct {
 	config
 	op              Op
 	typ             string
-	id              *int64
-	user_id         *int64
-	adduser_id      *int64
+	id              *uint64
+	user_id         *uint64
+	adduser_id      *uint64
 	topic           *string
 	status          *int8
 	addstatus       *int8
@@ -922,8 +922,8 @@ type PostMutation struct {
 	update_at       *int64
 	addupdate_at    *int64
 	clearedFields   map[string]struct{}
-	comments        map[int64]struct{}
-	removedcomments map[int64]struct{}
+	comments        map[uint64]struct{}
+	removedcomments map[uint64]struct{}
 	clearedcomments bool
 	done            bool
 	oldValue        func(context.Context) (*Post, error)
@@ -950,7 +950,7 @@ func newPostMutation(c config, op Op, opts ...postOption) *PostMutation {
 }
 
 // withPostID sets the ID field of the mutation.
-func withPostID(id int64) postOption {
+func withPostID(id uint64) postOption {
 	return func(m *PostMutation) {
 		var (
 			err   error
@@ -1002,13 +1002,13 @@ func (m PostMutation) Tx() (*Tx, error) {
 
 // SetID sets the value of the id field. Note that this
 // operation is only accepted on creation of Post entities.
-func (m *PostMutation) SetID(id int64) {
+func (m *PostMutation) SetID(id uint64) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *PostMutation) ID() (id int64, exists bool) {
+func (m *PostMutation) ID() (id uint64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -1016,13 +1016,13 @@ func (m *PostMutation) ID() (id int64, exists bool) {
 }
 
 // SetUserID sets the "user_id" field.
-func (m *PostMutation) SetUserID(i int64) {
-	m.user_id = &i
+func (m *PostMutation) SetUserID(u uint64) {
+	m.user_id = &u
 	m.adduser_id = nil
 }
 
 // UserID returns the value of the "user_id" field in the mutation.
-func (m *PostMutation) UserID() (r int64, exists bool) {
+func (m *PostMutation) UserID() (r uint64, exists bool) {
 	v := m.user_id
 	if v == nil {
 		return
@@ -1033,7 +1033,7 @@ func (m *PostMutation) UserID() (r int64, exists bool) {
 // OldUserID returns the old "user_id" field's value of the Post entity.
 // If the Post object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PostMutation) OldUserID(ctx context.Context) (v int64, err error) {
+func (m *PostMutation) OldUserID(ctx context.Context) (v uint64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, fmt.Errorf("OldUserID is only allowed on UpdateOne operations")
 	}
@@ -1047,17 +1047,17 @@ func (m *PostMutation) OldUserID(ctx context.Context) (v int64, err error) {
 	return oldValue.UserID, nil
 }
 
-// AddUserID adds i to the "user_id" field.
-func (m *PostMutation) AddUserID(i int64) {
+// AddUserID adds u to the "user_id" field.
+func (m *PostMutation) AddUserID(u uint64) {
 	if m.adduser_id != nil {
-		*m.adduser_id += i
+		*m.adduser_id += u
 	} else {
-		m.adduser_id = &i
+		m.adduser_id = &u
 	}
 }
 
 // AddedUserID returns the value that was added to the "user_id" field in this mutation.
-func (m *PostMutation) AddedUserID() (r int64, exists bool) {
+func (m *PostMutation) AddedUserID() (r uint64, exists bool) {
 	v := m.adduser_id
 	if v == nil {
 		return
@@ -1332,9 +1332,9 @@ func (m *PostMutation) ResetUpdateAt() {
 }
 
 // AddCommentIDs adds the "comments" edge to the Comment entity by ids.
-func (m *PostMutation) AddCommentIDs(ids ...int64) {
+func (m *PostMutation) AddCommentIDs(ids ...uint64) {
 	if m.comments == nil {
-		m.comments = make(map[int64]struct{})
+		m.comments = make(map[uint64]struct{})
 	}
 	for i := range ids {
 		m.comments[ids[i]] = struct{}{}
@@ -1352,9 +1352,9 @@ func (m *PostMutation) CommentsCleared() bool {
 }
 
 // RemoveCommentIDs removes the "comments" edge to the Comment entity by IDs.
-func (m *PostMutation) RemoveCommentIDs(ids ...int64) {
+func (m *PostMutation) RemoveCommentIDs(ids ...uint64) {
 	if m.removedcomments == nil {
-		m.removedcomments = make(map[int64]struct{})
+		m.removedcomments = make(map[uint64]struct{})
 	}
 	for i := range ids {
 		delete(m.comments, ids[i])
@@ -1363,7 +1363,7 @@ func (m *PostMutation) RemoveCommentIDs(ids ...int64) {
 }
 
 // RemovedComments returns the removed IDs of the "comments" edge to the Comment entity.
-func (m *PostMutation) RemovedCommentsIDs() (ids []int64) {
+func (m *PostMutation) RemovedCommentsIDs() (ids []uint64) {
 	for id := range m.removedcomments {
 		ids = append(ids, id)
 	}
@@ -1371,7 +1371,7 @@ func (m *PostMutation) RemovedCommentsIDs() (ids []int64) {
 }
 
 // CommentsIDs returns the "comments" edge IDs in the mutation.
-func (m *PostMutation) CommentsIDs() (ids []int64) {
+func (m *PostMutation) CommentsIDs() (ids []uint64) {
 	for id := range m.comments {
 		ids = append(ids, id)
 	}
@@ -1474,7 +1474,7 @@ func (m *PostMutation) OldField(ctx context.Context, name string) (ent.Value, er
 func (m *PostMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case post.FieldUserID:
-		v, ok := value.(int64)
+		v, ok := value.(uint64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1566,7 +1566,7 @@ func (m *PostMutation) AddedField(name string) (ent.Value, bool) {
 func (m *PostMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case post.FieldUserID:
-		v, ok := value.(int64)
+		v, ok := value.(uint64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1738,23 +1738,23 @@ type ReplyMutation struct {
 	config
 	op              Op
 	typ             string
-	id              *int64
-	user_id         *int64
-	adduser_id      *int64
+	id              *uint64
+	user_id         *uint64
+	adduser_id      *uint64
 	content         *string
 	status          *int8
 	addstatus       *int8
-	floor           *int64
-	addfloor        *int64
+	floor           *uint64
+	addfloor        *uint64
 	create_at       *int64
 	addcreate_at    *int64
 	clearedFields   map[string]struct{}
-	owner           *int64
+	owner           *uint64
 	clearedowner    bool
-	parent          *int64
+	parent          *uint64
 	clearedparent   bool
-	children        map[int64]struct{}
-	removedchildren map[int64]struct{}
+	children        map[uint64]struct{}
+	removedchildren map[uint64]struct{}
 	clearedchildren bool
 	done            bool
 	oldValue        func(context.Context) (*Reply, error)
@@ -1781,7 +1781,7 @@ func newReplyMutation(c config, op Op, opts ...replyOption) *ReplyMutation {
 }
 
 // withReplyID sets the ID field of the mutation.
-func withReplyID(id int64) replyOption {
+func withReplyID(id uint64) replyOption {
 	return func(m *ReplyMutation) {
 		var (
 			err   error
@@ -1833,13 +1833,13 @@ func (m ReplyMutation) Tx() (*Tx, error) {
 
 // SetID sets the value of the id field. Note that this
 // operation is only accepted on creation of Reply entities.
-func (m *ReplyMutation) SetID(id int64) {
+func (m *ReplyMutation) SetID(id uint64) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *ReplyMutation) ID() (id int64, exists bool) {
+func (m *ReplyMutation) ID() (id uint64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -1847,13 +1847,13 @@ func (m *ReplyMutation) ID() (id int64, exists bool) {
 }
 
 // SetUserID sets the "user_id" field.
-func (m *ReplyMutation) SetUserID(i int64) {
-	m.user_id = &i
+func (m *ReplyMutation) SetUserID(u uint64) {
+	m.user_id = &u
 	m.adduser_id = nil
 }
 
 // UserID returns the value of the "user_id" field in the mutation.
-func (m *ReplyMutation) UserID() (r int64, exists bool) {
+func (m *ReplyMutation) UserID() (r uint64, exists bool) {
 	v := m.user_id
 	if v == nil {
 		return
@@ -1864,7 +1864,7 @@ func (m *ReplyMutation) UserID() (r int64, exists bool) {
 // OldUserID returns the old "user_id" field's value of the Reply entity.
 // If the Reply object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ReplyMutation) OldUserID(ctx context.Context) (v int64, err error) {
+func (m *ReplyMutation) OldUserID(ctx context.Context) (v uint64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, fmt.Errorf("OldUserID is only allowed on UpdateOne operations")
 	}
@@ -1878,17 +1878,17 @@ func (m *ReplyMutation) OldUserID(ctx context.Context) (v int64, err error) {
 	return oldValue.UserID, nil
 }
 
-// AddUserID adds i to the "user_id" field.
-func (m *ReplyMutation) AddUserID(i int64) {
+// AddUserID adds u to the "user_id" field.
+func (m *ReplyMutation) AddUserID(u uint64) {
 	if m.adduser_id != nil {
-		*m.adduser_id += i
+		*m.adduser_id += u
 	} else {
-		m.adduser_id = &i
+		m.adduser_id = &u
 	}
 }
 
 // AddedUserID returns the value that was added to the "user_id" field in this mutation.
-func (m *ReplyMutation) AddedUserID() (r int64, exists bool) {
+func (m *ReplyMutation) AddedUserID() (r uint64, exists bool) {
 	v := m.adduser_id
 	if v == nil {
 		return
@@ -1903,12 +1903,12 @@ func (m *ReplyMutation) ResetUserID() {
 }
 
 // SetCommentID sets the "comment_id" field.
-func (m *ReplyMutation) SetCommentID(i int64) {
-	m.owner = &i
+func (m *ReplyMutation) SetCommentID(u uint64) {
+	m.owner = &u
 }
 
 // CommentID returns the value of the "comment_id" field in the mutation.
-func (m *ReplyMutation) CommentID() (r int64, exists bool) {
+func (m *ReplyMutation) CommentID() (r uint64, exists bool) {
 	v := m.owner
 	if v == nil {
 		return
@@ -1919,7 +1919,7 @@ func (m *ReplyMutation) CommentID() (r int64, exists bool) {
 // OldCommentID returns the old "comment_id" field's value of the Reply entity.
 // If the Reply object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ReplyMutation) OldCommentID(ctx context.Context) (v int64, err error) {
+func (m *ReplyMutation) OldCommentID(ctx context.Context) (v uint64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, fmt.Errorf("OldCommentID is only allowed on UpdateOne operations")
 	}
@@ -1952,12 +1952,12 @@ func (m *ReplyMutation) ResetCommentID() {
 }
 
 // SetParentID sets the "parent_id" field.
-func (m *ReplyMutation) SetParentID(i int64) {
-	m.parent = &i
+func (m *ReplyMutation) SetParentID(u uint64) {
+	m.parent = &u
 }
 
 // ParentID returns the value of the "parent_id" field in the mutation.
-func (m *ReplyMutation) ParentID() (r int64, exists bool) {
+func (m *ReplyMutation) ParentID() (r uint64, exists bool) {
 	v := m.parent
 	if v == nil {
 		return
@@ -1968,7 +1968,7 @@ func (m *ReplyMutation) ParentID() (r int64, exists bool) {
 // OldParentID returns the old "parent_id" field's value of the Reply entity.
 // If the Reply object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ReplyMutation) OldParentID(ctx context.Context) (v int64, err error) {
+func (m *ReplyMutation) OldParentID(ctx context.Context) (v uint64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, fmt.Errorf("OldParentID is only allowed on UpdateOne operations")
 	}
@@ -2093,13 +2093,13 @@ func (m *ReplyMutation) ResetStatus() {
 }
 
 // SetFloor sets the "floor" field.
-func (m *ReplyMutation) SetFloor(i int64) {
-	m.floor = &i
+func (m *ReplyMutation) SetFloor(u uint64) {
+	m.floor = &u
 	m.addfloor = nil
 }
 
 // Floor returns the value of the "floor" field in the mutation.
-func (m *ReplyMutation) Floor() (r int64, exists bool) {
+func (m *ReplyMutation) Floor() (r uint64, exists bool) {
 	v := m.floor
 	if v == nil {
 		return
@@ -2110,7 +2110,7 @@ func (m *ReplyMutation) Floor() (r int64, exists bool) {
 // OldFloor returns the old "floor" field's value of the Reply entity.
 // If the Reply object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ReplyMutation) OldFloor(ctx context.Context) (v int64, err error) {
+func (m *ReplyMutation) OldFloor(ctx context.Context) (v uint64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, fmt.Errorf("OldFloor is only allowed on UpdateOne operations")
 	}
@@ -2124,17 +2124,17 @@ func (m *ReplyMutation) OldFloor(ctx context.Context) (v int64, err error) {
 	return oldValue.Floor, nil
 }
 
-// AddFloor adds i to the "floor" field.
-func (m *ReplyMutation) AddFloor(i int64) {
+// AddFloor adds u to the "floor" field.
+func (m *ReplyMutation) AddFloor(u uint64) {
 	if m.addfloor != nil {
-		*m.addfloor += i
+		*m.addfloor += u
 	} else {
-		m.addfloor = &i
+		m.addfloor = &u
 	}
 }
 
 // AddedFloor returns the value that was added to the "floor" field in this mutation.
-func (m *ReplyMutation) AddedFloor() (r int64, exists bool) {
+func (m *ReplyMutation) AddedFloor() (r uint64, exists bool) {
 	v := m.addfloor
 	if v == nil {
 		return
@@ -2205,7 +2205,7 @@ func (m *ReplyMutation) ResetCreateAt() {
 }
 
 // SetOwnerID sets the "owner" edge to the Comment entity by id.
-func (m *ReplyMutation) SetOwnerID(id int64) {
+func (m *ReplyMutation) SetOwnerID(id uint64) {
 	m.owner = &id
 }
 
@@ -2220,7 +2220,7 @@ func (m *ReplyMutation) OwnerCleared() bool {
 }
 
 // OwnerID returns the "owner" edge ID in the mutation.
-func (m *ReplyMutation) OwnerID() (id int64, exists bool) {
+func (m *ReplyMutation) OwnerID() (id uint64, exists bool) {
 	if m.owner != nil {
 		return *m.owner, true
 	}
@@ -2230,7 +2230,7 @@ func (m *ReplyMutation) OwnerID() (id int64, exists bool) {
 // OwnerIDs returns the "owner" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // OwnerID instead. It exists only for internal usage by the builders.
-func (m *ReplyMutation) OwnerIDs() (ids []int64) {
+func (m *ReplyMutation) OwnerIDs() (ids []uint64) {
 	if id := m.owner; id != nil {
 		ids = append(ids, *id)
 	}
@@ -2256,7 +2256,7 @@ func (m *ReplyMutation) ParentCleared() bool {
 // ParentIDs returns the "parent" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // ParentID instead. It exists only for internal usage by the builders.
-func (m *ReplyMutation) ParentIDs() (ids []int64) {
+func (m *ReplyMutation) ParentIDs() (ids []uint64) {
 	if id := m.parent; id != nil {
 		ids = append(ids, *id)
 	}
@@ -2270,9 +2270,9 @@ func (m *ReplyMutation) ResetParent() {
 }
 
 // AddChildIDs adds the "children" edge to the Reply entity by ids.
-func (m *ReplyMutation) AddChildIDs(ids ...int64) {
+func (m *ReplyMutation) AddChildIDs(ids ...uint64) {
 	if m.children == nil {
-		m.children = make(map[int64]struct{})
+		m.children = make(map[uint64]struct{})
 	}
 	for i := range ids {
 		m.children[ids[i]] = struct{}{}
@@ -2290,9 +2290,9 @@ func (m *ReplyMutation) ChildrenCleared() bool {
 }
 
 // RemoveChildIDs removes the "children" edge to the Reply entity by IDs.
-func (m *ReplyMutation) RemoveChildIDs(ids ...int64) {
+func (m *ReplyMutation) RemoveChildIDs(ids ...uint64) {
 	if m.removedchildren == nil {
-		m.removedchildren = make(map[int64]struct{})
+		m.removedchildren = make(map[uint64]struct{})
 	}
 	for i := range ids {
 		delete(m.children, ids[i])
@@ -2301,7 +2301,7 @@ func (m *ReplyMutation) RemoveChildIDs(ids ...int64) {
 }
 
 // RemovedChildren returns the removed IDs of the "children" edge to the Reply entity.
-func (m *ReplyMutation) RemovedChildrenIDs() (ids []int64) {
+func (m *ReplyMutation) RemovedChildrenIDs() (ids []uint64) {
 	for id := range m.removedchildren {
 		ids = append(ids, id)
 	}
@@ -2309,7 +2309,7 @@ func (m *ReplyMutation) RemovedChildrenIDs() (ids []int64) {
 }
 
 // ChildrenIDs returns the "children" edge IDs in the mutation.
-func (m *ReplyMutation) ChildrenIDs() (ids []int64) {
+func (m *ReplyMutation) ChildrenIDs() (ids []uint64) {
 	for id := range m.children {
 		ids = append(ids, id)
 	}
@@ -2419,21 +2419,21 @@ func (m *ReplyMutation) OldField(ctx context.Context, name string) (ent.Value, e
 func (m *ReplyMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case reply.FieldUserID:
-		v, ok := value.(int64)
+		v, ok := value.(uint64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUserID(v)
 		return nil
 	case reply.FieldCommentID:
-		v, ok := value.(int64)
+		v, ok := value.(uint64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCommentID(v)
 		return nil
 	case reply.FieldParentID:
-		v, ok := value.(int64)
+		v, ok := value.(uint64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -2454,7 +2454,7 @@ func (m *ReplyMutation) SetField(name string, value ent.Value) error {
 		m.SetStatus(v)
 		return nil
 	case reply.FieldFloor:
-		v, ok := value.(int64)
+		v, ok := value.(uint64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -2513,7 +2513,7 @@ func (m *ReplyMutation) AddedField(name string) (ent.Value, bool) {
 func (m *ReplyMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case reply.FieldUserID:
-		v, ok := value.(int64)
+		v, ok := value.(uint64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -2527,7 +2527,7 @@ func (m *ReplyMutation) AddField(name string, value ent.Value) error {
 		m.AddStatus(v)
 		return nil
 	case reply.FieldFloor:
-		v, ok := value.(int64)
+		v, ok := value.(uint64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

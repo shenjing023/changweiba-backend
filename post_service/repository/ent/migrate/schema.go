@@ -11,13 +11,13 @@ import (
 var (
 	// CommentColumns holds the columns for the "comment" table.
 	CommentColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt64, Increment: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
-		{Name: "user_id", Type: field.TypeInt64, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
+		{Name: "id", Type: field.TypeUint64, Increment: true},
+		{Name: "user_id", Type: field.TypeUint64},
 		{Name: "content", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(1024)"}},
 		{Name: "status", Type: field.TypeInt8, Default: 0, SchemaType: map[string]string{"mysql": "tinyint unsigned"}},
-		{Name: "floor", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
+		{Name: "floor", Type: field.TypeUint64},
 		{Name: "create_at", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
-		{Name: "post_id", Type: field.TypeInt64, Nullable: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
+		{Name: "post_id", Type: field.TypeUint64, Nullable: true},
 	}
 	// CommentTable holds the schema information for the "comment" table.
 	CommentTable = &schema.Table{
@@ -42,8 +42,8 @@ var (
 	}
 	// PostColumns holds the columns for the "post" table.
 	PostColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt64, Increment: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
-		{Name: "user_id", Type: field.TypeInt64, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
+		{Name: "id", Type: field.TypeUint64, Increment: true},
+		{Name: "user_id", Type: field.TypeUint64},
 		{Name: "topic", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(1024)"}},
 		{Name: "status", Type: field.TypeInt8, Default: 0, SchemaType: map[string]string{"mysql": "tinyint unsigned"}},
 		{Name: "reply_num", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
@@ -65,14 +65,14 @@ var (
 	}
 	// ReplyColumns holds the columns for the "reply" table.
 	ReplyColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt64, Increment: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
-		{Name: "user_id", Type: field.TypeInt64, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
+		{Name: "id", Type: field.TypeUint64, Increment: true},
+		{Name: "user_id", Type: field.TypeUint64},
 		{Name: "content", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(1024)"}},
 		{Name: "status", Type: field.TypeInt8, Default: 0, SchemaType: map[string]string{"mysql": "tinyint unsigned"}},
-		{Name: "floor", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
+		{Name: "floor", Type: field.TypeUint64},
 		{Name: "create_at", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
-		{Name: "comment_id", Type: field.TypeInt64, Nullable: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
-		{Name: "parent_id", Type: field.TypeInt64, Nullable: true, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
+		{Name: "comment_id", Type: field.TypeUint64, Nullable: true},
+		{Name: "parent_id", Type: field.TypeUint64, Nullable: true},
 	}
 	// ReplyTable holds the schema information for the "reply" table.
 	ReplyTable = &schema.Table{

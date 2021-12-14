@@ -11,6 +11,7 @@ import (
 	"stock_service/repository/ent/predicate"
 	"stock_service/repository/ent/stock"
 	"stock_service/repository/ent/tradedate"
+	"stock_service/repository/ent/user"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -27,7 +28,8 @@ type StockQuery struct {
 	fields     []string
 	predicates []predicate.Stock
 	// eager-loading edges.
-	withTrades *TradeDateQuery
+	withTrades      *TradeDateQuery
+	withSubscribers *UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -86,6 +88,28 @@ func (sq *StockQuery) QueryTrades() *TradeDateQuery {
 	return query
 }
 
+// QuerySubscribers chains the current query on the "subscribers" edge.
+func (sq *StockQuery) QuerySubscribers() *UserQuery {
+	query := &UserQuery{config: sq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := sq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := sq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(stock.Table, stock.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, stock.SubscribersTable, stock.SubscribersPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Stock entity from the query.
 // Returns a *NotFoundError when no Stock was found.
 func (sq *StockQuery) First(ctx context.Context) (*Stock, error) {
@@ -110,8 +134,8 @@ func (sq *StockQuery) FirstX(ctx context.Context) *Stock {
 
 // FirstID returns the first Stock ID from the query.
 // Returns a *NotFoundError when no Stock ID was found.
-func (sq *StockQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (sq *StockQuery) FirstID(ctx context.Context) (id uint64, err error) {
+	var ids []uint64
 	if ids, err = sq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -123,7 +147,7 @@ func (sq *StockQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (sq *StockQuery) FirstIDX(ctx context.Context) int {
+func (sq *StockQuery) FirstIDX(ctx context.Context) uint64 {
 	id, err := sq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -161,8 +185,8 @@ func (sq *StockQuery) OnlyX(ctx context.Context) *Stock {
 // OnlyID is like Only, but returns the only Stock ID in the query.
 // Returns a *NotSingularError when exactly one Stock ID is not found.
 // Returns a *NotFoundError when no entities are found.
-func (sq *StockQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (sq *StockQuery) OnlyID(ctx context.Context) (id uint64, err error) {
+	var ids []uint64
 	if ids, err = sq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -178,7 +202,7 @@ func (sq *StockQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (sq *StockQuery) OnlyIDX(ctx context.Context) int {
+func (sq *StockQuery) OnlyIDX(ctx context.Context) uint64 {
 	id, err := sq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -204,8 +228,8 @@ func (sq *StockQuery) AllX(ctx context.Context) []*Stock {
 }
 
 // IDs executes the query and returns a list of Stock IDs.
-func (sq *StockQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
+func (sq *StockQuery) IDs(ctx context.Context) ([]uint64, error) {
+	var ids []uint64
 	if err := sq.Select(stock.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -213,7 +237,7 @@ func (sq *StockQuery) IDs(ctx context.Context) ([]int, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (sq *StockQuery) IDsX(ctx context.Context) []int {
+func (sq *StockQuery) IDsX(ctx context.Context) []uint64 {
 	ids, err := sq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -262,12 +286,13 @@ func (sq *StockQuery) Clone() *StockQuery {
 		return nil
 	}
 	return &StockQuery{
-		config:     sq.config,
-		limit:      sq.limit,
-		offset:     sq.offset,
-		order:      append([]OrderFunc{}, sq.order...),
-		predicates: append([]predicate.Stock{}, sq.predicates...),
-		withTrades: sq.withTrades.Clone(),
+		config:          sq.config,
+		limit:           sq.limit,
+		offset:          sq.offset,
+		order:           append([]OrderFunc{}, sq.order...),
+		predicates:      append([]predicate.Stock{}, sq.predicates...),
+		withTrades:      sq.withTrades.Clone(),
+		withSubscribers: sq.withSubscribers.Clone(),
 		// clone intermediate query.
 		sql:  sq.sql.Clone(),
 		path: sq.path,
@@ -282,6 +307,17 @@ func (sq *StockQuery) WithTrades(opts ...func(*TradeDateQuery)) *StockQuery {
 		opt(query)
 	}
 	sq.withTrades = query
+	return sq
+}
+
+// WithSubscribers tells the query-builder to eager-load the nodes that are connected to
+// the "subscribers" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *StockQuery) WithSubscribers(opts ...func(*UserQuery)) *StockQuery {
+	query := &UserQuery{config: sq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	sq.withSubscribers = query
 	return sq
 }
 
@@ -350,8 +386,9 @@ func (sq *StockQuery) sqlAll(ctx context.Context) ([]*Stock, error) {
 	var (
 		nodes       = []*Stock{}
 		_spec       = sq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			sq.withTrades != nil,
+			sq.withSubscribers != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
@@ -376,7 +413,7 @@ func (sq *StockQuery) sqlAll(ctx context.Context) ([]*Stock, error) {
 
 	if query := sq.withTrades; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		nodeids := make(map[int]*Stock)
+		nodeids := make(map[uint64]*Stock)
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
@@ -396,6 +433,71 @@ func (sq *StockQuery) sqlAll(ctx context.Context) ([]*Stock, error) {
 				return nil, fmt.Errorf(`unexpected foreign-key "stock_id" returned %v for node %v`, fk, n.ID)
 			}
 			node.Edges.Trades = append(node.Edges.Trades, n)
+		}
+	}
+
+	if query := sq.withSubscribers; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		ids := make(map[uint64]*Stock, len(nodes))
+		for _, node := range nodes {
+			ids[node.ID] = node
+			fks = append(fks, node.ID)
+			node.Edges.Subscribers = []*User{}
+		}
+		var (
+			edgeids []uint64
+			edges   = make(map[uint64][]*Stock)
+		)
+		_spec := &sqlgraph.EdgeQuerySpec{
+			Edge: &sqlgraph.EdgeSpec{
+				Inverse: false,
+				Table:   stock.SubscribersTable,
+				Columns: stock.SubscribersPrimaryKey,
+			},
+			Predicate: func(s *sql.Selector) {
+				s.Where(sql.InValues(stock.SubscribersPrimaryKey[0], fks...))
+			},
+			ScanValues: func() [2]interface{} {
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
+			},
+			Assign: func(out, in interface{}) error {
+				eout, ok := out.(*sql.NullInt64)
+				if !ok || eout == nil {
+					return fmt.Errorf("unexpected id value for edge-out")
+				}
+				ein, ok := in.(*sql.NullInt64)
+				if !ok || ein == nil {
+					return fmt.Errorf("unexpected id value for edge-in")
+				}
+				outValue := uint64(eout.Int64)
+				inValue := uint64(ein.Int64)
+				node, ok := ids[outValue]
+				if !ok {
+					return fmt.Errorf("unexpected node id in edges: %v", outValue)
+				}
+				if _, ok := edges[inValue]; !ok {
+					edgeids = append(edgeids, inValue)
+				}
+				edges[inValue] = append(edges[inValue], node)
+				return nil
+			},
+		}
+		if err := sqlgraph.QueryEdges(ctx, sq.driver, _spec); err != nil {
+			return nil, fmt.Errorf(`query edges "subscribers": %w`, err)
+		}
+		query.Where(user.IDIn(edgeids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := edges[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected "subscribers" node returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Subscribers = append(nodes[i].Edges.Subscribers, n)
+			}
 		}
 	}
 
@@ -421,7 +523,7 @@ func (sq *StockQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   stock.Table,
 			Columns: stock.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUint64,
 				Column: stock.FieldID,
 			},
 		},

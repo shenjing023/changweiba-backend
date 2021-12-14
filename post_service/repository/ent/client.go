@@ -176,7 +176,7 @@ func (c *CommentClient) UpdateOne(co *Comment) *CommentUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *CommentClient) UpdateOneID(id int64) *CommentUpdateOne {
+func (c *CommentClient) UpdateOneID(id uint64) *CommentUpdateOne {
 	mutation := newCommentMutation(c.config, OpUpdateOne, withCommentID(id))
 	return &CommentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -193,7 +193,7 @@ func (c *CommentClient) DeleteOne(co *Comment) *CommentDeleteOne {
 }
 
 // DeleteOneID returns a delete builder for the given id.
-func (c *CommentClient) DeleteOneID(id int64) *CommentDeleteOne {
+func (c *CommentClient) DeleteOneID(id uint64) *CommentDeleteOne {
 	builder := c.Delete().Where(comment.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -208,12 +208,12 @@ func (c *CommentClient) Query() *CommentQuery {
 }
 
 // Get returns a Comment entity by its id.
-func (c *CommentClient) Get(ctx context.Context, id int64) (*Comment, error) {
+func (c *CommentClient) Get(ctx context.Context, id uint64) (*Comment, error) {
 	return c.Query().Where(comment.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *CommentClient) GetX(ctx context.Context, id int64) *Comment {
+func (c *CommentClient) GetX(ctx context.Context, id uint64) *Comment {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -298,7 +298,7 @@ func (c *PostClient) UpdateOne(po *Post) *PostUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *PostClient) UpdateOneID(id int64) *PostUpdateOne {
+func (c *PostClient) UpdateOneID(id uint64) *PostUpdateOne {
 	mutation := newPostMutation(c.config, OpUpdateOne, withPostID(id))
 	return &PostUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -315,7 +315,7 @@ func (c *PostClient) DeleteOne(po *Post) *PostDeleteOne {
 }
 
 // DeleteOneID returns a delete builder for the given id.
-func (c *PostClient) DeleteOneID(id int64) *PostDeleteOne {
+func (c *PostClient) DeleteOneID(id uint64) *PostDeleteOne {
 	builder := c.Delete().Where(post.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -330,12 +330,12 @@ func (c *PostClient) Query() *PostQuery {
 }
 
 // Get returns a Post entity by its id.
-func (c *PostClient) Get(ctx context.Context, id int64) (*Post, error) {
+func (c *PostClient) Get(ctx context.Context, id uint64) (*Post, error) {
 	return c.Query().Where(post.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *PostClient) GetX(ctx context.Context, id int64) *Post {
+func (c *PostClient) GetX(ctx context.Context, id uint64) *Post {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -404,7 +404,7 @@ func (c *ReplyClient) UpdateOne(r *Reply) *ReplyUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *ReplyClient) UpdateOneID(id int64) *ReplyUpdateOne {
+func (c *ReplyClient) UpdateOneID(id uint64) *ReplyUpdateOne {
 	mutation := newReplyMutation(c.config, OpUpdateOne, withReplyID(id))
 	return &ReplyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -421,7 +421,7 @@ func (c *ReplyClient) DeleteOne(r *Reply) *ReplyDeleteOne {
 }
 
 // DeleteOneID returns a delete builder for the given id.
-func (c *ReplyClient) DeleteOneID(id int64) *ReplyDeleteOne {
+func (c *ReplyClient) DeleteOneID(id uint64) *ReplyDeleteOne {
 	builder := c.Delete().Where(reply.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -436,12 +436,12 @@ func (c *ReplyClient) Query() *ReplyQuery {
 }
 
 // Get returns a Reply entity by its id.
-func (c *ReplyClient) Get(ctx context.Context, id int64) (*Reply, error) {
+func (c *ReplyClient) Get(ctx context.Context, id uint64) (*Reply, error) {
 	return c.Query().Where(reply.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *ReplyClient) GetX(ctx context.Context, id int64) *Reply {
+func (c *ReplyClient) GetX(ctx context.Context, id uint64) *Reply {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)

@@ -13,6 +13,8 @@ const (
 	FieldTDate = "t_date"
 	// FieldEndPrice holds the string denoting the end_price field in the database.
 	FieldEndPrice = "end_price"
+	// FieldVolumn holds the string denoting the volumn field in the database.
+	FieldVolumn = "volumn"
 	// FieldCreateAt holds the string denoting the create_at field in the database.
 	FieldCreateAt = "create_at"
 	// FieldUpdateAt holds the string denoting the update_at field in the database.
@@ -38,6 +40,7 @@ var Columns = []string{
 	FieldStockID,
 	FieldTDate,
 	FieldEndPrice,
+	FieldVolumn,
 	FieldCreateAt,
 	FieldUpdateAt,
 	FieldXueqiuCommentCount,
@@ -55,9 +58,13 @@ func ValidColumn(column string) bool {
 
 var (
 	// StockIDValidator is a validator for the "stock_id" field. It is called by the builders before save.
-	StockIDValidator func(int) error
+	StockIDValidator func(uint64) error
 	// TDateValidator is a validator for the "t_date" field. It is called by the builders before save.
 	TDateValidator func(string) error
+	// DefaultVolumn holds the default value on creation for the "volumn" field.
+	DefaultVolumn int64
+	// VolumnValidator is a validator for the "volumn" field. It is called by the builders before save.
+	VolumnValidator func(int64) error
 	// DefaultCreateAt holds the default value on creation for the "create_at" field.
 	DefaultCreateAt int64
 	// CreateAtValidator is a validator for the "create_at" field. It is called by the builders before save.
@@ -70,4 +77,6 @@ var (
 	DefaultXueqiuCommentCount int64
 	// XueqiuCommentCountValidator is a validator for the "xueqiu_comment_count" field. It is called by the builders before save.
 	XueqiuCommentCountValidator func(int64) error
+	// IDValidator is a validator for the "id" field. It is called by the builders before save.
+	IDValidator func(uint64) error
 )

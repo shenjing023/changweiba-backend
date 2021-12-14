@@ -18,21 +18,13 @@ type Reply struct {
 // Fields of the Reply.
 func (Reply) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("id").SchemaType(map[string]string{
-			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).Positive().Unique(),
+		field.Uint64("id").Positive().Unique(),
 
-		field.Int64("user_id").SchemaType(map[string]string{
-			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).Positive().Comment("The user that posted the message."),
+		field.Uint64("user_id").Positive().Comment("The user that posted the message."),
 
-		field.Int64("comment_id").SchemaType(map[string]string{
-			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).Positive().Comment("The comment that this reply is for.").Optional(),
+		field.Uint64("comment_id").Positive().Comment("The comment that this reply is for.").Optional(),
 
-		field.Int64("parent_id").SchemaType(map[string]string{
-			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).Positive().Comment("回复哪个回复的id").Optional(),
+		field.Uint64("parent_id").Positive().Comment("回复哪个回复的id").Optional(),
 
 		field.String("content").SchemaType(map[string]string{
 			dialect.MySQL: "varchar(1024)", // Override MySQL.
@@ -42,13 +34,11 @@ func (Reply) Fields() []ent.Field {
 			dialect.MySQL: "tinyint unsigned", // Override MySQL.
 		}).NonNegative().Default(0).Comment("状态,是否被封，0：正常，大于0被封"),
 
-		field.Int64("floor").SchemaType(map[string]string{
-			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).NonNegative().Default(0).Comment("第几楼"),
+		field.Uint64("floor").Positive().Comment("第几楼"),
 
 		field.Int64("create_at").SchemaType(map[string]string{
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).NonNegative().Default(0).Comment("创建时间"),
+		}).NonNegative().Default(0).Comment("创建时间").Immutable(),
 	}
 }
 

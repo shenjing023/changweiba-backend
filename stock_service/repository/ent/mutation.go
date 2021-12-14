@@ -8,6 +8,7 @@ import (
 	"stock_service/repository/ent/predicate"
 	"stock_service/repository/ent/stock"
 	"stock_service/repository/ent/tradedate"
+	"stock_service/repository/ent/user"
 	"sync"
 
 	"entgo.io/ent"
@@ -24,23 +25,27 @@ const (
 	// Node types.
 	TypeStock     = "Stock"
 	TypeTradeDate = "TradeDate"
+	TypeUser      = "User"
 )
 
 // StockMutation represents an operation that mutates the Stock nodes in the graph.
 type StockMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	symbol        *string
-	name          *string
-	clearedFields map[string]struct{}
-	trades        map[int]struct{}
-	removedtrades map[int]struct{}
-	clearedtrades bool
-	done          bool
-	oldValue      func(context.Context) (*Stock, error)
-	predicates    []predicate.Stock
+	op                 Op
+	typ                string
+	id                 *uint64
+	symbol             *string
+	name               *string
+	clearedFields      map[string]struct{}
+	trades             map[uint64]struct{}
+	removedtrades      map[uint64]struct{}
+	clearedtrades      bool
+	subscribers        map[uint64]struct{}
+	removedsubscribers map[uint64]struct{}
+	clearedsubscribers bool
+	done               bool
+	oldValue           func(context.Context) (*Stock, error)
+	predicates         []predicate.Stock
 }
 
 var _ ent.Mutation = (*StockMutation)(nil)
@@ -63,7 +68,7 @@ func newStockMutation(c config, op Op, opts ...stockOption) *StockMutation {
 }
 
 // withStockID sets the ID field of the mutation.
-func withStockID(id int) stockOption {
+func withStockID(id uint64) stockOption {
 	return func(m *StockMutation) {
 		var (
 			err   error
@@ -113,9 +118,15 @@ func (m StockMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Stock entities.
+func (m *StockMutation) SetID(id uint64) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *StockMutation) ID() (id int, exists bool) {
+func (m *StockMutation) ID() (id uint64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -195,9 +206,9 @@ func (m *StockMutation) ResetName() {
 }
 
 // AddTradeIDs adds the "trades" edge to the TradeDate entity by ids.
-func (m *StockMutation) AddTradeIDs(ids ...int) {
+func (m *StockMutation) AddTradeIDs(ids ...uint64) {
 	if m.trades == nil {
-		m.trades = make(map[int]struct{})
+		m.trades = make(map[uint64]struct{})
 	}
 	for i := range ids {
 		m.trades[ids[i]] = struct{}{}
@@ -215,9 +226,9 @@ func (m *StockMutation) TradesCleared() bool {
 }
 
 // RemoveTradeIDs removes the "trades" edge to the TradeDate entity by IDs.
-func (m *StockMutation) RemoveTradeIDs(ids ...int) {
+func (m *StockMutation) RemoveTradeIDs(ids ...uint64) {
 	if m.removedtrades == nil {
-		m.removedtrades = make(map[int]struct{})
+		m.removedtrades = make(map[uint64]struct{})
 	}
 	for i := range ids {
 		delete(m.trades, ids[i])
@@ -226,7 +237,7 @@ func (m *StockMutation) RemoveTradeIDs(ids ...int) {
 }
 
 // RemovedTrades returns the removed IDs of the "trades" edge to the TradeDate entity.
-func (m *StockMutation) RemovedTradesIDs() (ids []int) {
+func (m *StockMutation) RemovedTradesIDs() (ids []uint64) {
 	for id := range m.removedtrades {
 		ids = append(ids, id)
 	}
@@ -234,7 +245,7 @@ func (m *StockMutation) RemovedTradesIDs() (ids []int) {
 }
 
 // TradesIDs returns the "trades" edge IDs in the mutation.
-func (m *StockMutation) TradesIDs() (ids []int) {
+func (m *StockMutation) TradesIDs() (ids []uint64) {
 	for id := range m.trades {
 		ids = append(ids, id)
 	}
@@ -246,6 +257,60 @@ func (m *StockMutation) ResetTrades() {
 	m.trades = nil
 	m.clearedtrades = false
 	m.removedtrades = nil
+}
+
+// AddSubscriberIDs adds the "subscribers" edge to the User entity by ids.
+func (m *StockMutation) AddSubscriberIDs(ids ...uint64) {
+	if m.subscribers == nil {
+		m.subscribers = make(map[uint64]struct{})
+	}
+	for i := range ids {
+		m.subscribers[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSubscribers clears the "subscribers" edge to the User entity.
+func (m *StockMutation) ClearSubscribers() {
+	m.clearedsubscribers = true
+}
+
+// SubscribersCleared reports if the "subscribers" edge to the User entity was cleared.
+func (m *StockMutation) SubscribersCleared() bool {
+	return m.clearedsubscribers
+}
+
+// RemoveSubscriberIDs removes the "subscribers" edge to the User entity by IDs.
+func (m *StockMutation) RemoveSubscriberIDs(ids ...uint64) {
+	if m.removedsubscribers == nil {
+		m.removedsubscribers = make(map[uint64]struct{})
+	}
+	for i := range ids {
+		delete(m.subscribers, ids[i])
+		m.removedsubscribers[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSubscribers returns the removed IDs of the "subscribers" edge to the User entity.
+func (m *StockMutation) RemovedSubscribersIDs() (ids []uint64) {
+	for id := range m.removedsubscribers {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SubscribersIDs returns the "subscribers" edge IDs in the mutation.
+func (m *StockMutation) SubscribersIDs() (ids []uint64) {
+	for id := range m.subscribers {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSubscribers resets all changes to the "subscribers" edge.
+func (m *StockMutation) ResetSubscribers() {
+	m.subscribers = nil
+	m.clearedsubscribers = false
+	m.removedsubscribers = nil
 }
 
 // Where appends a list predicates to the StockMutation builder.
@@ -383,9 +448,12 @@ func (m *StockMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *StockMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.trades != nil {
 		edges = append(edges, stock.EdgeTrades)
+	}
+	if m.subscribers != nil {
+		edges = append(edges, stock.EdgeSubscribers)
 	}
 	return edges
 }
@@ -400,15 +468,24 @@ func (m *StockMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case stock.EdgeSubscribers:
+		ids := make([]ent.Value, 0, len(m.subscribers))
+		for id := range m.subscribers {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *StockMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedtrades != nil {
 		edges = append(edges, stock.EdgeTrades)
+	}
+	if m.removedsubscribers != nil {
+		edges = append(edges, stock.EdgeSubscribers)
 	}
 	return edges
 }
@@ -423,15 +500,24 @@ func (m *StockMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case stock.EdgeSubscribers:
+		ids := make([]ent.Value, 0, len(m.removedsubscribers))
+		for id := range m.removedsubscribers {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *StockMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedtrades {
 		edges = append(edges, stock.EdgeTrades)
+	}
+	if m.clearedsubscribers {
+		edges = append(edges, stock.EdgeSubscribers)
 	}
 	return edges
 }
@@ -442,6 +528,8 @@ func (m *StockMutation) EdgeCleared(name string) bool {
 	switch name {
 	case stock.EdgeTrades:
 		return m.clearedtrades
+	case stock.EdgeSubscribers:
+		return m.clearedsubscribers
 	}
 	return false
 }
@@ -461,6 +549,9 @@ func (m *StockMutation) ResetEdge(name string) error {
 	case stock.EdgeTrades:
 		m.ResetTrades()
 		return nil
+	case stock.EdgeSubscribers:
+		m.ResetSubscribers()
+		return nil
 	}
 	return fmt.Errorf("unknown Stock edge %s", name)
 }
@@ -470,10 +561,12 @@ type TradeDateMutation struct {
 	config
 	op                      Op
 	typ                     string
-	id                      *int
+	id                      *uint64
 	t_date                  *string
 	end_price               *float64
 	addend_price            *float64
+	volumn                  *int64
+	addvolumn               *int64
 	create_at               *int64
 	addcreate_at            *int64
 	update_at               *int64
@@ -481,7 +574,7 @@ type TradeDateMutation struct {
 	xueqiu_comment_count    *int64
 	addxueqiu_comment_count *int64
 	clearedFields           map[string]struct{}
-	stock                   *int
+	stock                   *uint64
 	clearedstock            bool
 	done                    bool
 	oldValue                func(context.Context) (*TradeDate, error)
@@ -508,7 +601,7 @@ func newTradeDateMutation(c config, op Op, opts ...tradedateOption) *TradeDateMu
 }
 
 // withTradeDateID sets the ID field of the mutation.
-func withTradeDateID(id int) tradedateOption {
+func withTradeDateID(id uint64) tradedateOption {
 	return func(m *TradeDateMutation) {
 		var (
 			err   error
@@ -558,9 +651,15 @@ func (m TradeDateMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of TradeDate entities.
+func (m *TradeDateMutation) SetID(id uint64) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *TradeDateMutation) ID() (id int, exists bool) {
+func (m *TradeDateMutation) ID() (id uint64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -568,12 +667,12 @@ func (m *TradeDateMutation) ID() (id int, exists bool) {
 }
 
 // SetStockID sets the "stock_id" field.
-func (m *TradeDateMutation) SetStockID(i int) {
-	m.stock = &i
+func (m *TradeDateMutation) SetStockID(u uint64) {
+	m.stock = &u
 }
 
 // StockID returns the value of the "stock_id" field in the mutation.
-func (m *TradeDateMutation) StockID() (r int, exists bool) {
+func (m *TradeDateMutation) StockID() (r uint64, exists bool) {
 	v := m.stock
 	if v == nil {
 		return
@@ -584,7 +683,7 @@ func (m *TradeDateMutation) StockID() (r int, exists bool) {
 // OldStockID returns the old "stock_id" field's value of the TradeDate entity.
 // If the TradeDate object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TradeDateMutation) OldStockID(ctx context.Context) (v int, err error) {
+func (m *TradeDateMutation) OldStockID(ctx context.Context) (v uint64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, fmt.Errorf("OldStockID is only allowed on UpdateOne operations")
 	}
@@ -706,6 +805,62 @@ func (m *TradeDateMutation) AddedEndPrice() (r float64, exists bool) {
 func (m *TradeDateMutation) ResetEndPrice() {
 	m.end_price = nil
 	m.addend_price = nil
+}
+
+// SetVolumn sets the "volumn" field.
+func (m *TradeDateMutation) SetVolumn(i int64) {
+	m.volumn = &i
+	m.addvolumn = nil
+}
+
+// Volumn returns the value of the "volumn" field in the mutation.
+func (m *TradeDateMutation) Volumn() (r int64, exists bool) {
+	v := m.volumn
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVolumn returns the old "volumn" field's value of the TradeDate entity.
+// If the TradeDate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TradeDateMutation) OldVolumn(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldVolumn is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldVolumn requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVolumn: %w", err)
+	}
+	return oldValue.Volumn, nil
+}
+
+// AddVolumn adds i to the "volumn" field.
+func (m *TradeDateMutation) AddVolumn(i int64) {
+	if m.addvolumn != nil {
+		*m.addvolumn += i
+	} else {
+		m.addvolumn = &i
+	}
+}
+
+// AddedVolumn returns the value that was added to the "volumn" field in this mutation.
+func (m *TradeDateMutation) AddedVolumn() (r int64, exists bool) {
+	v := m.addvolumn
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVolumn resets all changes to the "volumn" field.
+func (m *TradeDateMutation) ResetVolumn() {
+	m.volumn = nil
+	m.addvolumn = nil
 }
 
 // SetCreateAt sets the "create_at" field.
@@ -889,7 +1044,7 @@ func (m *TradeDateMutation) StockCleared() bool {
 // StockIDs returns the "stock" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // StockID instead. It exists only for internal usage by the builders.
-func (m *TradeDateMutation) StockIDs() (ids []int) {
+func (m *TradeDateMutation) StockIDs() (ids []uint64) {
 	if id := m.stock; id != nil {
 		ids = append(ids, *id)
 	}
@@ -921,7 +1076,7 @@ func (m *TradeDateMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TradeDateMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.stock != nil {
 		fields = append(fields, tradedate.FieldStockID)
 	}
@@ -930,6 +1085,9 @@ func (m *TradeDateMutation) Fields() []string {
 	}
 	if m.end_price != nil {
 		fields = append(fields, tradedate.FieldEndPrice)
+	}
+	if m.volumn != nil {
+		fields = append(fields, tradedate.FieldVolumn)
 	}
 	if m.create_at != nil {
 		fields = append(fields, tradedate.FieldCreateAt)
@@ -954,6 +1112,8 @@ func (m *TradeDateMutation) Field(name string) (ent.Value, bool) {
 		return m.TDate()
 	case tradedate.FieldEndPrice:
 		return m.EndPrice()
+	case tradedate.FieldVolumn:
+		return m.Volumn()
 	case tradedate.FieldCreateAt:
 		return m.CreateAt()
 	case tradedate.FieldUpdateAt:
@@ -975,6 +1135,8 @@ func (m *TradeDateMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldTDate(ctx)
 	case tradedate.FieldEndPrice:
 		return m.OldEndPrice(ctx)
+	case tradedate.FieldVolumn:
+		return m.OldVolumn(ctx)
 	case tradedate.FieldCreateAt:
 		return m.OldCreateAt(ctx)
 	case tradedate.FieldUpdateAt:
@@ -991,7 +1153,7 @@ func (m *TradeDateMutation) OldField(ctx context.Context, name string) (ent.Valu
 func (m *TradeDateMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case tradedate.FieldStockID:
-		v, ok := value.(int)
+		v, ok := value.(uint64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1010,6 +1172,13 @@ func (m *TradeDateMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetEndPrice(v)
+		return nil
+	case tradedate.FieldVolumn:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVolumn(v)
 		return nil
 	case tradedate.FieldCreateAt:
 		v, ok := value.(int64)
@@ -1043,6 +1212,9 @@ func (m *TradeDateMutation) AddedFields() []string {
 	if m.addend_price != nil {
 		fields = append(fields, tradedate.FieldEndPrice)
 	}
+	if m.addvolumn != nil {
+		fields = append(fields, tradedate.FieldVolumn)
+	}
 	if m.addcreate_at != nil {
 		fields = append(fields, tradedate.FieldCreateAt)
 	}
@@ -1062,6 +1234,8 @@ func (m *TradeDateMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
 	case tradedate.FieldEndPrice:
 		return m.AddedEndPrice()
+	case tradedate.FieldVolumn:
+		return m.AddedVolumn()
 	case tradedate.FieldCreateAt:
 		return m.AddedCreateAt()
 	case tradedate.FieldUpdateAt:
@@ -1083,6 +1257,13 @@ func (m *TradeDateMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddEndPrice(v)
+		return nil
+	case tradedate.FieldVolumn:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVolumn(v)
 		return nil
 	case tradedate.FieldCreateAt:
 		v, ok := value.(int64)
@@ -1149,6 +1330,9 @@ func (m *TradeDateMutation) ResetField(name string) error {
 		return nil
 	case tradedate.FieldEndPrice:
 		m.ResetEndPrice()
+		return nil
+	case tradedate.FieldVolumn:
+		m.ResetVolumn()
 		return nil
 	case tradedate.FieldCreateAt:
 		m.ResetCreateAt()
@@ -1237,4 +1421,395 @@ func (m *TradeDateMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown TradeDate edge %s", name)
+}
+
+// UserMutation represents an operation that mutates the User nodes in the graph.
+type UserMutation struct {
+	config
+	op                      Op
+	typ                     string
+	id                      *uint64
+	nick_name               *string
+	clearedFields           map[string]struct{}
+	subscribe_stocks        map[uint64]struct{}
+	removedsubscribe_stocks map[uint64]struct{}
+	clearedsubscribe_stocks bool
+	done                    bool
+	oldValue                func(context.Context) (*User, error)
+	predicates              []predicate.User
+}
+
+var _ ent.Mutation = (*UserMutation)(nil)
+
+// userOption allows management of the mutation configuration using functional options.
+type userOption func(*UserMutation)
+
+// newUserMutation creates new mutation for the User entity.
+func newUserMutation(c config, op Op, opts ...userOption) *UserMutation {
+	m := &UserMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeUser,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withUserID sets the ID field of the mutation.
+func withUserID(id uint64) userOption {
+	return func(m *UserMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *User
+		)
+		m.oldValue = func(ctx context.Context) (*User, error) {
+			once.Do(func() {
+				if m.done {
+					err = fmt.Errorf("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().User.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withUser sets the old User of the mutation.
+func withUser(node *User) userOption {
+	return func(m *UserMutation) {
+		m.oldValue = func(context.Context) (*User, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m UserMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m UserMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, fmt.Errorf("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of User entities.
+func (m *UserMutation) SetID(id uint64) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *UserMutation) ID() (id uint64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// SetNickName sets the "nick_name" field.
+func (m *UserMutation) SetNickName(s string) {
+	m.nick_name = &s
+}
+
+// NickName returns the value of the "nick_name" field in the mutation.
+func (m *UserMutation) NickName() (r string, exists bool) {
+	v := m.nick_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNickName returns the old "nick_name" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldNickName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldNickName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldNickName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNickName: %w", err)
+	}
+	return oldValue.NickName, nil
+}
+
+// ResetNickName resets all changes to the "nick_name" field.
+func (m *UserMutation) ResetNickName() {
+	m.nick_name = nil
+}
+
+// AddSubscribeStockIDs adds the "subscribe_stocks" edge to the Stock entity by ids.
+func (m *UserMutation) AddSubscribeStockIDs(ids ...uint64) {
+	if m.subscribe_stocks == nil {
+		m.subscribe_stocks = make(map[uint64]struct{})
+	}
+	for i := range ids {
+		m.subscribe_stocks[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSubscribeStocks clears the "subscribe_stocks" edge to the Stock entity.
+func (m *UserMutation) ClearSubscribeStocks() {
+	m.clearedsubscribe_stocks = true
+}
+
+// SubscribeStocksCleared reports if the "subscribe_stocks" edge to the Stock entity was cleared.
+func (m *UserMutation) SubscribeStocksCleared() bool {
+	return m.clearedsubscribe_stocks
+}
+
+// RemoveSubscribeStockIDs removes the "subscribe_stocks" edge to the Stock entity by IDs.
+func (m *UserMutation) RemoveSubscribeStockIDs(ids ...uint64) {
+	if m.removedsubscribe_stocks == nil {
+		m.removedsubscribe_stocks = make(map[uint64]struct{})
+	}
+	for i := range ids {
+		delete(m.subscribe_stocks, ids[i])
+		m.removedsubscribe_stocks[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSubscribeStocks returns the removed IDs of the "subscribe_stocks" edge to the Stock entity.
+func (m *UserMutation) RemovedSubscribeStocksIDs() (ids []uint64) {
+	for id := range m.removedsubscribe_stocks {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SubscribeStocksIDs returns the "subscribe_stocks" edge IDs in the mutation.
+func (m *UserMutation) SubscribeStocksIDs() (ids []uint64) {
+	for id := range m.subscribe_stocks {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSubscribeStocks resets all changes to the "subscribe_stocks" edge.
+func (m *UserMutation) ResetSubscribeStocks() {
+	m.subscribe_stocks = nil
+	m.clearedsubscribe_stocks = false
+	m.removedsubscribe_stocks = nil
+}
+
+// Where appends a list predicates to the UserMutation builder.
+func (m *UserMutation) Where(ps ...predicate.User) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *UserMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (User).
+func (m *UserMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *UserMutation) Fields() []string {
+	fields := make([]string, 0, 1)
+	if m.nick_name != nil {
+		fields = append(fields, user.FieldNickName)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *UserMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case user.FieldNickName:
+		return m.NickName()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case user.FieldNickName:
+		return m.OldNickName(ctx)
+	}
+	return nil, fmt.Errorf("unknown User field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UserMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case user.FieldNickName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNickName(v)
+		return nil
+	}
+	return fmt.Errorf("unknown User field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *UserMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UserMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown User numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *UserMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *UserMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *UserMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown User nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *UserMutation) ResetField(name string) error {
+	switch name {
+	case user.FieldNickName:
+		m.ResetNickName()
+		return nil
+	}
+	return fmt.Errorf("unknown User field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *UserMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.subscribe_stocks != nil {
+		edges = append(edges, user.EdgeSubscribeStocks)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *UserMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case user.EdgeSubscribeStocks:
+		ids := make([]ent.Value, 0, len(m.subscribe_stocks))
+		for id := range m.subscribe_stocks {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *UserMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removedsubscribe_stocks != nil {
+		edges = append(edges, user.EdgeSubscribeStocks)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *UserMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case user.EdgeSubscribeStocks:
+		ids := make([]ent.Value, 0, len(m.removedsubscribe_stocks))
+		for id := range m.removedsubscribe_stocks {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *UserMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedsubscribe_stocks {
+		edges = append(edges, user.EdgeSubscribeStocks)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *UserMutation) EdgeCleared(name string) bool {
+	switch name {
+	case user.EdgeSubscribeStocks:
+		return m.clearedsubscribe_stocks
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *UserMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown User unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *UserMutation) ResetEdge(name string) error {
+	switch name {
+	case user.EdgeSubscribeStocks:
+		m.ResetSubscribeStocks()
+		return nil
+	}
+	return fmt.Errorf("unknown User edge %s", name)
 }

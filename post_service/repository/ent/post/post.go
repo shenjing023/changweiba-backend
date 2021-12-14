@@ -55,7 +55,7 @@ func ValidColumn(column string) bool {
 
 var (
 	// UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
-	UserIDValidator func(int64) error
+	UserIDValidator func(uint64) error
 	// TopicValidator is a validator for the "topic" field. It is called by the builders before save.
 	TopicValidator func(string) error
 	// DefaultStatus holds the default value on creation for the "status" field.
@@ -75,5 +75,5 @@ var (
 	// UpdateAtValidator is a validator for the "update_at" field. It is called by the builders before save.
 	UpdateAtValidator func(int64) error
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
-	IDValidator func(int64) error
+	IDValidator func(uint64) error
 )

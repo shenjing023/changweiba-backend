@@ -175,7 +175,7 @@ func (c *AvatarClient) UpdateOne(a *Avatar) *AvatarUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *AvatarClient) UpdateOneID(id int64) *AvatarUpdateOne {
+func (c *AvatarClient) UpdateOneID(id uint64) *AvatarUpdateOne {
 	mutation := newAvatarMutation(c.config, OpUpdateOne, withAvatarID(id))
 	return &AvatarUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -192,7 +192,7 @@ func (c *AvatarClient) DeleteOne(a *Avatar) *AvatarDeleteOne {
 }
 
 // DeleteOneID returns a delete builder for the given id.
-func (c *AvatarClient) DeleteOneID(id int64) *AvatarDeleteOne {
+func (c *AvatarClient) DeleteOneID(id uint64) *AvatarDeleteOne {
 	builder := c.Delete().Where(avatar.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -207,12 +207,12 @@ func (c *AvatarClient) Query() *AvatarQuery {
 }
 
 // Get returns a Avatar entity by its id.
-func (c *AvatarClient) Get(ctx context.Context, id int64) (*Avatar, error) {
+func (c *AvatarClient) Get(ctx context.Context, id uint64) (*Avatar, error) {
 	return c.Query().Where(avatar.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *AvatarClient) GetX(ctx context.Context, id int64) *Avatar {
+func (c *AvatarClient) GetX(ctx context.Context, id uint64) *Avatar {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -265,7 +265,7 @@ func (c *BanTypeClient) UpdateOne(bt *BanType) *BanTypeUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *BanTypeClient) UpdateOneID(id int64) *BanTypeUpdateOne {
+func (c *BanTypeClient) UpdateOneID(id uint64) *BanTypeUpdateOne {
 	mutation := newBanTypeMutation(c.config, OpUpdateOne, withBanTypeID(id))
 	return &BanTypeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -282,7 +282,7 @@ func (c *BanTypeClient) DeleteOne(bt *BanType) *BanTypeDeleteOne {
 }
 
 // DeleteOneID returns a delete builder for the given id.
-func (c *BanTypeClient) DeleteOneID(id int64) *BanTypeDeleteOne {
+func (c *BanTypeClient) DeleteOneID(id uint64) *BanTypeDeleteOne {
 	builder := c.Delete().Where(bantype.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -297,12 +297,12 @@ func (c *BanTypeClient) Query() *BanTypeQuery {
 }
 
 // Get returns a BanType entity by its id.
-func (c *BanTypeClient) Get(ctx context.Context, id int64) (*BanType, error) {
+func (c *BanTypeClient) Get(ctx context.Context, id uint64) (*BanType, error) {
 	return c.Query().Where(bantype.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *BanTypeClient) GetX(ctx context.Context, id int64) *BanType {
+func (c *BanTypeClient) GetX(ctx context.Context, id uint64) *BanType {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -355,7 +355,7 @@ func (c *UserClient) UpdateOne(u *User) *UserUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *UserClient) UpdateOneID(id int64) *UserUpdateOne {
+func (c *UserClient) UpdateOneID(id uint64) *UserUpdateOne {
 	mutation := newUserMutation(c.config, OpUpdateOne, withUserID(id))
 	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -372,7 +372,7 @@ func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
 }
 
 // DeleteOneID returns a delete builder for the given id.
-func (c *UserClient) DeleteOneID(id int64) *UserDeleteOne {
+func (c *UserClient) DeleteOneID(id uint64) *UserDeleteOne {
 	builder := c.Delete().Where(user.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -387,12 +387,12 @@ func (c *UserClient) Query() *UserQuery {
 }
 
 // Get returns a User entity by its id.
-func (c *UserClient) Get(ctx context.Context, id int64) (*User, error) {
+func (c *UserClient) Get(ctx context.Context, id uint64) (*User, error) {
 	return c.Query().Where(user.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *UserClient) GetX(ctx context.Context, id int64) *User {
+func (c *UserClient) GetX(ctx context.Context, id uint64) *User {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)

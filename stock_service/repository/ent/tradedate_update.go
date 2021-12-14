@@ -28,15 +28,15 @@ func (tdu *TradeDateUpdate) Where(ps ...predicate.TradeDate) *TradeDateUpdate {
 }
 
 // SetStockID sets the "stock_id" field.
-func (tdu *TradeDateUpdate) SetStockID(i int) *TradeDateUpdate {
-	tdu.mutation.SetStockID(i)
+func (tdu *TradeDateUpdate) SetStockID(u uint64) *TradeDateUpdate {
+	tdu.mutation.SetStockID(u)
 	return tdu
 }
 
 // SetNillableStockID sets the "stock_id" field if the given value is not nil.
-func (tdu *TradeDateUpdate) SetNillableStockID(i *int) *TradeDateUpdate {
-	if i != nil {
-		tdu.SetStockID(*i)
+func (tdu *TradeDateUpdate) SetNillableStockID(u *uint64) *TradeDateUpdate {
+	if u != nil {
+		tdu.SetStockID(*u)
 	}
 	return tdu
 }
@@ -63,6 +63,27 @@ func (tdu *TradeDateUpdate) SetEndPrice(f float64) *TradeDateUpdate {
 // AddEndPrice adds f to the "end_price" field.
 func (tdu *TradeDateUpdate) AddEndPrice(f float64) *TradeDateUpdate {
 	tdu.mutation.AddEndPrice(f)
+	return tdu
+}
+
+// SetVolumn sets the "volumn" field.
+func (tdu *TradeDateUpdate) SetVolumn(i int64) *TradeDateUpdate {
+	tdu.mutation.ResetVolumn()
+	tdu.mutation.SetVolumn(i)
+	return tdu
+}
+
+// SetNillableVolumn sets the "volumn" field if the given value is not nil.
+func (tdu *TradeDateUpdate) SetNillableVolumn(i *int64) *TradeDateUpdate {
+	if i != nil {
+		tdu.SetVolumn(*i)
+	}
+	return tdu
+}
+
+// AddVolumn adds i to the "volumn" field.
+func (tdu *TradeDateUpdate) AddVolumn(i int64) *TradeDateUpdate {
+	tdu.mutation.AddVolumn(i)
 	return tdu
 }
 
@@ -217,6 +238,11 @@ func (tdu *TradeDateUpdate) check() error {
 			return &ValidationError{Name: "t_date", err: fmt.Errorf("ent: validator failed for field \"t_date\": %w", err)}
 		}
 	}
+	if v, ok := tdu.mutation.Volumn(); ok {
+		if err := tradedate.VolumnValidator(v); err != nil {
+			return &ValidationError{Name: "volumn", err: fmt.Errorf("ent: validator failed for field \"volumn\": %w", err)}
+		}
+	}
 	if v, ok := tdu.mutation.CreateAt(); ok {
 		if err := tradedate.CreateAtValidator(v); err != nil {
 			return &ValidationError{Name: "create_at", err: fmt.Errorf("ent: validator failed for field \"create_at\": %w", err)}
@@ -241,7 +267,7 @@ func (tdu *TradeDateUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   tradedate.Table,
 			Columns: tradedate.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUint64,
 				Column: tradedate.FieldID,
 			},
 		},
@@ -272,6 +298,20 @@ func (tdu *TradeDateUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeFloat64,
 			Value:  value,
 			Column: tradedate.FieldEndPrice,
+		})
+	}
+	if value, ok := tdu.mutation.Volumn(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: tradedate.FieldVolumn,
+		})
+	}
+	if value, ok := tdu.mutation.AddedVolumn(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: tradedate.FieldVolumn,
 		})
 	}
 	if value, ok := tdu.mutation.CreateAt(); ok {
@@ -325,7 +365,7 @@ func (tdu *TradeDateUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUint64,
 					Column: stock.FieldID,
 				},
 			},
@@ -341,7 +381,7 @@ func (tdu *TradeDateUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUint64,
 					Column: stock.FieldID,
 				},
 			},
@@ -371,15 +411,15 @@ type TradeDateUpdateOne struct {
 }
 
 // SetStockID sets the "stock_id" field.
-func (tduo *TradeDateUpdateOne) SetStockID(i int) *TradeDateUpdateOne {
-	tduo.mutation.SetStockID(i)
+func (tduo *TradeDateUpdateOne) SetStockID(u uint64) *TradeDateUpdateOne {
+	tduo.mutation.SetStockID(u)
 	return tduo
 }
 
 // SetNillableStockID sets the "stock_id" field if the given value is not nil.
-func (tduo *TradeDateUpdateOne) SetNillableStockID(i *int) *TradeDateUpdateOne {
-	if i != nil {
-		tduo.SetStockID(*i)
+func (tduo *TradeDateUpdateOne) SetNillableStockID(u *uint64) *TradeDateUpdateOne {
+	if u != nil {
+		tduo.SetStockID(*u)
 	}
 	return tduo
 }
@@ -406,6 +446,27 @@ func (tduo *TradeDateUpdateOne) SetEndPrice(f float64) *TradeDateUpdateOne {
 // AddEndPrice adds f to the "end_price" field.
 func (tduo *TradeDateUpdateOne) AddEndPrice(f float64) *TradeDateUpdateOne {
 	tduo.mutation.AddEndPrice(f)
+	return tduo
+}
+
+// SetVolumn sets the "volumn" field.
+func (tduo *TradeDateUpdateOne) SetVolumn(i int64) *TradeDateUpdateOne {
+	tduo.mutation.ResetVolumn()
+	tduo.mutation.SetVolumn(i)
+	return tduo
+}
+
+// SetNillableVolumn sets the "volumn" field if the given value is not nil.
+func (tduo *TradeDateUpdateOne) SetNillableVolumn(i *int64) *TradeDateUpdateOne {
+	if i != nil {
+		tduo.SetVolumn(*i)
+	}
+	return tduo
+}
+
+// AddVolumn adds i to the "volumn" field.
+func (tduo *TradeDateUpdateOne) AddVolumn(i int64) *TradeDateUpdateOne {
+	tduo.mutation.AddVolumn(i)
 	return tduo
 }
 
@@ -567,6 +628,11 @@ func (tduo *TradeDateUpdateOne) check() error {
 			return &ValidationError{Name: "t_date", err: fmt.Errorf("ent: validator failed for field \"t_date\": %w", err)}
 		}
 	}
+	if v, ok := tduo.mutation.Volumn(); ok {
+		if err := tradedate.VolumnValidator(v); err != nil {
+			return &ValidationError{Name: "volumn", err: fmt.Errorf("ent: validator failed for field \"volumn\": %w", err)}
+		}
+	}
 	if v, ok := tduo.mutation.CreateAt(); ok {
 		if err := tradedate.CreateAtValidator(v); err != nil {
 			return &ValidationError{Name: "create_at", err: fmt.Errorf("ent: validator failed for field \"create_at\": %w", err)}
@@ -591,7 +657,7 @@ func (tduo *TradeDateUpdateOne) sqlSave(ctx context.Context) (_node *TradeDate, 
 			Table:   tradedate.Table,
 			Columns: tradedate.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUint64,
 				Column: tradedate.FieldID,
 			},
 		},
@@ -639,6 +705,20 @@ func (tduo *TradeDateUpdateOne) sqlSave(ctx context.Context) (_node *TradeDate, 
 			Type:   field.TypeFloat64,
 			Value:  value,
 			Column: tradedate.FieldEndPrice,
+		})
+	}
+	if value, ok := tduo.mutation.Volumn(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: tradedate.FieldVolumn,
+		})
+	}
+	if value, ok := tduo.mutation.AddedVolumn(); ok {
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt64,
+			Value:  value,
+			Column: tradedate.FieldVolumn,
 		})
 	}
 	if value, ok := tduo.mutation.CreateAt(); ok {
@@ -692,7 +772,7 @@ func (tduo *TradeDateUpdateOne) sqlSave(ctx context.Context) (_node *TradeDate, 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUint64,
 					Column: stock.FieldID,
 				},
 			},
@@ -708,7 +788,7 @@ func (tduo *TradeDateUpdateOne) sqlSave(ctx context.Context) (_node *TradeDate, 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUint64,
 					Column: stock.FieldID,
 				},
 			},

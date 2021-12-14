@@ -107,27 +107,6 @@ func (uu *UserUpdate) AddRole(i int8) *UserUpdate {
 	return uu
 }
 
-// SetCreateAt sets the "create_at" field.
-func (uu *UserUpdate) SetCreateAt(i int64) *UserUpdate {
-	uu.mutation.ResetCreateAt()
-	uu.mutation.SetCreateAt(i)
-	return uu
-}
-
-// SetNillableCreateAt sets the "create_at" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableCreateAt(i *int64) *UserUpdate {
-	if i != nil {
-		uu.SetCreateAt(*i)
-	}
-	return uu
-}
-
-// AddCreateAt adds i to the "create_at" field.
-func (uu *UserUpdate) AddCreateAt(i int64) *UserUpdate {
-	uu.mutation.AddCreateAt(i)
-	return uu
-}
-
 // SetUpdateAt sets the "update_at" field.
 func (uu *UserUpdate) SetUpdateAt(i int64) *UserUpdate {
 	uu.mutation.ResetUpdateAt()
@@ -246,11 +225,6 @@ func (uu *UserUpdate) check() error {
 			return &ValidationError{Name: "role", err: fmt.Errorf("ent: validator failed for field \"role\": %w", err)}
 		}
 	}
-	if v, ok := uu.mutation.CreateAt(); ok {
-		if err := user.CreateAtValidator(v); err != nil {
-			return &ValidationError{Name: "create_at", err: fmt.Errorf("ent: validator failed for field \"create_at\": %w", err)}
-		}
-	}
 	if v, ok := uu.mutation.UpdateAt(); ok {
 		if err := user.UpdateAtValidator(v); err != nil {
 			return &ValidationError{Name: "update_at", err: fmt.Errorf("ent: validator failed for field \"update_at\": %w", err)}
@@ -265,7 +239,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   user.Table,
 			Columns: user.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
+				Type:   field.TypeUint64,
 				Column: user.FieldID,
 			},
 		},
@@ -338,20 +312,6 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeInt8,
 			Value:  value,
 			Column: user.FieldRole,
-		})
-	}
-	if value, ok := uu.mutation.CreateAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: user.FieldCreateAt,
-		})
-	}
-	if value, ok := uu.mutation.AddedCreateAt(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: user.FieldCreateAt,
 		})
 	}
 	if value, ok := uu.mutation.UpdateAt(); ok {
@@ -465,27 +425,6 @@ func (uuo *UserUpdateOne) SetNillableRole(i *int8) *UserUpdateOne {
 // AddRole adds i to the "role" field.
 func (uuo *UserUpdateOne) AddRole(i int8) *UserUpdateOne {
 	uuo.mutation.AddRole(i)
-	return uuo
-}
-
-// SetCreateAt sets the "create_at" field.
-func (uuo *UserUpdateOne) SetCreateAt(i int64) *UserUpdateOne {
-	uuo.mutation.ResetCreateAt()
-	uuo.mutation.SetCreateAt(i)
-	return uuo
-}
-
-// SetNillableCreateAt sets the "create_at" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableCreateAt(i *int64) *UserUpdateOne {
-	if i != nil {
-		uuo.SetCreateAt(*i)
-	}
-	return uuo
-}
-
-// AddCreateAt adds i to the "create_at" field.
-func (uuo *UserUpdateOne) AddCreateAt(i int64) *UserUpdateOne {
-	uuo.mutation.AddCreateAt(i)
 	return uuo
 }
 
@@ -614,11 +553,6 @@ func (uuo *UserUpdateOne) check() error {
 			return &ValidationError{Name: "role", err: fmt.Errorf("ent: validator failed for field \"role\": %w", err)}
 		}
 	}
-	if v, ok := uuo.mutation.CreateAt(); ok {
-		if err := user.CreateAtValidator(v); err != nil {
-			return &ValidationError{Name: "create_at", err: fmt.Errorf("ent: validator failed for field \"create_at\": %w", err)}
-		}
-	}
 	if v, ok := uuo.mutation.UpdateAt(); ok {
 		if err := user.UpdateAtValidator(v); err != nil {
 			return &ValidationError{Name: "update_at", err: fmt.Errorf("ent: validator failed for field \"update_at\": %w", err)}
@@ -633,7 +567,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Table:   user.Table,
 			Columns: user.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
+				Type:   field.TypeUint64,
 				Column: user.FieldID,
 			},
 		},
@@ -723,20 +657,6 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Type:   field.TypeInt8,
 			Value:  value,
 			Column: user.FieldRole,
-		})
-	}
-	if value, ok := uuo.mutation.CreateAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: user.FieldCreateAt,
-		})
-	}
-	if value, ok := uuo.mutation.AddedCreateAt(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: user.FieldCreateAt,
 		})
 	}
 	if value, ok := uuo.mutation.UpdateAt(); ok {

@@ -22,21 +22,21 @@ type CommentCreate struct {
 }
 
 // SetUserID sets the "user_id" field.
-func (cc *CommentCreate) SetUserID(i int64) *CommentCreate {
-	cc.mutation.SetUserID(i)
+func (cc *CommentCreate) SetUserID(u uint64) *CommentCreate {
+	cc.mutation.SetUserID(u)
 	return cc
 }
 
 // SetPostID sets the "post_id" field.
-func (cc *CommentCreate) SetPostID(i int64) *CommentCreate {
-	cc.mutation.SetPostID(i)
+func (cc *CommentCreate) SetPostID(u uint64) *CommentCreate {
+	cc.mutation.SetPostID(u)
 	return cc
 }
 
 // SetNillablePostID sets the "post_id" field if the given value is not nil.
-func (cc *CommentCreate) SetNillablePostID(i *int64) *CommentCreate {
-	if i != nil {
-		cc.SetPostID(*i)
+func (cc *CommentCreate) SetNillablePostID(u *uint64) *CommentCreate {
+	if u != nil {
+		cc.SetPostID(*u)
 	}
 	return cc
 }
@@ -62,16 +62,8 @@ func (cc *CommentCreate) SetNillableStatus(i *int8) *CommentCreate {
 }
 
 // SetFloor sets the "floor" field.
-func (cc *CommentCreate) SetFloor(i int64) *CommentCreate {
-	cc.mutation.SetFloor(i)
-	return cc
-}
-
-// SetNillableFloor sets the "floor" field if the given value is not nil.
-func (cc *CommentCreate) SetNillableFloor(i *int64) *CommentCreate {
-	if i != nil {
-		cc.SetFloor(*i)
-	}
+func (cc *CommentCreate) SetFloor(u uint64) *CommentCreate {
+	cc.mutation.SetFloor(u)
 	return cc
 }
 
@@ -90,19 +82,19 @@ func (cc *CommentCreate) SetNillableCreateAt(i *int64) *CommentCreate {
 }
 
 // SetID sets the "id" field.
-func (cc *CommentCreate) SetID(i int64) *CommentCreate {
-	cc.mutation.SetID(i)
+func (cc *CommentCreate) SetID(u uint64) *CommentCreate {
+	cc.mutation.SetID(u)
 	return cc
 }
 
 // SetOwnerID sets the "owner" edge to the Post entity by ID.
-func (cc *CommentCreate) SetOwnerID(id int64) *CommentCreate {
+func (cc *CommentCreate) SetOwnerID(id uint64) *CommentCreate {
 	cc.mutation.SetOwnerID(id)
 	return cc
 }
 
 // SetNillableOwnerID sets the "owner" edge to the Post entity by ID if the given value is not nil.
-func (cc *CommentCreate) SetNillableOwnerID(id *int64) *CommentCreate {
+func (cc *CommentCreate) SetNillableOwnerID(id *uint64) *CommentCreate {
 	if id != nil {
 		cc = cc.SetOwnerID(*id)
 	}
@@ -115,14 +107,14 @@ func (cc *CommentCreate) SetOwner(p *Post) *CommentCreate {
 }
 
 // AddReplyIDs adds the "replies" edge to the Reply entity by IDs.
-func (cc *CommentCreate) AddReplyIDs(ids ...int64) *CommentCreate {
+func (cc *CommentCreate) AddReplyIDs(ids ...uint64) *CommentCreate {
 	cc.mutation.AddReplyIDs(ids...)
 	return cc
 }
 
 // AddReplies adds the "replies" edges to the Reply entity.
 func (cc *CommentCreate) AddReplies(r ...*Reply) *CommentCreate {
-	ids := make([]int64, len(r))
+	ids := make([]uint64, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -204,10 +196,6 @@ func (cc *CommentCreate) defaults() {
 		v := comment.DefaultStatus
 		cc.mutation.SetStatus(v)
 	}
-	if _, ok := cc.mutation.Floor(); !ok {
-		v := comment.DefaultFloor
-		cc.mutation.SetFloor(v)
-	}
 	if _, ok := cc.mutation.CreateAt(); !ok {
 		v := comment.DefaultCreateAt
 		cc.mutation.SetCreateAt(v)
@@ -279,7 +267,7 @@ func (cc *CommentCreate) sqlSave(ctx context.Context) (*Comment, error) {
 	}
 	if _spec.ID.Value != _node.ID {
 		id := _spec.ID.Value.(int64)
-		_node.ID = int64(id)
+		_node.ID = uint64(id)
 	}
 	return _node, nil
 }
@@ -290,7 +278,7 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: comment.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
+				Type:   field.TypeUint64,
 				Column: comment.FieldID,
 			},
 		}
@@ -301,7 +289,7 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := cc.mutation.UserID(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeUint64,
 			Value:  value,
 			Column: comment.FieldUserID,
 		})
@@ -325,7 +313,7 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := cc.mutation.Floor(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeUint64,
 			Value:  value,
 			Column: comment.FieldFloor,
 		})
@@ -348,7 +336,7 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: post.FieldID,
 				},
 			},
@@ -368,7 +356,7 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: reply.FieldID,
 				},
 			},
@@ -425,7 +413,7 @@ func (ccb *CommentCreateBulk) Save(ctx context.Context) ([]*Comment, error) {
 				mutation.done = true
 				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int64(id)
+					nodes[i].ID = uint64(id)
 				}
 				return nodes[i], nil
 			})

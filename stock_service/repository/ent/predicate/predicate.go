@@ -11,3 +11,6 @@ type Stock func(*sql.Selector)
 
 // TradeDate is the predicate function for tradedate builders.
 type TradeDate func(*sql.Selector)
+
+// User is the predicate function for user builders.
+type User func(*sql.Selector)

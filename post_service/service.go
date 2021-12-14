@@ -66,4 +66,14 @@ func main() {
 	execDir := flag.String("d", pwd, "execute directory")
 	flag.Parse()
 	runPostService(*execDir + "/conf/config.yaml")
+
+	// client, err := ent.Open("mysql", "root:123456@(10.0.0.214:6033)/liuwei1?parseTime=true")
+	// if err != nil {
+	// 	log.Fatalf("failed opening connection to mysql: %v", err)
+	// }
+	// defer client.Close()
+	// // Run the auto migration tool.
+	// if err := client.Debug().Schema.Create(context.Background()); err != nil {
+	// 	log.Fatalf("failed creating schema resources: %v", err)
+	// }
 }

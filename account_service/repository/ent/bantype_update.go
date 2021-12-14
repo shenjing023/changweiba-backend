@@ -113,7 +113,7 @@ func (btu *BanTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   bantype.Table,
 			Columns: bantype.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
+				Type:   field.TypeUint64,
 				Column: bantype.FieldID,
 			},
 		},
@@ -245,7 +245,7 @@ func (btuo *BanTypeUpdateOne) sqlSave(ctx context.Context) (_node *BanType, err 
 			Table:   bantype.Table,
 			Columns: bantype.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
+				Type:   field.TypeUint64,
 				Column: bantype.FieldID,
 			},
 		},

@@ -28,7 +28,7 @@ func GetPosts(ctx context.Context, c *Client, page, pageSize int) ([]*Post, erro
 	return posts, nil
 }
 
-func InsertReply(ctx context.Context, c *Client, userID, commentID, parentID int64, content string) (int64, error) {
+func InsertReply(ctx context.Context, c *Client, userID, commentID, parentID uint64, content string) (int64, error) {
 	db := c.driver.(*sql.Driver).DB()
 	//先获取楼层数
 	var floor int64
@@ -47,7 +47,7 @@ func InsertReply(ctx context.Context, c *Client, userID, commentID, parentID int
 	// 再插入
 	rc := c.Reply.Create().
 		SetUserID(userID).
-		SetFloor(floor + 1).
+		SetFloor(uint64(floor + 1)).
 		SetContent(content).
 		SetStatus(0).
 		SetCreateAt(time.Now().Unix()).
@@ -61,7 +61,7 @@ func InsertReply(ctx context.Context, c *Client, userID, commentID, parentID int
 		return 0, err
 	}
 	tx.Commit()
-	return r.ID, nil
+	return int64(r.ID), nil
 }
 
 // GetCommentsByPostID 获取帖子所属的评论

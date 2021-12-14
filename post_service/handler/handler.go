@@ -58,8 +58,8 @@ func (PostService) GetPosts(ctx context.Context, pr *pb.PostsRequest) (*pb.Posts
 	var posts []*pb.Post
 	for _, v := range dbPosts {
 		posts = append(posts, &pb.Post{
-			Id:         v.ID,
-			UserId:     v.UserID,
+			Id:         int64(v.ID),
+			UserId:     int64(v.UserID),
 			Topic:      v.Topic,
 			CreateTime: v.CreateAt,
 			LastUpdate: v.UpdateAt,
@@ -115,7 +115,7 @@ func (PostService) GetPostFirstComment(ctx context.Context, pr *pb.FirstCommentR
 			comments = append(comments, &pb.Comment{})
 		} else {
 			comments = append(comments, &pb.Comment{
-				Id:      v.ID,
+				Id:      int64(v.ID),
 				Content: v.Content,
 				Status:  pb.PostStatusEnum_Status(v.Status),
 			})
@@ -135,7 +135,7 @@ func (PostService) GetCommentsByPostId(ctx context.Context, pr *pb.CommentsReque
 	var comments []*pb.Comment
 	for _, v := range dbComments {
 		comments = append(comments, &pb.Comment{
-			Id:      v.ID,
+			Id:      int64(v.ID),
 			Content: v.Content,
 			Status:  pb.PostStatusEnum_Status(v.Status),
 		})
@@ -160,13 +160,13 @@ func (PostService) GetRepliesByCommentId(ctx context.Context, pr *pb.RepliesRequ
 	var replies []*pb.Reply
 	for _, v := range dbReplies {
 		replies = append(replies, &pb.Reply{
-			Id:         v.ID,
+			Id:         int64(v.ID),
 			Content:    v.Content,
 			Status:     pb.PostStatusEnum_Status(v.Status),
 			CreateTime: v.CreateAt,
-			ParentId:   v.ParentID,
-			Floor:      v.Floor,
-			UserId:     v.UserID,
+			ParentId:   int64(v.ParentID),
+			Floor:      int64(v.Floor),
+			UserId:     int64(v.UserID),
 			CommentId:  pr.CommentId,
 		})
 	}

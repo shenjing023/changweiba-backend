@@ -16,6 +16,8 @@ type Tx struct {
 	Stock *StockClient
 	// TradeDate is the client for interacting with the TradeDate builders.
 	TradeDate *TradeDateClient
+	// User is the client for interacting with the User builders.
+	User *UserClient
 
 	// lazily loaded.
 	client     *Client
@@ -153,6 +155,7 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Stock = NewStockClient(tx.config)
 	tx.TradeDate = NewTradeDateClient(tx.config)
+	tx.User = NewUserClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

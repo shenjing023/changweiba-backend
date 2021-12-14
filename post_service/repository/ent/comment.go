@@ -15,13 +15,13 @@ import (
 type Comment struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int64 `json:"id,omitempty"`
+	ID uint64 `json:"id,omitempty"`
 	// UserID holds the value of the "user_id" field.
 	// The user that posted the message.
-	UserID int64 `json:"user_id,omitempty"`
+	UserID uint64 `json:"user_id,omitempty"`
 	// PostID holds the value of the "post_id" field.
 	// The post that the message belongs to.
-	PostID int64 `json:"post_id,omitempty"`
+	PostID uint64 `json:"post_id,omitempty"`
 	// Content holds the value of the "content" field.
 	// The content of the message.
 	Content string `json:"content,omitempty"`
@@ -30,7 +30,7 @@ type Comment struct {
 	Status int8 `json:"status,omitempty"`
 	// Floor holds the value of the "floor" field.
 	// 第几楼
-	Floor int64 `json:"floor,omitempty"`
+	Floor uint64 `json:"floor,omitempty"`
 	// CreateAt holds the value of the "create_at" field.
 	// 创建时间
 	CreateAt int64 `json:"create_at,omitempty"`
@@ -102,18 +102,18 @@ func (c *Comment) assignValues(columns []string, values []interface{}) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			c.ID = int64(value.Int64)
+			c.ID = uint64(value.Int64)
 		case comment.FieldUserID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field user_id", values[i])
 			} else if value.Valid {
-				c.UserID = value.Int64
+				c.UserID = uint64(value.Int64)
 			}
 		case comment.FieldPostID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field post_id", values[i])
 			} else if value.Valid {
-				c.PostID = value.Int64
+				c.PostID = uint64(value.Int64)
 			}
 		case comment.FieldContent:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -131,7 +131,7 @@ func (c *Comment) assignValues(columns []string, values []interface{}) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field floor", values[i])
 			} else if value.Valid {
-				c.Floor = value.Int64
+				c.Floor = uint64(value.Int64)
 			}
 		case comment.FieldCreateAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {

@@ -109,8 +109,8 @@ func (tdq *TradeDateQuery) FirstX(ctx context.Context) *TradeDate {
 
 // FirstID returns the first TradeDate ID from the query.
 // Returns a *NotFoundError when no TradeDate ID was found.
-func (tdq *TradeDateQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (tdq *TradeDateQuery) FirstID(ctx context.Context) (id uint64, err error) {
+	var ids []uint64
 	if ids, err = tdq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -122,7 +122,7 @@ func (tdq *TradeDateQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (tdq *TradeDateQuery) FirstIDX(ctx context.Context) int {
+func (tdq *TradeDateQuery) FirstIDX(ctx context.Context) uint64 {
 	id, err := tdq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -160,8 +160,8 @@ func (tdq *TradeDateQuery) OnlyX(ctx context.Context) *TradeDate {
 // OnlyID is like Only, but returns the only TradeDate ID in the query.
 // Returns a *NotSingularError when exactly one TradeDate ID is not found.
 // Returns a *NotFoundError when no entities are found.
-func (tdq *TradeDateQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (tdq *TradeDateQuery) OnlyID(ctx context.Context) (id uint64, err error) {
+	var ids []uint64
 	if ids, err = tdq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -177,7 +177,7 @@ func (tdq *TradeDateQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (tdq *TradeDateQuery) OnlyIDX(ctx context.Context) int {
+func (tdq *TradeDateQuery) OnlyIDX(ctx context.Context) uint64 {
 	id, err := tdq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -203,8 +203,8 @@ func (tdq *TradeDateQuery) AllX(ctx context.Context) []*TradeDate {
 }
 
 // IDs executes the query and returns a list of TradeDate IDs.
-func (tdq *TradeDateQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
+func (tdq *TradeDateQuery) IDs(ctx context.Context) ([]uint64, error) {
+	var ids []uint64
 	if err := tdq.Select(tradedate.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ func (tdq *TradeDateQuery) IDs(ctx context.Context) ([]int, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (tdq *TradeDateQuery) IDsX(ctx context.Context) []int {
+func (tdq *TradeDateQuery) IDsX(ctx context.Context) []uint64 {
 	ids, err := tdq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -290,7 +290,7 @@ func (tdq *TradeDateQuery) WithStock(opts ...func(*StockQuery)) *TradeDateQuery 
 // Example:
 //
 //	var v []struct {
-//		StockID int `json:"stock_id,omitempty"`
+//		StockID uint64 `json:"stock_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -317,7 +317,7 @@ func (tdq *TradeDateQuery) GroupBy(field string, fields ...string) *TradeDateGro
 // Example:
 //
 //	var v []struct {
-//		StockID int `json:"stock_id,omitempty"`
+//		StockID uint64 `json:"stock_id,omitempty"`
 //	}
 //
 //	client.TradeDate.Query().
@@ -374,8 +374,8 @@ func (tdq *TradeDateQuery) sqlAll(ctx context.Context) ([]*TradeDate, error) {
 	}
 
 	if query := tdq.withStock; query != nil {
-		ids := make([]int, 0, len(nodes))
-		nodeids := make(map[int][]*TradeDate)
+		ids := make([]uint64, 0, len(nodes))
+		nodeids := make(map[uint64][]*TradeDate)
 		for i := range nodes {
 			fk := nodes[i].StockID
 			if _, ok := nodeids[fk]; !ok {
@@ -421,7 +421,7 @@ func (tdq *TradeDateQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   tradedate.Table,
 			Columns: tradedate.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUint64,
 				Column: tradedate.FieldID,
 			},
 		},

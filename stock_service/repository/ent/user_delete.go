@@ -4,9 +4,9 @@ package ent
 
 import (
 	"context"
-	"cw_account_service/repository/ent/predicate"
-	"cw_account_service/repository/ent/user"
 	"fmt"
+	"stock_service/repository/ent/predicate"
+	"stock_service/repository/ent/user"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"

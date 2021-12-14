@@ -10,28 +10,28 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int) predicate.TradeDate {
+func ID(id uint64) predicate.TradeDate {
 	return predicate.TradeDate(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int) predicate.TradeDate {
+func IDEQ(id uint64) predicate.TradeDate {
 	return predicate.TradeDate(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int) predicate.TradeDate {
+func IDNEQ(id uint64) predicate.TradeDate {
 	return predicate.TradeDate(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldID), id))
 	})
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int) predicate.TradeDate {
+func IDIn(ids ...uint64) predicate.TradeDate {
 	return predicate.TradeDate(func(s *sql.Selector) {
 		// if not arguments were provided, append the FALSE constants,
 		// since we can't apply "IN ()". This will make this predicate falsy.
@@ -48,7 +48,7 @@ func IDIn(ids ...int) predicate.TradeDate {
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int) predicate.TradeDate {
+func IDNotIn(ids ...uint64) predicate.TradeDate {
 	return predicate.TradeDate(func(s *sql.Selector) {
 		// if not arguments were provided, append the FALSE constants,
 		// since we can't apply "IN ()". This will make this predicate falsy.
@@ -65,35 +65,35 @@ func IDNotIn(ids ...int) predicate.TradeDate {
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int) predicate.TradeDate {
+func IDGT(id uint64) predicate.TradeDate {
 	return predicate.TradeDate(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldID), id))
 	})
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int) predicate.TradeDate {
+func IDGTE(id uint64) predicate.TradeDate {
 	return predicate.TradeDate(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldID), id))
 	})
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int) predicate.TradeDate {
+func IDLT(id uint64) predicate.TradeDate {
 	return predicate.TradeDate(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldID), id))
 	})
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int) predicate.TradeDate {
+func IDLTE(id uint64) predicate.TradeDate {
 	return predicate.TradeDate(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldID), id))
 	})
 }
 
 // StockID applies equality check predicate on the "stock_id" field. It's identical to StockIDEQ.
-func StockID(v int) predicate.TradeDate {
+func StockID(v uint64) predicate.TradeDate {
 	return predicate.TradeDate(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldStockID), v))
 	})
@@ -110,6 +110,13 @@ func TDate(v string) predicate.TradeDate {
 func EndPrice(v float64) predicate.TradeDate {
 	return predicate.TradeDate(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldEndPrice), v))
+	})
+}
+
+// Volumn applies equality check predicate on the "volumn" field. It's identical to VolumnEQ.
+func Volumn(v int64) predicate.TradeDate {
+	return predicate.TradeDate(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldVolumn), v))
 	})
 }
 
@@ -135,21 +142,21 @@ func XueqiuCommentCount(v int64) predicate.TradeDate {
 }
 
 // StockIDEQ applies the EQ predicate on the "stock_id" field.
-func StockIDEQ(v int) predicate.TradeDate {
+func StockIDEQ(v uint64) predicate.TradeDate {
 	return predicate.TradeDate(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldStockID), v))
 	})
 }
 
 // StockIDNEQ applies the NEQ predicate on the "stock_id" field.
-func StockIDNEQ(v int) predicate.TradeDate {
+func StockIDNEQ(v uint64) predicate.TradeDate {
 	return predicate.TradeDate(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldStockID), v))
 	})
 }
 
 // StockIDIn applies the In predicate on the "stock_id" field.
-func StockIDIn(vs ...int) predicate.TradeDate {
+func StockIDIn(vs ...uint64) predicate.TradeDate {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -166,7 +173,7 @@ func StockIDIn(vs ...int) predicate.TradeDate {
 }
 
 // StockIDNotIn applies the NotIn predicate on the "stock_id" field.
-func StockIDNotIn(vs ...int) predicate.TradeDate {
+func StockIDNotIn(vs ...uint64) predicate.TradeDate {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -380,6 +387,82 @@ func EndPriceLT(v float64) predicate.TradeDate {
 func EndPriceLTE(v float64) predicate.TradeDate {
 	return predicate.TradeDate(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldEndPrice), v))
+	})
+}
+
+// VolumnEQ applies the EQ predicate on the "volumn" field.
+func VolumnEQ(v int64) predicate.TradeDate {
+	return predicate.TradeDate(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldVolumn), v))
+	})
+}
+
+// VolumnNEQ applies the NEQ predicate on the "volumn" field.
+func VolumnNEQ(v int64) predicate.TradeDate {
+	return predicate.TradeDate(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldVolumn), v))
+	})
+}
+
+// VolumnIn applies the In predicate on the "volumn" field.
+func VolumnIn(vs ...int64) predicate.TradeDate {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.TradeDate(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldVolumn), v...))
+	})
+}
+
+// VolumnNotIn applies the NotIn predicate on the "volumn" field.
+func VolumnNotIn(vs ...int64) predicate.TradeDate {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.TradeDate(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldVolumn), v...))
+	})
+}
+
+// VolumnGT applies the GT predicate on the "volumn" field.
+func VolumnGT(v int64) predicate.TradeDate {
+	return predicate.TradeDate(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldVolumn), v))
+	})
+}
+
+// VolumnGTE applies the GTE predicate on the "volumn" field.
+func VolumnGTE(v int64) predicate.TradeDate {
+	return predicate.TradeDate(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldVolumn), v))
+	})
+}
+
+// VolumnLT applies the LT predicate on the "volumn" field.
+func VolumnLT(v int64) predicate.TradeDate {
+	return predicate.TradeDate(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldVolumn), v))
+	})
+}
+
+// VolumnLTE applies the LTE predicate on the "volumn" field.
+func VolumnLTE(v int64) predicate.TradeDate {
+	return predicate.TradeDate(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldVolumn), v))
 	})
 }
 

@@ -21,35 +21,35 @@ type ReplyCreate struct {
 }
 
 // SetUserID sets the "user_id" field.
-func (rc *ReplyCreate) SetUserID(i int64) *ReplyCreate {
-	rc.mutation.SetUserID(i)
+func (rc *ReplyCreate) SetUserID(u uint64) *ReplyCreate {
+	rc.mutation.SetUserID(u)
 	return rc
 }
 
 // SetCommentID sets the "comment_id" field.
-func (rc *ReplyCreate) SetCommentID(i int64) *ReplyCreate {
-	rc.mutation.SetCommentID(i)
+func (rc *ReplyCreate) SetCommentID(u uint64) *ReplyCreate {
+	rc.mutation.SetCommentID(u)
 	return rc
 }
 
 // SetNillableCommentID sets the "comment_id" field if the given value is not nil.
-func (rc *ReplyCreate) SetNillableCommentID(i *int64) *ReplyCreate {
-	if i != nil {
-		rc.SetCommentID(*i)
+func (rc *ReplyCreate) SetNillableCommentID(u *uint64) *ReplyCreate {
+	if u != nil {
+		rc.SetCommentID(*u)
 	}
 	return rc
 }
 
 // SetParentID sets the "parent_id" field.
-func (rc *ReplyCreate) SetParentID(i int64) *ReplyCreate {
-	rc.mutation.SetParentID(i)
+func (rc *ReplyCreate) SetParentID(u uint64) *ReplyCreate {
+	rc.mutation.SetParentID(u)
 	return rc
 }
 
 // SetNillableParentID sets the "parent_id" field if the given value is not nil.
-func (rc *ReplyCreate) SetNillableParentID(i *int64) *ReplyCreate {
-	if i != nil {
-		rc.SetParentID(*i)
+func (rc *ReplyCreate) SetNillableParentID(u *uint64) *ReplyCreate {
+	if u != nil {
+		rc.SetParentID(*u)
 	}
 	return rc
 }
@@ -75,16 +75,8 @@ func (rc *ReplyCreate) SetNillableStatus(i *int8) *ReplyCreate {
 }
 
 // SetFloor sets the "floor" field.
-func (rc *ReplyCreate) SetFloor(i int64) *ReplyCreate {
-	rc.mutation.SetFloor(i)
-	return rc
-}
-
-// SetNillableFloor sets the "floor" field if the given value is not nil.
-func (rc *ReplyCreate) SetNillableFloor(i *int64) *ReplyCreate {
-	if i != nil {
-		rc.SetFloor(*i)
-	}
+func (rc *ReplyCreate) SetFloor(u uint64) *ReplyCreate {
+	rc.mutation.SetFloor(u)
 	return rc
 }
 
@@ -103,19 +95,19 @@ func (rc *ReplyCreate) SetNillableCreateAt(i *int64) *ReplyCreate {
 }
 
 // SetID sets the "id" field.
-func (rc *ReplyCreate) SetID(i int64) *ReplyCreate {
-	rc.mutation.SetID(i)
+func (rc *ReplyCreate) SetID(u uint64) *ReplyCreate {
+	rc.mutation.SetID(u)
 	return rc
 }
 
 // SetOwnerID sets the "owner" edge to the Comment entity by ID.
-func (rc *ReplyCreate) SetOwnerID(id int64) *ReplyCreate {
+func (rc *ReplyCreate) SetOwnerID(id uint64) *ReplyCreate {
 	rc.mutation.SetOwnerID(id)
 	return rc
 }
 
 // SetNillableOwnerID sets the "owner" edge to the Comment entity by ID if the given value is not nil.
-func (rc *ReplyCreate) SetNillableOwnerID(id *int64) *ReplyCreate {
+func (rc *ReplyCreate) SetNillableOwnerID(id *uint64) *ReplyCreate {
 	if id != nil {
 		rc = rc.SetOwnerID(*id)
 	}
@@ -133,14 +125,14 @@ func (rc *ReplyCreate) SetParent(r *Reply) *ReplyCreate {
 }
 
 // AddChildIDs adds the "children" edge to the Reply entity by IDs.
-func (rc *ReplyCreate) AddChildIDs(ids ...int64) *ReplyCreate {
+func (rc *ReplyCreate) AddChildIDs(ids ...uint64) *ReplyCreate {
 	rc.mutation.AddChildIDs(ids...)
 	return rc
 }
 
 // AddChildren adds the "children" edges to the Reply entity.
 func (rc *ReplyCreate) AddChildren(r ...*Reply) *ReplyCreate {
-	ids := make([]int64, len(r))
+	ids := make([]uint64, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -222,10 +214,6 @@ func (rc *ReplyCreate) defaults() {
 		v := reply.DefaultStatus
 		rc.mutation.SetStatus(v)
 	}
-	if _, ok := rc.mutation.Floor(); !ok {
-		v := reply.DefaultFloor
-		rc.mutation.SetFloor(v)
-	}
 	if _, ok := rc.mutation.CreateAt(); !ok {
 		v := reply.DefaultCreateAt
 		rc.mutation.SetCreateAt(v)
@@ -302,7 +290,7 @@ func (rc *ReplyCreate) sqlSave(ctx context.Context) (*Reply, error) {
 	}
 	if _spec.ID.Value != _node.ID {
 		id := _spec.ID.Value.(int64)
-		_node.ID = int64(id)
+		_node.ID = uint64(id)
 	}
 	return _node, nil
 }
@@ -313,7 +301,7 @@ func (rc *ReplyCreate) createSpec() (*Reply, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: reply.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt64,
+				Type:   field.TypeUint64,
 				Column: reply.FieldID,
 			},
 		}
@@ -324,7 +312,7 @@ func (rc *ReplyCreate) createSpec() (*Reply, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := rc.mutation.UserID(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeUint64,
 			Value:  value,
 			Column: reply.FieldUserID,
 		})
@@ -348,7 +336,7 @@ func (rc *ReplyCreate) createSpec() (*Reply, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := rc.mutation.Floor(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeUint64,
 			Value:  value,
 			Column: reply.FieldFloor,
 		})
@@ -371,7 +359,7 @@ func (rc *ReplyCreate) createSpec() (*Reply, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: comment.FieldID,
 				},
 			},
@@ -391,7 +379,7 @@ func (rc *ReplyCreate) createSpec() (*Reply, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: reply.FieldID,
 				},
 			},
@@ -411,7 +399,7 @@ func (rc *ReplyCreate) createSpec() (*Reply, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt64,
+					Type:   field.TypeUint64,
 					Column: reply.FieldID,
 				},
 			},
@@ -468,7 +456,7 @@ func (rcb *ReplyCreateBulk) Save(ctx context.Context) ([]*Reply, error) {
 				mutation.done = true
 				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int64(id)
+					nodes[i].ID = uint64(id)
 				}
 				return nodes[i], nil
 			})
