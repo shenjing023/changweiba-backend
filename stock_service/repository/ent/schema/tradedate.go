@@ -28,7 +28,7 @@ func (TradeDate) Fields() []ent.Field {
 		}).NonNegative().Default(0).Comment("成交量"),
 		field.Int64("create_at").SchemaType(map[string]string{
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).NonNegative().Default(0).Comment("创建时间"),
+		}).NonNegative().Default(0).Comment("创建时间").Immutable(),
 
 		field.Int64("update_at").SchemaType(map[string]string{
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.

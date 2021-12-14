@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+option go_package = ".;pb";
+package stock;
+
+message SubscribeStockRequest {
+    int64 user_id=1;
+    string symbol=2;
+}
+
+message SubscribeStockReply {
+    int64 id=1;
+}
+
+message UnSubscribeStockRequest {
+    int64 user_id=1;
+    string symbol=2;
+}
+
+message UnSubscribeStockReply {
+    int64 id=1;
+}
+
+message TradeData {
+    string date=1;
+    float end_price=2;
+    int64 volumn=3;
+    int64 xueqiu_count=4;
+}
+
+message StockData {
+    int64 id=1;
+    string symbol=2;
+    string name=3;
+    repeated TradeData trade_data=4;
+}
+
+message SubscribeStockTradeRequest {
+    int64 user_id=1;
+}
+
+message SubscribeStockTradeReply {
+    repeated StockData data=1;
+}
+
+service StockService{
+    rpc SubscribeStock(SubscribeStockRequest) returns(SubscribeStockReply){}
+    rpc UnSubscribeStock(UnSubscribeStockRequest) returns(UnSubscribeStockReply){}
+    rpc SubscribeStockTrade(SubscribeStockTradeRequest) returns(SubscribeStockTradeReply){}
+}
