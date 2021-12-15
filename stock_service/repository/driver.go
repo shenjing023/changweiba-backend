@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"os"
+	"stock_service/common"
 	"stock_service/repository/ent"
 
 	"stock_service/conf"
@@ -71,13 +72,32 @@ func Close() {
 	redisClient.Close()
 }
 
-// subscribeStock subscribe stock
-func SubscribeStock(symbol string, userID int64) error {
-	// find stockID through symbol
-	stockID := uint64(0)
+// SubscribeStock subscribe stock
+func SubscribeStock(stockID int64, userID int64) error {
 	user, err := entClient.User.Get(context.Background(), uint64(userID))
 	if err != nil {
-		return err
+		if ent.IsNotFound(err) {
+			return common.NewServiceErr(common.NotFound, err)
+		}
+		return common.NewServiceErr(common.Internal, err)
 	}
-	return user.Update().AddSubscribeStockIDs(stockID).Exec(context.Background())
+	if err = user.Update().AddSubscribeStockIDs(uint64(stockID)).Exec(context.Background()); err != nil {
+		return common.NewServiceErr(common.Internal, err)
+	}
+	return nil
+}
+
+// UnSubscribeStock unsubscribe stock
+func UnSubscribeStock(stockID int64, userID int64) error {
+	user, err := entClient.User.Get(context.Background(), uint64(userID))
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return common.NewServiceErr(common.NotFound, err)
+		}
+		return common.NewServiceErr(common.Internal, err)
+	}
+	if err = user.Update().RemoveSubscribeStockIDs(uint64(stockID)).Exec(context.Background()); err != nil {
+		return common.NewServiceErr(common.Internal, err)
+	}
+	return nil
 }

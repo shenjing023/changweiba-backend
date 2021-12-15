@@ -7,6 +7,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -18,9 +19,10 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StockServiceClient interface {
-	SubscribeStock(ctx context.Context, in *SubscribeStockRequest, opts ...grpc.CallOption) (*SubscribeStockReply, error)
-	UnSubscribeStock(ctx context.Context, in *UnSubscribeStockRequest, opts ...grpc.CallOption) (*UnSubscribeStockReply, error)
+	SubscribeStock(ctx context.Context, in *SubscribeStockRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	UnSubscribeStock(ctx context.Context, in *UnSubscribeStockRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	SubscribeStockTrade(ctx context.Context, in *SubscribeStockTradeRequest, opts ...grpc.CallOption) (*SubscribeStockTradeReply, error)
+	SearchStock(ctx context.Context, in *SearchStockRequest, opts ...grpc.CallOption) (*SearchStockReply, error)
 }
 
 type stockServiceClient struct {
@@ -31,8 +33,8 @@ func NewStockServiceClient(cc grpc.ClientConnInterface) StockServiceClient {
 	return &stockServiceClient{cc}
 }
 
-func (c *stockServiceClient) SubscribeStock(ctx context.Context, in *SubscribeStockRequest, opts ...grpc.CallOption) (*SubscribeStockReply, error) {
-	out := new(SubscribeStockReply)
+func (c *stockServiceClient) SubscribeStock(ctx context.Context, in *SubscribeStockRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/stock.StockService/SubscribeStock", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -40,8 +42,8 @@ func (c *stockServiceClient) SubscribeStock(ctx context.Context, in *SubscribeSt
 	return out, nil
 }
 
-func (c *stockServiceClient) UnSubscribeStock(ctx context.Context, in *UnSubscribeStockRequest, opts ...grpc.CallOption) (*UnSubscribeStockReply, error) {
-	out := new(UnSubscribeStockReply)
+func (c *stockServiceClient) UnSubscribeStock(ctx context.Context, in *UnSubscribeStockRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/stock.StockService/UnSubscribeStock", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -58,13 +60,23 @@ func (c *stockServiceClient) SubscribeStockTrade(ctx context.Context, in *Subscr
 	return out, nil
 }
 
+func (c *stockServiceClient) SearchStock(ctx context.Context, in *SearchStockRequest, opts ...grpc.CallOption) (*SearchStockReply, error) {
+	out := new(SearchStockReply)
+	err := c.cc.Invoke(ctx, "/stock.StockService/SearchStock", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StockServiceServer is the server API for StockService service.
 // All implementations must embed UnimplementedStockServiceServer
 // for forward compatibility
 type StockServiceServer interface {
-	SubscribeStock(context.Context, *SubscribeStockRequest) (*SubscribeStockReply, error)
-	UnSubscribeStock(context.Context, *UnSubscribeStockRequest) (*UnSubscribeStockReply, error)
+	SubscribeStock(context.Context, *SubscribeStockRequest) (*emptypb.Empty, error)
+	UnSubscribeStock(context.Context, *UnSubscribeStockRequest) (*emptypb.Empty, error)
 	SubscribeStockTrade(context.Context, *SubscribeStockTradeRequest) (*SubscribeStockTradeReply, error)
+	SearchStock(context.Context, *SearchStockRequest) (*SearchStockReply, error)
 	mustEmbedUnimplementedStockServiceServer()
 }
 
@@ -72,14 +84,17 @@ type StockServiceServer interface {
 type UnimplementedStockServiceServer struct {
 }
 
-func (UnimplementedStockServiceServer) SubscribeStock(context.Context, *SubscribeStockRequest) (*SubscribeStockReply, error) {
+func (UnimplementedStockServiceServer) SubscribeStock(context.Context, *SubscribeStockRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SubscribeStock not implemented")
 }
-func (UnimplementedStockServiceServer) UnSubscribeStock(context.Context, *UnSubscribeStockRequest) (*UnSubscribeStockReply, error) {
+func (UnimplementedStockServiceServer) UnSubscribeStock(context.Context, *UnSubscribeStockRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnSubscribeStock not implemented")
 }
 func (UnimplementedStockServiceServer) SubscribeStockTrade(context.Context, *SubscribeStockTradeRequest) (*SubscribeStockTradeReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SubscribeStockTrade not implemented")
+}
+func (UnimplementedStockServiceServer) SearchStock(context.Context, *SearchStockRequest) (*SearchStockReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchStock not implemented")
 }
 func (UnimplementedStockServiceServer) mustEmbedUnimplementedStockServiceServer() {}
 
@@ -148,6 +163,24 @@ func _StockService_SubscribeStockTrade_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StockService_SearchStock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchStockRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StockServiceServer).SearchStock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stock.StockService/SearchStock",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StockServiceServer).SearchStock(ctx, req.(*SearchStockRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StockService_ServiceDesc is the grpc.ServiceDesc for StockService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -166,6 +199,10 @@ var StockService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SubscribeStockTrade",
 			Handler:    _StockService_SubscribeStockTrade_Handler,
+		},
+		{
+			MethodName: "SearchStock",
+			Handler:    _StockService_SearchStock_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
