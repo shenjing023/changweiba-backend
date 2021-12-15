@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"stock_service/repository/ent"
-	"stock_service/repository/ent/user"
 
 	"stock_service/conf"
 
@@ -74,10 +73,11 @@ func Close() {
 
 // subscribeStock subscribe stock
 func SubscribeStock(symbol string, userID int64) error {
-	stockID := 0
-	user, err := entClient.User.Query().Where(user.ID(uint64(userID))).Only(context.Background())
+	// find stockID through symbol
+	stockID := uint64(0)
+	user, err := entClient.User.Get(context.Background(), uint64(userID))
 	if err != nil {
 		return err
 	}
-	user.Update().AddSubscribeStockIDs(symbol).Exec(context.Background())
+	return user.Update().AddSubscribeStockIDs(stockID).Exec(context.Background())
 }
