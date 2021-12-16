@@ -38,7 +38,7 @@ message SubscribeStockTradeReply {
 }
 
 message SearchStockRequest {
-    string symbol=1;
+    string symbolorname=1;
 }
 
 message SearchStockReply {

@@ -5,6 +5,7 @@ import (
 	"stock_service/common"
 	"stock_service/pb"
 	"stock_service/repository"
+	"strings"
 
 	log "github.com/shenjing023/llog"
 	"google.golang.org/grpc/codes"
@@ -14,6 +15,11 @@ import (
 
 type StockService struct {
 	pb.UnimplementedStockServiceServer
+}
+
+type Stock struct {
+	symbol string
+	name   string
 }
 
 // ServiceErr2GRPCErr serviceErr covert to GRPCErr
@@ -42,4 +48,13 @@ func (StockService) UnSubscribeStock(ctx context.Context, req *pb.UnSubscribeSto
 		return nil, ServiceErr2GRPCErr(err)
 	}
 	return nil, nil
+}
+
+func (StockService) SearchStock(ctx context.Context, req *pb.SearchStockRequest) (*pb.SearchStockReply, error) {
+	symbolorname := strings.TrimSpace(req.Symbolorname)
+	data, err := common.SearchStock(symbolorname)
+	if err != nil {
+		return nil, ServiceErr2GRPCErr(err)
+	}
+
 }
