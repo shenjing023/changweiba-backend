@@ -42,9 +42,7 @@ message SearchStockRequest {
 }
 
 message SearchStockReply {
-    int64 id=1;
-    string symbol=2;
-    string name=3;
+    repeated StockData stocks=1;
 }
 
 service StockService{

@@ -17,11 +17,6 @@ type StockService struct {
 	pb.UnimplementedStockServiceServer
 }
 
-type Stock struct {
-	symbol string
-	name   string
-}
-
 // ServiceErr2GRPCErr serviceErr covert to GRPCErr
 func ServiceErr2GRPCErr(err error) error {
 	if e, ok := err.(*common.ServiceErr); ok {
@@ -56,5 +51,45 @@ func (StockService) SearchStock(ctx context.Context, req *pb.SearchStockRequest)
 	if err != nil {
 		return nil, ServiceErr2GRPCErr(err)
 	}
-
+	var symbols []string
+	for _, d := range data {
+		symbols = append(symbols, d.Symbol)
+	}
+	stocks, err := repository.GetStockBySymbols(symbols...)
+	if err != nil {
+		return nil, ServiceErr2GRPCErr(err)
+	}
+	var (
+		_symbols []string
+		names    []string
+		index    []int
+	)
+	for i, s := range stocks {
+		// 不存在的股票，插入db
+		if s.Symbol == "" {
+			_symbols = append(_symbols, data[i].Symbol)
+			names = append(names, data[i].Name)
+			index = append(index, i)
+		}
+	}
+	if len(_symbols) > 0 {
+		_stocks, err := repository.InsertStocks(_symbols, names)
+		if err != nil {
+			return nil, ServiceErr2GRPCErr(err)
+		}
+		for i, s := range _stocks {
+			stocks[index[i]] = s
+		}
+	}
+	var replyStocks []*pb.StockData
+	for _, s := range stocks {
+		replyStocks = append(replyStocks, &pb.StockData{
+			Id:     int64(s.ID),
+			Symbol: s.Symbol,
+			Name:   s.Name,
+		})
+	}
+	return &pb.SearchStockReply{
+		Stocks: replyStocks,
+	}, nil
 }

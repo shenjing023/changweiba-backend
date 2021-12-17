@@ -5,6 +5,7 @@ import (
 	"os"
 	"stock_service/common"
 	"stock_service/repository/ent"
+	"stock_service/repository/ent/stock"
 
 	"stock_service/conf"
 
@@ -100,4 +101,44 @@ func UnSubscribeStock(stockID int64, userID int64) error {
 		return common.NewServiceErr(common.Internal, err)
 	}
 	return nil
+}
+
+func GetStockBySymbols(symbols ...string) ([]*ent.Stock, error) {
+	stocks, err := entClient.Stock.
+		Query().
+		Where(stock.SymbolIn(symbols...)).
+		All(context.Background())
+	if err != nil {
+		return nil, common.NewServiceErr(common.Internal, err)
+	}
+	var (
+		results []*ent.Stock
+		m       = make(map[string]*ent.Stock)
+	)
+	for _, stock := range stocks {
+		m[stock.Symbol] = stock
+	}
+	for _, symbol := range symbols {
+		if stock, ok := m[symbol]; ok {
+			results = append(results, stock)
+		} else {
+			results = append(results, &ent.Stock{})
+		}
+	}
+	return results, nil
+}
+
+func InsertStocks(symbols, names []string) ([]*ent.Stock, error) {
+	if len(symbols) != len(names) {
+		return nil, common.NewServiceErr(common.InvalidArgument, fmt.Errorf("symbols and names length not equal"))
+	}
+	bulk := make([]*ent.StockCreate, len(symbols))
+	for i, symbol := range symbols {
+		bulk[i] = entClient.Stock.Create().SetSymbol(symbol).SetName(names[i])
+	}
+	stocks, err := entClient.Stock.CreateBulk(bulk...).Save(context.Background())
+	if err != nil {
+		return nil, common.NewServiceErr(common.Internal, err)
+	}
+	return stocks, nil
 }

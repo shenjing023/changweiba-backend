@@ -31,10 +31,10 @@ func xueqiuRequest(url, method string, body io.Reader) (*http.Response, error) {
 }
 
 type StockData struct {
-	Code  string `json:"code"`
-	Query string `json:"query"`
-	State int    `json:"state"`
-	Type  int    `json:"type"`
+	Symbol string `json:"code"`
+	Name   string `json:"query"`
+	State  int    `json:"state"`
+	Type   int    `json:"type"`
 }
 
 type SearchResp struct {
