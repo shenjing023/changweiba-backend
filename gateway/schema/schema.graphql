@@ -24,6 +24,8 @@ type Query {
         page:Int!
         pageSize:Int!
     ):ReplyConnection!
+    """stock搜索"""
+    searchStock(symbolorname: String!): StockConnection!
 }
 
 type Mutation{
@@ -43,4 +45,5 @@ type Mutation{
     deletePost(input: Int!): Boolean!
     """获取access_token"""
     getAccessToken(input: String!): String!
+    
 }

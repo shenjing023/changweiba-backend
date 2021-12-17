@@ -20,9 +20,8 @@ import (
 var (
 	AccountConn *grpc.ClientConn
 	PostConn    *grpc.ClientConn
+	StockConn   *grpc.ClientConn
 )
-
-const serviceSchema = "svc"
 
 // InitGRPCConn init grpc conn
 func InitGRPCConn() {
@@ -43,6 +42,12 @@ func InitGRPCConn() {
 	}
 	resolver.Register(post)
 
+	stock, err := NewDiscovery(etcdConf, "svc-"+conf.Cfg.StockSvcName, conf.Cfg.StockSvcName)
+	if err != nil {
+		panic(err)
+	}
+	resolver.Register(stock)
+
 	AccountConn, err = grpc.DialContext(context.Background(),
 		GetPrefix("svc-"+conf.Cfg.AccountSvcName, conf.Cfg.AccountSvcName),
 		grpc.WithDefaultServiceConfig(`{"LoadBalancingPolicy": "round_robin"}`),
@@ -62,6 +67,15 @@ func InitGRPCConn() {
 	if err != nil {
 		log.Fatalf("fail to postsRPC dial: %+v", err)
 	}
+
+	StockConn, err = grpc.DialContext(context.Background(),
+		GetPrefix("svc-"+conf.Cfg.StockSvcName, conf.Cfg.StockSvcName),
+		grpc.WithDefaultServiceConfig(`{"LoadBalancingPolicy": "round_robin"}`),
+		grpc.WithInsecure(),
+	)
+	if err != nil {
+		log.Fatalf("fail to stockRPC dial: %+v", err)
+	}
 }
 
 // StopGRPCConn 关闭rpc连接
@@ -71,6 +85,9 @@ func StopGRPCConn() {
 	}
 	if PostConn != nil {
 		PostConn.Close()
+	}
+	if StockConn != nil {
+		StockConn.Close()
 	}
 }
 

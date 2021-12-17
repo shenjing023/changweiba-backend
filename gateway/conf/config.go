@@ -18,6 +18,7 @@ type YamlConf struct {
 	LogDir         string `yaml:"log_dir"`
 	PostSvcName    string `yaml:"post_svc_name"`
 	AccountSvcName string `yaml:"account_svc_name"`
+	StockSvcName   string `yaml:"stock_svc_name"`
 	AuthToken      struct {
 		Access struct {
 			SignKey string `yaml:"sign_key"`

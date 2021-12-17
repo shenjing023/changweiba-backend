@@ -99,13 +99,14 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Comment  func(childComplexity int, commentID int) int
-		Comments func(childComplexity int, postID int, page int, pageSize int) int
-		Post     func(childComplexity int, postID int) int
-		Posts    func(childComplexity int, page int, pageSize int) int
-		Replies  func(childComplexity int, commentID int, page int, pageSize int) int
-		Reply    func(childComplexity int, replyID int) int
-		User     func(childComplexity int, userID int) int
+		Comment     func(childComplexity int, commentID int) int
+		Comments    func(childComplexity int, postID int, page int, pageSize int) int
+		Post        func(childComplexity int, postID int) int
+		Posts       func(childComplexity int, page int, pageSize int) int
+		Replies     func(childComplexity int, commentID int, page int, pageSize int) int
+		Reply       func(childComplexity int, replyID int) int
+		SearchStock func(childComplexity int, symbolorname string) int
+		User        func(childComplexity int, userID int) int
 	}
 
 	Reply struct {
@@ -120,6 +121,17 @@ type ComplexityRoot struct {
 	}
 
 	ReplyConnection struct {
+		Nodes      func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	Stock struct {
+		ID     func(childComplexity int) int
+		Name   func(childComplexity int) int
+		Symbol func(childComplexity int) int
+	}
+
+	StockConnection struct {
 		Nodes      func(childComplexity int) int
 		TotalCount func(childComplexity int) int
 	}
@@ -170,6 +182,7 @@ type QueryResolver interface {
 	Comments(ctx context.Context, postID int, page int, pageSize int) (*models.CommentConnection, error)
 	Reply(ctx context.Context, replyID int) (*models.Reply, error)
 	Replies(ctx context.Context, commentID int, page int, pageSize int) (*models.ReplyConnection, error)
+	SearchStock(ctx context.Context, symbolorname string) (*models.StockConnection, error)
 }
 type ReplyResolver interface {
 	User(ctx context.Context, obj *models.Reply) (*models.User, error)
@@ -553,6 +566,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Reply(childComplexity, args["replyId"].(int)), true
 
+	case "Query.searchStock":
+		if e.complexity.Query.SearchStock == nil {
+			break
+		}
+
+		args, err := ec.field_Query_searchStock_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SearchStock(childComplexity, args["symbolorname"].(string)), true
+
 	case "Query.user":
 		if e.complexity.Query.User == nil {
 			break
@@ -634,6 +659,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ReplyConnection.TotalCount(childComplexity), true
+
+	case "Stock.id":
+		if e.complexity.Stock.ID == nil {
+			break
+		}
+
+		return e.complexity.Stock.ID(childComplexity), true
+
+	case "Stock.name":
+		if e.complexity.Stock.Name == nil {
+			break
+		}
+
+		return e.complexity.Stock.Name(childComplexity), true
+
+	case "Stock.symbol":
+		if e.complexity.Stock.Symbol == nil {
+			break
+		}
+
+		return e.complexity.Stock.Symbol(childComplexity), true
+
+	case "StockConnection.nodes":
+		if e.complexity.StockConnection.Nodes == nil {
+			break
+		}
+
+		return e.complexity.StockConnection.Nodes(childComplexity), true
+
+	case "StockConnection.totalCount":
+		if e.complexity.StockConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.StockConnection.TotalCount(childComplexity), true
 
 	case "User.avatar":
 		if e.complexity.User.Avatar == nil {
@@ -965,6 +1025,8 @@ input DeletePost{
         page:Int!
         pageSize:Int!
     ):ReplyConnection!
+    """stock搜索"""
+    searchStock(symbolorname: String!): StockConnection!
 }
 
 type Mutation{
@@ -984,6 +1046,17 @@ type Mutation{
     deletePost(input: Int!): Boolean!
     """获取access_token"""
     getAccessToken(input: String!): String!
+    
+}`, BuiltIn: false},
+	{Name: "schema/stock.graphql", Input: `type Stock{
+    id: Int!
+    symbol: String!
+    name: String!
+}
+
+type StockConnection{
+    nodes:[Stock]
+    totalCount:Int!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -1322,6 +1395,21 @@ func (ec *executionContext) field_Query_reply_args(ctx context.Context, rawArgs 
 		}
 	}
 	args["replyId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_searchStock_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["symbolorname"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("symbolorname"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["symbolorname"] = arg0
 	return args, nil
 }
 
@@ -2967,6 +3055,48 @@ func (ec *executionContext) _Query_replies(ctx context.Context, field graphql.Co
 	return ec.marshalNReplyConnection2ᚖgatewayᚋmodelsᚐReplyConnection(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_searchStock(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_searchStock_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().SearchStock(rctx, args["symbolorname"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.StockConnection)
+	fc.Result = res
+	return ec.marshalNStockConnection2ᚖgatewayᚋmodelsᚐStockConnection(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -3359,6 +3489,178 @@ func (ec *executionContext) _ReplyConnection_totalCount(ctx context.Context, fie
 	}()
 	fc := &graphql.FieldContext{
 		Object:     "ReplyConnection",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Stock_id(ctx context.Context, field graphql.CollectedField, obj *models.Stock) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Stock",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Stock_symbol(ctx context.Context, field graphql.CollectedField, obj *models.Stock) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Stock",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Symbol, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Stock_name(ctx context.Context, field graphql.CollectedField, obj *models.Stock) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Stock",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _StockConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.StockConnection) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "StockConnection",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nodes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*models.Stock)
+	fc.Result = res
+	return ec.marshalOStock2ᚕᚖgatewayᚋmodelsᚐStock(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _StockConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *models.StockConnection) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "StockConnection",
 		Field:      field,
 		Args:       nil,
 		IsMethod:   false,
@@ -5628,6 +5930,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "searchStock":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_searchStock(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -5729,6 +6045,72 @@ func (ec *executionContext) _ReplyConnection(ctx context.Context, sel ast.Select
 			out.Values[i] = ec._ReplyConnection_nodes(ctx, field, obj)
 		case "totalCount":
 			out.Values[i] = ec._ReplyConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var stockImplementors = []string{"Stock"}
+
+func (ec *executionContext) _Stock(ctx context.Context, sel ast.SelectionSet, obj *models.Stock) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, stockImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Stock")
+		case "id":
+			out.Values[i] = ec._Stock_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "symbol":
+			out.Values[i] = ec._Stock_symbol(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "name":
+			out.Values[i] = ec._Stock_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var stockConnectionImplementors = []string{"StockConnection"}
+
+func (ec *executionContext) _StockConnection(ctx context.Context, sel ast.SelectionSet, obj *models.StockConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, stockConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("StockConnection")
+		case "nodes":
+			out.Values[i] = ec._StockConnection_nodes(ctx, field, obj)
+		case "totalCount":
+			out.Values[i] = ec._StockConnection_totalCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -6271,6 +6653,20 @@ func (ec *executionContext) unmarshalNReportUser2gatewayᚋmodelsᚐReportUser(c
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNStockConnection2gatewayᚋmodelsᚐStockConnection(ctx context.Context, sel ast.SelectionSet, v models.StockConnection) graphql.Marshaler {
+	return ec._StockConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNStockConnection2ᚖgatewayᚋmodelsᚐStockConnection(ctx context.Context, sel ast.SelectionSet, v *models.StockConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._StockConnection(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -6779,6 +7175,54 @@ func (ec *executionContext) marshalOReplyConnection2ᚖgatewayᚋmodelsᚐReplyC
 		return graphql.Null
 	}
 	return ec._ReplyConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOStock2ᚕᚖgatewayᚋmodelsᚐStock(ctx context.Context, sel ast.SelectionSet, v []*models.Stock) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOStock2ᚖgatewayᚋmodelsᚐStock(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOStock2ᚖgatewayᚋmodelsᚐStock(ctx context.Context, sel ast.SelectionSet, v *models.Stock) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Stock(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

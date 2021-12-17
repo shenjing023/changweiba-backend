@@ -103,6 +103,10 @@ func (r *queryResolver) Replies(ctx context.Context, commentID int, page int, pa
 	panic("not implemented")
 }
 
+func (r *queryResolver) SearchStock(ctx context.Context, symbolorname string) (*models.StockConnection, error) {
+	return handler.SearchStock(ctx, symbolorname)
+}
+
 func (r *replyResolver) User(ctx context.Context, obj *models.Reply) (*models.User, error) {
 	return dataloader.Loader.UsersByIDs.Load(ctx, int64(obj.User.ID))
 }

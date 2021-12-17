@@ -3,6 +3,7 @@ debug: false
 port: 8020
 account_svc_name: "account"
 post_svc_name: "post"
+stock_svc_name: "stock"
 auth_token:
   access:
     sign_key: "ssdadasd1"

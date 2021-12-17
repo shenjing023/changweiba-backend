@@ -1,0 +1,10 @@
+type Stock{
+    id: Int!
+    symbol: String!
+    name: String!
+}
+
+type StockConnection{
+    nodes:[Stock]
+    totalCount:Int!
+}

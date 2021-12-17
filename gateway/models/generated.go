@@ -110,6 +110,17 @@ type ReportUser struct {
 	Reason         string `json:"reason"`
 }
 
+type Stock struct {
+	ID     int    `json:"id"`
+	Symbol string `json:"symbol"`
+	Name   string `json:"name"`
+}
+
+type StockConnection struct {
+	Nodes      []*Stock `json:"nodes"`
+	TotalCount int      `json:"totalCount"`
+}
+
 type User struct {
 	ID       int    `json:"id"`
 	Name     string `json:"name"`
