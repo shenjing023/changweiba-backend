@@ -17,6 +17,4 @@ etcd:
   host: "10.0.0.215"
   port: 2379
 log_dir: ""
-salt: "asdah#!2sddh"
 svc_name: "stock"
-xueqiu_token: "e8bc5b27c7b41a2e2bb25sda6b92fce058a36b96467e"

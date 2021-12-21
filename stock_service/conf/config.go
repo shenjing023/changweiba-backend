@@ -33,9 +33,8 @@ type YamlConf struct {
 		Host string `yaml:"host"`
 		Port int    `yaml:"port"`
 	} `yaml:"etcd"`
-	SvcName     string `yaml:"svc_name"`
-	LogDir      string `yaml:"log_dir"`
-	XueqiuToken string `yaml:"xueqiu_token"`
+	SvcName string `yaml:"svc_name"`
+	LogDir  string `yaml:"log_dir"`
 }
 
 // Cfg global config variate

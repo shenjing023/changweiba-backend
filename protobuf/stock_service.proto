@@ -22,18 +22,30 @@ message TradeData {
     int64 xueqiu_count=4;
 }
 
-message StockData {
+message StockInfo {
     int64 id=1;
     string symbol=2;
     string name=3;
-    repeated TradeData trade_data=4;
 }
 
-message SubscribeStockTradeRequest {
+message StockData {
+    StockInfo info=1;
+    repeated TradeData trade_data=2;
+}
+
+message SubscribeStocksRequest {
     int64 user_id=1;
 }
 
-message SubscribeStockTradeReply {
+message SubscribeStocksReply {
+    repeated StockInfo data=1;
+}
+
+message StockTradeDataRequest {
+    int64 id=1;
+}
+
+message StockTradeDataReply {
     repeated StockData data=1;
 }
 
@@ -42,12 +54,13 @@ message SearchStockRequest {
 }
 
 message SearchStockReply {
-    repeated StockData stocks=1;
+    repeated StockInfo stocks=1;
 }
 
 service StockService{
     rpc SubscribeStock(SubscribeStockRequest) returns(google.protobuf.Empty){}
     rpc UnSubscribeStock(UnSubscribeStockRequest) returns(google.protobuf.Empty){}
-    rpc SubscribeStockTrade(SubscribeStockTradeRequest) returns(SubscribeStockTradeReply){}
+    rpc SubscribedStocks(SubscribeStocksRequest) returns(SubscribeStocksReply){}
     rpc SearchStock(SearchStockRequest) returns(SearchStockReply){}
+    rpc StockTradeData(StockTradeDataRequest) returns(StockTradeDataReply){}
 }

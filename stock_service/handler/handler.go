@@ -35,20 +35,21 @@ func (StockService) SubscribeStock(ctx context.Context, req *pb.SubscribeStockRe
 	if err := repository.SubscribeStock(req.StockId, req.UserId); err != nil {
 		return nil, ServiceErr2GRPCErr(err)
 	}
-	return nil, nil
+	return new(emptypb.Empty), nil
 }
 
 func (StockService) UnSubscribeStock(ctx context.Context, req *pb.UnSubscribeStockRequest) (*emptypb.Empty, error) {
 	if err := repository.UnSubscribeStock(req.StockId, req.UserId); err != nil {
 		return nil, ServiceErr2GRPCErr(err)
 	}
-	return nil, nil
+	return new(emptypb.Empty), nil
 }
 
 func (StockService) SearchStock(ctx context.Context, req *pb.SearchStockRequest) (*pb.SearchStockReply, error) {
 	symbolorname := strings.TrimSpace(req.Symbolorname)
-	data, err := common.SearchStock(symbolorname)
+	data, err := SearchStock(symbolorname)
 	if err != nil {
+		log.Errorf("SearchStock Error1: %v", err)
 		return nil, ServiceErr2GRPCErr(err)
 	}
 	var symbols []string
@@ -57,6 +58,7 @@ func (StockService) SearchStock(ctx context.Context, req *pb.SearchStockRequest)
 	}
 	stocks, err := repository.GetStockBySymbols(symbols...)
 	if err != nil {
+		log.Errorf("SearchStock Error2: %v", err)
 		return nil, ServiceErr2GRPCErr(err)
 	}
 	var (
@@ -75,15 +77,16 @@ func (StockService) SearchStock(ctx context.Context, req *pb.SearchStockRequest)
 	if len(_symbols) > 0 {
 		_stocks, err := repository.InsertStocks(_symbols, names)
 		if err != nil {
+			log.Errorf("SearchStock Error3: %v", err)
 			return nil, ServiceErr2GRPCErr(err)
 		}
 		for i, s := range _stocks {
 			stocks[index[i]] = s
 		}
 	}
-	var replyStocks []*pb.StockData
+	var replyStocks []*pb.StockInfo
 	for _, s := range stocks {
-		replyStocks = append(replyStocks, &pb.StockData{
+		replyStocks = append(replyStocks, &pb.StockInfo{
 			Id:     int64(s.ID),
 			Symbol: s.Symbol,
 			Name:   s.Name,
@@ -91,5 +94,24 @@ func (StockService) SearchStock(ctx context.Context, req *pb.SearchStockRequest)
 	}
 	return &pb.SearchStockReply{
 		Stocks: replyStocks,
+	}, nil
+}
+
+func (StockService) SubscribedStocks(ctx context.Context, req *pb.SubscribeStocksRequest) (*pb.SubscribeStocksReply, error) {
+	stocks, err := repository.GetSubscribedStocks(req.UserId)
+	if err != nil {
+		log.Errorf("SubscribedStocks Error: %v", err)
+		return nil, ServiceErr2GRPCErr(err)
+	}
+	var replyStocks []*pb.StockInfo
+	for _, s := range stocks {
+		replyStocks = append(replyStocks, &pb.StockInfo{
+			Id:     int64(s.ID),
+			Symbol: s.Symbol,
+			Name:   s.Name,
+		})
+	}
+	return &pb.SubscribeStocksReply{
+		Data: replyStocks,
 	}, nil
 }

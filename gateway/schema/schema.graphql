@@ -26,6 +26,8 @@ type Query {
     ):ReplyConnection!
     """stock搜索"""
     searchStock(symbolorname: String!): StockConnection!
+    """获取订阅stock"""
+    subscribedStocks: StockConnection!
 }
 
 type Mutation{
@@ -45,5 +47,8 @@ type Mutation{
     deletePost(input: Int!): Boolean!
     """获取access_token"""
     getAccessToken(input: String!): String!
-    
+    """订阅stock"""
+    subscribeStock(input: Int!): Boolean!
+    """取消订阅stock"""
+    unsubscribeStock(input: Int!): Boolean!
 }

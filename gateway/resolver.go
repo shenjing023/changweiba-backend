@@ -59,6 +59,14 @@ func (r *mutationResolver) GetAccessToken(ctx context.Context, input string) (st
 	panic("not implemented")
 }
 
+func (r *mutationResolver) SubscribeStock(ctx context.Context, input int) (bool, error) {
+	return handler.SubscribeStock(ctx, input)
+}
+
+func (r *mutationResolver) UnsubscribeStock(ctx context.Context, input int) (bool, error) {
+	return handler.UnSubscribeStock(ctx, input)
+}
+
 func (r *postResolver) User(ctx context.Context, obj *models.Post) (*models.User, error) {
 	return dataloader.Loader.UsersByIDs.Load(ctx, int64(obj.User.ID))
 }
@@ -105,6 +113,10 @@ func (r *queryResolver) Replies(ctx context.Context, commentID int, page int, pa
 
 func (r *queryResolver) SearchStock(ctx context.Context, symbolorname string) (*models.StockConnection, error) {
 	return handler.SearchStock(ctx, symbolorname)
+}
+
+func (r *queryResolver) SubscribedStocks(ctx context.Context) (*models.StockConnection, error) {
+	return handler.SubscribedStocks(ctx)
 }
 
 func (r *replyResolver) User(ctx context.Context, obj *models.Reply) (*models.User, error) {

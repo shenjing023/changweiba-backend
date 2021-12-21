@@ -6,6 +6,7 @@ import (
 	"stock_service/common"
 	"stock_service/repository/ent"
 	"stock_service/repository/ent/stock"
+	"stock_service/repository/ent/user"
 
 	"stock_service/conf"
 
@@ -138,6 +139,17 @@ func InsertStocks(symbols, names []string) ([]*ent.Stock, error) {
 	}
 	stocks, err := entClient.Stock.CreateBulk(bulk...).Save(context.Background())
 	if err != nil {
+		return nil, common.NewServiceErr(common.Internal, err)
+	}
+	return stocks, nil
+}
+
+func GetSubscribedStocks(userID int64) ([]*ent.Stock, error) {
+	stocks, err := entClient.User.Query().Where(user.ID(uint64(userID))).QuerySubscribeStocks().All(context.Background())
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, common.NewServiceErr(common.NotFound, err)
+		}
 		return nil, common.NewServiceErr(common.Internal, err)
 	}
 	return stocks, nil
