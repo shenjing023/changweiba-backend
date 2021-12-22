@@ -563,10 +563,10 @@ type TradeDateMutation struct {
 	typ                     string
 	id                      *uint64
 	t_date                  *string
-	end_price               *float64
-	addend_price            *float64
-	volumn                  *int64
-	addvolumn               *int64
+	close                   *float64
+	addclose                *float64
+	volume                  *float64
+	addvolume               *float64
 	create_at               *int64
 	addcreate_at            *int64
 	update_at               *int64
@@ -751,116 +751,116 @@ func (m *TradeDateMutation) ResetTDate() {
 	m.t_date = nil
 }
 
-// SetEndPrice sets the "end_price" field.
-func (m *TradeDateMutation) SetEndPrice(f float64) {
-	m.end_price = &f
-	m.addend_price = nil
+// SetClose sets the "close" field.
+func (m *TradeDateMutation) SetClose(f float64) {
+	m.close = &f
+	m.addclose = nil
 }
 
-// EndPrice returns the value of the "end_price" field in the mutation.
-func (m *TradeDateMutation) EndPrice() (r float64, exists bool) {
-	v := m.end_price
+// Close returns the value of the "close" field in the mutation.
+func (m *TradeDateMutation) Close() (r float64, exists bool) {
+	v := m.close
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldEndPrice returns the old "end_price" field's value of the TradeDate entity.
+// OldClose returns the old "close" field's value of the TradeDate entity.
 // If the TradeDate object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TradeDateMutation) OldEndPrice(ctx context.Context) (v float64, err error) {
+func (m *TradeDateMutation) OldClose(ctx context.Context) (v float64, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldEndPrice is only allowed on UpdateOne operations")
+		return v, fmt.Errorf("OldClose is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldEndPrice requires an ID field in the mutation")
+		return v, fmt.Errorf("OldClose requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldEndPrice: %w", err)
+		return v, fmt.Errorf("querying old value for OldClose: %w", err)
 	}
-	return oldValue.EndPrice, nil
+	return oldValue.Close, nil
 }
 
-// AddEndPrice adds f to the "end_price" field.
-func (m *TradeDateMutation) AddEndPrice(f float64) {
-	if m.addend_price != nil {
-		*m.addend_price += f
+// AddClose adds f to the "close" field.
+func (m *TradeDateMutation) AddClose(f float64) {
+	if m.addclose != nil {
+		*m.addclose += f
 	} else {
-		m.addend_price = &f
+		m.addclose = &f
 	}
 }
 
-// AddedEndPrice returns the value that was added to the "end_price" field in this mutation.
-func (m *TradeDateMutation) AddedEndPrice() (r float64, exists bool) {
-	v := m.addend_price
+// AddedClose returns the value that was added to the "close" field in this mutation.
+func (m *TradeDateMutation) AddedClose() (r float64, exists bool) {
+	v := m.addclose
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// ResetEndPrice resets all changes to the "end_price" field.
-func (m *TradeDateMutation) ResetEndPrice() {
-	m.end_price = nil
-	m.addend_price = nil
+// ResetClose resets all changes to the "close" field.
+func (m *TradeDateMutation) ResetClose() {
+	m.close = nil
+	m.addclose = nil
 }
 
-// SetVolumn sets the "volumn" field.
-func (m *TradeDateMutation) SetVolumn(i int64) {
-	m.volumn = &i
-	m.addvolumn = nil
+// SetVolume sets the "volume" field.
+func (m *TradeDateMutation) SetVolume(f float64) {
+	m.volume = &f
+	m.addvolume = nil
 }
 
-// Volumn returns the value of the "volumn" field in the mutation.
-func (m *TradeDateMutation) Volumn() (r int64, exists bool) {
-	v := m.volumn
+// Volume returns the value of the "volume" field in the mutation.
+func (m *TradeDateMutation) Volume() (r float64, exists bool) {
+	v := m.volume
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldVolumn returns the old "volumn" field's value of the TradeDate entity.
+// OldVolume returns the old "volume" field's value of the TradeDate entity.
 // If the TradeDate object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TradeDateMutation) OldVolumn(ctx context.Context) (v int64, err error) {
+func (m *TradeDateMutation) OldVolume(ctx context.Context) (v float64, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldVolumn is only allowed on UpdateOne operations")
+		return v, fmt.Errorf("OldVolume is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldVolumn requires an ID field in the mutation")
+		return v, fmt.Errorf("OldVolume requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldVolumn: %w", err)
+		return v, fmt.Errorf("querying old value for OldVolume: %w", err)
 	}
-	return oldValue.Volumn, nil
+	return oldValue.Volume, nil
 }
 
-// AddVolumn adds i to the "volumn" field.
-func (m *TradeDateMutation) AddVolumn(i int64) {
-	if m.addvolumn != nil {
-		*m.addvolumn += i
+// AddVolume adds f to the "volume" field.
+func (m *TradeDateMutation) AddVolume(f float64) {
+	if m.addvolume != nil {
+		*m.addvolume += f
 	} else {
-		m.addvolumn = &i
+		m.addvolume = &f
 	}
 }
 
-// AddedVolumn returns the value that was added to the "volumn" field in this mutation.
-func (m *TradeDateMutation) AddedVolumn() (r int64, exists bool) {
-	v := m.addvolumn
+// AddedVolume returns the value that was added to the "volume" field in this mutation.
+func (m *TradeDateMutation) AddedVolume() (r float64, exists bool) {
+	v := m.addvolume
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// ResetVolumn resets all changes to the "volumn" field.
-func (m *TradeDateMutation) ResetVolumn() {
-	m.volumn = nil
-	m.addvolumn = nil
+// ResetVolume resets all changes to the "volume" field.
+func (m *TradeDateMutation) ResetVolume() {
+	m.volume = nil
+	m.addvolume = nil
 }
 
 // SetCreateAt sets the "create_at" field.
@@ -1083,11 +1083,11 @@ func (m *TradeDateMutation) Fields() []string {
 	if m.t_date != nil {
 		fields = append(fields, tradedate.FieldTDate)
 	}
-	if m.end_price != nil {
-		fields = append(fields, tradedate.FieldEndPrice)
+	if m.close != nil {
+		fields = append(fields, tradedate.FieldClose)
 	}
-	if m.volumn != nil {
-		fields = append(fields, tradedate.FieldVolumn)
+	if m.volume != nil {
+		fields = append(fields, tradedate.FieldVolume)
 	}
 	if m.create_at != nil {
 		fields = append(fields, tradedate.FieldCreateAt)
@@ -1110,10 +1110,10 @@ func (m *TradeDateMutation) Field(name string) (ent.Value, bool) {
 		return m.StockID()
 	case tradedate.FieldTDate:
 		return m.TDate()
-	case tradedate.FieldEndPrice:
-		return m.EndPrice()
-	case tradedate.FieldVolumn:
-		return m.Volumn()
+	case tradedate.FieldClose:
+		return m.Close()
+	case tradedate.FieldVolume:
+		return m.Volume()
 	case tradedate.FieldCreateAt:
 		return m.CreateAt()
 	case tradedate.FieldUpdateAt:
@@ -1133,10 +1133,10 @@ func (m *TradeDateMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldStockID(ctx)
 	case tradedate.FieldTDate:
 		return m.OldTDate(ctx)
-	case tradedate.FieldEndPrice:
-		return m.OldEndPrice(ctx)
-	case tradedate.FieldVolumn:
-		return m.OldVolumn(ctx)
+	case tradedate.FieldClose:
+		return m.OldClose(ctx)
+	case tradedate.FieldVolume:
+		return m.OldVolume(ctx)
 	case tradedate.FieldCreateAt:
 		return m.OldCreateAt(ctx)
 	case tradedate.FieldUpdateAt:
@@ -1166,19 +1166,19 @@ func (m *TradeDateMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetTDate(v)
 		return nil
-	case tradedate.FieldEndPrice:
+	case tradedate.FieldClose:
 		v, ok := value.(float64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetEndPrice(v)
+		m.SetClose(v)
 		return nil
-	case tradedate.FieldVolumn:
-		v, ok := value.(int64)
+	case tradedate.FieldVolume:
+		v, ok := value.(float64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetVolumn(v)
+		m.SetVolume(v)
 		return nil
 	case tradedate.FieldCreateAt:
 		v, ok := value.(int64)
@@ -1209,11 +1209,11 @@ func (m *TradeDateMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *TradeDateMutation) AddedFields() []string {
 	var fields []string
-	if m.addend_price != nil {
-		fields = append(fields, tradedate.FieldEndPrice)
+	if m.addclose != nil {
+		fields = append(fields, tradedate.FieldClose)
 	}
-	if m.addvolumn != nil {
-		fields = append(fields, tradedate.FieldVolumn)
+	if m.addvolume != nil {
+		fields = append(fields, tradedate.FieldVolume)
 	}
 	if m.addcreate_at != nil {
 		fields = append(fields, tradedate.FieldCreateAt)
@@ -1232,10 +1232,10 @@ func (m *TradeDateMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *TradeDateMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case tradedate.FieldEndPrice:
-		return m.AddedEndPrice()
-	case tradedate.FieldVolumn:
-		return m.AddedVolumn()
+	case tradedate.FieldClose:
+		return m.AddedClose()
+	case tradedate.FieldVolume:
+		return m.AddedVolume()
 	case tradedate.FieldCreateAt:
 		return m.AddedCreateAt()
 	case tradedate.FieldUpdateAt:
@@ -1251,19 +1251,19 @@ func (m *TradeDateMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *TradeDateMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case tradedate.FieldEndPrice:
+	case tradedate.FieldClose:
 		v, ok := value.(float64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.AddEndPrice(v)
+		m.AddClose(v)
 		return nil
-	case tradedate.FieldVolumn:
-		v, ok := value.(int64)
+	case tradedate.FieldVolume:
+		v, ok := value.(float64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.AddVolumn(v)
+		m.AddVolume(v)
 		return nil
 	case tradedate.FieldCreateAt:
 		v, ok := value.(int64)
@@ -1328,11 +1328,11 @@ func (m *TradeDateMutation) ResetField(name string) error {
 	case tradedate.FieldTDate:
 		m.ResetTDate()
 		return nil
-	case tradedate.FieldEndPrice:
-		m.ResetEndPrice()
+	case tradedate.FieldClose:
+		m.ResetClose()
 		return nil
-	case tradedate.FieldVolumn:
-		m.ResetVolumn()
+	case tradedate.FieldVolume:
+		m.ResetVolume()
 		return nil
 	case tradedate.FieldCreateAt:
 		m.ResetCreateAt()

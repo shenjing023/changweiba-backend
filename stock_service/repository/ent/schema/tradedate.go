@@ -7,6 +7,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 )
 
 // TradeDate holds the schema definition for the TradeDate entity.
@@ -22,10 +23,8 @@ func (TradeDate) Fields() []ent.Field {
 		field.String("t_date").SchemaType(map[string]string{
 			dialect.MySQL: "date", // Override MySQL.
 		}).NotEmpty().Comment("交易日期"),
-		field.Float("end_price").Comment("收盘价"),
-		field.Int64("volumn").SchemaType(map[string]string{
-			dialect.MySQL: "int UNSIGNED", // Override MySQL.
-		}).NonNegative().Default(0).Comment("成交量"),
+		field.Float("close").Comment("收盘价"),
+		field.Float("volume").Comment("成交量"),
 		field.Int64("create_at").SchemaType(map[string]string{
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.
 		}).NonNegative().Default(0).Comment("创建时间").Immutable(),
@@ -50,5 +49,12 @@ func (TradeDate) Edges() []ent.Edge {
 func (TradeDate) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "trade_date"},
+	}
+}
+
+func (TradeDate) Indexes() []ent.Index {
+	return []ent.Index{
+		// 非唯一约束索引
+		index.Fields("stock_id"),
 	}
 }

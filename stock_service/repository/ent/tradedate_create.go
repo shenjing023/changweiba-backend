@@ -40,23 +40,15 @@ func (tdc *TradeDateCreate) SetTDate(s string) *TradeDateCreate {
 	return tdc
 }
 
-// SetEndPrice sets the "end_price" field.
-func (tdc *TradeDateCreate) SetEndPrice(f float64) *TradeDateCreate {
-	tdc.mutation.SetEndPrice(f)
+// SetClose sets the "close" field.
+func (tdc *TradeDateCreate) SetClose(f float64) *TradeDateCreate {
+	tdc.mutation.SetClose(f)
 	return tdc
 }
 
-// SetVolumn sets the "volumn" field.
-func (tdc *TradeDateCreate) SetVolumn(i int64) *TradeDateCreate {
-	tdc.mutation.SetVolumn(i)
-	return tdc
-}
-
-// SetNillableVolumn sets the "volumn" field if the given value is not nil.
-func (tdc *TradeDateCreate) SetNillableVolumn(i *int64) *TradeDateCreate {
-	if i != nil {
-		tdc.SetVolumn(*i)
-	}
+// SetVolume sets the "volume" field.
+func (tdc *TradeDateCreate) SetVolume(f float64) *TradeDateCreate {
+	tdc.mutation.SetVolume(f)
 	return tdc
 }
 
@@ -184,10 +176,6 @@ func (tdc *TradeDateCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (tdc *TradeDateCreate) defaults() {
-	if _, ok := tdc.mutation.Volumn(); !ok {
-		v := tradedate.DefaultVolumn
-		tdc.mutation.SetVolumn(v)
-	}
 	if _, ok := tdc.mutation.CreateAt(); !ok {
 		v := tradedate.DefaultCreateAt
 		tdc.mutation.SetCreateAt(v)
@@ -217,16 +205,11 @@ func (tdc *TradeDateCreate) check() error {
 			return &ValidationError{Name: "t_date", err: fmt.Errorf(`ent: validator failed for field "t_date": %w`, err)}
 		}
 	}
-	if _, ok := tdc.mutation.EndPrice(); !ok {
-		return &ValidationError{Name: "end_price", err: errors.New(`ent: missing required field "end_price"`)}
+	if _, ok := tdc.mutation.Close(); !ok {
+		return &ValidationError{Name: "close", err: errors.New(`ent: missing required field "close"`)}
 	}
-	if _, ok := tdc.mutation.Volumn(); !ok {
-		return &ValidationError{Name: "volumn", err: errors.New(`ent: missing required field "volumn"`)}
-	}
-	if v, ok := tdc.mutation.Volumn(); ok {
-		if err := tradedate.VolumnValidator(v); err != nil {
-			return &ValidationError{Name: "volumn", err: fmt.Errorf(`ent: validator failed for field "volumn": %w`, err)}
-		}
+	if _, ok := tdc.mutation.Volume(); !ok {
+		return &ValidationError{Name: "volume", err: errors.New(`ent: missing required field "volume"`)}
 	}
 	if _, ok := tdc.mutation.CreateAt(); !ok {
 		return &ValidationError{Name: "create_at", err: errors.New(`ent: missing required field "create_at"`)}
@@ -298,21 +281,21 @@ func (tdc *TradeDateCreate) createSpec() (*TradeDate, *sqlgraph.CreateSpec) {
 		})
 		_node.TDate = value
 	}
-	if value, ok := tdc.mutation.EndPrice(); ok {
+	if value, ok := tdc.mutation.Close(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeFloat64,
 			Value:  value,
-			Column: tradedate.FieldEndPrice,
+			Column: tradedate.FieldClose,
 		})
-		_node.EndPrice = value
+		_node.Close = value
 	}
-	if value, ok := tdc.mutation.Volumn(); ok {
+	if value, ok := tdc.mutation.Volume(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeFloat64,
 			Value:  value,
-			Column: tradedate.FieldVolumn,
+			Column: tradedate.FieldVolume,
 		})
-		_node.Volumn = value
+		_node.Volume = value
 	}
 	if value, ok := tdc.mutation.CreateAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{

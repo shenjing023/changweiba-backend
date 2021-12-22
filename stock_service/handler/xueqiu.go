@@ -47,10 +47,24 @@ type StockData struct {
 	Type   int    `json:"type"`
 }
 
+type CommentData struct {
+	ErrorResp `json:",omitempty"`
+	List      []struct {
+		description string `json:"-"`
+		Id          int    `json:"id"`
+		CreatedAt   int64  `json:"created_at"`
+		ViewCount   int    `json:"view_count"`
+	} `json:"list,omitempty"`
+}
+
+type ErrorResp struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
 type SearchResp struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
-	Data    []StockData `json:"data,omitempty"`
+	ErrorResp
+	Data []StockData `json:"data,omitempty"`
 }
 
 // Option set option function
@@ -157,4 +171,63 @@ func (x *Xueqiu) SearchStock(symbolorname string) ([]StockData, error) {
 
 func SearchStock(symbolorname string) ([]StockData, error) {
 	return defaultXueqiu.SearchStock(symbolorname)
+}
+
+// 拉取股票讨论数据
+func (x *Xueqiu) GetStockCommentData(lastPullTime int64, symbol string) (map[string]int, error) {
+	url := "https://xueqiu.com/query/v1/symbol/search/status.json?count=20&comment=0&symbol=%s&hl=0&source=all&sort=time&page=%d&q=&type=11"
+	result := make(map[string]int)
+	for page := 1; page <= 50; page++ {
+		url = fmt.Sprintf(url, symbol, page)
+		var data CommentData
+		for i := 0; i < x.maxRetry; i++ {
+			res, err := x.request(url, http.MethodGet, nil)
+			if err != nil {
+				log.Infof("url[%s] request failed: %v", url, err)
+				time.Sleep(time.Second)
+				continue
+			}
+			defer res.Body.Close()
+			t, err := ioutil.ReadAll(res.Body)
+			if err != nil {
+				return nil, err
+			}
+			err = json.Unmarshal(t, &data)
+			if err != nil {
+				return nil, fmt.Errorf("json unmarshal failed: %v", err)
+			}
+			if data.Code != 0 && i != x.maxRetry-1 {
+				log.Infof("url[%s] request failed msg[%s] and retry: %d", url, data.Message, i+1)
+				time.Sleep(time.Millisecond * 100)
+				continue
+			}
+			break
+		}
+		flag := x.parseComment(&data, lastPullTime, result)
+		if flag {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	return result, nil
+}
+
+func (x *Xueqiu) parseComment(data *CommentData, lastPullTime int64, result map[string]int) (flag bool) {
+	now := time.Now()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	for _, v := range data.List {
+		t := v.CreatedAt / 1000
+		if t >= lastPullTime && t < today.Unix() {
+			day := time.Unix(t, 0).Local().Format("2006-01-02")
+			if _, ok := result[day]; !ok {
+				result[day] = 1
+			} else {
+				result[day]++
+			}
+		} else {
+			flag = true
+			break
+		}
+	}
+	return
 }

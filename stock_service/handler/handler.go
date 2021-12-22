@@ -98,7 +98,7 @@ func (StockService) SearchStock(ctx context.Context, req *pb.SearchStockRequest)
 }
 
 func (StockService) SubscribedStocks(ctx context.Context, req *pb.SubscribeStocksRequest) (*pb.SubscribeStocksReply, error) {
-	stocks, err := repository.GetSubscribedStocks(req.UserId)
+	stocks, err := repository.GetSubscribedStocksByUserID(req.UserId)
 	if err != nil {
 		log.Errorf("SubscribedStocks Error: %v", err)
 		return nil, ServiceErr2GRPCErr(err)

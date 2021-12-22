@@ -6,7 +6,9 @@ import (
 	"stock_service/common"
 	"stock_service/repository/ent"
 	"stock_service/repository/ent/stock"
+	"stock_service/repository/ent/tradedate"
 	"stock_service/repository/ent/user"
+	"time"
 
 	"stock_service/conf"
 
@@ -85,6 +87,8 @@ func SubscribeStock(stockID int64, userID int64) error {
 	}
 	if err = user.Update().AddSubscribeStockIDs(uint64(stockID)).Exec(context.Background()); err != nil {
 		return common.NewServiceErr(common.Internal, err)
+	} else if ent.IsConstraintError(err) {
+		return nil
 	}
 	return nil
 }
@@ -144,7 +148,7 @@ func InsertStocks(symbols, names []string) ([]*ent.Stock, error) {
 	return stocks, nil
 }
 
-func GetSubscribedStocks(userID int64) ([]*ent.Stock, error) {
+func GetSubscribedStocksByUserID(userID int64) ([]*ent.Stock, error) {
 	stocks, err := entClient.User.Query().Where(user.ID(uint64(userID))).QuerySubscribeStocks().All(context.Background())
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -153,4 +157,41 @@ func GetSubscribedStocks(userID int64) ([]*ent.Stock, error) {
 		return nil, common.NewServiceErr(common.Internal, err)
 	}
 	return stocks, nil
+}
+
+// 订阅数不为0的股票
+func GetSubscribedStocks() ([]*ent.Stock, error) {
+	stocks, err := entClient.Stock.Query().Where(stock.HasSubscribers()).All(context.Background())
+	if err != nil {
+		return nil, common.NewServiceErr(common.Internal, err)
+	}
+	return stocks, nil
+}
+
+// 获取股票交易数据最近拉取的时间
+func GetStockLastPullTime(stockID uint64) (int64, error) {
+	td, err := entClient.TradeDate.Query().Where(tradedate.StockID(stockID)).Order(ent.Desc(tradedate.FieldTDate)).First(context.Background())
+	if err != nil {
+		return 0, err
+	}
+	t, _ := time.ParseInLocation("2006-01-02T15:04:05+08:00", td.TDate, time.Local)
+	return t.Unix(), nil
+}
+
+// 插入股票每日交易数据
+func InsertStockTradeDate(stockID int64, tradeDate string, close, volume float64, xq int64) error {
+	now := time.Now().Unix()
+	_, err := entClient.TradeDate.Create().
+		SetStockID(uint64(stockID)).
+		SetTDate(tradeDate).
+		SetClose(close).
+		SetVolume(volume).
+		SetXueqiuCommentCount(xq).
+		SetCreateAt(now).
+		SetUpdateAt(now).
+		Save(context.Background())
+	if err != nil {
+		return common.NewServiceErr(common.Internal, err)
+	}
+	return nil
 }

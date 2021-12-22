@@ -11,10 +11,10 @@ const (
 	FieldStockID = "stock_id"
 	// FieldTDate holds the string denoting the t_date field in the database.
 	FieldTDate = "t_date"
-	// FieldEndPrice holds the string denoting the end_price field in the database.
-	FieldEndPrice = "end_price"
-	// FieldVolumn holds the string denoting the volumn field in the database.
-	FieldVolumn = "volumn"
+	// FieldClose holds the string denoting the close field in the database.
+	FieldClose = "close"
+	// FieldVolume holds the string denoting the volume field in the database.
+	FieldVolume = "volume"
 	// FieldCreateAt holds the string denoting the create_at field in the database.
 	FieldCreateAt = "create_at"
 	// FieldUpdateAt holds the string denoting the update_at field in the database.
@@ -39,8 +39,8 @@ var Columns = []string{
 	FieldID,
 	FieldStockID,
 	FieldTDate,
-	FieldEndPrice,
-	FieldVolumn,
+	FieldClose,
+	FieldVolume,
 	FieldCreateAt,
 	FieldUpdateAt,
 	FieldXueqiuCommentCount,
@@ -61,10 +61,6 @@ var (
 	StockIDValidator func(uint64) error
 	// TDateValidator is a validator for the "t_date" field. It is called by the builders before save.
 	TDateValidator func(string) error
-	// DefaultVolumn holds the default value on creation for the "volumn" field.
-	DefaultVolumn int64
-	// VolumnValidator is a validator for the "volumn" field. It is called by the builders before save.
-	VolumnValidator func(int64) error
 	// DefaultCreateAt holds the default value on creation for the "create_at" field.
 	DefaultCreateAt int64
 	// CreateAtValidator is a validator for the "create_at" field. It is called by the builders before save.

@@ -37,12 +37,6 @@ func init() {
 	tradedateDescTDate := tradedateFields[2].Descriptor()
 	// tradedate.TDateValidator is a validator for the "t_date" field. It is called by the builders before save.
 	tradedate.TDateValidator = tradedateDescTDate.Validators[0].(func(string) error)
-	// tradedateDescVolumn is the schema descriptor for volumn field.
-	tradedateDescVolumn := tradedateFields[4].Descriptor()
-	// tradedate.DefaultVolumn holds the default value on creation for the volumn field.
-	tradedate.DefaultVolumn = tradedateDescVolumn.Default.(int64)
-	// tradedate.VolumnValidator is a validator for the "volumn" field. It is called by the builders before save.
-	tradedate.VolumnValidator = tradedateDescVolumn.Validators[0].(func(int64) error)
 	// tradedateDescCreateAt is the schema descriptor for create_at field.
 	tradedateDescCreateAt := tradedateFields[5].Descriptor()
 	// tradedate.DefaultCreateAt holds the default value on creation for the create_at field.

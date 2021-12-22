@@ -25,8 +25,8 @@ var (
 	TradeDateColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUint64, Increment: true},
 		{Name: "t_date", Type: field.TypeString, SchemaType: map[string]string{"mysql": "date"}},
-		{Name: "end_price", Type: field.TypeFloat64},
-		{Name: "volumn", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
+		{Name: "close", Type: field.TypeFloat64},
+		{Name: "volume", Type: field.TypeFloat64},
 		{Name: "create_at", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 		{Name: "update_at", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 		{Name: "xueqiu_comment_count", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
@@ -43,6 +43,13 @@ var (
 				Columns:    []*schema.Column{TradeDateColumns[7]},
 				RefColumns: []*schema.Column{StockColumns[0]},
 				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "tradedate_stock_id",
+				Unique:  false,
+				Columns: []*schema.Column{TradeDateColumns[7]},
 			},
 		},
 	}

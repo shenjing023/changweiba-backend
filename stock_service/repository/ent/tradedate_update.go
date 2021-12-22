@@ -53,58 +53,29 @@ func (tdu *TradeDateUpdate) SetTDate(s string) *TradeDateUpdate {
 	return tdu
 }
 
-// SetEndPrice sets the "end_price" field.
-func (tdu *TradeDateUpdate) SetEndPrice(f float64) *TradeDateUpdate {
-	tdu.mutation.ResetEndPrice()
-	tdu.mutation.SetEndPrice(f)
+// SetClose sets the "close" field.
+func (tdu *TradeDateUpdate) SetClose(f float64) *TradeDateUpdate {
+	tdu.mutation.ResetClose()
+	tdu.mutation.SetClose(f)
 	return tdu
 }
 
-// AddEndPrice adds f to the "end_price" field.
-func (tdu *TradeDateUpdate) AddEndPrice(f float64) *TradeDateUpdate {
-	tdu.mutation.AddEndPrice(f)
+// AddClose adds f to the "close" field.
+func (tdu *TradeDateUpdate) AddClose(f float64) *TradeDateUpdate {
+	tdu.mutation.AddClose(f)
 	return tdu
 }
 
-// SetVolumn sets the "volumn" field.
-func (tdu *TradeDateUpdate) SetVolumn(i int64) *TradeDateUpdate {
-	tdu.mutation.ResetVolumn()
-	tdu.mutation.SetVolumn(i)
+// SetVolume sets the "volume" field.
+func (tdu *TradeDateUpdate) SetVolume(f float64) *TradeDateUpdate {
+	tdu.mutation.ResetVolume()
+	tdu.mutation.SetVolume(f)
 	return tdu
 }
 
-// SetNillableVolumn sets the "volumn" field if the given value is not nil.
-func (tdu *TradeDateUpdate) SetNillableVolumn(i *int64) *TradeDateUpdate {
-	if i != nil {
-		tdu.SetVolumn(*i)
-	}
-	return tdu
-}
-
-// AddVolumn adds i to the "volumn" field.
-func (tdu *TradeDateUpdate) AddVolumn(i int64) *TradeDateUpdate {
-	tdu.mutation.AddVolumn(i)
-	return tdu
-}
-
-// SetCreateAt sets the "create_at" field.
-func (tdu *TradeDateUpdate) SetCreateAt(i int64) *TradeDateUpdate {
-	tdu.mutation.ResetCreateAt()
-	tdu.mutation.SetCreateAt(i)
-	return tdu
-}
-
-// SetNillableCreateAt sets the "create_at" field if the given value is not nil.
-func (tdu *TradeDateUpdate) SetNillableCreateAt(i *int64) *TradeDateUpdate {
-	if i != nil {
-		tdu.SetCreateAt(*i)
-	}
-	return tdu
-}
-
-// AddCreateAt adds i to the "create_at" field.
-func (tdu *TradeDateUpdate) AddCreateAt(i int64) *TradeDateUpdate {
-	tdu.mutation.AddCreateAt(i)
+// AddVolume adds f to the "volume" field.
+func (tdu *TradeDateUpdate) AddVolume(f float64) *TradeDateUpdate {
+	tdu.mutation.AddVolume(f)
 	return tdu
 }
 
@@ -238,16 +209,6 @@ func (tdu *TradeDateUpdate) check() error {
 			return &ValidationError{Name: "t_date", err: fmt.Errorf("ent: validator failed for field \"t_date\": %w", err)}
 		}
 	}
-	if v, ok := tdu.mutation.Volumn(); ok {
-		if err := tradedate.VolumnValidator(v); err != nil {
-			return &ValidationError{Name: "volumn", err: fmt.Errorf("ent: validator failed for field \"volumn\": %w", err)}
-		}
-	}
-	if v, ok := tdu.mutation.CreateAt(); ok {
-		if err := tradedate.CreateAtValidator(v); err != nil {
-			return &ValidationError{Name: "create_at", err: fmt.Errorf("ent: validator failed for field \"create_at\": %w", err)}
-		}
-	}
 	if v, ok := tdu.mutation.UpdateAt(); ok {
 		if err := tradedate.UpdateAtValidator(v); err != nil {
 			return &ValidationError{Name: "update_at", err: fmt.Errorf("ent: validator failed for field \"update_at\": %w", err)}
@@ -286,46 +247,32 @@ func (tdu *TradeDateUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: tradedate.FieldTDate,
 		})
 	}
-	if value, ok := tdu.mutation.EndPrice(); ok {
+	if value, ok := tdu.mutation.Close(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeFloat64,
 			Value:  value,
-			Column: tradedate.FieldEndPrice,
+			Column: tradedate.FieldClose,
 		})
 	}
-	if value, ok := tdu.mutation.AddedEndPrice(); ok {
+	if value, ok := tdu.mutation.AddedClose(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeFloat64,
 			Value:  value,
-			Column: tradedate.FieldEndPrice,
+			Column: tradedate.FieldClose,
 		})
 	}
-	if value, ok := tdu.mutation.Volumn(); ok {
+	if value, ok := tdu.mutation.Volume(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeFloat64,
 			Value:  value,
-			Column: tradedate.FieldVolumn,
+			Column: tradedate.FieldVolume,
 		})
 	}
-	if value, ok := tdu.mutation.AddedVolumn(); ok {
+	if value, ok := tdu.mutation.AddedVolume(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeFloat64,
 			Value:  value,
-			Column: tradedate.FieldVolumn,
-		})
-	}
-	if value, ok := tdu.mutation.CreateAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: tradedate.FieldCreateAt,
-		})
-	}
-	if value, ok := tdu.mutation.AddedCreateAt(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: tradedate.FieldCreateAt,
+			Column: tradedate.FieldVolume,
 		})
 	}
 	if value, ok := tdu.mutation.UpdateAt(); ok {
@@ -436,58 +383,29 @@ func (tduo *TradeDateUpdateOne) SetTDate(s string) *TradeDateUpdateOne {
 	return tduo
 }
 
-// SetEndPrice sets the "end_price" field.
-func (tduo *TradeDateUpdateOne) SetEndPrice(f float64) *TradeDateUpdateOne {
-	tduo.mutation.ResetEndPrice()
-	tduo.mutation.SetEndPrice(f)
+// SetClose sets the "close" field.
+func (tduo *TradeDateUpdateOne) SetClose(f float64) *TradeDateUpdateOne {
+	tduo.mutation.ResetClose()
+	tduo.mutation.SetClose(f)
 	return tduo
 }
 
-// AddEndPrice adds f to the "end_price" field.
-func (tduo *TradeDateUpdateOne) AddEndPrice(f float64) *TradeDateUpdateOne {
-	tduo.mutation.AddEndPrice(f)
+// AddClose adds f to the "close" field.
+func (tduo *TradeDateUpdateOne) AddClose(f float64) *TradeDateUpdateOne {
+	tduo.mutation.AddClose(f)
 	return tduo
 }
 
-// SetVolumn sets the "volumn" field.
-func (tduo *TradeDateUpdateOne) SetVolumn(i int64) *TradeDateUpdateOne {
-	tduo.mutation.ResetVolumn()
-	tduo.mutation.SetVolumn(i)
+// SetVolume sets the "volume" field.
+func (tduo *TradeDateUpdateOne) SetVolume(f float64) *TradeDateUpdateOne {
+	tduo.mutation.ResetVolume()
+	tduo.mutation.SetVolume(f)
 	return tduo
 }
 
-// SetNillableVolumn sets the "volumn" field if the given value is not nil.
-func (tduo *TradeDateUpdateOne) SetNillableVolumn(i *int64) *TradeDateUpdateOne {
-	if i != nil {
-		tduo.SetVolumn(*i)
-	}
-	return tduo
-}
-
-// AddVolumn adds i to the "volumn" field.
-func (tduo *TradeDateUpdateOne) AddVolumn(i int64) *TradeDateUpdateOne {
-	tduo.mutation.AddVolumn(i)
-	return tduo
-}
-
-// SetCreateAt sets the "create_at" field.
-func (tduo *TradeDateUpdateOne) SetCreateAt(i int64) *TradeDateUpdateOne {
-	tduo.mutation.ResetCreateAt()
-	tduo.mutation.SetCreateAt(i)
-	return tduo
-}
-
-// SetNillableCreateAt sets the "create_at" field if the given value is not nil.
-func (tduo *TradeDateUpdateOne) SetNillableCreateAt(i *int64) *TradeDateUpdateOne {
-	if i != nil {
-		tduo.SetCreateAt(*i)
-	}
-	return tduo
-}
-
-// AddCreateAt adds i to the "create_at" field.
-func (tduo *TradeDateUpdateOne) AddCreateAt(i int64) *TradeDateUpdateOne {
-	tduo.mutation.AddCreateAt(i)
+// AddVolume adds f to the "volume" field.
+func (tduo *TradeDateUpdateOne) AddVolume(f float64) *TradeDateUpdateOne {
+	tduo.mutation.AddVolume(f)
 	return tduo
 }
 
@@ -628,16 +546,6 @@ func (tduo *TradeDateUpdateOne) check() error {
 			return &ValidationError{Name: "t_date", err: fmt.Errorf("ent: validator failed for field \"t_date\": %w", err)}
 		}
 	}
-	if v, ok := tduo.mutation.Volumn(); ok {
-		if err := tradedate.VolumnValidator(v); err != nil {
-			return &ValidationError{Name: "volumn", err: fmt.Errorf("ent: validator failed for field \"volumn\": %w", err)}
-		}
-	}
-	if v, ok := tduo.mutation.CreateAt(); ok {
-		if err := tradedate.CreateAtValidator(v); err != nil {
-			return &ValidationError{Name: "create_at", err: fmt.Errorf("ent: validator failed for field \"create_at\": %w", err)}
-		}
-	}
 	if v, ok := tduo.mutation.UpdateAt(); ok {
 		if err := tradedate.UpdateAtValidator(v); err != nil {
 			return &ValidationError{Name: "update_at", err: fmt.Errorf("ent: validator failed for field \"update_at\": %w", err)}
@@ -693,46 +601,32 @@ func (tduo *TradeDateUpdateOne) sqlSave(ctx context.Context) (_node *TradeDate, 
 			Column: tradedate.FieldTDate,
 		})
 	}
-	if value, ok := tduo.mutation.EndPrice(); ok {
+	if value, ok := tduo.mutation.Close(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeFloat64,
 			Value:  value,
-			Column: tradedate.FieldEndPrice,
+			Column: tradedate.FieldClose,
 		})
 	}
-	if value, ok := tduo.mutation.AddedEndPrice(); ok {
+	if value, ok := tduo.mutation.AddedClose(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeFloat64,
 			Value:  value,
-			Column: tradedate.FieldEndPrice,
+			Column: tradedate.FieldClose,
 		})
 	}
-	if value, ok := tduo.mutation.Volumn(); ok {
+	if value, ok := tduo.mutation.Volume(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeFloat64,
 			Value:  value,
-			Column: tradedate.FieldVolumn,
+			Column: tradedate.FieldVolume,
 		})
 	}
-	if value, ok := tduo.mutation.AddedVolumn(); ok {
+	if value, ok := tduo.mutation.AddedVolume(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
+			Type:   field.TypeFloat64,
 			Value:  value,
-			Column: tradedate.FieldVolumn,
-		})
-	}
-	if value, ok := tduo.mutation.CreateAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: tradedate.FieldCreateAt,
-		})
-	}
-	if value, ok := tduo.mutation.AddedCreateAt(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt64,
-			Value:  value,
-			Column: tradedate.FieldCreateAt,
+			Column: tradedate.FieldVolume,
 		})
 	}
 	if value, ok := tduo.mutation.UpdateAt(); ok {
