@@ -62,6 +62,7 @@ func runStockService(configPath string) {
 	if err != nil {
 		log.Fatalf("failed register serve: %v", err)
 	}
+	handler.RunCronJob()
 	log.Info("service start success")
 
 	// Wait for interrupt signal to gracefully shutdown the server

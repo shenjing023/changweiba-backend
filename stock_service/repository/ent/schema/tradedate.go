@@ -56,5 +56,6 @@ func (TradeDate) Indexes() []ent.Index {
 	return []ent.Index{
 		// 非唯一约束索引
 		index.Fields("stock_id"),
+		index.Fields("stock_id", "t_date").Unique(),
 	}
 }

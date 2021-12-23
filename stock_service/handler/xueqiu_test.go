@@ -41,7 +41,7 @@ func TestParseComment(t *testing.T) {
 func TestGetStockCommentData(t *testing.T) {
 	xq := NewXueqiu()
 	time.Sleep(time.Second * 3)
-	data, err := xq.GetStockCommentData(1640074878, "SZ300739")
+	data, err := xq.GetCommentData(1640074878, "SH601020")
 	if err != nil {
 		fmt.Println(err)
 	}

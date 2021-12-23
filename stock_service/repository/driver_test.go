@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"stock_service/common"
 	"stock_service/conf"
 	"testing"
 	"time"
@@ -24,13 +25,17 @@ func TestInsertTradeDate(t *testing.T) {
 	defer Close()
 	err := InsertStockTradeDate(1, "2018-01-02", 13.0, 10000, 11)
 	if err != nil {
+		a, ok := err.(*common.ServiceErr)
+		if ok {
+			t.Log(a.Code)
+		}
 		t.Error(err)
 	}
 }
 
 func TestGetStockLastPullTime(t *testing.T) {
 	defer Close()
-	lastPullTime, err := GetStockLastPullTime(1)
+	lastPullTime, err := GetStockLastPullTime(0)
 	if err != nil {
 		t.Error(err)
 	}

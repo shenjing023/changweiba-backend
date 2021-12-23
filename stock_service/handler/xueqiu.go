@@ -130,8 +130,7 @@ func (x *Xueqiu) request(url, method string, body io.Reader) (*http.Response, er
 	}
 	req.Header.Add("Host", "xueqiu.com")
 	req.Header.Add("Referer", "https://xueqiu.com/")
-	req.Header.Add("X-Requested-With", "XMLHttpRequest")
-	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36")
 	x.m.RLock()
 	for _, cookie := range x.cookies {
 		req.AddCookie(cookie)
@@ -173,37 +172,21 @@ func SearchStock(symbolorname string) ([]StockData, error) {
 	return defaultXueqiu.SearchStock(symbolorname)
 }
 
+func GetXqCommentData(lastPullTime int64, symbol string) (map[string]int, error) {
+	return defaultXueqiu.GetCommentData(lastPullTime, symbol)
+}
+
 // 拉取股票讨论数据
-func (x *Xueqiu) GetStockCommentData(lastPullTime int64, symbol string) (map[string]int, error) {
-	url := "https://xueqiu.com/query/v1/symbol/search/status.json?count=20&comment=0&symbol=%s&hl=0&source=all&sort=time&page=%d&q=&type=11"
+func (x *Xueqiu) GetCommentData(lastPullTime int64, symbol string) (map[string]int, error) {
 	result := make(map[string]int)
 	for page := 1; page <= 50; page++ {
+		url := "https://xueqiu.com/query/v1/symbol/search/status.json?count=20&comment=0&symbol=%s&hl=0&source=all&sort=time&page=%d&q=&type=11"
 		url = fmt.Sprintf(url, symbol, page)
-		var data CommentData
-		for i := 0; i < x.maxRetry; i++ {
-			res, err := x.request(url, http.MethodGet, nil)
-			if err != nil {
-				log.Infof("url[%s] request failed: %v", url, err)
-				time.Sleep(time.Second)
-				continue
-			}
-			defer res.Body.Close()
-			t, err := ioutil.ReadAll(res.Body)
-			if err != nil {
-				return nil, err
-			}
-			err = json.Unmarshal(t, &data)
-			if err != nil {
-				return nil, fmt.Errorf("json unmarshal failed: %v", err)
-			}
-			if data.Code != 0 && i != x.maxRetry-1 {
-				log.Infof("url[%s] request failed msg[%s] and retry: %d", url, data.Message, i+1)
-				time.Sleep(time.Millisecond * 100)
-				continue
-			}
-			break
+		data, err := x.getComment(url)
+		if err != nil {
+			return nil, err
 		}
-		flag := x.parseComment(&data, lastPullTime, result)
+		flag := x.parseComment(data, lastPullTime, result)
 		if flag {
 			break
 		}
@@ -212,12 +195,36 @@ func (x *Xueqiu) GetStockCommentData(lastPullTime int64, symbol string) (map[str
 	return result, nil
 }
 
+func (x *Xueqiu) getComment(url string) (*CommentData, error) {
+	var data CommentData
+	for i := 0; i < x.maxRetry; i++ {
+		res, err := x.request(url, http.MethodGet, nil)
+		if err != nil {
+			log.Infof("url[%s] request failed: %v", url, err)
+			time.Sleep(time.Second)
+			continue
+		}
+		defer res.Body.Close()
+		if res.StatusCode == http.StatusOK {
+			if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
+				return &data, fmt.Errorf("json unmarshal failed: %v", err)
+			}
+		}
+
+		if data.Code != 0 && i != x.maxRetry-1 {
+			log.Infof("url[%s] request failed msg[%s] and retry: %d", url, data.Message, i+1)
+			time.Sleep(time.Second * 1)
+			continue
+		}
+		break
+	}
+	return &data, nil
+}
+
 func (x *Xueqiu) parseComment(data *CommentData, lastPullTime int64, result map[string]int) (flag bool) {
-	now := time.Now()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
 	for _, v := range data.List {
 		t := v.CreatedAt / 1000
-		if t >= lastPullTime && t < today.Unix() {
+		if t >= lastPullTime {
 			day := time.Unix(t, 0).Local().Format("2006-01-02")
 			if _, ok := result[day]; !ok {
 				result[day] = 1

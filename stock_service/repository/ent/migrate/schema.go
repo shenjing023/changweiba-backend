@@ -51,6 +51,11 @@ var (
 				Unique:  false,
 				Columns: []*schema.Column{TradeDateColumns[7]},
 			},
+			{
+				Name:    "tradedate_stock_id_t_date",
+				Unique:  true,
+				Columns: []*schema.Column{TradeDateColumns[7], TradeDateColumns[1]},
+			},
 		},
 	}
 	// UserColumns holds the columns for the "user" table.

@@ -17,13 +17,11 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/shenjing023/llog"
 	"golang.org/x/net/context"
-	"golang.org/x/sync/singleflight"
 )
 
 var (
-	redisClient     *redis.Client
-	entClient       *ent.Client
-	postsCountCache singleflight.Group
+	redisClient *redis.Client
+	entClient   *ent.Client
 )
 
 const (
@@ -172,6 +170,9 @@ func GetSubscribedStocks() ([]*ent.Stock, error) {
 func GetStockLastPullTime(stockID uint64) (int64, error) {
 	td, err := entClient.TradeDate.Query().Where(tradedate.StockID(stockID)).Order(ent.Desc(tradedate.FieldTDate)).First(context.Background())
 	if err != nil {
+		if ent.IsNotFound(err) {
+			return 0, nil
+		}
 		return 0, err
 	}
 	t, _ := time.ParseInLocation("2006-01-02T15:04:05+08:00", td.TDate, time.Local)
@@ -179,10 +180,10 @@ func GetStockLastPullTime(stockID uint64) (int64, error) {
 }
 
 // 插入股票每日交易数据
-func InsertStockTradeDate(stockID int64, tradeDate string, close, volume float64, xq int64) error {
+func InsertStockTradeDate(stockID uint64, tradeDate string, close, volume float64, xq int64) error {
 	now := time.Now().Unix()
 	_, err := entClient.TradeDate.Create().
-		SetStockID(uint64(stockID)).
+		SetStockID(stockID).
 		SetTDate(tradeDate).
 		SetClose(close).
 		SetVolume(volume).
@@ -191,6 +192,9 @@ func InsertStockTradeDate(stockID int64, tradeDate string, close, volume float64
 		SetUpdateAt(now).
 		Save(context.Background())
 	if err != nil {
+		if ent.IsConstraintError(err) {
+			return common.NewServiceErr(common.AlreadyExists, err)
+		}
 		return common.NewServiceErr(common.Internal, err)
 	}
 	return nil
