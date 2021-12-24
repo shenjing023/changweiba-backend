@@ -115,3 +115,24 @@ func (StockService) SubscribedStocks(ctx context.Context, req *pb.SubscribeStock
 		Data: replyStocks,
 	}, nil
 }
+
+func (StockService) StockTradeData(ctx context.Context, req *pb.StockTradeDataRequest) (*pb.StockTradeDataReply, error) {
+	data, err := repository.GetStockTradeDate(uint64(req.Id))
+	if err != nil {
+		log.Errorf("StockTradeData Error: %v", err)
+		return nil, ServiceErr2GRPCErr(err)
+	}
+	var replyData []*pb.TradeData
+	for _, d := range data {
+		replyData = append(replyData, &pb.TradeData{
+			Date:        d.TDate,
+			Close:       d.Close,
+			Volume:      int64(d.Volume),
+			XueqiuCount: d.XueqiuCommentCount,
+		})
+	}
+	return &pb.StockTradeDataReply{
+		TradeData: replyData,
+		Info:      &pb.StockInfo{Id: req.Id},
+	}, nil
+}

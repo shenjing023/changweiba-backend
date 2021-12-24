@@ -17,8 +17,8 @@ message UnSubscribeStockRequest {
 
 message TradeData {
     string date=1;
-    float end_price=2;
-    int64 volumn=3;
+    double close=2;
+    int64 volume=3;
     int64 xueqiu_count=4;
 }
 
@@ -26,11 +26,6 @@ message StockInfo {
     int64 id=1;
     string symbol=2;
     string name=3;
-}
-
-message StockData {
-    StockInfo info=1;
-    repeated TradeData trade_data=2;
 }
 
 message SubscribeStocksRequest {
@@ -46,7 +41,8 @@ message StockTradeDataRequest {
 }
 
 message StockTradeDataReply {
-    repeated StockData data=1;
+    StockInfo info=1;
+    repeated TradeData trade_data=2;
 }
 
 message SearchStockRequest {

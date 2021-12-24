@@ -28,6 +28,10 @@ type Query {
     searchStock(symbolorname: String!): StockConnection!
     """获取订阅stock"""
     subscribedStocks: StockConnection!
+    """获取stock交易数据"""
+    stockTrades(
+        stockId:Int!
+    ):TradeDateConnection!
 }
 
 type Mutation{

@@ -35,7 +35,6 @@ func UpdateTradeData() {
 			log.Errorf("get trade data error:%v", err)
 			continue
 		}
-		log.Info("trade data:", tradeData)
 		xqComment, err := GetXqCommentData(lastPulledTime, stock.Symbol)
 		if err != nil {
 			log.Errorf("get xq comment error:%v", err)

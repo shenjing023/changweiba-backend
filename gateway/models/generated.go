@@ -121,6 +121,19 @@ type StockConnection struct {
 	TotalCount int      `json:"totalCount"`
 }
 
+type TradeDate struct {
+	Date   string  `json:"date"`
+	Close  float64 `json:"close"`
+	Volume float64 `json:"volume"`
+	Xq     int     `json:"xq"`
+}
+
+type TradeDateConnection struct {
+	Nodes      []*TradeDate `json:"nodes"`
+	TotalCount int          `json:"totalCount"`
+	ID         int          `json:"id"`
+}
+
 type User struct {
 	ID       int    `json:"id"`
 	Name     string `json:"name"`

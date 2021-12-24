@@ -8,3 +8,16 @@ type StockConnection{
     nodes:[Stock]
     totalCount:Int!
 }
+
+type TradeDate{
+    date: String!
+    close: Float!
+    volume: Float!
+    xq: Int!
+}
+
+type TradeDateConnection{
+    nodes:[TradeDate]
+    totalCount:Int!
+    id: Int!
+}

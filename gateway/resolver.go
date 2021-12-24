@@ -119,6 +119,10 @@ func (r *queryResolver) SubscribedStocks(ctx context.Context) (*models.StockConn
 	return handler.SubscribedStocks(ctx)
 }
 
+func (r *queryResolver) StockTrades(ctx context.Context, stockID int) (*models.TradeDateConnection, error) {
+	return handler.StockTrades(ctx, stockID)
+}
+
 func (r *replyResolver) User(ctx context.Context, obj *models.Reply) (*models.User, error) {
 	return dataloader.Loader.UsersByIDs.Load(ctx, int64(obj.User.ID))
 }

@@ -199,3 +199,15 @@ func InsertStockTradeDate(stockID uint64, tradeDate string, close, volume float6
 	}
 	return nil
 }
+
+// 获取股票交易数据
+func GetStockTradeDate(stockID uint64) ([]*ent.TradeDate, error) {
+	data, err := entClient.TradeDate.Query().Where(tradedate.StockID(stockID)).All(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	for _, d := range data {
+		d.TDate = d.TDate[:10]
+	}
+	return data, nil
+}

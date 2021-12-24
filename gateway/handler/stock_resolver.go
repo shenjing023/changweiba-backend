@@ -119,3 +119,33 @@ func SubscribedStocks(ctx context.Context) (*models.StockConnection, error) {
 		TotalCount: len(stocks),
 	}, nil
 }
+
+func StockTrades(ctx context.Context, stockID int) (*models.TradeDateConnection, error) {
+	client := pb.NewStockServiceClient(StockConn)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	request := pb.StockTradeDataRequest{
+		Id: int64(stockID),
+	}
+	resp, err := client.StockTradeData(ctx, &request)
+	if err != nil {
+		log.Errorf("get stock trades error: %v", err)
+		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
+			codes.Internal: ServiceError,
+		})
+	}
+	var trades []*models.TradeDate
+	for _, trade := range resp.TradeData {
+		trades = append(trades, &models.TradeDate{
+			Date:   trade.Date,
+			Close:  float64(trade.Close),
+			Volume: float64(trade.Volume),
+			Xq:     int(trade.XueqiuCount),
+		})
+	}
+	return &models.TradeDateConnection{
+		Nodes:      trades,
+		TotalCount: len(trades),
+		ID:         stockID,
+	}, nil
+}
