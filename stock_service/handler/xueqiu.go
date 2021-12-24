@@ -28,10 +28,10 @@ var (
 )
 
 type Xueqiu struct {
-	c        *http.Client
-	cookies  []*http.Cookie
-	m        sync.RWMutex
-	maxRetry int
+	c       *http.Client
+	cookies []*http.Cookie
+	m       sync.RWMutex
+	opt     *options
 }
 
 type options struct {
@@ -76,6 +76,7 @@ func NewXueqiu(opts ...Option) *Xueqiu {
 		opt(&o)
 	}
 	xq := &Xueqiu{
+		opt: &o,
 		c: &http.Client{
 			Timeout: time.Duration(o.timeout) * time.Second,
 			Transport: &http.Transport{
@@ -83,7 +84,6 @@ func NewXueqiu(opts ...Option) *Xueqiu {
 				MaxConnsPerHost:     o.maxConns,
 			},
 		},
-		maxRetry: o.maxRetry,
 	}
 	go func() {
 		for {
@@ -141,7 +141,7 @@ func (x *Xueqiu) request(url, method string, body io.Reader) (*http.Response, er
 
 func (x *Xueqiu) SearchStock(symbolorname string) ([]StockData, error) {
 	url := fmt.Sprintf("https://xueqiu.com/query/v1/suggest_stock.json?q=%s&count=5", url.QueryEscape(symbolorname))
-	for i := 0; i < x.maxRetry; i++ {
+	for i := 0; i < x.opt.maxRetry; i++ {
 		res, err := x.request(url, http.MethodGet, nil)
 		if err != nil {
 			log.Infof("url[%s] request failed: %v", url, err)
@@ -158,7 +158,7 @@ func (x *Xueqiu) SearchStock(symbolorname string) ([]StockData, error) {
 		if err != nil {
 			return nil, fmt.Errorf("json unmarshal failed: %v", err)
 		}
-		if searchResp.Code != 200 && i != x.maxRetry-1 {
+		if searchResp.Code != 200 && i != x.opt.maxRetry-1 {
 			log.Infof("url[%s] request failed msg[%s] and retry: %d", url, searchResp.Message, i+1)
 			time.Sleep(time.Millisecond * 100)
 			continue
@@ -197,7 +197,7 @@ func (x *Xueqiu) GetCommentData(lastPullTime int64, symbol string) (map[string]i
 
 func (x *Xueqiu) getComment(url string) (*CommentData, error) {
 	var data CommentData
-	for i := 0; i < x.maxRetry; i++ {
+	for i := 0; i < x.opt.maxRetry; i++ {
 		res, err := x.request(url, http.MethodGet, nil)
 		if err != nil {
 			log.Infof("url[%s] request failed: %v", url, err)
@@ -211,7 +211,7 @@ func (x *Xueqiu) getComment(url string) (*CommentData, error) {
 			}
 		}
 
-		if data.Code != 0 && i != x.maxRetry-1 {
+		if data.Code != 0 && i != x.opt.maxRetry-1 {
 			log.Infof("url[%s] request failed msg[%s] and retry: %d", url, data.Message, i+1)
 			time.Sleep(time.Second * 1)
 			continue
