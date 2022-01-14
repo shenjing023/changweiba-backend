@@ -17,34 +17,38 @@ import (
 	"cw_account_service/handler"
 
 	log "github.com/shenjing023/llog"
+	"github.com/shenjing023/vivy-polaris/contrib/registry"
+	"github.com/shenjing023/vivy-polaris/options"
+	vp_server "github.com/shenjing023/vivy-polaris/server"
 	clientv3 "go.etcd.io/etcd/client/v3"
-	"google.golang.org/grpc"
 )
 
 // runAccountService create and run new service
 func runAccountService(configPath string) {
 	conf.Init(configPath)
 	repository.Init()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", conf.Cfg.Port))
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-	s := grpc.NewServer()
-	pb.RegisterAccountServer(s, &handler.User{})
-	go func() {
-		if err := s.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %v", err)
-		}
-	}()
 
 	etcdConf := clientv3.Config{
 		Endpoints:   []string{fmt.Sprintf("%s:%d", conf.Cfg.Etcd.Host, conf.Cfg.Etcd.Port)},
 		DialTimeout: time.Second * 5,
 	}
-	r, err := NewRegister(etcdConf, "svc-"+conf.Cfg.SvcName, conf.Cfg.SvcName, "127.0.0.1", fmt.Sprintf("%d", conf.Cfg.Port))
+	r, err := registry.NewEtcdRegister(etcdConf, pb.Account_ServiceDesc, "127.0.0.1", fmt.Sprintf("%d", conf.Cfg.Port))
 	if err != nil {
-		log.Fatalf("failed register serve: %v", err)
+		log.Fatalf("failed register server: %+v", err)
 	}
+	defer r.Deregister()
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", conf.Cfg.Port))
+	if err != nil {
+		log.Fatalf("failed to listen: %+v", err)
+	}
+	s := vp_server.NewServer(options.WithDebug(conf.Cfg.Debug))
+	pb.RegisterAccountServer(s, &handler.User{})
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %+v", err)
+		}
+	}()
 	log.Info("service start success")
 
 	// Wait for interrupt signal to gracefully shutdown the server
@@ -52,7 +56,6 @@ func runAccountService(configPath string) {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	<-quit
 	log.Infof("signal %d received and shutdown service", quit)
-	r.Close()
 	s.GracefulStop()
 	stopService()
 }

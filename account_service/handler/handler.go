@@ -2,19 +2,17 @@ package handler
 
 import (
 	"context"
-	"cw_account_service/common"
 	"cw_account_service/conf"
 	pb "cw_account_service/pb"
 	"cw_account_service/repository"
 	"encoding/base64"
-	"errors"
 	"strings"
 
+	"github.com/cockroachdb/errors"
+
 	log "github.com/shenjing023/llog"
+	er "github.com/shenjing023/vivy-polaris/errors"
 	"golang.org/x/crypto/scrypt"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 )
 
 const (
@@ -26,41 +24,28 @@ type User struct {
 	pb.UnimplementedAccountServer
 }
 
-// ServiceErr2GRPCErr serviceErr covert to GRPCErr
-func ServiceErr2GRPCErr(err error) error {
-	if e, ok := err.(*common.ServiceErr); ok {
-		if e.Code == common.Internal {
-			log.Errorf("Service Internal Error: %v", e.Err)
-		}
-		if _, ok := common.ErrMap[e.Code]; ok {
-			return status.Error(common.ErrMap[e.Code], e.Err.Error())
-		}
-		return status.Error(codes.Unknown, e.Err.Error())
-	}
-	return status.Error(codes.Unknown, err.Error())
-}
-
 // SignUp 注册
 func (u *User) SignUp(ctx context.Context, sr *pb.SignUpRequest) (*pb.SignUpReply, error) {
-	if err := checkNewUser(sr); err != nil {
-		return nil, ServiceErr2GRPCErr(err)
+	if err := checkNewUser(ctx, sr); err != nil {
+		log.Errorf("check new_user error: %+v", err)
+		return nil, err
 	}
 
 	password, err := encryptPassword(sr.Password)
 	if err != nil {
-		log.Error("generate crypto password error:", err.Error())
-		return nil, status.Error(codes.Internal, ServiceError)
+		log.Errorf("generate crypto password error: %+v", err)
+		return nil, er.NewServiceErr(er.Internal, err)
 	}
 	//头像url
-	avatar, err := repository.GetRandomAvatar()
+	avatar, err := repository.GetRandomAvatar(ctx)
 	if err != nil {
-		log.Error("get random avatar error:", err.Error())
-		return nil, ServiceErr2GRPCErr(err)
+		log.Errorf("get random avatar error: %+v", err)
+		return nil, err
 	}
-	id, err := repository.InsertUser(sr.Name, password, avatar)
+	id, err := repository.InsertUser(ctx, sr.Name, password, avatar)
 	if err != nil {
-		log.Error("insert user error:", err.Error())
-		return nil, ServiceErr2GRPCErr(err)
+		log.Errorf("insert user error: %+v", err)
+		return nil, err
 	}
 	resp := &pb.SignUpReply{
 		Id: id,
@@ -70,19 +55,16 @@ func (u *User) SignUp(ctx context.Context, sr *pb.SignUpRequest) (*pb.SignUpRepl
 
 // SignIn 登录
 func (u *User) SignIn(ctx context.Context, sr *pb.SignInRequest) (*pb.SignInReply, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if ok {
-		log.Info("md: ", md)
-	}
-	dbUser, err := repository.GetUserByName(sr.Name)
+	dbUser, err := repository.GetUserByName(ctx, sr.Name)
 	if err != nil {
-		return nil, ServiceErr2GRPCErr(err)
+		log.Errorf("get user by name error: %+v", err)
+		return nil, err
 	}
 	dbPassword := dbUser.Password
 	tmp, _ := encryptPassword(sr.Password)
 	if dbPassword != tmp {
-		return nil, ServiceErr2GRPCErr(common.NewServiceErr(common.InvalidArgument,
-			errors.New("password incorrect")))
+		return nil, er.NewServiceErr(er.InvalidArgument,
+			errors.New("password incorrect"))
 	}
 	return &pb.SignInReply{
 		Id: int64(dbUser.ID),
@@ -91,13 +73,14 @@ func (u *User) SignIn(ctx context.Context, sr *pb.SignInRequest) (*pb.SignInRepl
 
 // GetUser 获取user信息
 func (u *User) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
-	dbUser, err := repository.GetUserByID(user.Id)
+	dbUser, err := repository.GetUserByID(ctx, user.Id)
 	if err != nil {
-		return nil, ServiceErr2GRPCErr(err)
+		log.Errorf("get user by id error: %+v", err)
+		return nil, err
 	}
 	ban := ""
 	if dbUser.Status != 0 {
-		ban, _ = repository.GetBannedReason(int64(dbUser.Status))
+		ban, _ = repository.GetBannedReason(ctx, int64(dbUser.Status))
 	}
 	return &pb.User{
 		Id:           int64(dbUser.ID),
@@ -112,9 +95,10 @@ func (u *User) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 
 // GetUsersByUserIds 通过用户id批量获取用户信息
 func (u *User) GetUsersByUserIds(ctx context.Context, ur *pb.UsersByUserIdsRequest) (*pb.UsersByUserIdsReply, error) {
-	dbUsers, err := repository.GetUsers(ur.Ids)
+	dbUsers, err := repository.GetUsers(ctx, ur.Ids)
 	if err != nil {
-		return nil, ServiceErr2GRPCErr(err)
+		log.Errorf("get users by ids error: %+v", err)
+		return nil, err
 	}
 	var users []*pb.User
 	for _, v := range dbUsers {
@@ -124,7 +108,7 @@ func (u *User) GetUsersByUserIds(ctx context.Context, ur *pb.UsersByUserIdsReque
 		}
 		ban := ""
 		if v.Status != 0 {
-			ban, _ = repository.GetBannedReason(int64(v.Status))
+			ban, _ = repository.GetBannedReason(ctx, int64(v.Status))
 		}
 		users = append(users, &pb.User{
 			Id:           int64(v.ID),
@@ -141,16 +125,16 @@ func (u *User) GetUsersByUserIds(ctx context.Context, ur *pb.UsersByUserIdsReque
 	}, nil
 }
 
-func checkNewUser(sr *pb.SignUpRequest) error {
+func checkNewUser(ctx context.Context, sr *pb.SignUpRequest) error {
 	if len(strings.TrimSpace(sr.Name)) == 0 || len(strings.TrimSpace(sr.Password)) == 0 {
-		return common.NewServiceErr(common.InvalidArgument,
+		return er.NewServiceErr(er.InvalidArgument,
 			errors.New("user name or password can not be empty"))
 	}
-	if exist, err := repository.CheckUserExistByName(sr.Name); err != nil {
+	if exist, err := repository.CheckUserExistByName(ctx, sr.Name); err != nil {
 		return err
 	} else if exist {
-		return common.NewServiceErr(common.AlreadyExists,
-			errors.New("user name already exist"))
+		return er.NewServiceErr(er.AlreadyExists,
+			errors.Newf("user_name[%s] already exist", sr.Name))
 	}
 	return nil
 }
@@ -159,7 +143,7 @@ func checkNewUser(sr *pb.SignUpRequest) error {
 func encryptPassword(password string) (string, error) {
 	dk, err := scrypt.Key([]byte(password), []byte(conf.Cfg.Salt), 1<<15, 8, 1, 32)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "scrypt error")
 	}
 	return base64.StdEncoding.EncodeToString(dk)[:32], nil
 }

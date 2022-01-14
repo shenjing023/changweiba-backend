@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"errors"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -10,13 +9,15 @@ import (
 	"strconv"
 	"time"
 
-	"cw_account_service/common"
 	"cw_account_service/conf"
 	"cw_account_service/repository/ent"
+
+	er "github.com/shenjing023/vivy-polaris/errors"
 
 	"cw_account_service/repository/ent/user"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/cockroachdb/errors"
 	"github.com/go-redis/redis/v8"
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/shenjing023/llog"
@@ -66,14 +67,14 @@ func Close() {
 }
 
 // GetRandomAvatar 随机获取一个头像url
-func GetRandomAvatar() (url string, err error) {
+func GetRandomAvatar(ctx context.Context) (url string, err error) {
 	var avatars []*ent.Avatar
-	avatars, err = entClient.Avatar.Query().All(context.Background())
+	avatars, err = entClient.Avatar.Query().All(ctx)
 	if err != nil {
-		return "", common.NewServiceErr(common.Internal, err)
+		return "", er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
 	if len(avatars) == 0 {
-		return "", common.NewServiceErr(common.Internal, errors.New("there are no avatar data in db"))
+		return "", er.NewServiceErr(er.Internal, errors.New("there are no avatar data in db"))
 	}
 	seed := rand.New(rand.NewSource(time.Now().UnixNano()))
 	index := seed.Intn(len(avatars))
@@ -82,7 +83,7 @@ func GetRandomAvatar() (url string, err error) {
 }
 
 // InsertUser insert new user
-func InsertUser(userName, password, avatar string) (int64, error) {
+func InsertUser(ctx context.Context, userName, password, avatar string) (int64, error) {
 	now := time.Now().Unix()
 	user, err := entClient.User.Create().
 		SetNickName(userName).
@@ -90,29 +91,29 @@ func InsertUser(userName, password, avatar string) (int64, error) {
 		SetCreateAt(now).
 		SetUpdateAt(now).
 		SetAvatar(avatar).
-		Save(context.Background())
+		Save(ctx)
 	if err != nil {
-		return 0, common.NewServiceErr(common.Internal, err)
+		return 0, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
 	return int64(user.ID), nil
 }
 
 // GetUserByID get user by user_id
-func GetUserByID(id int64) (*ent.User, error) {
-	user, err := entClient.User.Get(context.Background(), uint64(id))
+func GetUserByID(ctx context.Context, id int64) (*ent.User, error) {
+	user, err := entClient.User.Get(ctx, uint64(id))
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return nil, common.NewServiceErr(common.NotFound, err)
+			return nil, er.NewServiceErr(er.NotFound, errors.New("user not exist"))
 		}
-		return nil, common.NewServiceErr(common.Internal, err)
+		return nil, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
 	return user, nil
 }
 
 // CheckUserExistByName 检查user是否已存在
-func CheckUserExistByName(userName string) (bool, error) {
-	if count, err := entClient.User.Query().Where(user.NickName(userName)).Count(context.Background()); err != nil {
-		return false, common.NewServiceErr(common.Internal, err)
+func CheckUserExistByName(ctx context.Context, userName string) (bool, error) {
+	if count, err := entClient.User.Query().Where(user.NickName(userName)).Count(ctx); err != nil {
+		return false, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	} else if count > 0 {
 		return true, nil
 	}
@@ -120,12 +121,12 @@ func CheckUserExistByName(userName string) (bool, error) {
 }
 
 // GetUserByName get user by name
-func GetUserByName(name string) (*ent.User, error) {
-	if user, err := entClient.User.Query().Where(user.NickName(name)).Only(context.Background()); err != nil {
+func GetUserByName(ctx context.Context, name string) (*ent.User, error) {
+	if user, err := entClient.User.Query().Where(user.NickName(name)).Only(ctx); err != nil {
 		if ent.IsNotFound(err) {
-			return nil, common.NewServiceErr(common.NotFound, err)
+			return nil, er.NewServiceErr(er.NotFound, errors.New("user not exist"))
 		}
-		return nil, common.NewServiceErr(common.Internal, err)
+		return nil, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	} else {
 		return user, nil
 	}
@@ -156,17 +157,17 @@ func BytesToInt32(buf []byte) int32 {
 }
 
 // GetUsers 批量获取用户信息
-func GetUsers(ids []int64) ([]*ent.User, error) {
-	// TODO redis
+func GetUsers(ctx context.Context, ids []int64) ([]*ent.User, error) {
+	// TODO redis cache
 	var _ids []uint64
 	for _, id := range ids {
 		_ids = append(_ids, uint64(id))
 	}
 	users, err := entClient.User.Query().Where(user.IDIn(_ids...)).Order(func(s *sql.Selector) {
 		s.OrderBy(user.FieldID)
-	}).All(context.Background())
+	}).All(ctx)
 	if err != nil {
-		return nil, common.NewServiceErr(common.Internal, err)
+		return nil, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
 
 	//可能有的id不存在或重复,需要再排序
@@ -188,11 +189,11 @@ func GetUsers(ids []int64) ([]*ent.User, error) {
 }
 
 // GetBannedReason 获取禁言原因
-func GetBannedReason(bannedType int64) (string, error) {
+func GetBannedReason(ctx context.Context, bannedType int64) (string, error) {
 	// TODO redis
-	ban, err := entClient.BanType.Get(context.Background(), uint64(bannedType))
+	ban, err := entClient.BanType.Get(ctx, uint64(bannedType))
 	if err != nil {
-		return "", common.NewServiceErr(common.Internal, err)
+		return "", er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
 	return ban.Content, nil
 }

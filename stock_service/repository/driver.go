@@ -193,7 +193,7 @@ func InsertStockTradeDate(stockID uint64, tradeDate string, close, volume float6
 		Save(context.Background())
 	if err != nil {
 		if ent.IsConstraintError(err) {
-			return common.NewServiceErr(common.AlreadyExists, err)
+			return nil
 		}
 		return common.NewServiceErr(common.Internal, err)
 	}
