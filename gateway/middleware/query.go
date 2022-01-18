@@ -3,7 +3,7 @@ package middleware
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	"gateway/common"
 	"io/ioutil"
 	"net/http"
 
@@ -13,6 +13,8 @@ import (
 	"github.com/vektah/gqlparser/v2/parser"
 )
 
+const queryNameKey = "queryName"
+
 // QueryDeepMiddleware 检测请求查询字段深度的中间件
 func QueryDeepMiddleware(queryDeep int) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -21,7 +23,7 @@ func QueryDeepMiddleware(queryDeep int) gin.HandlerFunc {
 		}
 		body, err := ioutil.ReadAll(c.Request.Body)
 		if err != nil {
-			log.Error("read request body error:", err.Error())
+			log.Errorf("read request body error: %+v", err)
 			systemError(c)
 		}
 		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body)) // 关键点,不能去掉
@@ -30,14 +32,14 @@ func QueryDeepMiddleware(queryDeep int) gin.HandlerFunc {
 		var param postParams
 		err = json.Unmarshal(body, &param)
 		if err != nil {
-			log.Error(fmt.Sprintf("unmarshal post param error:%s, body: %s", err.Error(), string(body)))
+			log.Errorf("unmarshal post param error:%+v, body: %s", err, string(body))
 			systemError(c)
 		}
 
 		doc, err_ := parser.ParseQuery(&ast.Source{Input: param.Query})
 		//spew.Dump(err)
 		if err_ != nil {
-			log.Error("parse query error: ", err_)
+			log.Errorf("parse query error: %+v", err_)
 			systemError(c)
 		}
 		var queryName []string //存储查询的接口名称
@@ -48,10 +50,13 @@ func QueryDeepMiddleware(queryDeep int) gin.HandlerFunc {
 					//检查查询的字段深度,待优化，还有directive
 					deep := getQueryFieldDeep(tmp.SelectionSet, 0)
 					if deep > queryDeep {
-						c.JSON(http.StatusBadRequest, gin.H{
-							"status": -1,
-							"msg":    "请求字段深度超出限制",
-						})
+						c.JSON(http.StatusBadRequest, []gqlError{{
+							Message: "请求字段深度超出限制",
+							Extensions: map[string]interface{}{
+								"code": common.InvalidArgument,
+							},
+							Path: []string{tmp.Name},
+						}})
 						c.Abort()
 						return
 					}
@@ -62,7 +67,7 @@ func QueryDeepMiddleware(queryDeep int) gin.HandlerFunc {
 				}
 			}
 		}
-		c.Set("queryName", queryName)
+		c.Set(queryNameKey, queryName)
 		c.Next()
 	}
 }
@@ -94,9 +99,11 @@ type postParams struct {
 }
 
 func systemError(ctx *gin.Context) {
-	ctx.JSON(http.StatusInternalServerError, gin.H{
-		"code": -1,
-		"msg":  "system error",
-	})
+	ctx.JSON(http.StatusInternalServerError, []gqlError{{
+		Message: "service system error",
+		Extensions: map[string]interface{}{
+			"code": common.Internal,
+		},
+	}})
 	ctx.Abort()
 }

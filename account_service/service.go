@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net"
@@ -18,6 +19,7 @@ import (
 
 	log "github.com/shenjing023/llog"
 	"github.com/shenjing023/vivy-polaris/contrib/registry"
+	"github.com/shenjing023/vivy-polaris/contrib/tracing"
 	"github.com/shenjing023/vivy-polaris/options"
 	vp_server "github.com/shenjing023/vivy-polaris/server"
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -38,11 +40,21 @@ func runAccountService(configPath string) {
 	}
 	defer r.Deregister()
 
+	tp, err := tracing.NewJaegerTracerProvider(conf.Cfg.JaegerCollectURL, "account-server")
+	if err != nil {
+		log.Fatalf("new JaegerTracerProvider error: %+v", err)
+	}
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			log.Fatalf("Error shutting down tracer provider: %v", err)
+		}
+	}()
+
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", conf.Cfg.Port))
 	if err != nil {
 		log.Fatalf("failed to listen: %+v", err)
 	}
-	s := vp_server.NewServer(options.WithDebug(conf.Cfg.Debug))
+	s := vp_server.NewServer(options.WithDebug(conf.Cfg.Debug), options.WithServerTracing(tp))
 	pb.RegisterAccountServer(s, &handler.User{})
 	go func() {
 		if err := s.Serve(lis); err != nil {
