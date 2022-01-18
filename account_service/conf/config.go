@@ -33,9 +33,9 @@ type YamlConf struct {
 		Host string `yaml:"host"`
 		Port int    `yaml:"port"`
 	} `yaml:"etcd"`
-	SvcName string `yaml:"svc_name"`
-	LogDir  string `yaml:"log_dir"`
-	Salt    string `yaml:"salt"`
+	LogDir           string `yaml:"log_dir"`
+	Salt             string `yaml:"salt"`
+	JaegerCollectURL string `yaml:"jeager_collect_url"`
 }
 
 // Cfg global config variate

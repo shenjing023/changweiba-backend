@@ -1,18 +1,15 @@
-package common
+package jwt
 
 import (
+	"gateway/common"
 	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/pkg/errors"
 )
 
-var (
-	ErrTokenExpired     = errors.New("Token is expired")
-	ErrTokenNotValidYet = errors.New("Token not active yet")
-	ErrTokenMalformed   = errors.New("That's not even a token")
-	ErrTokenInvalid     = errors.New("Couldn't handle this token")
-	signKey             = "secret key"
+const (
+	signKey = "secret key"
 )
 
 // options jwt
@@ -28,7 +25,7 @@ type options struct {
 // CustomClaims custom claim
 type CustomClaims struct {
 	Attachment interface{} `json:"attachment"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 // Option set option function
@@ -46,20 +43,6 @@ type JWTToken struct {
 	Token     string
 }
 
-var defaultOptions = options{
-	signingMethod: jwt.SigningMethodHS256,
-	signingKey:    signKey,
-	keyfunc: func(t *jwt.Token) (interface{}, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, ErrTokenInvalid
-		}
-		return []byte(signKey), nil
-	},
-	expired:   3600,
-	tokenType: "Bearer",
-	claims:    jwt.StandardClaims{},
-}
-
 // WithSigningMethod 设定签名方式
 func WithSigningMethod(method jwt.SigningMethod) Option {
 	return func(o *options) {
@@ -73,7 +56,7 @@ func WithSigningKey(key string) Option {
 		o.signingKey = key
 		o.keyfunc = func(t *jwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, ErrTokenInvalid
+				return nil, common.ErrTokenInvalid
 			}
 			return []byte(key), nil
 		}
@@ -89,7 +72,19 @@ func WithExpired(expired int) Option {
 
 // NewJWTAuth create auth
 func NewJWTAuth(opts ...Option) *JWTAuth {
-	o := defaultOptions
+	o := options{
+		signingMethod: jwt.SigningMethodHS256,
+		signingKey:    signKey,
+		keyfunc: func(t *jwt.Token) (interface{}, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, common.ErrTokenInvalid
+			}
+			return []byte(signKey), nil
+		},
+		expired:   3600,
+		tokenType: "Bearer",
+		claims:    jwt.RegisteredClaims{},
+	}
 	for _, opt := range opts {
 		opt(&o)
 	}
@@ -101,23 +96,23 @@ func NewJWTAuth(opts ...Option) *JWTAuth {
 // GenerateToken generate new token
 func (j *JWTAuth) GenerateToken(attachment interface{}) (*JWTToken, error) {
 	now := time.Now()
-	expiresAt := now.Add(time.Duration(j.opts.expired) * time.Second).Unix()
+	expiresAt := now.Add(time.Duration(j.opts.expired) * time.Second)
 	claims := CustomClaims{
 		Attachment: attachment,
-		StandardClaims: jwt.StandardClaims{
-			NotBefore: now.Unix(),
-			IssuedAt:  now.Unix(),
-			ExpiresAt: expiresAt,
+		RegisteredClaims: jwt.RegisteredClaims{
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
 		},
 	}
 
 	token := jwt.NewWithClaims(j.opts.signingMethod, claims)
 	tokenString, err := token.SignedString([]byte(j.opts.signingKey))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "jwt error")
 	}
 	return &JWTToken{
-		ExpiresAt: expiresAt,
+		ExpiresAt: expiresAt.Unix(),
 		TokenType: j.opts.tokenType,
 		Token:     tokenString,
 	}, nil
@@ -129,37 +124,30 @@ func (j *JWTAuth) ParseToken(tokenString string) (interface{}, error) {
 	if err != nil {
 		if ve, ok := err.(*jwt.ValidationError); ok {
 			if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-				return nil, ErrTokenMalformed
+				return nil, common.ErrTokenMalformed
 			} else if ve.Errors&jwt.ValidationErrorExpired != 0 {
 				// Token is expired
-				return nil, ErrTokenExpired
+				return nil, common.ErrTokenExpired
 			} else if ve.Errors&jwt.ValidationErrorNotValidYet != 0 {
-				return nil, ErrTokenNotValidYet
+				return nil, common.ErrTokenNotValidYet
 			} else {
-				return nil, ErrTokenInvalid
+				return nil, common.ErrTokenInvalid
 			}
 		}
+		return nil, common.ErrTokenInternal
 	}
 
 	if claims, ok := token.Claims.(*CustomClaims); ok {
 		return claims.Attachment, nil
 	}
-	return ErrTokenInvalid, nil
+	return common.ErrTokenInvalid, nil
 }
 
 // RefreshToken refresh token
 func (j *JWTAuth) RefreshToken(tokenString string) (*JWTToken, error) {
-	jwt.TimeFunc = func() time.Time {
-		return time.Unix(0, 0)
-	}
-	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, j.opts.keyfunc)
+	attachment, err := j.ParseToken(tokenString)
 	if err != nil {
 		return nil, err
 	}
-	if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
-		jwt.TimeFunc = time.Now
-		claims.StandardClaims.ExpiresAt = time.Now().Add(1 * time.Hour).Unix()
-		return j.GenerateToken(claims.Attachment)
-	}
-	return nil, ErrTokenInvalid
+	return j.GenerateToken(attachment)
 }

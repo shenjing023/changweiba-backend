@@ -17,4 +17,4 @@ etcd:
   host: "10.0.0.215"
   port: 2379
 log_dir: ""
-svc_name: "post"
+jeager_collect_url: "http://10.0.0.215:14268/api/traces"

@@ -2,8 +2,8 @@ package common
 
 import (
 	"context"
-	"errors"
 
+	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"google.golang.org/grpc/codes"
@@ -12,7 +12,7 @@ import (
 
 // GinContextFromContext normal ctx covert to gin ctx
 func GinContextFromContext(ctx context.Context) (*gin.Context, error) {
-	ginContext := ctx.Value("GinContextKey")
+	ginContext := ctx.Value(GinContext)
 	if ginContext == nil {
 		return nil, errors.New("retrieve gin.Context error")
 	}

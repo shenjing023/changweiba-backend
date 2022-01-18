@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"gateway/middleware"
 	"gateway/models"
 	"time"
@@ -14,25 +15,8 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-const (
-	// ServiceError service error
-	ServiceError = "gateway service internal error"
-)
-
 // SignUp 用户注册
 func SignUp(ctx context.Context, input models.NewUser) (*models.AuthToken, error) {
-	//获取客户端ip
-	// gc, err := common.GinContextFromContext(ctx)
-	// if err != nil {
-	// 	log.Error("%+v", err)
-	// 	return nil, errors.New(ServiceError)
-	// }
-	// ip, _, err := net.SplitHostPort(strings.TrimSpace(gc.Request.RemoteAddr))
-	// if err != nil {
-	// 	log.Error("get remote ip error: ", err)
-	// 	return nil, errors.New(ServiceError)
-	// }
-
 	client := pb.NewAccountClient(AccountConn)
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
@@ -43,9 +27,9 @@ func SignUp(ctx context.Context, input models.NewUser) (*models.AuthToken, error
 	}
 	resp, err := client.SignUp(ctx, &user)
 	if err != nil {
-		log.Error("SignUp user error: ", err)
+		log.Errorf("signUp user error: %+v", err)
 		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
-			codes.Internal:        ServiceError,
+			codes.Internal:        common.ServiceError,
 			codes.AlreadyExists:   "该昵称已注册",
 			codes.InvalidArgument: "昵称或密码不能为空",
 		})
@@ -54,13 +38,13 @@ func SignUp(ctx context.Context, input models.NewUser) (*models.AuthToken, error
 	// 生成jwt token
 	accessToken, err := middleware.GenerateAccessToken(resp.Id)
 	if err != nil {
-		log.Error("generate access_token error: ", err)
-		return nil, common.NewGQLError(common.Internal, ServiceError)
+		log.Errorf("generate access_token error: %+v", err)
+		return nil, common.NewGQLError(common.Internal, common.ServiceError)
 	}
 	refreshToken, err := middleware.GenerateRefreshToken(resp.Id)
 	if err != nil {
-		log.Error("generate refresh_token error: ", err)
-		return nil, common.NewGQLError(common.Internal, ServiceError)
+		log.Errorf("generate refresh_token error: %+v", err)
+		return nil, common.NewGQLError(common.Internal, common.ServiceError)
 	}
 
 	return &models.AuthToken{
@@ -81,9 +65,9 @@ func SignIn(ctx context.Context, input models.NewUser) (*models.AuthToken, error
 	}
 	resp, err := client.SignIn(ctx, &user)
 	if err != nil {
-		log.Error("SignIn user error: ", err)
+		log.Errorf("SignIn user error: %+v", err)
 		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
-			codes.Internal:        ServiceError,
+			codes.Internal:        common.ServiceError,
 			codes.NotFound:        "昵称不正确",
 			codes.InvalidArgument: "密码不正确",
 		})
@@ -92,13 +76,13 @@ func SignIn(ctx context.Context, input models.NewUser) (*models.AuthToken, error
 	// 生成jwt token
 	accessToken, err := middleware.GenerateAccessToken(resp.Id)
 	if err != nil {
-		log.Error("generate access_token error: ", err)
-		return nil, common.NewGQLError(common.Internal, ServiceError)
+		log.Errorf("generate access_token error: %+v", err)
+		return nil, common.NewGQLError(common.Internal, common.ServiceError)
 	}
 	refreshToken, err := middleware.GenerateRefreshToken(resp.Id)
 	if err != nil {
-		log.Error("generate refresh_token error: ", err)
-		return nil, common.NewGQLError(common.Internal, ServiceError)
+		log.Errorf("generate refresh_token error: %+v", err)
+		return nil, common.NewGQLError(common.Internal, common.ServiceError)
 	}
 
 	return &models.AuthToken{
@@ -118,7 +102,7 @@ func UsersByIDsLoaderFunc(ctx context.Context, keys []int64) (users []*models.Us
 	}
 	resp, err := client.GetUsersByUserIds(ctx, &ur)
 	if err != nil {
-		log.Error("get user by ids error: ", err)
+		log.Errorf("get user by ids error: %+v", err)
 		for i := 0; i < len(keys); i++ {
 			errs = append(errs, err)
 		}
@@ -137,4 +121,23 @@ func UsersByIDsLoaderFunc(ctx context.Context, keys []int64) (users []*models.Us
 		})
 	}
 	return
+}
+
+func GetAccessToken(ctx context.Context, input string) (string, error) {
+	// 先验证refresh_token
+	token, err := middleware.RefreshRefreshToken(input)
+	if err != nil {
+		if errors.Is(err, common.ErrTokenExpired) {
+			return "", common.NewGQLError(common.InvalidArgument, "授权已过期")
+		} else if errors.Is(err, common.ErrTokenNotValidYet) {
+			return "", common.NewGQLError(common.InvalidArgument, "授权未生效")
+		} else if errors.Is(err, common.ErrTokenMalformed) {
+			return "", common.NewGQLError(common.InvalidArgument, "token无效")
+		} else if errors.Is(err, common.ErrTokenInvalid) {
+			return "", common.NewGQLError(common.InvalidArgument, "token无效")
+		}
+		log.Errorf("refresh token error: %+v", err)
+		return "", common.NewGQLError(common.Internal, common.ServiceError)
+	}
+	return token, nil
 }

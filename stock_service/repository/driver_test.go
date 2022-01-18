@@ -1,10 +1,12 @@
 package repository
 
 import (
-	"stock_service/common"
+	"context"
 	"stock_service/conf"
 	"testing"
 	"time"
+
+	er "github.com/shenjing023/vivy-polaris/errors"
 )
 
 func init() {
@@ -14,7 +16,8 @@ func init() {
 
 func TestGetSubscribeStocks(t *testing.T) {
 	defer Close()
-	stocks, err := GetSubscribedStocks()
+	ctx := context.Background()
+	stocks, err := GetSubscribedStocks(ctx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -23,9 +26,10 @@ func TestGetSubscribeStocks(t *testing.T) {
 
 func TestInsertTradeDate(t *testing.T) {
 	defer Close()
-	err := InsertStockTradeDate(1, "2018-01-02", 13.0, 10000, 11)
+	ctx := context.Background()
+	err := InsertStockTradeDate(ctx, 1, "2018-01-02", 13.0, 10000, 11)
 	if err != nil {
-		a, ok := err.(*common.ServiceErr)
+		a, ok := err.(*er.Error)
 		if ok {
 			t.Log(a.Code)
 		}
@@ -35,7 +39,8 @@ func TestInsertTradeDate(t *testing.T) {
 
 func TestGetStockLastPullTime(t *testing.T) {
 	defer Close()
-	lastPullTime, err := GetStockLastPullTime(0)
+	ctx := context.Background()
+	lastPullTime, err := GetStockLastPullTime(ctx, 0)
 	if err != nil {
 		t.Error(err)
 	}

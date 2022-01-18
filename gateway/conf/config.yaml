@@ -1,9 +1,6 @@
 #服务相关配置
-debug: false
+debug: true
 port: 8020
-account_svc_name: "account"
-post_svc_name: "post"
-stock_svc_name: "stock"
 auth_token:
   access:
     sign_key: "ssdadasd1"
@@ -17,3 +14,4 @@ etcd:
   host: "10.0.0.215"
   port: 2379
 svc_name: "gateway"
+jeager_collect_url: "http://10.0.0.215:14268/api/traces"

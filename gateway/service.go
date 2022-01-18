@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"gateway/conf"
@@ -11,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 
 	service_handler "gateway/handler"
@@ -59,6 +61,7 @@ func runGatewayService(configPath string) {
 	log.Infof("signal %d received and shutdown service", quit)
 	srv.Shutdown(context.Background())
 	service_handler.StopGRPCConn()
+	service_handler.StopTracer()
 }
 
 // Defining the Playground handler
@@ -74,16 +77,14 @@ func playgroundHandler() gin.HandlerFunc {
 func graphqlHandler() gin.HandlerFunc {
 	// NewExecutableSchema and Config are in the generated.go file
 	// Resolver is in the resolver.go file
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(
-		generated.Config{
-			Resolvers: &Resolver{},
-		},
-	))
-	// srv.SetRecoverFunc(func(ctx context.Context, err interface{}) error {
-	// 	log.Errorf("service panic: %+v", err)
-	// 	log.Error(string(debug.Stack()))
-	// 	return errors.New("Internal system error")
-	// })
+	c := generated.Config{Resolvers: &Resolver{}}
+	c.Directives.IsAuthenticated = middleware.IsAuthenticated
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(c))
+	srv.SetRecoverFunc(func(ctx context.Context, err interface{}) error {
+		log.Errorf("service panic: %+v", err)
+		log.Error(string(debug.Stack()))
+		return errors.New("Internal system error")
+	})
 	// srv.Use(extension.FixedComplexityLimit(20))
 
 	return func(c *gin.Context) {

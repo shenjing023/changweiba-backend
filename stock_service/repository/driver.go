@@ -3,7 +3,6 @@ package repository
 import (
 	"fmt"
 	"os"
-	"stock_service/common"
 	"stock_service/repository/ent"
 	"stock_service/repository/ent/stock"
 	"stock_service/repository/ent/tradedate"
@@ -13,28 +12,17 @@ import (
 	"stock_service/conf"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/cockroachdb/errors"
 	"github.com/go-redis/redis/v8"
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/shenjing023/llog"
+	er "github.com/shenjing023/vivy-polaris/errors"
 	"golang.org/x/net/context"
 )
 
 var (
 	redisClient *redis.Client
 	entClient   *ent.Client
-)
-
-const (
-	// POSTSCOUNTKEY redis 保存当前帖子总数
-	POSTSCOUNTKEY = "post:post:totalcount"
-	// 帖子下共有多少楼
-	COMMENTFLOORKEY = "post:comment:totalcount"
-	// 帖子的一楼评论
-	FIRSTCOMMENTKEY = "post:post:first_comment"
-	// 帖子的总评论数
-	COMMENTCOUNTKEY = "post:comments_allcount"
-	// 评论的总回复数
-	REPLYCOUNTKEY = "post:reply_count_comment"
 )
 
 // Init init mysql and redis orm
@@ -75,16 +63,16 @@ func Close() {
 }
 
 // SubscribeStock subscribe stock
-func SubscribeStock(stockID int64, userID int64) error {
-	user, err := entClient.User.Get(context.Background(), uint64(userID))
+func SubscribeStock(ctx context.Context, stockID int64, userID int64) error {
+	user, err := entClient.User.Get(ctx, uint64(userID))
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return common.NewServiceErr(common.NotFound, err)
+			return er.NewServiceErr(er.NotFound, errors.New("user not exist"))
 		}
-		return common.NewServiceErr(common.Internal, err)
+		return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
-	if err = user.Update().AddSubscribeStockIDs(uint64(stockID)).Exec(context.Background()); err != nil {
-		return common.NewServiceErr(common.Internal, err)
+	if err = user.Update().AddSubscribeStockIDs(uint64(stockID)).Exec(ctx); err != nil {
+		return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	} else if ent.IsConstraintError(err) {
 		return nil
 	}
@@ -92,27 +80,27 @@ func SubscribeStock(stockID int64, userID int64) error {
 }
 
 // UnSubscribeStock unsubscribe stock
-func UnSubscribeStock(stockID int64, userID int64) error {
-	user, err := entClient.User.Get(context.Background(), uint64(userID))
+func UnSubscribeStock(ctx context.Context, stockID int64, userID int64) error {
+	user, err := entClient.User.Get(ctx, uint64(userID))
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return common.NewServiceErr(common.NotFound, err)
+			return er.NewServiceErr(er.NotFound, errors.New("user not exist"))
 		}
-		return common.NewServiceErr(common.Internal, err)
+		return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
-	if err = user.Update().RemoveSubscribeStockIDs(uint64(stockID)).Exec(context.Background()); err != nil {
-		return common.NewServiceErr(common.Internal, err)
+	if err = user.Update().RemoveSubscribeStockIDs(uint64(stockID)).Exec(ctx); err != nil {
+		return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
 	return nil
 }
 
-func GetStockBySymbols(symbols ...string) ([]*ent.Stock, error) {
+func GetStockBySymbols(ctx context.Context, symbols ...string) ([]*ent.Stock, error) {
 	stocks, err := entClient.Stock.
 		Query().
 		Where(stock.SymbolIn(symbols...)).
-		All(context.Background())
+		All(ctx)
 	if err != nil {
-		return nil, common.NewServiceErr(common.Internal, err)
+		return nil, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
 	var (
 		results []*ent.Stock
@@ -131,44 +119,44 @@ func GetStockBySymbols(symbols ...string) ([]*ent.Stock, error) {
 	return results, nil
 }
 
-func InsertStocks(symbols, names []string) ([]*ent.Stock, error) {
+func InsertStocks(ctx context.Context, symbols, names []string) ([]*ent.Stock, error) {
 	if len(symbols) != len(names) {
-		return nil, common.NewServiceErr(common.InvalidArgument, fmt.Errorf("symbols and names length not equal"))
+		return nil, er.NewServiceErr(er.InvalidArgument, errors.New("symbols and names length not equal"))
 	}
 	bulk := make([]*ent.StockCreate, len(symbols))
 	for i, symbol := range symbols {
 		bulk[i] = entClient.Stock.Create().SetSymbol(symbol).SetName(names[i])
 	}
-	stocks, err := entClient.Stock.CreateBulk(bulk...).Save(context.Background())
+	stocks, err := entClient.Stock.CreateBulk(bulk...).Save(ctx)
 	if err != nil {
-		return nil, common.NewServiceErr(common.Internal, err)
+		return nil, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
 	return stocks, nil
 }
 
-func GetSubscribedStocksByUserID(userID int64) ([]*ent.Stock, error) {
-	stocks, err := entClient.User.Query().Where(user.ID(uint64(userID))).QuerySubscribeStocks().All(context.Background())
+func GetSubscribedStocksByUserID(ctx context.Context, userID int64) ([]*ent.Stock, error) {
+	stocks, err := entClient.User.Query().Where(user.ID(uint64(userID))).QuerySubscribeStocks().All(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return nil, common.NewServiceErr(common.NotFound, err)
+			return nil, er.NewServiceErr(er.NotFound, errors.New("user not exist"))
 		}
-		return nil, common.NewServiceErr(common.Internal, err)
+		return nil, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
 	return stocks, nil
 }
 
 // 订阅数不为0的股票
-func GetSubscribedStocks() ([]*ent.Stock, error) {
-	stocks, err := entClient.Stock.Query().Where(stock.HasSubscribers()).All(context.Background())
+func GetSubscribedStocks(ctx context.Context) ([]*ent.Stock, error) {
+	stocks, err := entClient.Stock.Query().Where(stock.HasSubscribers()).All(ctx)
 	if err != nil {
-		return nil, common.NewServiceErr(common.Internal, err)
+		return nil, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
 	return stocks, nil
 }
 
 // 获取股票交易数据最近拉取的时间
-func GetStockLastPullTime(stockID uint64) (int64, error) {
-	td, err := entClient.TradeDate.Query().Where(tradedate.StockID(stockID)).Order(ent.Desc(tradedate.FieldTDate)).First(context.Background())
+func GetStockLastPullTime(ctx context.Context, stockID uint64) (int64, error) {
+	td, err := entClient.TradeDate.Query().Where(tradedate.StockID(stockID)).Order(ent.Desc(tradedate.FieldTDate)).First(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return 0, nil
@@ -180,7 +168,7 @@ func GetStockLastPullTime(stockID uint64) (int64, error) {
 }
 
 // 插入股票每日交易数据
-func InsertStockTradeDate(stockID uint64, tradeDate string, close, volume float64, xq int64) error {
+func InsertStockTradeDate(ctx context.Context, stockID uint64, tradeDate string, close, volume float64, xq int64) error {
 	now := time.Now().Unix()
 	_, err := entClient.TradeDate.Create().
 		SetStockID(stockID).
@@ -190,19 +178,19 @@ func InsertStockTradeDate(stockID uint64, tradeDate string, close, volume float6
 		SetXueqiuCommentCount(xq).
 		SetCreateAt(now).
 		SetUpdateAt(now).
-		Save(context.Background())
+		Save(ctx)
 	if err != nil {
 		if ent.IsConstraintError(err) {
 			return nil
 		}
-		return common.NewServiceErr(common.Internal, err)
+		return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
 	return nil
 }
 
 // 获取股票交易数据
-func GetStockTradeDate(stockID uint64) ([]*ent.TradeDate, error) {
-	data, err := entClient.TradeDate.Query().Where(tradedate.StockID(stockID)).All(context.Background())
+func GetStockTradeDate(ctx context.Context, stockID uint64) ([]*ent.TradeDate, error) {
+	data, err := entClient.TradeDate.Query().Where(tradedate.StockID(stockID)).All(ctx)
 	if err != nil {
 		return nil, err
 	}

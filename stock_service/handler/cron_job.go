@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -17,17 +18,17 @@ import (
 
 func UpdateTradeData() {
 	// 先获取订阅数不为0的stock
-	stocks, err := repository.GetSubscribedStocks()
+	stocks, err := repository.GetSubscribedStocks(context.Background())
 	if err != nil {
-		log.Errorf("get subscribed stocks error:%v", err)
+		log.Errorf("get subscribed stocks error:%+v", err)
 		return
 	}
 	// 循环获取每个股票的最近拉取的时间
 	for _, stock := range stocks {
 		// 获取最近拉取的时间
-		lastPulledTime, err := repository.GetStockLastPullTime(stock.ID)
+		lastPulledTime, err := repository.GetStockLastPullTime(context.Background(), stock.ID)
 		if err != nil {
-			log.Errorf("get last pulled time error:%v", err)
+			log.Errorf("get last pulled time error:%+v", err)
 			continue
 		}
 		tradeData := getTradeData(stock.Symbol, lastPulledTime)
@@ -49,8 +50,8 @@ func UpdateTradeData() {
 			if _, ok := xqComment[date]; ok {
 				xq = xqComment[date]
 			}
-			if err := repository.InsertStockTradeDate(stock.ID, date, close, volume, int64(xq)); err != nil {
-				log.Errorf("insert stock trade date error:%v", err)
+			if err := repository.InsertStockTradeDate(context.Background(), stock.ID, date, close, volume, int64(xq)); err != nil {
+				log.Errorf("insert stock trade date error:%+v", err)
 			}
 		}
 	}

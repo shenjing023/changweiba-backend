@@ -2,18 +2,21 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
-	"gateway/common"
 	"gateway/conf"
 
+	pb "gateway/pb"
+
 	log "github.com/shenjing023/llog"
+	vp_client "github.com/shenjing023/vivy-polaris/client"
+	"github.com/shenjing023/vivy-polaris/contrib/registry"
+	"github.com/shenjing023/vivy-polaris/contrib/tracing"
+	"github.com/shenjing023/vivy-polaris/options"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/resolver"
 )
 
 //rpc连接
@@ -21,6 +24,7 @@ var (
 	AccountConn *grpc.ClientConn
 	PostConn    *grpc.ClientConn
 	StockConn   *grpc.ClientConn
+	tp          *sdktrace.TracerProvider
 )
 
 // InitGRPCConn init grpc conn
@@ -30,49 +34,27 @@ func InitGRPCConn() {
 		Endpoints:   []string{fmt.Sprintf("%s:%d", conf.Cfg.Etcd.Host, conf.Cfg.Etcd.Port)},
 		DialTimeout: time.Second * 5,
 	}
-	account, err := NewDiscovery(etcdConf, "svc-"+conf.Cfg.AccountSvcName, conf.Cfg.AccountSvcName)
-	if err != nil {
-		panic(err)
-	}
-	resolver.Register(account)
 
-	post, err := NewDiscovery(etcdConf, "svc-"+conf.Cfg.PostSvcName, conf.Cfg.PostSvcName)
+	// jeager tracing
+	tp, err = tracing.NewJaegerTracerProvider(conf.Cfg.JaegerCollectURL, "gateway-client")
 	if err != nil {
-		panic(err)
+		log.Fatalf("new JaegerTracerProvider error: %+v", err)
 	}
-	resolver.Register(post)
 
-	stock, err := NewDiscovery(etcdConf, "svc-"+conf.Cfg.StockSvcName, conf.Cfg.StockSvcName)
-	if err != nil {
-		panic(err)
-	}
-	resolver.Register(stock)
-
-	AccountConn, err = grpc.DialContext(context.Background(),
-		GetPrefix("svc-"+conf.Cfg.AccountSvcName, conf.Cfg.AccountSvcName),
-		grpc.WithDefaultServiceConfig(`{"LoadBalancingPolicy": "round_robin"}`),
-		grpc.WithInsecure(),
-		// grpc.WithUnaryInterceptor(unaryHeaderInterceptor),
-	)
+	AccountConn, err = vp_client.NewClientConn(registry.GetServiceTarget(pb.Account_ServiceDesc), options.WithEtcdDiscovery(etcdConf, pb.Account_ServiceDesc),
+		options.WithInsecure(), options.WithRRLB(), options.WithClientTracing(tp))
 	if err != nil {
 		log.Fatalf("fail to accountRPC dial: %+v", err)
 	}
 
-	PostConn, err = grpc.DialContext(context.Background(),
-		GetPrefix("svc-"+conf.Cfg.PostSvcName, conf.Cfg.PostSvcName),
-		grpc.WithDefaultServiceConfig(`{"LoadBalancingPolicy": "round_robin"}`),
-		grpc.WithInsecure(),
-		// grpc.WithUnaryInterceptor(unaryHeaderInterceptor),
-	)
+	PostConn, err = vp_client.NewClientConn(registry.GetServiceTarget(pb.PostService_ServiceDesc), options.WithEtcdDiscovery(etcdConf, pb.PostService_ServiceDesc),
+		options.WithInsecure(), options.WithRRLB(), options.WithClientTracing(tp))
 	if err != nil {
 		log.Fatalf("fail to postsRPC dial: %+v", err)
 	}
 
-	StockConn, err = grpc.DialContext(context.Background(),
-		GetPrefix("svc-"+conf.Cfg.StockSvcName, conf.Cfg.StockSvcName),
-		grpc.WithDefaultServiceConfig(`{"LoadBalancingPolicy": "round_robin"}`),
-		grpc.WithInsecure(),
-	)
+	StockConn, err = vp_client.NewClientConn(registry.GetServiceTarget(pb.StockService_ServiceDesc), options.WithEtcdDiscovery(etcdConf, pb.StockService_ServiceDesc),
+		options.WithInsecure(), options.WithRRLB(), options.WithClientTracing(tp))
 	if err != nil {
 		log.Fatalf("fail to stockRPC dial: %+v", err)
 	}
@@ -91,30 +73,6 @@ func StopGRPCConn() {
 	}
 }
 
-// unaryHeaderInterceptor get http header to metadata for opentracing
-func unaryHeaderInterceptor(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-	gc, err := common.GinContextFromContext(ctx)
-	if err != nil {
-		log.Errorf("%+v", err)
-		return errors.New(ServiceError)
-	}
-	var (
-		otHeaders = []string{
-			"X-Request-Id",
-			"X-B3-Parentspanid",
-			"X-B3-Sampled",
-			"X-B3-Spanid",
-			"X-B3-Traceid",
-		}
-		pairs []string
-	)
-
-	for _, h := range otHeaders {
-		if v := gc.Request.Header.Get(h); len(v) > 0 {
-			pairs = append(pairs, h, v)
-		}
-	}
-	header := metadata.Pairs(pairs...)
-	ctx = metadata.NewOutgoingContext(ctx, header)
-	return invoker(ctx, method, req, reply, cc, opts...)
+func StopTracer() {
+	tp.Shutdown(context.Background())
 }

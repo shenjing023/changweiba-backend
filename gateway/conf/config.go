@@ -13,13 +13,10 @@ import (
 
 // YamlConf global config struct
 type YamlConf struct {
-	Debug          bool   `yaml:"debug"`
-	Port           int    `yaml:"port"`
-	LogDir         string `yaml:"log_dir"`
-	PostSvcName    string `yaml:"post_svc_name"`
-	AccountSvcName string `yaml:"account_svc_name"`
-	StockSvcName   string `yaml:"stock_svc_name"`
-	AuthToken      struct {
+	Debug     bool   `yaml:"debug"`
+	Port      int    `yaml:"port"`
+	LogDir    string `yaml:"log_dir"`
+	AuthToken struct {
 		Access struct {
 			SignKey string `yaml:"sign_key"`
 			Expire  int    `yaml:"expire"`
@@ -33,8 +30,9 @@ type YamlConf struct {
 		Host string `yaml:"host"`
 		Port int    `yaml:"port"`
 	} `yaml:"etcd"`
-	SvcName   string `yaml:"svc_name"`
-	QueryDeep int    `yaml:"query_deep"`
+	SvcName          string `yaml:"svc_name"`
+	QueryDeep        int    `yaml:"query_deep"`
+	JaegerCollectURL string `yaml:"jeager_collect_url"`
 }
 
 // Cfg global config variate

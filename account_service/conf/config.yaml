@@ -1,5 +1,5 @@
 #服务相关配置
-debug: false
+debug: true
 port: 8018
 db:
   host: "127.0.0.1"
@@ -18,4 +18,4 @@ etcd:
   port: 2379
 log_dir: ""
 salt: "asdah#!2sddh"
-svc_name: "account"
+jeager_collect_url: "http://10.0.0.215:14268/api/traces"

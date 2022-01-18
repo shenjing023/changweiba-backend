@@ -56,7 +56,7 @@ func (r *mutationResolver) DeletePost(ctx context.Context, input int) (bool, err
 }
 
 func (r *mutationResolver) GetAccessToken(ctx context.Context, input string) (string, error) {
-	panic("not implemented")
+	return handler.GetAccessToken(ctx, input)
 }
 
 func (r *mutationResolver) SubscribeStock(ctx context.Context, input int) (bool, error) {

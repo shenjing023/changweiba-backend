@@ -16,8 +16,8 @@ import (
 func NewPost(ctx context.Context, input models.NewPost) (int, error) {
 	userID, err := common.GetUserIDFromContext(ctx)
 	if err != nil {
-		log.Error("new post get userID from context error: ", err)
-		return 0, err
+		log.Errorf("new post get userID from context error: %+v", err)
+		return 0, common.NewGQLError(common.Internal, common.ServiceError)
 	}
 	client := pb.NewPostServiceClient(PostConn)
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
@@ -29,9 +29,9 @@ func NewPost(ctx context.Context, input models.NewPost) (int, error) {
 	}
 	r, err := client.NewPost(ctx, &request)
 	if err != nil {
-		log.Error("new post error: ", err)
+		log.Errorf("new post error: %+v", err)
 		return 0, common.GRPCErrorConvert(err, map[codes.Code]string{
-			codes.Internal: ServiceError,
+			codes.Internal: common.ServiceError,
 		})
 	}
 	return int(r.PostId), nil
@@ -48,9 +48,9 @@ func Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection,
 	}
 	r, err := client.GetPosts(ctx, &request)
 	if err != nil {
-		log.Error("get posts error: ", err)
+		log.Errorf("get posts error: %+v", err)
 		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
-			codes.Internal: ServiceError,
+			codes.Internal: common.ServiceError,
 		})
 	}
 	var posts []*models.Post
@@ -88,7 +88,7 @@ func FirstCommentLoaderFunc(ctx context.Context, keys []int64) (comments []*mode
 	}
 	r, err := client.GetPostFirstComment(ctx, &request)
 	if err != nil {
-		log.Error("get first comment error: ", err)
+		log.Errorf("get first comment error: %+v", err)
 		for i := 0; i < len(keys); i++ {
 			errs = append(errs, err)
 		}
@@ -110,8 +110,8 @@ func FirstCommentLoaderFunc(ctx context.Context, keys []int64) (comments []*mode
 func NewComment(ctx context.Context, input models.NewComment) (int, error) {
 	userID, err := common.GetUserIDFromContext(ctx)
 	if err != nil {
-		log.Error("new comment get userID from context error: ", err)
-		return 0, err
+		log.Errorf("new comment get userID from context error: %+v", err)
+		return 0, common.NewGQLError(common.Internal, common.ServiceError)
 	}
 	client := pb.NewPostServiceClient(PostConn)
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
@@ -123,9 +123,9 @@ func NewComment(ctx context.Context, input models.NewComment) (int, error) {
 	}
 	r, err := client.NewComment(ctx, &request)
 	if err != nil {
-		log.Error("new comment error: ", err)
+		log.Errorf("new comment error: %+v", err)
 		return 0, common.GRPCErrorConvert(err, map[codes.Code]string{
-			codes.Internal: ServiceError,
+			codes.Internal: common.ServiceError,
 		})
 	}
 	return int(r.CommentId), nil
@@ -134,8 +134,8 @@ func NewComment(ctx context.Context, input models.NewComment) (int, error) {
 func NewReply(ctx context.Context, input models.NewReply) (int, error) {
 	userID, err := common.GetUserIDFromContext(ctx)
 	if err != nil {
-		log.Error("new reply get userID from context error: ", err)
-		return 0, err
+		log.Errorf("new reply get userID from context error: %+v", err)
+		return 0, common.NewGQLError(common.Internal, common.ServiceError)
 	}
 	client := pb.NewPostServiceClient(PostConn)
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
@@ -153,9 +153,9 @@ func NewReply(ctx context.Context, input models.NewReply) (int, error) {
 	}
 	r, err := client.NewReply(ctx, &request)
 	if err != nil {
-		log.Error("new reply error: ", err)
+		log.Errorf("new reply error: %+v", err)
 		return 0, common.GRPCErrorConvert(err, map[codes.Code]string{
-			codes.Internal: ServiceError,
+			codes.Internal: common.ServiceError,
 		})
 	}
 	return int(r.ReplyId), nil
@@ -173,9 +173,9 @@ func GetCommentsByPostID(ctx context.Context, postID int, page int, pageSize int
 	}
 	r, err := client.GetCommentsByPostId(ctx, &request)
 	if err != nil {
-		log.Error("get post comments error: ", err)
+		log.Errorf("get post comments error: %+v", err)
 		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
-			codes.Internal: ServiceError,
+			codes.Internal: common.ServiceError,
 		})
 	}
 	var comments []*models.Comment
@@ -209,9 +209,9 @@ func GetRepliesByCommentID(ctx context.Context, commentID int, page int, pageSiz
 	}
 	r, err := client.GetRepliesByCommentId(ctx, &request)
 	if err != nil {
-		log.Error("get comment replies error: ", err)
+		log.Errorf("get comment replies error: %+v", err)
 		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
-			codes.Internal: ServiceError,
+			codes.Internal: common.ServiceError,
 		})
 	}
 	var replies []*models.Reply

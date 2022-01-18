@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net"
@@ -17,8 +18,11 @@ import (
 	pb "stock_service/pb"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/shenjing023/vivy-polaris/contrib/registry"
+	"github.com/shenjing023/vivy-polaris/contrib/tracing"
+	"github.com/shenjing023/vivy-polaris/options"
+	vp_server "github.com/shenjing023/vivy-polaris/server"
 	clientv3 "go.etcd.io/etcd/client/v3"
-	"google.golang.org/grpc"
 )
 
 func main() {
@@ -42,26 +46,38 @@ func main() {
 func runStockService(configPath string) {
 	conf.Init(configPath)
 	repository.Init()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", conf.Cfg.Port))
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-	s := grpc.NewServer()
-	pb.RegisterStockServiceServer(s, &handler.StockService{})
-	go func() {
-		if err := s.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %v", err)
-		}
-	}()
 
 	etcdConf := clientv3.Config{
 		Endpoints:   []string{fmt.Sprintf("%s:%d", conf.Cfg.Etcd.Host, conf.Cfg.Etcd.Port)},
 		DialTimeout: time.Second * 5,
 	}
-	r, err := NewRegister(etcdConf, "svc-"+conf.Cfg.SvcName, conf.Cfg.SvcName, "127.0.0.1", fmt.Sprintf("%d", conf.Cfg.Port))
+	r, err := registry.NewEtcdRegister(etcdConf, pb.StockService_ServiceDesc, "127.0.0.1", fmt.Sprintf("%d", conf.Cfg.Port))
 	if err != nil {
-		log.Fatalf("failed register serve: %v", err)
+		log.Fatalf("failed register server: %+v", err)
 	}
+	defer r.Deregister()
+
+	tp, err := tracing.NewJaegerTracerProvider(conf.Cfg.JaegerCollectURL, "account-server")
+	if err != nil {
+		log.Fatalf("new JaegerTracerProvider error: %+v", err)
+	}
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			log.Fatalf("Error shutting down tracer provider: %v", err)
+		}
+	}()
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", conf.Cfg.Port))
+	if err != nil {
+		log.Fatalf("failed to listen: %+v", err)
+	}
+	s := vp_server.NewServer(options.WithDebug(conf.Cfg.Debug), options.WithServerTracing(tp))
+	pb.RegisterStockServiceServer(s, &handler.StockService{})
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %+v", err)
+		}
+	}()
 	handler.RunCronJob()
 	log.Info("service start success")
 
@@ -70,7 +86,6 @@ func runStockService(configPath string) {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Infof("signal %d received and shutdown service", quit)
-	r.Close()
 	s.GracefulStop()
 	stopService()
 }

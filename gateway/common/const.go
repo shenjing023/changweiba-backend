@@ -1,6 +1,24 @@
 package common
 
-import "google.golang.org/grpc/codes"
+import (
+	"errors"
+
+	"google.golang.org/grpc/codes"
+)
+
+var (
+	ErrTokenExpired     = errors.New("token is expired")
+	ErrTokenNotValidYet = errors.New("token not active yet")
+	ErrTokenMalformed   = errors.New("that's not even a token")
+	ErrTokenInvalid     = errors.New("couldn't handle this token")
+	ErrTokenInternal    = errors.New("token internal error")
+)
+
+const (
+	// ServiceError service error
+	ServiceError = "gateway service internal error"
+	GinContext   = "GinContextKey"
+)
 
 // ErrorCode service error code
 type ErrorCode uint32

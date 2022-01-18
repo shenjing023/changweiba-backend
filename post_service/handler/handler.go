@@ -6,9 +6,9 @@ import (
 	"cw_post_service/repository"
 	"strings"
 
+	"github.com/cockroachdb/errors"
 	log "github.com/shenjing023/llog"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	er "github.com/shenjing023/vivy-polaris/errors"
 )
 
 const (
@@ -24,18 +24,18 @@ type PostService struct {
 // NewPost new post
 func (PostService) NewPost(ctx context.Context, pr *pb.NewPostRequest) (*pb.NewPostReply, error) {
 	if len(strings.TrimSpace(pr.Topic)) == 0 || len(strings.TrimSpace(pr.Content)) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "topic or content can not be empty")
+		return nil, er.NewServiceErr(er.InvalidArgument, errors.New("topic or content can not be empty"))
 	}
-	postID, err := repository.InsertPost(pr.UserId, pr.Topic)
+	postID, err := repository.InsertPost(ctx, pr.UserId, pr.Topic)
 	if err != nil {
-		log.Error("insert post error: ", err.Error())
-		return nil, status.Error(codes.Internal, ServiceError)
+		log.Errorf("insert post error: %+v", err)
+		return nil, err
 	}
 	// 插入一楼
-	if _, err := repository.InsertComment(pr.UserId, postID, pr.Content); err != nil {
-		log.Errorf("insert post[%d] first comment error: %v", postID, err)
-		go repository.DeletePost(postID)
-		return nil, status.Error(codes.Internal, ServiceError)
+	if _, err := repository.InsertComment(ctx, pr.UserId, postID, pr.Content); err != nil {
+		log.Errorf("insert post[%d] first comment error: %+v", postID, err)
+		go repository.DeletePost(ctx, postID)
+		return nil, err
 	}
 	return &pb.NewPostReply{
 		PostId: postID,
@@ -44,15 +44,15 @@ func (PostService) NewPost(ctx context.Context, pr *pb.NewPostRequest) (*pb.NewP
 
 // GetPost get post info
 func (PostService) GetPost(ctx context.Context, pr *pb.PostRequest) (*pb.PostReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPost not implemented")
+	return nil, er.NewServiceErr(er.Unimplemented, errors.New("method GetPost not implemented"))
 }
 
 // GetPosts get posts info by page and page_size
 func (PostService) GetPosts(ctx context.Context, pr *pb.PostsRequest) (*pb.PostsReply, error) {
-	dbPosts, err := repository.GetPosts(int(pr.Page), int(pr.PageSize))
+	dbPosts, err := repository.GetPosts(ctx, int(pr.Page), int(pr.PageSize))
 	if err != nil {
-		log.Error("get posts error: ", err.Error())
-		return nil, status.Error(codes.Internal, ServiceError)
+		log.Errorf("get posts error: %+v", err)
+		return nil, err
 	}
 
 	var posts []*pb.Post
@@ -67,10 +67,10 @@ func (PostService) GetPosts(ctx context.Context, pr *pb.PostsRequest) (*pb.Posts
 			Status:     pb.PostStatusEnum_Status(v.Status),
 		})
 	}
-	totalCount, err := repository.GetPostsTotalCount()
+	totalCount, err := repository.GetPostsTotalCount(ctx)
 	if err != nil {
-		log.Error("get posts total count error: ", err.Error())
-		return nil, status.Error(codes.Internal, ServiceError)
+		log.Errorf("get posts total count error: %+v", err)
+		return nil, err
 	}
 	return &pb.PostsReply{
 		Posts:      posts,
@@ -80,10 +80,10 @@ func (PostService) GetPosts(ctx context.Context, pr *pb.PostsRequest) (*pb.Posts
 
 func (PostService) NewComment(ctx context.Context, pr *pb.NewCommentRequest) (*pb.NewCommentReply, error) {
 	// TODO 解析content 文本 图片 视频
-	commentID, err := repository.InsertComment(pr.UserId, pr.PostId, pr.Content)
+	commentID, err := repository.InsertComment(ctx, pr.UserId, pr.PostId, pr.Content)
 	if err != nil {
-		log.Error("insert comment error: ", err.Error())
-		return nil, status.Error(codes.Internal, ServiceError)
+		log.Errorf("insert comment error: %+v", err)
+		return nil, err
 	}
 	return &pb.NewCommentReply{
 		CommentId: commentID,
@@ -91,11 +91,11 @@ func (PostService) NewComment(ctx context.Context, pr *pb.NewCommentRequest) (*p
 }
 
 func (PostService) NewReply(ctx context.Context, pr *pb.NewReplyRequest) (*pb.NewReplyReply, error) {
-	replyID, err := repository.InsertReply(pr.UserId, pr.PostId,
+	replyID, err := repository.InsertReply(ctx, pr.UserId, pr.PostId,
 		pr.CommentId, pr.ParentId, pr.Content)
 	if err != nil {
-		log.Error("insert reply error: ", err.Error())
-		return nil, status.Error(codes.Internal, ServiceError)
+		log.Errorf("insert reply error: %+v", err)
+		return nil, err
 	}
 	return &pb.NewReplyReply{
 		ReplyId: replyID,
@@ -103,10 +103,10 @@ func (PostService) NewReply(ctx context.Context, pr *pb.NewReplyRequest) (*pb.Ne
 }
 
 func (PostService) GetPostFirstComment(ctx context.Context, pr *pb.FirstCommentRequest) (*pb.FirstCommentReply, error) {
-	dbComments, err := repository.GetPostFirstComment(pr.PostIds)
+	dbComments, err := repository.GetPostFirstComment(ctx, pr.PostIds)
 	if err != nil {
-		log.Error("get first comment error: ", err.Error())
-		return nil, status.Error(codes.Internal, ServiceError)
+		log.Errorf("get first comment error: %+v", err)
+		return nil, err
 	}
 	var comments []*pb.Comment
 	for _, v := range dbComments {
@@ -127,10 +127,10 @@ func (PostService) GetPostFirstComment(ctx context.Context, pr *pb.FirstCommentR
 }
 
 func (PostService) GetCommentsByPostId(ctx context.Context, pr *pb.CommentsRequest) (*pb.CommentsReply, error) {
-	dbComments, err := repository.GetCommentsByPostID(pr.PostId, int(pr.Page), int(pr.PageSize))
+	dbComments, err := repository.GetCommentsByPostID(ctx, pr.PostId, int(pr.Page), int(pr.PageSize))
 	if err != nil {
-		log.Error("get post comments error: ", err.Error())
-		return nil, status.Error(codes.Internal, ServiceError)
+		log.Errorf("get post comments error: %+v", err)
+		return nil, err
 	}
 	var comments []*pb.Comment
 	for _, v := range dbComments {
@@ -140,10 +140,10 @@ func (PostService) GetCommentsByPostId(ctx context.Context, pr *pb.CommentsReque
 			Status:  pb.PostStatusEnum_Status(v.Status),
 		})
 	}
-	totalCount, err := repository.GetPostCommentTotalCount(pr.PostId)
+	totalCount, err := repository.GetPostCommentTotalCount(ctx, pr.PostId)
 	if err != nil {
-		log.Error("get post comments total count error: ", err.Error())
-		return nil, status.Error(codes.Internal, ServiceError)
+		log.Errorf("get post comments total count error: %+v", err)
+		return nil, err
 	}
 	return &pb.CommentsReply{
 		TotalCount: totalCount,
@@ -152,10 +152,10 @@ func (PostService) GetCommentsByPostId(ctx context.Context, pr *pb.CommentsReque
 }
 
 func (PostService) GetRepliesByCommentId(ctx context.Context, pr *pb.RepliesRequest) (*pb.RepliesReply, error) {
-	dbReplies, err := repository.GetRepliesByCommentID(pr.CommentId, int(pr.Page), int(pr.PageSize))
+	dbReplies, err := repository.GetRepliesByCommentID(ctx, pr.CommentId, int(pr.Page), int(pr.PageSize))
 	if err != nil {
-		log.Error("get comment replies error: ", err.Error())
-		return nil, status.Error(codes.Internal, ServiceError)
+		log.Errorf("get comment replies error: %+v", err)
+		return nil, err
 	}
 	var replies []*pb.Reply
 	for _, v := range dbReplies {
@@ -170,10 +170,10 @@ func (PostService) GetRepliesByCommentId(ctx context.Context, pr *pb.RepliesRequ
 			CommentId:  pr.CommentId,
 		})
 	}
-	totalCount, err := repository.GetCommentReplyTotalCount(pr.CommentId)
+	totalCount, err := repository.GetCommentReplyTotalCount(ctx, pr.CommentId)
 	if err != nil {
-		log.Error("get comment replies total count error: ", err.Error())
-		return nil, status.Error(codes.Internal, ServiceError)
+		log.Errorf("get comment replies total count error: %+v", err)
+		return nil, err
 	}
 	return &pb.RepliesReply{
 		TotalCount: totalCount,

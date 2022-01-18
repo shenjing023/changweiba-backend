@@ -20,9 +20,9 @@ func SearchStock(ctx context.Context, symbolorname string) (*models.StockConnect
 	}
 	resp, err := client.SearchStock(ctx, &request)
 	if err != nil {
-		log.Errorf("search stock error: %v", err)
+		log.Errorf("search stock error: %+v", err)
 		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
-			codes.Internal: ServiceError,
+			codes.Internal: common.ServiceError,
 		})
 	}
 	var stocks []*models.Stock
@@ -42,8 +42,8 @@ func SearchStock(ctx context.Context, symbolorname string) (*models.StockConnect
 func SubscribeStock(ctx context.Context, intput int) (bool, error) {
 	userID, err := common.GetUserIDFromContext(ctx)
 	if err != nil {
-		log.Error("subscribeStock get userID from context error: ", err)
-		return false, err
+		log.Errorf("subscribeStock get userID from context error: %+v", err)
+		return false, common.NewGQLError(common.Internal, common.ServiceError)
 	}
 	client := pb.NewStockServiceClient(StockConn)
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
@@ -54,9 +54,9 @@ func SubscribeStock(ctx context.Context, intput int) (bool, error) {
 	}
 	_, err = client.SubscribeStock(ctx, &request)
 	if err != nil {
-		log.Errorf("subscribe stock error: %v", err)
+		log.Errorf("subscribe stock error: %+v", err)
 		return false, common.GRPCErrorConvert(err, map[codes.Code]string{
-			codes.Internal:        ServiceError,
+			codes.Internal:        common.ServiceError,
 			codes.InvalidArgument: "stock id is not exist",
 		})
 	}
@@ -66,8 +66,8 @@ func SubscribeStock(ctx context.Context, intput int) (bool, error) {
 func UnSubscribeStock(ctx context.Context, intput int) (bool, error) {
 	userID, err := common.GetUserIDFromContext(ctx)
 	if err != nil {
-		log.Error("unscribeStock get userID from context error: ", err)
-		return false, err
+		log.Errorf("unscribeStock get userID from context error: %+v", err)
+		return false, common.NewGQLError(common.Internal, common.ServiceError)
 	}
 	client := pb.NewStockServiceClient(StockConn)
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
@@ -78,9 +78,9 @@ func UnSubscribeStock(ctx context.Context, intput int) (bool, error) {
 	}
 	_, err = client.UnSubscribeStock(ctx, &request)
 	if err != nil {
-		log.Errorf("unscribe stock error: %v", err)
+		log.Errorf("unscribe stock error: %+v", err)
 		return false, common.GRPCErrorConvert(err, map[codes.Code]string{
-			codes.Internal:        ServiceError,
+			codes.Internal:        common.ServiceError,
 			codes.InvalidArgument: "stock id is not exist",
 		})
 	}
@@ -90,8 +90,8 @@ func UnSubscribeStock(ctx context.Context, intput int) (bool, error) {
 func SubscribedStocks(ctx context.Context) (*models.StockConnection, error) {
 	userID, err := common.GetUserIDFromContext(ctx)
 	if err != nil {
-		log.Error("subscribedStock get userID from context error: ", err)
-		return nil, err
+		log.Errorf("subscribedStock get userID from context error: %+v", err)
+		return nil, common.NewGQLError(common.Internal, common.ServiceError)
 	}
 	client := pb.NewStockServiceClient(StockConn)
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
@@ -101,9 +101,9 @@ func SubscribedStocks(ctx context.Context) (*models.StockConnection, error) {
 	}
 	resp, err := client.SubscribedStocks(ctx, &request)
 	if err != nil {
-		log.Errorf("subscribed stock error: %v", err)
+		log.Errorf("subscribed stock error: %+v", err)
 		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
-			codes.Internal: ServiceError,
+			codes.Internal: common.ServiceError,
 		})
 	}
 	var stocks []*models.Stock
@@ -129,9 +129,9 @@ func StockTrades(ctx context.Context, stockID int) (*models.TradeDateConnection,
 	}
 	resp, err := client.StockTradeData(ctx, &request)
 	if err != nil {
-		log.Errorf("get stock trades error: %v", err)
+		log.Errorf("get stock trades error: %+v", err)
 		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
-			codes.Internal: ServiceError,
+			codes.Internal: common.ServiceError,
 		})
 	}
 	var trades []*models.TradeDate
