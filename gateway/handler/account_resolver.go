@@ -17,7 +17,7 @@ import (
 
 // SignUp 用户注册
 func SignUp(ctx context.Context, input models.NewUser) (*models.AuthToken, error) {
-	client := pb.NewAccountClient(AccountConn)
+	client := pb.NewAccountServiceClient(AccountConn)
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
@@ -55,7 +55,7 @@ func SignUp(ctx context.Context, input models.NewUser) (*models.AuthToken, error
 
 // SignIn 登录
 func SignIn(ctx context.Context, input models.NewUser) (*models.AuthToken, error) {
-	client := pb.NewAccountClient(AccountConn)
+	client := pb.NewAccountServiceClient(AccountConn)
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -93,7 +93,7 @@ func SignIn(ctx context.Context, input models.NewUser) (*models.AuthToken, error
 
 // UsersByIDsLoaderFunc 批量获取用户的dataloader func
 func UsersByIDsLoaderFunc(ctx context.Context, keys []int64) (users []*models.User, errs []error) {
-	client := pb.NewAccountClient(AccountConn)
+	client := pb.NewAccountServiceClient(AccountConn)
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 

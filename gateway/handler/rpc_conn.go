@@ -41,7 +41,7 @@ func InitGRPCConn() {
 		log.Fatalf("new JaegerTracerProvider error: %+v", err)
 	}
 
-	AccountConn, err = vp_client.NewClientConn(registry.GetServiceTarget(pb.Account_ServiceDesc), options.WithEtcdDiscovery(etcdConf, pb.Account_ServiceDesc),
+	AccountConn, err = vp_client.NewClientConn(registry.GetServiceTarget(pb.AccountService_ServiceDesc), options.WithEtcdDiscovery(etcdConf, pb.AccountService_ServiceDesc),
 		options.WithInsecure(), options.WithRRLB(), options.WithClientTracing(tp))
 	if err != nil {
 		log.Fatalf("fail to accountRPC dial: %+v", err)

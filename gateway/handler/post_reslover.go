@@ -59,7 +59,7 @@ func Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection,
 			ID:        int(v.Id),
 			Topic:     v.Topic,
 			CreatedAt: int(v.CreateTime),
-			UpdatedAt: int(v.LastUpdate),
+			UpdatedAt: int(v.UpdateTime),
 			ReplyNum:  int(v.ReplyNum),
 			Status:    models.PostStatus(v.Status),
 			User: &models.User{

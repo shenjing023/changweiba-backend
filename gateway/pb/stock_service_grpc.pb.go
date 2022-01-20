@@ -21,9 +21,9 @@ const _ = grpc.SupportPackageIsVersion7
 type StockServiceClient interface {
 	SubscribeStock(ctx context.Context, in *SubscribeStockRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	UnSubscribeStock(ctx context.Context, in *UnSubscribeStockRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	SubscribedStocks(ctx context.Context, in *SubscribeStocksRequest, opts ...grpc.CallOption) (*SubscribeStocksReply, error)
-	SearchStock(ctx context.Context, in *SearchStockRequest, opts ...grpc.CallOption) (*SearchStockReply, error)
-	StockTradeData(ctx context.Context, in *StockTradeDataRequest, opts ...grpc.CallOption) (*StockTradeDataReply, error)
+	SubscribedStocks(ctx context.Context, in *SubscribeStocksRequest, opts ...grpc.CallOption) (*SubscribeStocksResponse, error)
+	SearchStock(ctx context.Context, in *SearchStockRequest, opts ...grpc.CallOption) (*SearchStockResponse, error)
+	StockTradeData(ctx context.Context, in *StockTradeDataRequest, opts ...grpc.CallOption) (*StockTradeDataResponse, error)
 }
 
 type stockServiceClient struct {
@@ -52,8 +52,8 @@ func (c *stockServiceClient) UnSubscribeStock(ctx context.Context, in *UnSubscri
 	return out, nil
 }
 
-func (c *stockServiceClient) SubscribedStocks(ctx context.Context, in *SubscribeStocksRequest, opts ...grpc.CallOption) (*SubscribeStocksReply, error) {
-	out := new(SubscribeStocksReply)
+func (c *stockServiceClient) SubscribedStocks(ctx context.Context, in *SubscribeStocksRequest, opts ...grpc.CallOption) (*SubscribeStocksResponse, error) {
+	out := new(SubscribeStocksResponse)
 	err := c.cc.Invoke(ctx, "/stock.StockService/SubscribedStocks", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -61,8 +61,8 @@ func (c *stockServiceClient) SubscribedStocks(ctx context.Context, in *Subscribe
 	return out, nil
 }
 
-func (c *stockServiceClient) SearchStock(ctx context.Context, in *SearchStockRequest, opts ...grpc.CallOption) (*SearchStockReply, error) {
-	out := new(SearchStockReply)
+func (c *stockServiceClient) SearchStock(ctx context.Context, in *SearchStockRequest, opts ...grpc.CallOption) (*SearchStockResponse, error) {
+	out := new(SearchStockResponse)
 	err := c.cc.Invoke(ctx, "/stock.StockService/SearchStock", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -70,8 +70,8 @@ func (c *stockServiceClient) SearchStock(ctx context.Context, in *SearchStockReq
 	return out, nil
 }
 
-func (c *stockServiceClient) StockTradeData(ctx context.Context, in *StockTradeDataRequest, opts ...grpc.CallOption) (*StockTradeDataReply, error) {
-	out := new(StockTradeDataReply)
+func (c *stockServiceClient) StockTradeData(ctx context.Context, in *StockTradeDataRequest, opts ...grpc.CallOption) (*StockTradeDataResponse, error) {
+	out := new(StockTradeDataResponse)
 	err := c.cc.Invoke(ctx, "/stock.StockService/StockTradeData", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -85,9 +85,9 @@ func (c *stockServiceClient) StockTradeData(ctx context.Context, in *StockTradeD
 type StockServiceServer interface {
 	SubscribeStock(context.Context, *SubscribeStockRequest) (*emptypb.Empty, error)
 	UnSubscribeStock(context.Context, *UnSubscribeStockRequest) (*emptypb.Empty, error)
-	SubscribedStocks(context.Context, *SubscribeStocksRequest) (*SubscribeStocksReply, error)
-	SearchStock(context.Context, *SearchStockRequest) (*SearchStockReply, error)
-	StockTradeData(context.Context, *StockTradeDataRequest) (*StockTradeDataReply, error)
+	SubscribedStocks(context.Context, *SubscribeStocksRequest) (*SubscribeStocksResponse, error)
+	SearchStock(context.Context, *SearchStockRequest) (*SearchStockResponse, error)
+	StockTradeData(context.Context, *StockTradeDataRequest) (*StockTradeDataResponse, error)
 	mustEmbedUnimplementedStockServiceServer()
 }
 
@@ -101,13 +101,13 @@ func (UnimplementedStockServiceServer) SubscribeStock(context.Context, *Subscrib
 func (UnimplementedStockServiceServer) UnSubscribeStock(context.Context, *UnSubscribeStockRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnSubscribeStock not implemented")
 }
-func (UnimplementedStockServiceServer) SubscribedStocks(context.Context, *SubscribeStocksRequest) (*SubscribeStocksReply, error) {
+func (UnimplementedStockServiceServer) SubscribedStocks(context.Context, *SubscribeStocksRequest) (*SubscribeStocksResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SubscribedStocks not implemented")
 }
-func (UnimplementedStockServiceServer) SearchStock(context.Context, *SearchStockRequest) (*SearchStockReply, error) {
+func (UnimplementedStockServiceServer) SearchStock(context.Context, *SearchStockRequest) (*SearchStockResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchStock not implemented")
 }
-func (UnimplementedStockServiceServer) StockTradeData(context.Context, *StockTradeDataRequest) (*StockTradeDataReply, error) {
+func (UnimplementedStockServiceServer) StockTradeData(context.Context, *StockTradeDataRequest) (*StockTradeDataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StockTradeData not implemented")
 }
 func (UnimplementedStockServiceServer) mustEmbedUnimplementedStockServiceServer() {}
