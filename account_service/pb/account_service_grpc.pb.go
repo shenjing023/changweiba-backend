@@ -14,266 +14,266 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// AccountClient is the client API for Account service.
+// AccountServiceClient is the client API for AccountService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type AccountClient interface {
+type AccountServiceClient interface {
 	GetUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error)
-	SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpReply, error)
+	SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpResponse, error)
 	EditUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error)
-	SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*SignInReply, error)
-	GetUsersByIds(ctx context.Context, in *UsersRequest, opts ...grpc.CallOption) (*UsersReply, error)
-	GetUsersByUserIds(ctx context.Context, in *UsersByUserIdsRequest, opts ...grpc.CallOption) (*UsersByUserIdsReply, error)
+	SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*SignInResponse, error)
+	GetUsersByIds(ctx context.Context, in *UsersRequest, opts ...grpc.CallOption) (*UsersResponse, error)
+	GetUsersByUserIds(ctx context.Context, in *UsersByUserIdsRequest, opts ...grpc.CallOption) (*UsersByUserIdsResponse, error)
 }
 
-type accountClient struct {
+type accountServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewAccountClient(cc grpc.ClientConnInterface) AccountClient {
-	return &accountClient{cc}
+func NewAccountServiceClient(cc grpc.ClientConnInterface) AccountServiceClient {
+	return &accountServiceClient{cc}
 }
 
-func (c *accountClient) GetUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error) {
+func (c *accountServiceClient) GetUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error) {
 	out := new(User)
-	err := c.cc.Invoke(ctx, "/account.Account/GetUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/account.AccountService/GetUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *accountClient) SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpReply, error) {
-	out := new(SignUpReply)
-	err := c.cc.Invoke(ctx, "/account.Account/SignUp", in, out, opts...)
+func (c *accountServiceClient) SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpResponse, error) {
+	out := new(SignUpResponse)
+	err := c.cc.Invoke(ctx, "/account.AccountService/SignUp", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *accountClient) EditUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error) {
+func (c *accountServiceClient) EditUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error) {
 	out := new(User)
-	err := c.cc.Invoke(ctx, "/account.Account/EditUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/account.AccountService/EditUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *accountClient) SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*SignInReply, error) {
-	out := new(SignInReply)
-	err := c.cc.Invoke(ctx, "/account.Account/SignIn", in, out, opts...)
+func (c *accountServiceClient) SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*SignInResponse, error) {
+	out := new(SignInResponse)
+	err := c.cc.Invoke(ctx, "/account.AccountService/SignIn", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *accountClient) GetUsersByIds(ctx context.Context, in *UsersRequest, opts ...grpc.CallOption) (*UsersReply, error) {
-	out := new(UsersReply)
-	err := c.cc.Invoke(ctx, "/account.Account/GetUsersByIds", in, out, opts...)
+func (c *accountServiceClient) GetUsersByIds(ctx context.Context, in *UsersRequest, opts ...grpc.CallOption) (*UsersResponse, error) {
+	out := new(UsersResponse)
+	err := c.cc.Invoke(ctx, "/account.AccountService/GetUsersByIds", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *accountClient) GetUsersByUserIds(ctx context.Context, in *UsersByUserIdsRequest, opts ...grpc.CallOption) (*UsersByUserIdsReply, error) {
-	out := new(UsersByUserIdsReply)
-	err := c.cc.Invoke(ctx, "/account.Account/GetUsersByUserIds", in, out, opts...)
+func (c *accountServiceClient) GetUsersByUserIds(ctx context.Context, in *UsersByUserIdsRequest, opts ...grpc.CallOption) (*UsersByUserIdsResponse, error) {
+	out := new(UsersByUserIdsResponse)
+	err := c.cc.Invoke(ctx, "/account.AccountService/GetUsersByUserIds", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// AccountServer is the server API for Account service.
-// All implementations must embed UnimplementedAccountServer
+// AccountServiceServer is the server API for AccountService service.
+// All implementations must embed UnimplementedAccountServiceServer
 // for forward compatibility
-type AccountServer interface {
+type AccountServiceServer interface {
 	GetUser(context.Context, *User) (*User, error)
-	SignUp(context.Context, *SignUpRequest) (*SignUpReply, error)
+	SignUp(context.Context, *SignUpRequest) (*SignUpResponse, error)
 	EditUser(context.Context, *User) (*User, error)
-	SignIn(context.Context, *SignInRequest) (*SignInReply, error)
-	GetUsersByIds(context.Context, *UsersRequest) (*UsersReply, error)
-	GetUsersByUserIds(context.Context, *UsersByUserIdsRequest) (*UsersByUserIdsReply, error)
-	mustEmbedUnimplementedAccountServer()
+	SignIn(context.Context, *SignInRequest) (*SignInResponse, error)
+	GetUsersByIds(context.Context, *UsersRequest) (*UsersResponse, error)
+	GetUsersByUserIds(context.Context, *UsersByUserIdsRequest) (*UsersByUserIdsResponse, error)
+	mustEmbedUnimplementedAccountServiceServer()
 }
 
-// UnimplementedAccountServer must be embedded to have forward compatible implementations.
-type UnimplementedAccountServer struct {
+// UnimplementedAccountServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedAccountServiceServer struct {
 }
 
-func (UnimplementedAccountServer) GetUser(context.Context, *User) (*User, error) {
+func (UnimplementedAccountServiceServer) GetUser(context.Context, *User) (*User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }
-func (UnimplementedAccountServer) SignUp(context.Context, *SignUpRequest) (*SignUpReply, error) {
+func (UnimplementedAccountServiceServer) SignUp(context.Context, *SignUpRequest) (*SignUpResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SignUp not implemented")
 }
-func (UnimplementedAccountServer) EditUser(context.Context, *User) (*User, error) {
+func (UnimplementedAccountServiceServer) EditUser(context.Context, *User) (*User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EditUser not implemented")
 }
-func (UnimplementedAccountServer) SignIn(context.Context, *SignInRequest) (*SignInReply, error) {
+func (UnimplementedAccountServiceServer) SignIn(context.Context, *SignInRequest) (*SignInResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SignIn not implemented")
 }
-func (UnimplementedAccountServer) GetUsersByIds(context.Context, *UsersRequest) (*UsersReply, error) {
+func (UnimplementedAccountServiceServer) GetUsersByIds(context.Context, *UsersRequest) (*UsersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsersByIds not implemented")
 }
-func (UnimplementedAccountServer) GetUsersByUserIds(context.Context, *UsersByUserIdsRequest) (*UsersByUserIdsReply, error) {
+func (UnimplementedAccountServiceServer) GetUsersByUserIds(context.Context, *UsersByUserIdsRequest) (*UsersByUserIdsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsersByUserIds not implemented")
 }
-func (UnimplementedAccountServer) mustEmbedUnimplementedAccountServer() {}
+func (UnimplementedAccountServiceServer) mustEmbedUnimplementedAccountServiceServer() {}
 
-// UnsafeAccountServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AccountServer will
+// UnsafeAccountServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AccountServiceServer will
 // result in compilation errors.
-type UnsafeAccountServer interface {
-	mustEmbedUnimplementedAccountServer()
+type UnsafeAccountServiceServer interface {
+	mustEmbedUnimplementedAccountServiceServer()
 }
 
-func RegisterAccountServer(s grpc.ServiceRegistrar, srv AccountServer) {
-	s.RegisterService(&Account_ServiceDesc, srv)
+func RegisterAccountServiceServer(s grpc.ServiceRegistrar, srv AccountServiceServer) {
+	s.RegisterService(&AccountService_ServiceDesc, srv)
 }
 
-func _Account_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AccountService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(User)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServer).GetUser(ctx, in)
+		return srv.(AccountServiceServer).GetUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.Account/GetUser",
+		FullMethod: "/account.AccountService/GetUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).GetUser(ctx, req.(*User))
+		return srv.(AccountServiceServer).GetUser(ctx, req.(*User))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Account_SignUp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AccountService_SignUp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SignUpRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServer).SignUp(ctx, in)
+		return srv.(AccountServiceServer).SignUp(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.Account/SignUp",
+		FullMethod: "/account.AccountService/SignUp",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).SignUp(ctx, req.(*SignUpRequest))
+		return srv.(AccountServiceServer).SignUp(ctx, req.(*SignUpRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Account_EditUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AccountService_EditUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(User)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServer).EditUser(ctx, in)
+		return srv.(AccountServiceServer).EditUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.Account/EditUser",
+		FullMethod: "/account.AccountService/EditUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).EditUser(ctx, req.(*User))
+		return srv.(AccountServiceServer).EditUser(ctx, req.(*User))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Account_SignIn_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AccountService_SignIn_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SignInRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServer).SignIn(ctx, in)
+		return srv.(AccountServiceServer).SignIn(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.Account/SignIn",
+		FullMethod: "/account.AccountService/SignIn",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).SignIn(ctx, req.(*SignInRequest))
+		return srv.(AccountServiceServer).SignIn(ctx, req.(*SignInRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Account_GetUsersByIds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AccountService_GetUsersByIds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UsersRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServer).GetUsersByIds(ctx, in)
+		return srv.(AccountServiceServer).GetUsersByIds(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.Account/GetUsersByIds",
+		FullMethod: "/account.AccountService/GetUsersByIds",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).GetUsersByIds(ctx, req.(*UsersRequest))
+		return srv.(AccountServiceServer).GetUsersByIds(ctx, req.(*UsersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Account_GetUsersByUserIds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AccountService_GetUsersByUserIds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UsersByUserIdsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServer).GetUsersByUserIds(ctx, in)
+		return srv.(AccountServiceServer).GetUsersByUserIds(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.Account/GetUsersByUserIds",
+		FullMethod: "/account.AccountService/GetUsersByUserIds",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).GetUsersByUserIds(ctx, req.(*UsersByUserIdsRequest))
+		return srv.(AccountServiceServer).GetUsersByUserIds(ctx, req.(*UsersByUserIdsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Account_ServiceDesc is the grpc.ServiceDesc for Account service.
+// AccountService_ServiceDesc is the grpc.ServiceDesc for AccountService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Account_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "account.Account",
-	HandlerType: (*AccountServer)(nil),
+var AccountService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "account.AccountService",
+	HandlerType: (*AccountServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "GetUser",
-			Handler:    _Account_GetUser_Handler,
+			Handler:    _AccountService_GetUser_Handler,
 		},
 		{
 			MethodName: "SignUp",
-			Handler:    _Account_SignUp_Handler,
+			Handler:    _AccountService_SignUp_Handler,
 		},
 		{
 			MethodName: "EditUser",
-			Handler:    _Account_EditUser_Handler,
+			Handler:    _AccountService_EditUser_Handler,
 		},
 		{
 			MethodName: "SignIn",
-			Handler:    _Account_SignIn_Handler,
+			Handler:    _AccountService_SignIn_Handler,
 		},
 		{
 			MethodName: "GetUsersByIds",
-			Handler:    _Account_GetUsersByIds_Handler,
+			Handler:    _AccountService_GetUsersByIds_Handler,
 		},
 		{
 			MethodName: "GetUsersByUserIds",
-			Handler:    _Account_GetUsersByUserIds_Handler,
+			Handler:    _AccountService_GetUsersByUserIds_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

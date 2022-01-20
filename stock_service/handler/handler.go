@@ -30,7 +30,7 @@ func (StockService) UnSubscribeStock(ctx context.Context, req *pb.UnSubscribeSto
 	return new(emptypb.Empty), nil
 }
 
-func (StockService) SearchStock(ctx context.Context, req *pb.SearchStockRequest) (*pb.SearchStockReply, error) {
+func (StockService) SearchStock(ctx context.Context, req *pb.SearchStockRequest) (*pb.SearchStockResponse, error) {
 	symbolorname := strings.TrimSpace(req.Symbolorname)
 	data, err := SearchStock(symbolorname)
 	if err != nil {
@@ -77,12 +77,12 @@ func (StockService) SearchStock(ctx context.Context, req *pb.SearchStockRequest)
 			Name:   s.Name,
 		})
 	}
-	return &pb.SearchStockReply{
+	return &pb.SearchStockResponse{
 		Stocks: replyStocks,
 	}, nil
 }
 
-func (StockService) SubscribedStocks(ctx context.Context, req *pb.SubscribeStocksRequest) (*pb.SubscribeStocksReply, error) {
+func (StockService) SubscribedStocks(ctx context.Context, req *pb.SubscribeStocksRequest) (*pb.SubscribeStocksResponse, error) {
 	stocks, err := repository.GetSubscribedStocksByUserID(ctx, req.UserId)
 	if err != nil {
 		log.Errorf("SubscribedStocks Error: %+v", err)
@@ -96,12 +96,12 @@ func (StockService) SubscribedStocks(ctx context.Context, req *pb.SubscribeStock
 			Name:   s.Name,
 		})
 	}
-	return &pb.SubscribeStocksReply{
+	return &pb.SubscribeStocksResponse{
 		Data: replyStocks,
 	}, nil
 }
 
-func (StockService) StockTradeData(ctx context.Context, req *pb.StockTradeDataRequest) (*pb.StockTradeDataReply, error) {
+func (StockService) StockTradeData(ctx context.Context, req *pb.StockTradeDataRequest) (*pb.StockTradeDataResponse, error) {
 	data, err := repository.GetStockTradeDate(ctx, uint64(req.Id))
 	if err != nil {
 		log.Errorf("StockTradeData Error: %+v", err)
@@ -116,7 +116,7 @@ func (StockService) StockTradeData(ctx context.Context, req *pb.StockTradeDataRe
 			XueqiuCount: d.XueqiuCommentCount,
 		})
 	}
-	return &pb.StockTradeDataReply{
+	return &pb.StockTradeDataResponse{
 		TradeData: replyData,
 		Info:      &pb.StockInfo{Id: req.Id},
 	}, nil

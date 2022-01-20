@@ -1,7 +1,9 @@
 syntax = "proto3";
 
-option go_package = ".;pb";
 package enums;
+
+option go_package = ".;pb";
+
 
 message UserStatusEnum{
     enum Status{

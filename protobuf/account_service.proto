@@ -1,9 +1,11 @@
 syntax = "proto3";
 
+package account;
+
 import "enums.proto";
 
 option go_package = ".;pb";
-package account;
+
 
 message User {
     int64 id = 1;
@@ -14,7 +16,7 @@ message User {
     int64 score = 6;
     string banned_reason = 7;
     int64 create_time = 8;
-    int64 last_update=9;
+    int64 update_time=9;
     enums.UserRoleEnum.Role role=10;
 }
 
@@ -28,7 +30,7 @@ message SignUpRequest {
     // string ip = 3;
 }
 
-message SignUpReply {
+message SignUpResponse {
     int64 id=1;
 }
 
@@ -37,40 +39,40 @@ message SignInRequest{
     string password=2;
 }
 
-message SignInReply{
+message SignInResponse{
     int64 id=1;
 }
 
 //通过ids获取user,id为post_id,comment_id,reply_id
 message UsersRequest{
-    repeated int64 ids=1 [packed=true];
+    repeated int64 ids=1;
     //0为post 1为comment 2为reply
-    int64 idType=2;
+    int64 id_type=2;
 }
 
-message UsersReply{
+message UsersResponse{
     repeated User users=1;
 }
 
 //通过user_ids获取users
 message UsersByUserIdsRequest{
-    repeated int64 ids=1 [packed=true];
+    repeated int64 ids=1;
 }
 
-message UsersByUserIdsReply{
+message UsersByUserIdsResponse{
     repeated User users=1;
 }
 
 
-service Account {
+service AccountService {
     rpc GetUser (User) returns (User) {
     }
-    rpc SignUp (SignUpRequest) returns (SignUpReply) {
+    rpc SignUp (SignUpRequest) returns (SignUpResponse) {
     }
     rpc EditUser (User) returns (User) {
     }
-    rpc SignIn (SignInRequest) returns (SignInReply){
+    rpc SignIn (SignInRequest) returns (SignInResponse){
     }
-    rpc GetUsersByIds(UsersRequest) returns(UsersReply){}
-    rpc GetUsersByUserIds(UsersByUserIdsRequest) returns(UsersByUserIdsReply){}
+    rpc GetUsersByIds(UsersRequest) returns(UsersResponse){}
+    rpc GetUsersByUserIds(UsersByUserIdsRequest) returns(UsersByUserIdsResponse){}
 }

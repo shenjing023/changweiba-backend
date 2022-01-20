@@ -1,16 +1,18 @@
 syntax = "proto3";
 
+package post;
+
 import "enums.proto";
 
 option go_package = ".;pb";
-package post;
+
 
 message Post {
     int64 id = 1;
     int64 user_id = 2;
     string topic = 3;
     int64 create_time = 4;
-    int64 last_update = 5;
+    int64 update_time = 5;
     int64 reply_num = 6;
     enums.PostStatusEnum.Status status = 7;
 }
@@ -42,7 +44,7 @@ message NewPostRequest {
     string content = 3;
 }
 
-message NewPostReply {
+message NewPostResponse {
     int64 post_id=1;
 }
 
@@ -52,7 +54,7 @@ message NewCommentRequest {
     string content = 3;
 }
 
-message NewCommentReply{
+message NewCommentResponse{
     int64 comment_id=1;
 }
 
@@ -64,7 +66,7 @@ message NewReplyRequest {
     int64 parent_id = 5;
 }
 
-message NewReplyReply{
+message NewReplyResponse{
     int64 reply_id=1;
 }
 
@@ -72,7 +74,7 @@ message DeleteRequest {
     repeated int64 ids = 1;
 }
 
-message DeleteReply {
+message DeleteResponse {
     bool success=1;
 }
 
@@ -80,7 +82,7 @@ message PostRequest {
     int64 id = 1;
 }
 
-message PostReply {
+message PostResponse {
     Post post = 1;
 }
 
@@ -89,7 +91,7 @@ message PostsRequest {
     int64 page_size = 2;
 }
 
-message PostsReply {
+message PostsResponse {
     repeated Post posts = 1;
     int64 total_count=2;
 }
@@ -98,7 +100,7 @@ message CommentRequest {
     int64 id = 1;
 }
 
-message CommentReply {
+message CommentResponse {
     Comment comment = 1;
 }
 
@@ -109,7 +111,7 @@ message CommentsRequest {
     int64 page_size = 3;
 }
 
-message CommentsReply {
+message CommentsResponse {
     repeated Comment comments = 1;
     int64 total_count=2;
 }
@@ -118,7 +120,7 @@ message ReplyRequest{
     int64 id=1;
 }
 
-message ReplyReply{
+message ReplyResponse{
     Reply reply=1;
 }
 
@@ -129,18 +131,18 @@ message RepliesRequest{
     int64 page_size=3;
 }
 
-message RepliesReply{
+message RepliesResponse{
     repeated Reply replies=1;
     int64 total_count=2;
 }
 
 //通过comment_ids获取reply
 message RepliesByCommentsRequest{
-    repeated int64 comment_ids=1 [packed=true];
+    repeated int64 comment_ids=1;
     int64 limit=2;
 }
 
-message RepliesByCommentsReply{
+message RepliesByCommentsResponse{
     repeated Replies_ replies=1;
     message Replies_{
         repeated Reply replies_=1;
@@ -153,7 +155,7 @@ message PostsByUserIdRequest{
     int64 page_size=3;
 }
 
-message PostsByUserIdReply{
+message PostsByUserIdResponse{
     repeated Post posts=1;
     int64 total_count=2;
 }
@@ -164,7 +166,7 @@ message CommentsByUserIdRequest{
     int64 page_size=3;
 }
 
-message CommentsByUserIdReply{
+message CommentsByUserIdResponse{
     repeated Comment comments=1;
     int64 total_count=2;
 }
@@ -175,7 +177,7 @@ message RepliesByUserIdRequest{
     int64 page_size=3;
 }
 
-message RepliesByUserIdReply{
+message RepliesByUserIdResponse{
     repeated Reply replies=1;
     int64 total_count=2;
 }
@@ -184,27 +186,27 @@ message FirstCommentRequest{
     repeated int64 post_ids=1;
 }
 
-message FirstCommentReply{
+message FirstCommentResponse{
     repeated Comment comments=1;
 }
 
 
 service PostService{
-    rpc NewPost(NewPostRequest) returns(NewPostReply){}
-    rpc NewComment(NewCommentRequest) returns(NewCommentReply){}
-    rpc NewReply(NewReplyRequest) returns(NewReplyReply){}
-    rpc DeletePosts(DeleteRequest) returns(DeleteReply){}
-    rpc DeleteComments(DeleteRequest) returns(DeleteReply){}
-    rpc DeleteReplies(DeleteRequest) returns(DeleteReply){}
-    rpc GetPost(PostRequest) returns(PostReply){}
-    rpc GetComment(CommentRequest) returns(CommentReply){}
-    rpc GetReply(ReplyRequest) returns(ReplyReply){}
-    rpc GetCommentsByPostId(CommentsRequest) returns(CommentsReply){}
-    rpc GetRepliesByCommentId(RepliesRequest) returns(RepliesReply){}
-    rpc GetPosts(PostsRequest) returns(PostsReply){}
-    //rpc GetRepliesByCommentIds(RepliesByCommentsRequest) returns(RepliesByCommentsReply){}
-    rpc GetPostsByUserId(PostsByUserIdRequest) returns(PostsByUserIdReply){}
-    rpc GetCommentsByUserId(CommentsByUserIdRequest) returns(CommentsByUserIdReply){}
-    rpc GetRepliesByUserId(RepliesByUserIdRequest) returns(RepliesByUserIdReply){}
-    rpc GetPostFirstComment(FirstCommentRequest) returns(FirstCommentReply){}
+    rpc NewPost(NewPostRequest) returns(NewPostResponse){}
+    rpc NewComment(NewCommentRequest) returns(NewCommentResponse){}
+    rpc NewReply(NewReplyRequest) returns(NewReplyResponse){}
+    rpc DeletePosts(DeleteRequest) returns(DeleteResponse){}
+    rpc DeleteComments(DeleteRequest) returns(DeleteResponse){}
+    rpc DeleteReplies(DeleteRequest) returns(DeleteResponse){}
+    rpc GetPost(PostRequest) returns(PostResponse){}
+    rpc GetComment(CommentRequest) returns(CommentResponse){}
+    rpc GetReply(ReplyRequest) returns(ReplyResponse){}
+    rpc GetCommentsByPostId(CommentsRequest) returns(CommentsResponse){}
+    rpc GetRepliesByCommentId(RepliesRequest) returns(RepliesResponse){}
+    rpc GetPosts(PostsRequest) returns(PostsResponse){}
+    //rpc GetRepliesByCommentIds(RepliesByCommentsRequest) returns(RepliesByCommentsResponse){}
+    rpc GetPostsByUserId(PostsByUserIdRequest) returns(PostsByUserIdResponse){}
+    rpc GetCommentsByUserId(CommentsByUserIdRequest) returns(CommentsByUserIdResponse){}
+    rpc GetRepliesByUserId(RepliesByUserIdRequest) returns(RepliesByUserIdResponse){}
+    rpc GetPostFirstComment(FirstCommentRequest) returns(FirstCommentResponse){}
 }

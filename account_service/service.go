@@ -34,7 +34,7 @@ func runAccountService(configPath string) {
 		Endpoints:   []string{fmt.Sprintf("%s:%d", conf.Cfg.Etcd.Host, conf.Cfg.Etcd.Port)},
 		DialTimeout: time.Second * 5,
 	}
-	r, err := registry.NewEtcdRegister(etcdConf, pb.Account_ServiceDesc, "127.0.0.1", fmt.Sprintf("%d", conf.Cfg.Port))
+	r, err := registry.NewEtcdRegister(etcdConf, pb.AccountService_ServiceDesc, "127.0.0.1", fmt.Sprintf("%d", conf.Cfg.Port))
 	if err != nil {
 		log.Fatalf("failed register server: %+v", err)
 	}
@@ -55,7 +55,7 @@ func runAccountService(configPath string) {
 		log.Fatalf("failed to listen: %+v", err)
 	}
 	s := vp_server.NewServer(options.WithDebug(conf.Cfg.Debug), options.WithServerTracing(tp))
-	pb.RegisterAccountServer(s, &handler.User{})
+	pb.RegisterAccountServiceServer(s, &handler.User{})
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			log.Fatalf("failed to serve: %+v", err)

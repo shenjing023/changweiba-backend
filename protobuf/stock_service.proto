@@ -1,9 +1,11 @@
 syntax = "proto3";
 
+package stock;
+
 import "google/protobuf/empty.proto";
 
 option go_package = ".;pb";
-package stock;
+
 
 message SubscribeStockRequest {
     int64 user_id=1;
@@ -32,7 +34,7 @@ message SubscribeStocksRequest {
     int64 user_id=1;
 }
 
-message SubscribeStocksReply {
+message SubscribeStocksResponse {
     repeated StockInfo data=1;
 }
 
@@ -40,7 +42,7 @@ message StockTradeDataRequest {
     int64 id=1;
 }
 
-message StockTradeDataReply {
+message StockTradeDataResponse {
     StockInfo info=1;
     repeated TradeData trade_data=2;
 }
@@ -49,14 +51,14 @@ message SearchStockRequest {
     string symbolorname=1;
 }
 
-message SearchStockReply {
+message SearchStockResponse {
     repeated StockInfo stocks=1;
 }
 
 service StockService{
     rpc SubscribeStock(SubscribeStockRequest) returns(google.protobuf.Empty){}
     rpc UnSubscribeStock(UnSubscribeStockRequest) returns(google.protobuf.Empty){}
-    rpc SubscribedStocks(SubscribeStocksRequest) returns(SubscribeStocksReply){}
-    rpc SearchStock(SearchStockRequest) returns(SearchStockReply){}
-    rpc StockTradeData(StockTradeDataRequest) returns(StockTradeDataReply){}
+    rpc SubscribedStocks(SubscribeStocksRequest) returns(SubscribeStocksResponse){}
+    rpc SearchStock(SearchStockRequest) returns(SearchStockResponse){}
+    rpc StockTradeData(StockTradeDataRequest) returns(StockTradeDataResponse){}
 }

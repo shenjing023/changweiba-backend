@@ -21,11 +21,11 @@ const (
 
 // User user struct
 type User struct {
-	pb.UnimplementedAccountServer
+	pb.UnimplementedAccountServiceServer
 }
 
 // SignUp 注册
-func (u *User) SignUp(ctx context.Context, sr *pb.SignUpRequest) (*pb.SignUpReply, error) {
+func (u *User) SignUp(ctx context.Context, sr *pb.SignUpRequest) (*pb.SignUpResponse, error) {
 	if err := checkNewUser(ctx, sr); err != nil {
 		log.Errorf("check new_user error: %+v", err)
 		return nil, err
@@ -47,14 +47,14 @@ func (u *User) SignUp(ctx context.Context, sr *pb.SignUpRequest) (*pb.SignUpRepl
 		log.Errorf("insert user error: %+v", err)
 		return nil, err
 	}
-	resp := &pb.SignUpReply{
+	resp := &pb.SignUpResponse{
 		Id: id,
 	}
 	return resp, nil
 }
 
 // SignIn 登录
-func (u *User) SignIn(ctx context.Context, sr *pb.SignInRequest) (*pb.SignInReply, error) {
+func (u *User) SignIn(ctx context.Context, sr *pb.SignInRequest) (*pb.SignInResponse, error) {
 	dbUser, err := repository.GetUserByName(ctx, sr.Name)
 	if err != nil {
 		log.Errorf("get user by name error: %+v", err)
@@ -66,7 +66,7 @@ func (u *User) SignIn(ctx context.Context, sr *pb.SignInRequest) (*pb.SignInRepl
 		return nil, er.NewServiceErr(er.InvalidArgument,
 			errors.New("password incorrect"))
 	}
-	return &pb.SignInReply{
+	return &pb.SignInResponse{
 		Id: int64(dbUser.ID),
 	}, nil
 }
@@ -94,7 +94,7 @@ func (u *User) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 }
 
 // GetUsersByUserIds 通过用户id批量获取用户信息
-func (u *User) GetUsersByUserIds(ctx context.Context, ur *pb.UsersByUserIdsRequest) (*pb.UsersByUserIdsReply, error) {
+func (u *User) GetUsersByUserIds(ctx context.Context, ur *pb.UsersByUserIdsRequest) (*pb.UsersByUserIdsResponse, error) {
 	dbUsers, err := repository.GetUsers(ctx, ur.Ids)
 	if err != nil {
 		log.Errorf("get users by ids error: %+v", err)
@@ -120,7 +120,7 @@ func (u *User) GetUsersByUserIds(ctx context.Context, ur *pb.UsersByUserIdsReque
 			Role:         role,
 		})
 	}
-	return &pb.UsersByUserIdsReply{
+	return &pb.UsersByUserIdsResponse{
 		Users: users,
 	}, nil
 }
