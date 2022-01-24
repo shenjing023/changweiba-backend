@@ -2,20 +2,18 @@ package main
 
 import (
 	"context"
+	"cw_account_service/conf"
+	"cw_account_service/handler"
+	"cw_account_service/pb"
+	"cw_account_service/repository"
 	"flag"
 	"fmt"
 	"net"
+	"os"
 	"os/signal"
+	"path"
 	"syscall"
 	"time"
-
-	"os"
-
-	"cw_account_service/conf"
-	pb "cw_account_service/pb"
-	"cw_account_service/repository"
-
-	"cw_account_service/handler"
 
 	log "github.com/shenjing023/llog"
 	"github.com/shenjing023/vivy-polaris/contrib/registry"
@@ -25,11 +23,27 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
-// runAccountService create and run new service
-func runAccountService(configPath string) {
-	conf.Init(configPath)
-	repository.Init()
+var (
+	confPath *string
+)
 
+func init() {
+	pwd, _ := os.Getwd()
+	confPath = flag.String("p", path.Join(pwd, "/conf/config.yaml"), "config path")
+}
+
+func main() {
+	flag.Parse()
+	initServer()
+	runServer()
+}
+
+func initServer() {
+	conf.Init(*confPath)
+	repository.Init()
+}
+
+func runServer() {
 	etcdConf := clientv3.Config{
 		Endpoints:   []string{fmt.Sprintf("%s:%d", conf.Cfg.Etcd.Host, conf.Cfg.Etcd.Port)},
 		DialTimeout: time.Second * 5,
@@ -74,21 +88,4 @@ func runAccountService(configPath string) {
 
 func stopService() {
 	repository.Close()
-}
-
-func main() {
-	pwd, _ := os.Getwd()
-	execDir := flag.String("d", pwd, "execute directory")
-	flag.Parse()
-	runAccountService(*execDir + "/conf/config.yaml")
-
-	// client, err := ent.Open("mysql", "root:123456@(10.0.0.214:6033)/liuwei1?parseTime=true")
-	// if err != nil {
-	// 	log.Fatalf("failed opening connection to mysql: %v", err)
-	// }
-	// defer client.Close()
-	// // Run the auto migration tool.
-	// if err := client.Debug().Schema.Create(context.Background()); err != nil {
-	// 	log.Fatalf("failed creating schema resources: %v", err)
-	// }
 }
