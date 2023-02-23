@@ -55,8 +55,8 @@ require (
 	github.com/shenjing023/vivy-polaris v0.0.1
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	go.etcd.io/etcd/client/v3 v3.5.1
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
+	golang.org/x/text v0.3.8 // indirect
 	google.golang.org/genproto v0.0.0-20220114231437-d2e6a121cae0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
