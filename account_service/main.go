@@ -36,6 +36,16 @@ func main() {
 	flag.Parse()
 	initServer()
 	runServer()
+
+	// client, err := ent.Open("mysql", "root:123456@(127.0.0.1:3306)/changweiba?parseTime=true")
+	// if err != nil {
+	// 	log.Fatalf("failed opening connection to mysql: %v", err)
+	// }
+	// defer client.Close()
+	// // Run the auto migration tool.
+	// if err := client.Debug().Schema.Create(context.Background()); err != nil {
+	// 	log.Fatalf("failed creating schema resources: %v", err)
+	// }
 }
 
 func initServer() {
@@ -53,6 +63,7 @@ func runServer() {
 		log.Fatalf("failed register server: %+v", err)
 	}
 	defer r.Deregister()
+	log.Info("etcd register success")
 
 	tp, err := tracing.NewJaegerTracerProvider(conf.Cfg.JaegerCollectURL, "account-server")
 	if err != nil {
@@ -63,6 +74,7 @@ func runServer() {
 			log.Fatalf("Error shutting down tracer provider: %v", err)
 		}
 	}()
+	log.Info("tracer provider start success")
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", conf.Cfg.Port))
 	if err != nil {

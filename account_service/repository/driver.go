@@ -58,6 +58,7 @@ func Init() {
 		db.SetMaxOpenConns(conf.Cfg.DB.MaxOpen)
 	}
 	entClient = ent.NewClient(ent.Driver(drv))
+	log.Info("db connection success")
 }
 
 // Close close db connection
@@ -144,7 +145,7 @@ func InetItoa(ip int64) string {
 	return fmt.Sprintf("%d.%d.%d.%d", byte(ip>>24), byte(ip>>16), byte(ip>>8), byte(ip))
 }
 
-//BytesToInt64 []byte转int64
+// BytesToInt64 []byte转int64
 func BytesToInt64(buf []byte) int64 {
 	r, _ := strconv.ParseInt(string(buf), 10, 64)
 	return r

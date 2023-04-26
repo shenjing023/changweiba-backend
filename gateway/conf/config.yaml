@@ -11,7 +11,7 @@ auth_token:
 query_deep: 3
 log_dir: ""
 etcd:
-  host: "10.0.0.215"
+  host: "127.0.0.1"
   port: 2379
 svc_name: "gateway"
-jeager_collect_url: "http://10.0.0.215:14268/api/traces"
+jeager_collect_url: "http://127.0.0.1:14268/api/traces"

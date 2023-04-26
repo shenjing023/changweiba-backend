@@ -1,20 +1,20 @@
 #服务相关配置
-debug: false
+debug: true
 port: 8021
 db:
   host: "127.0.0.1"
-  port: 6033
+  port: 3306
   user: "root"
   password: "123456"
-  dbname: "liuwei1"
+  dbname: "changweiba"
   max_idle_conns: 10
   max_open_conns: 10
 redis:
-  host: "10.0.0.202"
-  port: 6383
+  host: "127.0.0.1"
+  port: 6379
   password: ""
 etcd:
-  host: "10.0.0.215"
+  host: "127.0.0.1"
   port: 2379
 log_dir: ""
-jeager_collect_url: "http://10.0.0.215:14268/api/traces"
+jeager_collect_url: "http://127.0.0.1:14268/api/traces"

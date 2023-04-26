@@ -215,7 +215,7 @@ func InsertComment(ctx context.Context, userID int64, postID int64, content stri
 	return int64(comment.ID), nil
 }
 
-//帖子回复数+1
+// 帖子回复数+1
 func increasePostReplyNum(postID int64) {
 	entClient.Post.UpdateOneID(uint64(postID)).
 		AddReplyNum(1).

@@ -82,7 +82,7 @@ func main() {
 	flag.Parse()
 	runPostService(*execDir + "/conf/config.yaml")
 
-	// client, err := ent.Open("mysql", "root:123456@(10.0.0.214:6033)/liuwei1?parseTime=true")
+	// client, err := ent.Open("mysql", "root:123456@(127.0.0.1:3306)/changweiba?parseTime=true")
 	// if err != nil {
 	// 	log.Fatalf("failed opening connection to mysql: %v", err)
 	// }
