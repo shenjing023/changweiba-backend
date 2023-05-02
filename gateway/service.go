@@ -32,12 +32,19 @@ func runGatewayService(configPath string) {
 
 	// Setting up Gin
 	engine := gin.Default()
+	engine.Use(middleware.Cors())
 	engine.Use(middleware.GinContextToContextMiddleware())
 	engine.Use(middleware.QueryDeepMiddleware(conf.Cfg.QueryDeep))
 	engine.Use(middleware.AuthMiddleware())
 
 	engine.POST("/graphql", graphqlHandler())
 	engine.GET("/", playgroundHandler())
+
+	engine.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
 
 	if !conf.Cfg.Debug {
 		gin.SetMode(gin.ReleaseMode)

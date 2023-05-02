@@ -139,5 +139,7 @@ func GetAccessToken(ctx context.Context, input string) (string, error) {
 		log.Errorf("refresh token error: %+v", err)
 		return "", common.NewGQLError(common.Internal, common.ServiceError)
 	}
+	// 再生成access_token
+	// TODO
 	return token, nil
 }

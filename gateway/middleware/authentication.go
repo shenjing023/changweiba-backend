@@ -93,6 +93,19 @@ func RefreshRefreshToken(tokenString string) (string, error) {
 	return token.Token, nil
 }
 
+// refresh token authentication
+// param: refreshToken
+// return: refreshToken and accessToken
+func RefreshTokenAuth(refreshToken string) (string, string, error) {
+	rToken, err := refreshTokenAuth.RefreshToken(refreshToken)
+	if err != nil {
+		return "", "", err
+	}
+	claims, _ := refreshTokenAuth.ParseToken(rToken.Token)
+	aToken, _ := accessTokenAuth.GenerateToken(claims.(float64))
+	return rToken.Token, aToken.Token, nil
+}
+
 // ParseRefreshToken parse refresh_token
 func ParseRefreshToken(token string) (interface{}, error) {
 	return refreshTokenAuth.ParseToken(token)
@@ -122,4 +135,27 @@ type gqlError struct {
 	Message    string                 `json:"message"`
 	Path       []string               `json:"path"`
 	Extensions map[string]interface{} `json:"extensions"`
+}
+
+func Cors() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// method := c.Request.Method
+		// origin := c.Request.Header.Get("Origin")
+		c.Header("Access-Control-Allow-Origin", "*") // 可将将 * 替换为指定的域名
+		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
+		c.Header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization")
+		c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Cache-Control, Content-Language, Content-Type")
+		c.Header("Access-Control-Allow-Credentials", "true")
+		// if origin != "" {
+		// 	c.Header("Access-Control-Allow-Origin", "*") // 可将将 * 替换为指定的域名
+		// 	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
+		// 	c.Header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization")
+		// 	c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Cache-Control, Content-Language, Content-Type")
+		// 	c.Header("Access-Control-Allow-Credentials", "true")
+		// }
+		// if method == "OPTIONS" {
+		// 	c.AbortWithStatus(http.StatusNoContent)
+		// }
+		c.Next()
+	}
 }
