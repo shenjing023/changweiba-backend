@@ -123,23 +123,23 @@ func UsersByIDsLoaderFunc(ctx context.Context, keys []int64) (users []*models.Us
 	return
 }
 
-func GetAccessToken(ctx context.Context, input string) (string, error) {
-	// 先验证refresh_token
-	token, err := middleware.RefreshRefreshToken(input)
+func RefreshTokenAuth(ctx context.Context, input string) (*models.AuthToken, error) {
+	rToken, aToken, err := middleware.RefreshTokenAuth(input)
 	if err != nil {
-		if errors.Is(err, common.ErrTokenExpired) {
-			return "", common.NewGQLError(common.InvalidArgument, "授权已过期")
-		} else if errors.Is(err, common.ErrTokenNotValidYet) {
-			return "", common.NewGQLError(common.InvalidArgument, "授权未生效")
-		} else if errors.Is(err, common.ErrTokenMalformed) {
-			return "", common.NewGQLError(common.InvalidArgument, "token无效")
-		} else if errors.Is(err, common.ErrTokenInvalid) {
-			return "", common.NewGQLError(common.InvalidArgument, "token无效")
-		}
 		log.Errorf("refresh token error: %+v", err)
-		return "", common.NewGQLError(common.Internal, common.ServiceError)
+		if errors.Is(err, common.ErrTokenExpired) {
+			return nil, common.NewGQLError(common.InvalidArgument, "授权已过期")
+		} else if errors.Is(err, common.ErrTokenNotValidYet) {
+			return nil, common.NewGQLError(common.InvalidArgument, "授权未生效")
+		} else if errors.Is(err, common.ErrTokenMalformed) {
+			return nil, common.NewGQLError(common.InvalidArgument, "token无效")
+		} else if errors.Is(err, common.ErrTokenInvalid) {
+			return nil, common.NewGQLError(common.InvalidArgument, "token无效")
+		}
+		return nil, common.NewGQLError(common.Internal, common.ServiceError)
 	}
-	// 再生成access_token
-	// TODO
-	return token, nil
+	return &models.AuthToken{
+		AccessToken:  aToken,
+		RefreshToken: rToken,
+	}, nil
 }

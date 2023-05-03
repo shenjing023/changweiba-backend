@@ -51,8 +51,8 @@ type Mutation{
     newReply(input: NewReply!): Int! @IsAuthenticated
     """删除帖子"""
     deletePost(input: Int!): Boolean! @IsAuthenticated
-    """获取access_token"""
-    getAccessToken(input: String!): String!
+    """刷新auth_token"""
+    refreshAuthToken(input: String!): AuthToken!
     """订阅stock"""
     subscribeStock(input: Int!): Boolean! @IsAuthenticated
     """取消订阅stock"""

@@ -22,11 +22,11 @@ type Comment struct {
 	// 第几楼
 	Floor   int              `json:"floor"`
 	Status  PostStatus       `json:"status"`
-	Replies *ReplyConnection `json:"replies"`
+	Replies *ReplyConnection `json:"replies,omitempty"`
 }
 
 type CommentConnection struct {
-	Nodes      []*Comment `json:"nodes"`
+	Nodes      []*Comment `json:"nodes,omitempty"`
 	TotalCount int        `json:"totalCount"`
 }
 
@@ -35,11 +35,11 @@ type DeletePost struct {
 }
 
 type EditUser struct {
-	Name     *string     `json:"name"`
-	Password *string     `json:"password"`
-	Avatar   *string     `json:"avatar"`
-	Status   *UserStatus `json:"status"`
-	Role     *UserRole   `json:"role"`
+	Name     *string     `json:"name,omitempty"`
+	Password *string     `json:"password,omitempty"`
+	Avatar   *string     `json:"avatar,omitempty"`
+	Status   *UserStatus `json:"status,omitempty"`
+	Role     *UserRole   `json:"role,omitempty"`
 }
 
 type NewComment struct {
@@ -56,7 +56,7 @@ type NewReply struct {
 	PostID    int    `json:"postId"`
 	CommentID int    `json:"commentId"`
 	Content   string `json:"content"`
-	ParentID  *int   `json:"parentId"`
+	ParentID  *int   `json:"parentId,omitempty"`
 }
 
 type NewUser struct {
@@ -82,7 +82,7 @@ type Post struct {
 }
 
 type PostConnection struct {
-	Nodes      []*Post `json:"nodes"`
+	Nodes      []*Post `json:"nodes,omitempty"`
 	TotalCount int     `json:"totalCount"`
 }
 
@@ -100,7 +100,7 @@ type Reply struct {
 }
 
 type ReplyConnection struct {
-	Nodes      []*Reply `json:"nodes"`
+	Nodes      []*Reply `json:"nodes,omitempty"`
 	TotalCount int      `json:"totalCount"`
 }
 
@@ -117,7 +117,7 @@ type Stock struct {
 }
 
 type StockConnection struct {
-	Nodes      []*Stock `json:"nodes"`
+	Nodes      []*Stock `json:"nodes,omitempty"`
 	TotalCount int      `json:"totalCount"`
 }
 
@@ -129,7 +129,7 @@ type TradeDate struct {
 }
 
 type TradeDateConnection struct {
-	Nodes      []*TradeDate `json:"nodes"`
+	Nodes      []*TradeDate `json:"nodes,omitempty"`
 	TotalCount int          `json:"totalCount"`
 	ID         int          `json:"id"`
 }
@@ -148,9 +148,9 @@ type User struct {
 	Score int `json:"score"`
 	// 被封原因
 	BannedReason string             `json:"banned_reason"`
-	Posts        *PostConnection    `json:"posts"`
-	Comments     *CommentConnection `json:"comments"`
-	Replies      *ReplyConnection   `json:"replies"`
+	Posts        *PostConnection    `json:"posts,omitempty"`
+	Comments     *CommentConnection `json:"comments,omitempty"`
+	Replies      *ReplyConnection   `json:"replies,omitempty"`
 }
 
 type PostStatus string

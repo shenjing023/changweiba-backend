@@ -4,10 +4,10 @@ port: 8020
 auth_token:
   access:
     sign_key: "ssdadasd1"
-    expire: 3600
+    expire: 30
   refresh:
     sign_key: "ssdadasd2"
-    expire: 3600
+    expire: 60
 query_deep: 3
 log_dir: ""
 etcd:

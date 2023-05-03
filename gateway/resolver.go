@@ -1,7 +1,7 @@
 package main
 
 //go:generate rm -rf generated
-//go:generate go run github.com/99designs/gqlgen
+//go:generate go run github.com/99designs/gqlgen generate
 
 // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
@@ -55,8 +55,8 @@ func (r *mutationResolver) DeletePost(ctx context.Context, input int) (bool, err
 	panic("not implemented")
 }
 
-func (r *mutationResolver) GetAccessToken(ctx context.Context, input string) (string, error) {
-	return handler.GetAccessToken(ctx, input)
+func (r *mutationResolver) RefreshAuthToken(ctx context.Context, input string) (*models.AuthToken, error) {
+	return handler.RefreshTokenAuth(ctx, input)
 }
 
 func (r *mutationResolver) SubscribeStock(ctx context.Context, input int) (bool, error) {
