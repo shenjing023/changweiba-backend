@@ -153,6 +153,11 @@ type User struct {
 	Replies      *ReplyConnection   `json:"replies,omitempty"`
 }
 
+type WencaiStock struct {
+	Bull  int    `json:"bull"`
+	Short string `json:"short"`
+}
+
 type PostStatus string
 
 const (

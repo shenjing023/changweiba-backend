@@ -113,6 +113,7 @@ type ComplexityRoot struct {
 		StockTrades      func(childComplexity int, stockID int) int
 		SubscribedStocks func(childComplexity int) int
 		User             func(childComplexity int, userID int) int
+		WencaiStock      func(childComplexity int, stockID int) int
 	}
 
 	Reply struct {
@@ -168,6 +169,11 @@ type ComplexityRoot struct {
 		Score        func(childComplexity int) int
 		Status       func(childComplexity int) int
 	}
+
+	WencaiStock struct {
+		Bull  func(childComplexity int) int
+		Short func(childComplexity int) int
+	}
 }
 
 type CommentResolver interface {
@@ -206,6 +212,7 @@ type QueryResolver interface {
 	SearchStock(ctx context.Context, symbolorname string) (*models.StockConnection, error)
 	SubscribedStocks(ctx context.Context) (*models.StockConnection, error)
 	StockTrades(ctx context.Context, stockID int) (*models.TradeDateConnection, error)
+	WencaiStock(ctx context.Context, stockID int) (*models.WencaiStock, error)
 }
 type ReplyResolver interface {
 	User(ctx context.Context, obj *models.Reply) (*models.User, error)
@@ -656,6 +663,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.User(childComplexity, args["userId"].(int)), true
 
+	case "Query.wencaiStock":
+		if e.complexity.Query.WencaiStock == nil {
+			break
+		}
+
+		args, err := ec.field_Query_wencaiStock_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.WencaiStock(childComplexity, args["stockId"].(int)), true
+
 	case "Reply.commentId":
 		if e.complexity.Reply.CommentID == nil {
 			break
@@ -901,6 +920,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Status(childComplexity), true
+
+	case "WencaiStock.bull":
+		if e.complexity.WencaiStock.Bull == nil {
+			break
+		}
+
+		return e.complexity.WencaiStock.Bull(childComplexity), true
+
+	case "WencaiStock.short":
+		if e.complexity.WencaiStock.Short == nil {
+			break
+		}
+
+		return e.complexity.WencaiStock.Short(childComplexity), true
 
 	}
 	return 0, false
@@ -1161,6 +1194,10 @@ type Query {
     stockTrades(
         stockId:Int!
     ):TradeDateConnection!
+    """
+    wencai stock query
+    """
+    wencaiStock(stockId: Int!): WencaiStock!
 }
 
 type Mutation{
@@ -1207,6 +1244,10 @@ type TradeDateConnection{
     nodes:[TradeDate]
     totalCount:Int!
     id: Int!
+}`, BuiltIn: false},
+	{Name: "../schema/wencai.graphql", Input: `type WencaiStock{
+    bull: Int!
+    short: String!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -1620,6 +1661,21 @@ func (ec *executionContext) field_Query_user_args(ctx context.Context, rawArgs m
 		}
 	}
 	args["userId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_wencaiStock_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["stockId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stockId"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["stockId"] = arg0
 	return args, nil
 }
 
@@ -4386,6 +4442,67 @@ func (ec *executionContext) fieldContext_Query_stockTrades(ctx context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_wencaiStock(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_wencaiStock(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().WencaiStock(rctx, fc.Args["stockId"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.WencaiStock)
+	fc.Result = res
+	return ec.marshalNWencaiStock2ᚖgatewayᚋmodelsᚐWencaiStock(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_wencaiStock(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "bull":
+				return ec.fieldContext_WencaiStock_bull(ctx, field)
+			case "short":
+				return ec.fieldContext_WencaiStock_short(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type WencaiStock", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_wencaiStock_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query___type(ctx, field)
 	if err != nil {
@@ -6074,6 +6191,94 @@ func (ec *executionContext) fieldContext_User_replies(ctx context.Context, field
 	if fc.Args, err = ec.field_User_replies_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WencaiStock_bull(ctx context.Context, field graphql.CollectedField, obj *models.WencaiStock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_WencaiStock_bull(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Bull, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_WencaiStock_bull(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WencaiStock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WencaiStock_short(ctx context.Context, field graphql.CollectedField, obj *models.WencaiStock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_WencaiStock_short(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Short, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_WencaiStock_short(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WencaiStock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -8871,6 +9076,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "wencaiStock":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_wencaiStock(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "__type":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -9295,6 +9523,41 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				return innerFunc(ctx)
 
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var wencaiStockImplementors = []string{"WencaiStock"}
+
+func (ec *executionContext) _WencaiStock(ctx context.Context, sel ast.SelectionSet, obj *models.WencaiStock) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, wencaiStockImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("WencaiStock")
+		case "bull":
+
+			out.Values[i] = ec._WencaiStock_bull(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "short":
+
+			out.Values[i] = ec._WencaiStock_short(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9897,6 +10160,20 @@ func (ec *executionContext) unmarshalNUserStatus2gatewayᚋmodelsᚐUserStatus(c
 
 func (ec *executionContext) marshalNUserStatus2gatewayᚋmodelsᚐUserStatus(ctx context.Context, sel ast.SelectionSet, v models.UserStatus) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNWencaiStock2gatewayᚋmodelsᚐWencaiStock(ctx context.Context, sel ast.SelectionSet, v models.WencaiStock) graphql.Marshaler {
+	return ec._WencaiStock(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNWencaiStock2ᚖgatewayᚋmodelsᚐWencaiStock(ctx context.Context, sel ast.SelectionSet, v *models.WencaiStock) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._WencaiStock(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {

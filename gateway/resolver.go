@@ -123,6 +123,10 @@ func (r *queryResolver) StockTrades(ctx context.Context, stockID int) (*models.T
 	return handler.StockTrades(ctx, stockID)
 }
 
+func (r queryResolver) WencaiStock(ctx context.Context, stockID int) (*models.WencaiStock, error) {
+	return handler.WencaiStock(ctx, stockID)
+}
+
 func (r *replyResolver) User(ctx context.Context, obj *models.Reply) (*models.User, error) {
 	return dataloader.Loader.UsersByIDs.Load(ctx, int64(obj.User.ID))
 }

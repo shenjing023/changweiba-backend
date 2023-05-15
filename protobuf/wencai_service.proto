@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package wencai;
+
+import "google/protobuf/empty.proto";
+
+option go_package = ".;pb";
+
+message QueryRequest{
+    int64 stock_id=1;
+}
+
+message QueryResponse{
+    // 持仓建议
+    int64 bull=1;
+    // 短期趋势
+    string short=2;
+}
+
+service WencaiService{
+    rpc Query(QueryRequest) returns(QueryResponse){}
+}

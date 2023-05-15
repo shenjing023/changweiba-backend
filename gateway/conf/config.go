@@ -33,6 +33,10 @@ type YamlConf struct {
 	SvcName          string `yaml:"svc_name"`
 	QueryDeep        int    `yaml:"query_deep"`
 	JaegerCollectURL string `yaml:"jeager_collect_url"`
+	Wencai           struct {
+		Host string `yaml:"host"`
+		Port int    `yaml:"port"`
+	}
 }
 
 // Cfg global config variate

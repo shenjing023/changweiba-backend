@@ -34,6 +34,10 @@ type Query {
     stockTrades(
         stockId:Int!
     ):TradeDateConnection!
+    """
+    wencai stock query
+    """
+    wencaiStock(stockId: Int!): WencaiStock!
 }
 
 type Mutation{

@@ -4,10 +4,10 @@ port: 8020
 auth_token:
   access:
     sign_key: "ssdadasd1"
-    expire: 30
+    expire: 3600
   refresh:
     sign_key: "ssdadasd2"
-    expire: 60
+    expire: 3600
 query_deep: 3
 log_dir: ""
 etcd:
@@ -15,3 +15,6 @@ etcd:
   port: 2379
 svc_name: "gateway"
 jeager_collect_url: "http://127.0.0.1:14268/api/traces"
+wencai:
+  host: "127.0.0.1"
+  port: 8022

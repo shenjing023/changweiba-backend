@@ -55,6 +55,15 @@ func GRPCErrorConvert(err error, conf map[codes.Code]string) error {
 	}
 }
 
+func HTTPErrorConvert(err error, code int) error {
+	return &gqlerror.Error{
+		Message: err.Error(),
+		Extensions: map[string]interface{}{
+			"code": code,
+		},
+	}
+}
+
 // GetUserIDFromContext get user_id from context
 func GetUserIDFromContext(ctx context.Context) (int64, error) {
 	gctx, err := GinContextFromContext(ctx)
