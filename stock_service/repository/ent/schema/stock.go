@@ -24,6 +24,7 @@ func (Stock) Fields() []ent.Field {
 		field.String("name").SchemaType(map[string]string{
 			dialect.MySQL: "varchar(10)", // Override MySQL.
 		}).NotEmpty().Unique().Comment("股票名称"),
+		field.Int("bull").Comment("持仓建议").Default(0),
 	}
 }
 

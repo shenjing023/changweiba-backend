@@ -9,12 +9,13 @@ option go_package = ".;pb";
 
 message SubscribeStockRequest {
     int64 user_id=1;
-    int64 stock_id=2;
+    string symbol=2;
+    string name=3;
 }
 
 message UnSubscribeStockRequest {
     int64 user_id=1;
-    int64 stock_id=2;
+    string symbol=2;
 }
 
 message TradeData {

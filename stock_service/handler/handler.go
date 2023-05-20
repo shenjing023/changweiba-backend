@@ -15,7 +15,7 @@ type StockService struct {
 }
 
 func (StockService) SubscribeStock(ctx context.Context, req *pb.SubscribeStockRequest) (*emptypb.Empty, error) {
-	if err := repository.SubscribeStock(ctx, req.StockId, req.UserId); err != nil {
+	if err := repository.SubscribeStock(ctx, req.UserId, req.Symbol, req.Name); err != nil {
 		log.Errorf("SubscribeStock Error: %+v", err)
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func (StockService) SubscribeStock(ctx context.Context, req *pb.SubscribeStockRe
 }
 
 func (StockService) UnSubscribeStock(ctx context.Context, req *pb.UnSubscribeStockRequest) (*emptypb.Empty, error) {
-	if err := repository.UnSubscribeStock(ctx, req.StockId, req.UserId); err != nil {
+	if err := repository.UnSubscribeStock(ctx, req.Symbol, req.UserId); err != nil {
 		log.Errorf("UnSubscribeStock Error: %+v", err)
 		return nil, err
 	}

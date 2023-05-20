@@ -8,8 +8,8 @@ import (
 
 func TestSearchStock(t *testing.T) {
 	xq := NewXueqiu()
-	time.Sleep(time.Second * 3)
-	data, err := xq.SearchStock("sz123456")
+	time.Sleep(time.Second * 30)
+	data, err := xq.SearchStock("SH601020")
 	if err != nil {
 		fmt.Println(err)
 	}

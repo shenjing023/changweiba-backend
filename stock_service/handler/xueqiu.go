@@ -95,7 +95,9 @@ func NewXueqiu(opts ...Option) *Xueqiu {
 }
 
 func (x *Xueqiu) updateCookie() {
+	log.Info(1111)
 	res, err := http.Get(XUEQIU_URL)
+	log.Infof("res: %v", res)
 	if err != nil {
 		log.Infof("update cookie failed: %v", err)
 		return
@@ -133,6 +135,7 @@ func (x *Xueqiu) request(url, method string, body io.Reader) (*http.Response, er
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36")
 	x.m.RLock()
 	for _, cookie := range x.cookies {
+		log.Infof("cookie: %v", cookie)
 		req.AddCookie(cookie)
 	}
 	x.m.RUnlock()
@@ -153,6 +156,7 @@ func (x *Xueqiu) SearchStock(symbolorname string) ([]StockData, error) {
 		if err != nil {
 			return nil, err
 		}
+		log.Infof("data: %s", string(t))
 		var searchResp SearchResp
 		err = json.Unmarshal(t, &searchResp)
 		if err != nil {

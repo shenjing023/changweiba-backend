@@ -63,7 +63,7 @@ func Close() {
 }
 
 // SubscribeStock subscribe stock
-func SubscribeStock(ctx context.Context, stockID int64, userID int64) error {
+func SubscribeStock(ctx context.Context, userID int64, symbol, name string) error {
 	user, err := entClient.User.Get(ctx, uint64(userID))
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -71,16 +71,34 @@ func SubscribeStock(ctx context.Context, stockID int64, userID int64) error {
 		}
 		return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
-	if err = user.Update().AddSubscribeStockIDs(uint64(stockID)).Exec(ctx); err != nil {
+	// 先查看股票是否存在
+	stocks, err := GetStockBySymbols(ctx, symbol)
+	if err != nil {
+		return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
+	}
+	stockID := uint64(0)
+	if len(stocks) > 0 {
+		if stocks[0].ID == 0 {
+			// 不存在，插入新股票
+			newStocks, err := InsertStocks(ctx, []string{symbol}, []string{name})
+			if err != nil {
+				return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
+			}
+			stockID = newStocks[0].ID
+		} else {
+			stockID = stocks[0].ID
+		}
+	}
+	if err = user.Update().AddSubscribeStockIDs(stockID).Exec(ctx); err != nil {
 		return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	} else if ent.IsConstraintError(err) {
-		return nil
+		return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
 	return nil
 }
 
 // UnSubscribeStock unsubscribe stock
-func UnSubscribeStock(ctx context.Context, stockID int64, userID int64) error {
+func UnSubscribeStock(ctx context.Context, symbol string, userID int64) error {
 	user, err := entClient.User.Get(ctx, uint64(userID))
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -88,7 +106,21 @@ func UnSubscribeStock(ctx context.Context, stockID int64, userID int64) error {
 		}
 		return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
-	if err = user.Update().RemoveSubscribeStockIDs(uint64(stockID)).Exec(ctx); err != nil {
+	// 先查看股票是否存在
+	stocks, err := GetStockBySymbols(ctx, symbol)
+	if err != nil {
+		return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
+	}
+	stockID := uint64(0)
+	if len(stocks) > 0 {
+		if stocks[0].ID == 0 {
+			// 不存在，插入新股票
+			return nil
+		} else {
+			stockID = stocks[0].ID
+		}
+	}
+	if err = user.Update().RemoveSubscribeStockIDs(stockID).Exec(ctx); err != nil {
 		return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
 	return nil
