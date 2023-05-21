@@ -71,6 +71,11 @@ func SubscribeStock(ctx context.Context, userID int64, symbol, name string) erro
 		}
 		return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
+	// 先查看用户订阅的股票数量
+	tmp, _ := GetSubscribedStocksByUserID(ctx, userID)
+	if len(tmp) > conf.Cfg.SubscribeStockLimit {
+		return er.NewServiceErr(er.Unavailable, errors.New("too many subscribe stocks"))
+	}
 	// 先查看股票是否存在
 	stocks, err := GetStockBySymbols(ctx, symbol)
 	if err != nil {
@@ -114,7 +119,6 @@ func UnSubscribeStock(ctx context.Context, symbol string, userID int64) error {
 	stockID := uint64(0)
 	if len(stocks) > 0 {
 		if stocks[0].ID == 0 {
-			// 不存在，插入新股票
 			return nil
 		} else {
 			stockID = stocks[0].ID

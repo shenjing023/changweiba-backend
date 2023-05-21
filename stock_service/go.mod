@@ -8,7 +8,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/shenjing023/llog v0.1.4
-	github.com/shenjing023/vivy-polaris v0.0.2
+	github.com/shenjing023/vivy-polaris v0.0.3
 	go.etcd.io/etcd/client/v3 v3.5.9
 	golang.org/x/net v0.10.0
 	google.golang.org/grpc v1.55.0

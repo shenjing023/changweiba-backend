@@ -33,8 +33,9 @@ type YamlConf struct {
 		Host string `yaml:"host"`
 		Port int    `yaml:"port"`
 	} `yaml:"etcd"`
-	LogDir           string `yaml:"log_dir"`
-	JaegerCollectURL string `yaml:"jeager_collect_url"`
+	LogDir              string `yaml:"log_dir"`
+	JaegerCollectURL    string `yaml:"jeager_collect_url"`
+	SubscribeStockLimit int    `yaml:"subscribe_stock_limit"` // 用户订阅stock的最大数量
 }
 
 // Cfg global config variate

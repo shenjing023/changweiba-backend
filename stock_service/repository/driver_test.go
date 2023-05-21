@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
 	er "github.com/shenjing023/vivy-polaris/errors"
 )
 
@@ -48,4 +49,114 @@ func TestGetStockLastPullTime(t *testing.T) {
 
 	now := time.Now()
 	t.Log(time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local).Unix())
+}
+
+func TestSubscribeStock(t *testing.T) {
+	type args struct {
+		ctx    context.Context
+		userID int64
+		symbol string
+		name   string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "stock not exist test1",
+			args: args{
+				ctx:    context.Background(),
+				userID: 8,
+				symbol: "SZ600220",
+				name:   "*ST新联",
+			},
+			wantErr: false,
+		},
+		{
+			name: "stock not exist test2",
+			args: args{
+				ctx:    context.Background(),
+				userID: 8,
+				symbol: "SZ600221",
+				name:   "恒立实业",
+			},
+			wantErr: false,
+		},
+		{
+			name: "stock exist test1",
+			args: args{
+				ctx:    context.Background(),
+				userID: 7,
+				symbol: "SZ600221",
+				name:   "恒立实业",
+			},
+			wantErr: false,
+		},
+		{
+			name: "subscribe stock limit test2",
+			args: args{
+				ctx:    context.Background(),
+				userID: 8,
+				symbol: "SZ600223",
+				name:   "吉林敖东",
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := SubscribeStock(tt.args.ctx, tt.args.userID, tt.args.symbol, tt.args.name); (err != nil) != tt.wantErr {
+				t.Errorf("SubscribeStock() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestUnSubscribeStock(t *testing.T) {
+	type args struct {
+		ctx    context.Context
+		symbol string
+		userID int64
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "stock not exist test1",
+			args: args{
+				ctx:    context.Background(),
+				userID: 8,
+				symbol: "SZ600210",
+			},
+			wantErr: false,
+		},
+		{
+			name: "user not exist test1",
+			args: args{
+				ctx:    context.Background(),
+				userID: 9,
+				symbol: "SZ600210",
+			},
+			wantErr: true,
+		},
+		{
+			name: "normal test1",
+			args: args{
+				ctx:    context.Background(),
+				userID: 8,
+				symbol: "SZ600220",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := UnSubscribeStock(tt.args.ctx, tt.args.symbol, tt.args.userID); (err != nil) != tt.wantErr {
+				t.Errorf("UnSubscribeStock() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
 }

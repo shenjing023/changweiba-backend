@@ -18,3 +18,4 @@ etcd:
   port: 2379
 log_dir: ""
 jeager_collect_url: "http://127.0.0.1:14268/api/traces"
+subscribe_stock_limit: 2
