@@ -10,6 +10,7 @@ import (
 	"stock_service/repository/ent/stock"
 	"stock_service/repository/ent/tradedate"
 	"stock_service/repository/ent/user"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -59,6 +60,20 @@ func (su *StockUpdate) SetNillableBull(i *int) *StockUpdate {
 // AddBull adds i to the "bull" field.
 func (su *StockUpdate) AddBull(i int) *StockUpdate {
 	su.mutation.AddBull(i)
+	return su
+}
+
+// SetLastSubscribeAt sets the "last_subscribe_at" field.
+func (su *StockUpdate) SetLastSubscribeAt(t time.Time) *StockUpdate {
+	su.mutation.SetLastSubscribeAt(t)
+	return su
+}
+
+// SetNillableLastSubscribeAt sets the "last_subscribe_at" field if the given value is not nil.
+func (su *StockUpdate) SetNillableLastSubscribeAt(t *time.Time) *StockUpdate {
+	if t != nil {
+		su.SetLastSubscribeAt(*t)
+	}
 	return su
 }
 
@@ -205,6 +220,9 @@ func (su *StockUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := su.mutation.AddedBull(); ok {
 		_spec.AddField(stock.FieldBull, field.TypeInt, value)
 	}
+	if value, ok := su.mutation.LastSubscribeAt(); ok {
+		_spec.SetField(stock.FieldLastSubscribeAt, field.TypeTime, value)
+	}
 	if su.mutation.TradesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -345,6 +363,20 @@ func (suo *StockUpdateOne) SetNillableBull(i *int) *StockUpdateOne {
 // AddBull adds i to the "bull" field.
 func (suo *StockUpdateOne) AddBull(i int) *StockUpdateOne {
 	suo.mutation.AddBull(i)
+	return suo
+}
+
+// SetLastSubscribeAt sets the "last_subscribe_at" field.
+func (suo *StockUpdateOne) SetLastSubscribeAt(t time.Time) *StockUpdateOne {
+	suo.mutation.SetLastSubscribeAt(t)
+	return suo
+}
+
+// SetNillableLastSubscribeAt sets the "last_subscribe_at" field if the given value is not nil.
+func (suo *StockUpdateOne) SetNillableLastSubscribeAt(t *time.Time) *StockUpdateOne {
+	if t != nil {
+		suo.SetLastSubscribeAt(*t)
+	}
 	return suo
 }
 
@@ -520,6 +552,9 @@ func (suo *StockUpdateOne) sqlSave(ctx context.Context) (_node *Stock, err error
 	}
 	if value, ok := suo.mutation.AddedBull(); ok {
 		_spec.AddField(stock.FieldBull, field.TypeInt, value)
+	}
+	if value, ok := suo.mutation.LastSubscribeAt(); ok {
+		_spec.SetField(stock.FieldLastSubscribeAt, field.TypeTime, value)
 	}
 	if suo.mutation.TradesCleared() {
 		edge := &sqlgraph.EdgeSpec{

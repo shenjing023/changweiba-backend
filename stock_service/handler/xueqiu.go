@@ -95,7 +95,6 @@ func NewXueqiu(opts ...Option) *Xueqiu {
 }
 
 func (x *Xueqiu) updateCookie() {
-	log.Info(1111)
 	res, err := http.Get(XUEQIU_URL)
 	log.Infof("res: %v", res)
 	if err != nil {

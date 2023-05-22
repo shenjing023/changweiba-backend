@@ -94,6 +94,52 @@ func (tdc *TradeDateCreate) SetNillableXueqiuCommentCount(i *int64) *TradeDateCr
 	return tdc
 }
 
+// SetOpen sets the "open" field.
+func (tdc *TradeDateCreate) SetOpen(f float64) *TradeDateCreate {
+	tdc.mutation.SetOpen(f)
+	return tdc
+}
+
+// SetMax sets the "max" field.
+func (tdc *TradeDateCreate) SetMax(f float64) *TradeDateCreate {
+	tdc.mutation.SetMax(f)
+	return tdc
+}
+
+// SetMin sets the "min" field.
+func (tdc *TradeDateCreate) SetMin(f float64) *TradeDateCreate {
+	tdc.mutation.SetMin(f)
+	return tdc
+}
+
+// SetBull sets the "bull" field.
+func (tdc *TradeDateCreate) SetBull(i int) *TradeDateCreate {
+	tdc.mutation.SetBull(i)
+	return tdc
+}
+
+// SetNillableBull sets the "bull" field if the given value is not nil.
+func (tdc *TradeDateCreate) SetNillableBull(i *int) *TradeDateCreate {
+	if i != nil {
+		tdc.SetBull(*i)
+	}
+	return tdc
+}
+
+// SetShort sets the "short" field.
+func (tdc *TradeDateCreate) SetShort(s string) *TradeDateCreate {
+	tdc.mutation.SetShort(s)
+	return tdc
+}
+
+// SetNillableShort sets the "short" field if the given value is not nil.
+func (tdc *TradeDateCreate) SetNillableShort(s *string) *TradeDateCreate {
+	if s != nil {
+		tdc.SetShort(*s)
+	}
+	return tdc
+}
+
 // SetID sets the "id" field.
 func (tdc *TradeDateCreate) SetID(u uint64) *TradeDateCreate {
 	tdc.mutation.SetID(u)
@@ -152,6 +198,14 @@ func (tdc *TradeDateCreate) defaults() {
 		v := tradedate.DefaultXueqiuCommentCount
 		tdc.mutation.SetXueqiuCommentCount(v)
 	}
+	if _, ok := tdc.mutation.Bull(); !ok {
+		v := tradedate.DefaultBull
+		tdc.mutation.SetBull(v)
+	}
+	if _, ok := tdc.mutation.Short(); !ok {
+		v := tradedate.DefaultShort
+		tdc.mutation.SetShort(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -198,6 +252,21 @@ func (tdc *TradeDateCreate) check() error {
 		if err := tradedate.XueqiuCommentCountValidator(v); err != nil {
 			return &ValidationError{Name: "xueqiu_comment_count", err: fmt.Errorf(`ent: validator failed for field "TradeDate.xueqiu_comment_count": %w`, err)}
 		}
+	}
+	if _, ok := tdc.mutation.Open(); !ok {
+		return &ValidationError{Name: "open", err: errors.New(`ent: missing required field "TradeDate.open"`)}
+	}
+	if _, ok := tdc.mutation.Max(); !ok {
+		return &ValidationError{Name: "max", err: errors.New(`ent: missing required field "TradeDate.max"`)}
+	}
+	if _, ok := tdc.mutation.Min(); !ok {
+		return &ValidationError{Name: "min", err: errors.New(`ent: missing required field "TradeDate.min"`)}
+	}
+	if _, ok := tdc.mutation.Bull(); !ok {
+		return &ValidationError{Name: "bull", err: errors.New(`ent: missing required field "TradeDate.bull"`)}
+	}
+	if _, ok := tdc.mutation.Short(); !ok {
+		return &ValidationError{Name: "short", err: errors.New(`ent: missing required field "TradeDate.short"`)}
 	}
 	if v, ok := tdc.mutation.ID(); ok {
 		if err := tradedate.IDValidator(v); err != nil {
@@ -259,6 +328,26 @@ func (tdc *TradeDateCreate) createSpec() (*TradeDate, *sqlgraph.CreateSpec) {
 	if value, ok := tdc.mutation.XueqiuCommentCount(); ok {
 		_spec.SetField(tradedate.FieldXueqiuCommentCount, field.TypeInt64, value)
 		_node.XueqiuCommentCount = value
+	}
+	if value, ok := tdc.mutation.Open(); ok {
+		_spec.SetField(tradedate.FieldOpen, field.TypeFloat64, value)
+		_node.Open = value
+	}
+	if value, ok := tdc.mutation.Max(); ok {
+		_spec.SetField(tradedate.FieldMax, field.TypeFloat64, value)
+		_node.Max = value
+	}
+	if value, ok := tdc.mutation.Min(); ok {
+		_spec.SetField(tradedate.FieldMin, field.TypeFloat64, value)
+		_node.Min = value
+	}
+	if value, ok := tdc.mutation.Bull(); ok {
+		_spec.SetField(tradedate.FieldBull, field.TypeInt, value)
+		_node.Bull = value
+	}
+	if value, ok := tdc.mutation.Short(); ok {
+		_spec.SetField(tradedate.FieldShort, field.TypeString, value)
+		_node.Short = value
 	}
 	if nodes := tdc.mutation.StockIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

@@ -3,6 +3,8 @@
 package stock
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 )
@@ -18,6 +20,8 @@ const (
 	FieldName = "name"
 	// FieldBull holds the string denoting the bull field in the database.
 	FieldBull = "bull"
+	// FieldLastSubscribeAt holds the string denoting the last_subscribe_at field in the database.
+	FieldLastSubscribeAt = "last_subscribe_at"
 	// EdgeTrades holds the string denoting the trades edge name in mutations.
 	EdgeTrades = "trades"
 	// EdgeSubscribers holds the string denoting the subscribers edge name in mutations.
@@ -44,6 +48,7 @@ var Columns = []string{
 	FieldSymbol,
 	FieldName,
 	FieldBull,
+	FieldLastSubscribeAt,
 }
 
 var (
@@ -69,6 +74,8 @@ var (
 	NameValidator func(string) error
 	// DefaultBull holds the default value on creation for the "bull" field.
 	DefaultBull int
+	// DefaultLastSubscribeAt holds the default value on creation for the "last_subscribe_at" field.
+	DefaultLastSubscribeAt func() time.Time
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
 	IDValidator func(uint64) error
 )
@@ -94,6 +101,11 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByBull orders the results by the bull field.
 func ByBull(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBull, opts...).ToFunc()
+}
+
+// ByLastSubscribeAt orders the results by the last_subscribe_at field.
+func ByLastSubscribeAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastSubscribeAt, opts...).ToFunc()
 }
 
 // ByTradesCount orders the results by trades count.

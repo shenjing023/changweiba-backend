@@ -59,11 +59,11 @@ func (r *mutationResolver) RefreshAuthToken(ctx context.Context, input string) (
 	return handler.RefreshTokenAuth(ctx, input)
 }
 
-func (r *mutationResolver) SubscribeStock(ctx context.Context, input int) (bool, error) {
-	return handler.SubscribeStock(ctx, input)
+func (r *mutationResolver) SubscribeStock(ctx context.Context, input models.SubscribeStock) (bool, error) {
+	return handler.SubscribeStock(ctx, input.Symbol, input.Name)
 }
 
-func (r *mutationResolver) UnsubscribeStock(ctx context.Context, input int) (bool, error) {
+func (r *mutationResolver) UnsubscribeStock(ctx context.Context, input string) (bool, error) {
 	return handler.UnSubscribeStock(ctx, input)
 }
 

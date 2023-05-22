@@ -29,7 +29,7 @@ type Query {
     """stock搜索"""
     searchStock(symbolorname: String!): StockConnection!
     """获取订阅stock"""
-    subscribedStocks: StockConnection!
+    subscribedStocks: StockConnection! @IsAuthenticated
     """获取stock交易数据"""
     stockTrades(
         stockId:Int!
@@ -58,7 +58,7 @@ type Mutation{
     """刷新auth_token"""
     refreshAuthToken(input: String!): AuthToken!
     """订阅stock"""
-    subscribeStock(input: Int!): Boolean! @IsAuthenticated
+    subscribeStock(input: SubscribeStock!): Boolean! @IsAuthenticated
     """取消订阅stock"""
-    unsubscribeStock(input: Int!): Boolean! @IsAuthenticated
+    unsubscribeStock(input: String!): Boolean! @IsAuthenticated
 }

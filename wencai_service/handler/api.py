@@ -16,7 +16,7 @@ def while_do(do, retry=5, sleep=3):
             count += 1
     return None
 
-def get_robot_data(stock_id: int):
+def get_robot_data(stock_symbol: str):
     """
     get
     """
@@ -25,7 +25,7 @@ def get_robot_data(stock_id: int):
         'page': 1,
         'source': 'Ths_iwencai_Xuangu',
         'secondary_intent': "stock",
-        'question': str(stock_id)
+        'question': stock_symbol
     }
     def do():
         res=rq.request(
@@ -39,10 +39,10 @@ def get_robot_data(stock_id: int):
         
     return while_do(do)
 
-def query_stock(stock_id:int):
-    result = get_robot_data(stock_id)
+def query_stock(stock_symbol:str):
+    result = get_robot_data(stock_symbol)
     if not result:
-        log.info(f"query [stock:{stock_id}] failed")
+        log.info(f"query [stock:{stock_symbol}] failed")
         return {
             "bull": 0,
             "short": "---"

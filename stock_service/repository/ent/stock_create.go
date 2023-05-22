@@ -9,6 +9,7 @@ import (
 	"stock_service/repository/ent/stock"
 	"stock_service/repository/ent/tradedate"
 	"stock_service/repository/ent/user"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -43,6 +44,20 @@ func (sc *StockCreate) SetBull(i int) *StockCreate {
 func (sc *StockCreate) SetNillableBull(i *int) *StockCreate {
 	if i != nil {
 		sc.SetBull(*i)
+	}
+	return sc
+}
+
+// SetLastSubscribeAt sets the "last_subscribe_at" field.
+func (sc *StockCreate) SetLastSubscribeAt(t time.Time) *StockCreate {
+	sc.mutation.SetLastSubscribeAt(t)
+	return sc
+}
+
+// SetNillableLastSubscribeAt sets the "last_subscribe_at" field if the given value is not nil.
+func (sc *StockCreate) SetNillableLastSubscribeAt(t *time.Time) *StockCreate {
+	if t != nil {
+		sc.SetLastSubscribeAt(*t)
 	}
 	return sc
 }
@@ -122,6 +137,10 @@ func (sc *StockCreate) defaults() {
 		v := stock.DefaultBull
 		sc.mutation.SetBull(v)
 	}
+	if _, ok := sc.mutation.LastSubscribeAt(); !ok {
+		v := stock.DefaultLastSubscribeAt()
+		sc.mutation.SetLastSubscribeAt(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -144,6 +163,9 @@ func (sc *StockCreate) check() error {
 	}
 	if _, ok := sc.mutation.Bull(); !ok {
 		return &ValidationError{Name: "bull", err: errors.New(`ent: missing required field "Stock.bull"`)}
+	}
+	if _, ok := sc.mutation.LastSubscribeAt(); !ok {
+		return &ValidationError{Name: "last_subscribe_at", err: errors.New(`ent: missing required field "Stock.last_subscribe_at"`)}
 	}
 	if v, ok := sc.mutation.ID(); ok {
 		if err := stock.IDValidator(v); err != nil {
@@ -193,6 +215,10 @@ func (sc *StockCreate) createSpec() (*Stock, *sqlgraph.CreateSpec) {
 	if value, ok := sc.mutation.Bull(); ok {
 		_spec.SetField(stock.FieldBull, field.TypeInt, value)
 		_node.Bull = value
+	}
+	if value, ok := sc.mutation.LastSubscribeAt(); ok {
+		_spec.SetField(stock.FieldLastSubscribeAt, field.TypeTime, value)
+		_node.LastSubscribeAt = value
 	}
 	if nodes := sc.mutation.TradesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

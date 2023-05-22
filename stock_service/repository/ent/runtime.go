@@ -7,6 +7,7 @@ import (
 	"stock_service/repository/ent/stock"
 	"stock_service/repository/ent/tradedate"
 	"stock_service/repository/ent/user"
+	"time"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -27,6 +28,10 @@ func init() {
 	stockDescBull := stockFields[3].Descriptor()
 	// stock.DefaultBull holds the default value on creation for the bull field.
 	stock.DefaultBull = stockDescBull.Default.(int)
+	// stockDescLastSubscribeAt is the schema descriptor for last_subscribe_at field.
+	stockDescLastSubscribeAt := stockFields[4].Descriptor()
+	// stock.DefaultLastSubscribeAt holds the default value on creation for the last_subscribe_at field.
+	stock.DefaultLastSubscribeAt = stockDescLastSubscribeAt.Default.(func() time.Time)
 	// stockDescID is the schema descriptor for id field.
 	stockDescID := stockFields[0].Descriptor()
 	// stock.IDValidator is a validator for the "id" field. It is called by the builders before save.
@@ -59,6 +64,14 @@ func init() {
 	tradedate.DefaultXueqiuCommentCount = tradedateDescXueqiuCommentCount.Default.(int64)
 	// tradedate.XueqiuCommentCountValidator is a validator for the "xueqiu_comment_count" field. It is called by the builders before save.
 	tradedate.XueqiuCommentCountValidator = tradedateDescXueqiuCommentCount.Validators[0].(func(int64) error)
+	// tradedateDescBull is the schema descriptor for bull field.
+	tradedateDescBull := tradedateFields[11].Descriptor()
+	// tradedate.DefaultBull holds the default value on creation for the bull field.
+	tradedate.DefaultBull = tradedateDescBull.Default.(int)
+	// tradedateDescShort is the schema descriptor for short field.
+	tradedateDescShort := tradedateFields[12].Descriptor()
+	// tradedate.DefaultShort holds the default value on creation for the short field.
+	tradedate.DefaultShort = tradedateDescShort.Default.(string)
 	// tradedateDescID is the schema descriptor for id field.
 	tradedateDescID := tradedateFields[0].Descriptor()
 	// tradedate.IDValidator is a validator for the "id" field. It is called by the builders before save.

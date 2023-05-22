@@ -122,6 +122,80 @@ func (tdu *TradeDateUpdate) AddXueqiuCommentCount(i int64) *TradeDateUpdate {
 	return tdu
 }
 
+// SetOpen sets the "open" field.
+func (tdu *TradeDateUpdate) SetOpen(f float64) *TradeDateUpdate {
+	tdu.mutation.ResetOpen()
+	tdu.mutation.SetOpen(f)
+	return tdu
+}
+
+// AddOpen adds f to the "open" field.
+func (tdu *TradeDateUpdate) AddOpen(f float64) *TradeDateUpdate {
+	tdu.mutation.AddOpen(f)
+	return tdu
+}
+
+// SetMax sets the "max" field.
+func (tdu *TradeDateUpdate) SetMax(f float64) *TradeDateUpdate {
+	tdu.mutation.ResetMax()
+	tdu.mutation.SetMax(f)
+	return tdu
+}
+
+// AddMax adds f to the "max" field.
+func (tdu *TradeDateUpdate) AddMax(f float64) *TradeDateUpdate {
+	tdu.mutation.AddMax(f)
+	return tdu
+}
+
+// SetMin sets the "min" field.
+func (tdu *TradeDateUpdate) SetMin(f float64) *TradeDateUpdate {
+	tdu.mutation.ResetMin()
+	tdu.mutation.SetMin(f)
+	return tdu
+}
+
+// AddMin adds f to the "min" field.
+func (tdu *TradeDateUpdate) AddMin(f float64) *TradeDateUpdate {
+	tdu.mutation.AddMin(f)
+	return tdu
+}
+
+// SetBull sets the "bull" field.
+func (tdu *TradeDateUpdate) SetBull(i int) *TradeDateUpdate {
+	tdu.mutation.ResetBull()
+	tdu.mutation.SetBull(i)
+	return tdu
+}
+
+// SetNillableBull sets the "bull" field if the given value is not nil.
+func (tdu *TradeDateUpdate) SetNillableBull(i *int) *TradeDateUpdate {
+	if i != nil {
+		tdu.SetBull(*i)
+	}
+	return tdu
+}
+
+// AddBull adds i to the "bull" field.
+func (tdu *TradeDateUpdate) AddBull(i int) *TradeDateUpdate {
+	tdu.mutation.AddBull(i)
+	return tdu
+}
+
+// SetShort sets the "short" field.
+func (tdu *TradeDateUpdate) SetShort(s string) *TradeDateUpdate {
+	tdu.mutation.SetShort(s)
+	return tdu
+}
+
+// SetNillableShort sets the "short" field if the given value is not nil.
+func (tdu *TradeDateUpdate) SetNillableShort(s *string) *TradeDateUpdate {
+	if s != nil {
+		tdu.SetShort(*s)
+	}
+	return tdu
+}
+
 // SetStock sets the "stock" edge to the Stock entity.
 func (tdu *TradeDateUpdate) SetStock(s *Stock) *TradeDateUpdate {
 	return tdu.SetStockID(s.ID)
@@ -228,6 +302,33 @@ func (tdu *TradeDateUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := tdu.mutation.AddedXueqiuCommentCount(); ok {
 		_spec.AddField(tradedate.FieldXueqiuCommentCount, field.TypeInt64, value)
+	}
+	if value, ok := tdu.mutation.Open(); ok {
+		_spec.SetField(tradedate.FieldOpen, field.TypeFloat64, value)
+	}
+	if value, ok := tdu.mutation.AddedOpen(); ok {
+		_spec.AddField(tradedate.FieldOpen, field.TypeFloat64, value)
+	}
+	if value, ok := tdu.mutation.Max(); ok {
+		_spec.SetField(tradedate.FieldMax, field.TypeFloat64, value)
+	}
+	if value, ok := tdu.mutation.AddedMax(); ok {
+		_spec.AddField(tradedate.FieldMax, field.TypeFloat64, value)
+	}
+	if value, ok := tdu.mutation.Min(); ok {
+		_spec.SetField(tradedate.FieldMin, field.TypeFloat64, value)
+	}
+	if value, ok := tdu.mutation.AddedMin(); ok {
+		_spec.AddField(tradedate.FieldMin, field.TypeFloat64, value)
+	}
+	if value, ok := tdu.mutation.Bull(); ok {
+		_spec.SetField(tradedate.FieldBull, field.TypeInt, value)
+	}
+	if value, ok := tdu.mutation.AddedBull(); ok {
+		_spec.AddField(tradedate.FieldBull, field.TypeInt, value)
+	}
+	if value, ok := tdu.mutation.Short(); ok {
+		_spec.SetField(tradedate.FieldShort, field.TypeString, value)
 	}
 	if tdu.mutation.StockCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -372,6 +473,80 @@ func (tduo *TradeDateUpdateOne) AddXueqiuCommentCount(i int64) *TradeDateUpdateO
 	return tduo
 }
 
+// SetOpen sets the "open" field.
+func (tduo *TradeDateUpdateOne) SetOpen(f float64) *TradeDateUpdateOne {
+	tduo.mutation.ResetOpen()
+	tduo.mutation.SetOpen(f)
+	return tduo
+}
+
+// AddOpen adds f to the "open" field.
+func (tduo *TradeDateUpdateOne) AddOpen(f float64) *TradeDateUpdateOne {
+	tduo.mutation.AddOpen(f)
+	return tduo
+}
+
+// SetMax sets the "max" field.
+func (tduo *TradeDateUpdateOne) SetMax(f float64) *TradeDateUpdateOne {
+	tduo.mutation.ResetMax()
+	tduo.mutation.SetMax(f)
+	return tduo
+}
+
+// AddMax adds f to the "max" field.
+func (tduo *TradeDateUpdateOne) AddMax(f float64) *TradeDateUpdateOne {
+	tduo.mutation.AddMax(f)
+	return tduo
+}
+
+// SetMin sets the "min" field.
+func (tduo *TradeDateUpdateOne) SetMin(f float64) *TradeDateUpdateOne {
+	tduo.mutation.ResetMin()
+	tduo.mutation.SetMin(f)
+	return tduo
+}
+
+// AddMin adds f to the "min" field.
+func (tduo *TradeDateUpdateOne) AddMin(f float64) *TradeDateUpdateOne {
+	tduo.mutation.AddMin(f)
+	return tduo
+}
+
+// SetBull sets the "bull" field.
+func (tduo *TradeDateUpdateOne) SetBull(i int) *TradeDateUpdateOne {
+	tduo.mutation.ResetBull()
+	tduo.mutation.SetBull(i)
+	return tduo
+}
+
+// SetNillableBull sets the "bull" field if the given value is not nil.
+func (tduo *TradeDateUpdateOne) SetNillableBull(i *int) *TradeDateUpdateOne {
+	if i != nil {
+		tduo.SetBull(*i)
+	}
+	return tduo
+}
+
+// AddBull adds i to the "bull" field.
+func (tduo *TradeDateUpdateOne) AddBull(i int) *TradeDateUpdateOne {
+	tduo.mutation.AddBull(i)
+	return tduo
+}
+
+// SetShort sets the "short" field.
+func (tduo *TradeDateUpdateOne) SetShort(s string) *TradeDateUpdateOne {
+	tduo.mutation.SetShort(s)
+	return tduo
+}
+
+// SetNillableShort sets the "short" field if the given value is not nil.
+func (tduo *TradeDateUpdateOne) SetNillableShort(s *string) *TradeDateUpdateOne {
+	if s != nil {
+		tduo.SetShort(*s)
+	}
+	return tduo
+}
+
 // SetStock sets the "stock" edge to the Stock entity.
 func (tduo *TradeDateUpdateOne) SetStock(s *Stock) *TradeDateUpdateOne {
 	return tduo.SetStockID(s.ID)
@@ -508,6 +683,33 @@ func (tduo *TradeDateUpdateOne) sqlSave(ctx context.Context) (_node *TradeDate, 
 	}
 	if value, ok := tduo.mutation.AddedXueqiuCommentCount(); ok {
 		_spec.AddField(tradedate.FieldXueqiuCommentCount, field.TypeInt64, value)
+	}
+	if value, ok := tduo.mutation.Open(); ok {
+		_spec.SetField(tradedate.FieldOpen, field.TypeFloat64, value)
+	}
+	if value, ok := tduo.mutation.AddedOpen(); ok {
+		_spec.AddField(tradedate.FieldOpen, field.TypeFloat64, value)
+	}
+	if value, ok := tduo.mutation.Max(); ok {
+		_spec.SetField(tradedate.FieldMax, field.TypeFloat64, value)
+	}
+	if value, ok := tduo.mutation.AddedMax(); ok {
+		_spec.AddField(tradedate.FieldMax, field.TypeFloat64, value)
+	}
+	if value, ok := tduo.mutation.Min(); ok {
+		_spec.SetField(tradedate.FieldMin, field.TypeFloat64, value)
+	}
+	if value, ok := tduo.mutation.AddedMin(); ok {
+		_spec.AddField(tradedate.FieldMin, field.TypeFloat64, value)
+	}
+	if value, ok := tduo.mutation.Bull(); ok {
+		_spec.SetField(tradedate.FieldBull, field.TypeInt, value)
+	}
+	if value, ok := tduo.mutation.AddedBull(); ok {
+		_spec.AddField(tradedate.FieldBull, field.TypeInt, value)
+	}
+	if value, ok := tduo.mutation.Short(); ok {
+		_spec.SetField(tradedate.FieldShort, field.TypeString, value)
 	}
 	if tduo.mutation.StockCleared() {
 		edge := &sqlgraph.EdgeSpec{

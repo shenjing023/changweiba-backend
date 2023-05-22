@@ -11,6 +11,7 @@ import (
 	"stock_service/repository/ent/tradedate"
 	"stock_service/repository/ent/user"
 	"sync"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -40,6 +41,7 @@ type StockMutation struct {
 	name               *string
 	bull               *int
 	addbull            *int
+	last_subscribe_at  *time.Time
 	clearedFields      map[string]struct{}
 	trades             map[uint64]struct{}
 	removedtrades      map[uint64]struct{}
@@ -284,6 +286,42 @@ func (m *StockMutation) ResetBull() {
 	m.addbull = nil
 }
 
+// SetLastSubscribeAt sets the "last_subscribe_at" field.
+func (m *StockMutation) SetLastSubscribeAt(t time.Time) {
+	m.last_subscribe_at = &t
+}
+
+// LastSubscribeAt returns the value of the "last_subscribe_at" field in the mutation.
+func (m *StockMutation) LastSubscribeAt() (r time.Time, exists bool) {
+	v := m.last_subscribe_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastSubscribeAt returns the old "last_subscribe_at" field's value of the Stock entity.
+// If the Stock object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StockMutation) OldLastSubscribeAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastSubscribeAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastSubscribeAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastSubscribeAt: %w", err)
+	}
+	return oldValue.LastSubscribeAt, nil
+}
+
+// ResetLastSubscribeAt resets all changes to the "last_subscribe_at" field.
+func (m *StockMutation) ResetLastSubscribeAt() {
+	m.last_subscribe_at = nil
+}
+
 // AddTradeIDs adds the "trades" edge to the TradeDate entity by ids.
 func (m *StockMutation) AddTradeIDs(ids ...uint64) {
 	if m.trades == nil {
@@ -426,7 +464,7 @@ func (m *StockMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *StockMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.symbol != nil {
 		fields = append(fields, stock.FieldSymbol)
 	}
@@ -435,6 +473,9 @@ func (m *StockMutation) Fields() []string {
 	}
 	if m.bull != nil {
 		fields = append(fields, stock.FieldBull)
+	}
+	if m.last_subscribe_at != nil {
+		fields = append(fields, stock.FieldLastSubscribeAt)
 	}
 	return fields
 }
@@ -450,6 +491,8 @@ func (m *StockMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case stock.FieldBull:
 		return m.Bull()
+	case stock.FieldLastSubscribeAt:
+		return m.LastSubscribeAt()
 	}
 	return nil, false
 }
@@ -465,6 +508,8 @@ func (m *StockMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldName(ctx)
 	case stock.FieldBull:
 		return m.OldBull(ctx)
+	case stock.FieldLastSubscribeAt:
+		return m.OldLastSubscribeAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown Stock field %s", name)
 }
@@ -494,6 +539,13 @@ func (m *StockMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetBull(v)
+		return nil
+	case stock.FieldLastSubscribeAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastSubscribeAt(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Stock field %s", name)
@@ -567,6 +619,9 @@ func (m *StockMutation) ResetField(name string) error {
 		return nil
 	case stock.FieldBull:
 		m.ResetBull()
+		return nil
+	case stock.FieldLastSubscribeAt:
+		m.ResetLastSubscribeAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Stock field %s", name)
@@ -699,6 +754,15 @@ type TradeDateMutation struct {
 	addupdate_at            *int64
 	xueqiu_comment_count    *int64
 	addxueqiu_comment_count *int64
+	open                    *float64
+	addopen                 *float64
+	max                     *float64
+	addmax                  *float64
+	min                     *float64
+	addmin                  *float64
+	bull                    *int
+	addbull                 *int
+	short                   *string
 	clearedFields           map[string]struct{}
 	stock                   *uint64
 	clearedstock            bool
@@ -1176,6 +1240,266 @@ func (m *TradeDateMutation) ResetXueqiuCommentCount() {
 	m.addxueqiu_comment_count = nil
 }
 
+// SetOpen sets the "open" field.
+func (m *TradeDateMutation) SetOpen(f float64) {
+	m.open = &f
+	m.addopen = nil
+}
+
+// Open returns the value of the "open" field in the mutation.
+func (m *TradeDateMutation) Open() (r float64, exists bool) {
+	v := m.open
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOpen returns the old "open" field's value of the TradeDate entity.
+// If the TradeDate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TradeDateMutation) OldOpen(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOpen is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOpen requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOpen: %w", err)
+	}
+	return oldValue.Open, nil
+}
+
+// AddOpen adds f to the "open" field.
+func (m *TradeDateMutation) AddOpen(f float64) {
+	if m.addopen != nil {
+		*m.addopen += f
+	} else {
+		m.addopen = &f
+	}
+}
+
+// AddedOpen returns the value that was added to the "open" field in this mutation.
+func (m *TradeDateMutation) AddedOpen() (r float64, exists bool) {
+	v := m.addopen
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetOpen resets all changes to the "open" field.
+func (m *TradeDateMutation) ResetOpen() {
+	m.open = nil
+	m.addopen = nil
+}
+
+// SetMax sets the "max" field.
+func (m *TradeDateMutation) SetMax(f float64) {
+	m.max = &f
+	m.addmax = nil
+}
+
+// Max returns the value of the "max" field in the mutation.
+func (m *TradeDateMutation) Max() (r float64, exists bool) {
+	v := m.max
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMax returns the old "max" field's value of the TradeDate entity.
+// If the TradeDate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TradeDateMutation) OldMax(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMax is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMax requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMax: %w", err)
+	}
+	return oldValue.Max, nil
+}
+
+// AddMax adds f to the "max" field.
+func (m *TradeDateMutation) AddMax(f float64) {
+	if m.addmax != nil {
+		*m.addmax += f
+	} else {
+		m.addmax = &f
+	}
+}
+
+// AddedMax returns the value that was added to the "max" field in this mutation.
+func (m *TradeDateMutation) AddedMax() (r float64, exists bool) {
+	v := m.addmax
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMax resets all changes to the "max" field.
+func (m *TradeDateMutation) ResetMax() {
+	m.max = nil
+	m.addmax = nil
+}
+
+// SetMin sets the "min" field.
+func (m *TradeDateMutation) SetMin(f float64) {
+	m.min = &f
+	m.addmin = nil
+}
+
+// Min returns the value of the "min" field in the mutation.
+func (m *TradeDateMutation) Min() (r float64, exists bool) {
+	v := m.min
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMin returns the old "min" field's value of the TradeDate entity.
+// If the TradeDate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TradeDateMutation) OldMin(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMin is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMin requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMin: %w", err)
+	}
+	return oldValue.Min, nil
+}
+
+// AddMin adds f to the "min" field.
+func (m *TradeDateMutation) AddMin(f float64) {
+	if m.addmin != nil {
+		*m.addmin += f
+	} else {
+		m.addmin = &f
+	}
+}
+
+// AddedMin returns the value that was added to the "min" field in this mutation.
+func (m *TradeDateMutation) AddedMin() (r float64, exists bool) {
+	v := m.addmin
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMin resets all changes to the "min" field.
+func (m *TradeDateMutation) ResetMin() {
+	m.min = nil
+	m.addmin = nil
+}
+
+// SetBull sets the "bull" field.
+func (m *TradeDateMutation) SetBull(i int) {
+	m.bull = &i
+	m.addbull = nil
+}
+
+// Bull returns the value of the "bull" field in the mutation.
+func (m *TradeDateMutation) Bull() (r int, exists bool) {
+	v := m.bull
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBull returns the old "bull" field's value of the TradeDate entity.
+// If the TradeDate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TradeDateMutation) OldBull(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBull is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBull requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBull: %w", err)
+	}
+	return oldValue.Bull, nil
+}
+
+// AddBull adds i to the "bull" field.
+func (m *TradeDateMutation) AddBull(i int) {
+	if m.addbull != nil {
+		*m.addbull += i
+	} else {
+		m.addbull = &i
+	}
+}
+
+// AddedBull returns the value that was added to the "bull" field in this mutation.
+func (m *TradeDateMutation) AddedBull() (r int, exists bool) {
+	v := m.addbull
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetBull resets all changes to the "bull" field.
+func (m *TradeDateMutation) ResetBull() {
+	m.bull = nil
+	m.addbull = nil
+}
+
+// SetShort sets the "short" field.
+func (m *TradeDateMutation) SetShort(s string) {
+	m.short = &s
+}
+
+// Short returns the value of the "short" field in the mutation.
+func (m *TradeDateMutation) Short() (r string, exists bool) {
+	v := m.short
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldShort returns the old "short" field's value of the TradeDate entity.
+// If the TradeDate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TradeDateMutation) OldShort(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldShort is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldShort requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldShort: %w", err)
+	}
+	return oldValue.Short, nil
+}
+
+// ResetShort resets all changes to the "short" field.
+func (m *TradeDateMutation) ResetShort() {
+	m.short = nil
+}
+
 // ClearStock clears the "stock" edge to the Stock entity.
 func (m *TradeDateMutation) ClearStock() {
 	m.clearedstock = true
@@ -1236,7 +1560,7 @@ func (m *TradeDateMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TradeDateMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 12)
 	if m.stock != nil {
 		fields = append(fields, tradedate.FieldStockID)
 	}
@@ -1257,6 +1581,21 @@ func (m *TradeDateMutation) Fields() []string {
 	}
 	if m.xueqiu_comment_count != nil {
 		fields = append(fields, tradedate.FieldXueqiuCommentCount)
+	}
+	if m.open != nil {
+		fields = append(fields, tradedate.FieldOpen)
+	}
+	if m.max != nil {
+		fields = append(fields, tradedate.FieldMax)
+	}
+	if m.min != nil {
+		fields = append(fields, tradedate.FieldMin)
+	}
+	if m.bull != nil {
+		fields = append(fields, tradedate.FieldBull)
+	}
+	if m.short != nil {
+		fields = append(fields, tradedate.FieldShort)
 	}
 	return fields
 }
@@ -1280,6 +1619,16 @@ func (m *TradeDateMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdateAt()
 	case tradedate.FieldXueqiuCommentCount:
 		return m.XueqiuCommentCount()
+	case tradedate.FieldOpen:
+		return m.Open()
+	case tradedate.FieldMax:
+		return m.Max()
+	case tradedate.FieldMin:
+		return m.Min()
+	case tradedate.FieldBull:
+		return m.Bull()
+	case tradedate.FieldShort:
+		return m.Short()
 	}
 	return nil, false
 }
@@ -1303,6 +1652,16 @@ func (m *TradeDateMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldUpdateAt(ctx)
 	case tradedate.FieldXueqiuCommentCount:
 		return m.OldXueqiuCommentCount(ctx)
+	case tradedate.FieldOpen:
+		return m.OldOpen(ctx)
+	case tradedate.FieldMax:
+		return m.OldMax(ctx)
+	case tradedate.FieldMin:
+		return m.OldMin(ctx)
+	case tradedate.FieldBull:
+		return m.OldBull(ctx)
+	case tradedate.FieldShort:
+		return m.OldShort(ctx)
 	}
 	return nil, fmt.Errorf("unknown TradeDate field %s", name)
 }
@@ -1361,6 +1720,41 @@ func (m *TradeDateMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetXueqiuCommentCount(v)
 		return nil
+	case tradedate.FieldOpen:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOpen(v)
+		return nil
+	case tradedate.FieldMax:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMax(v)
+		return nil
+	case tradedate.FieldMin:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMin(v)
+		return nil
+	case tradedate.FieldBull:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBull(v)
+		return nil
+	case tradedate.FieldShort:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetShort(v)
+		return nil
 	}
 	return fmt.Errorf("unknown TradeDate field %s", name)
 }
@@ -1384,6 +1778,18 @@ func (m *TradeDateMutation) AddedFields() []string {
 	if m.addxueqiu_comment_count != nil {
 		fields = append(fields, tradedate.FieldXueqiuCommentCount)
 	}
+	if m.addopen != nil {
+		fields = append(fields, tradedate.FieldOpen)
+	}
+	if m.addmax != nil {
+		fields = append(fields, tradedate.FieldMax)
+	}
+	if m.addmin != nil {
+		fields = append(fields, tradedate.FieldMin)
+	}
+	if m.addbull != nil {
+		fields = append(fields, tradedate.FieldBull)
+	}
 	return fields
 }
 
@@ -1402,6 +1808,14 @@ func (m *TradeDateMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedUpdateAt()
 	case tradedate.FieldXueqiuCommentCount:
 		return m.AddedXueqiuCommentCount()
+	case tradedate.FieldOpen:
+		return m.AddedOpen()
+	case tradedate.FieldMax:
+		return m.AddedMax()
+	case tradedate.FieldMin:
+		return m.AddedMin()
+	case tradedate.FieldBull:
+		return m.AddedBull()
 	}
 	return nil, false
 }
@@ -1445,6 +1859,34 @@ func (m *TradeDateMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddXueqiuCommentCount(v)
+		return nil
+	case tradedate.FieldOpen:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddOpen(v)
+		return nil
+	case tradedate.FieldMax:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMax(v)
+		return nil
+	case tradedate.FieldMin:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMin(v)
+		return nil
+	case tradedate.FieldBull:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBull(v)
 		return nil
 	}
 	return fmt.Errorf("unknown TradeDate numeric field %s", name)
@@ -1502,6 +1944,21 @@ func (m *TradeDateMutation) ResetField(name string) error {
 		return nil
 	case tradedate.FieldXueqiuCommentCount:
 		m.ResetXueqiuCommentCount()
+		return nil
+	case tradedate.FieldOpen:
+		m.ResetOpen()
+		return nil
+	case tradedate.FieldMax:
+		m.ResetMax()
+		return nil
+	case tradedate.FieldMin:
+		m.ResetMin()
+		return nil
+	case tradedate.FieldBull:
+		m.ResetBull()
+		return nil
+	case tradedate.FieldShort:
+		m.ResetShort()
 		return nil
 	}
 	return fmt.Errorf("unknown TradeDate field %s", name)

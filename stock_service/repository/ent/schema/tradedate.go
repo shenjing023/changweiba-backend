@@ -36,6 +36,12 @@ func (TradeDate) Fields() []ent.Field {
 		field.Int64("xueqiu_comment_count").SchemaType(map[string]string{
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.
 		}).NonNegative().Default(0).Comment("雪球评论数"),
+
+		field.Float("open").Comment("开盘价"),
+		field.Float("max").Comment("最高价"),
+		field.Float("min").Comment("最低价"),
+		field.Int("bull").Comment("持仓建议").Default(0),
+		field.String("short").Comment("短期趋势").Default("------"),
 	}
 }
 

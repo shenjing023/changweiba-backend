@@ -89,6 +89,31 @@ func XueqiuCommentCount(v int64) predicate.TradeDate {
 	return predicate.TradeDate(sql.FieldEQ(FieldXueqiuCommentCount, v))
 }
 
+// Open applies equality check predicate on the "open" field. It's identical to OpenEQ.
+func Open(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldEQ(FieldOpen, v))
+}
+
+// Max applies equality check predicate on the "max" field. It's identical to MaxEQ.
+func Max(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldEQ(FieldMax, v))
+}
+
+// Min applies equality check predicate on the "min" field. It's identical to MinEQ.
+func Min(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldEQ(FieldMin, v))
+}
+
+// Bull applies equality check predicate on the "bull" field. It's identical to BullEQ.
+func Bull(v int) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldEQ(FieldBull, v))
+}
+
+// Short applies equality check predicate on the "short" field. It's identical to ShortEQ.
+func Short(v string) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldEQ(FieldShort, v))
+}
+
 // StockIDEQ applies the EQ predicate on the "stock_id" field.
 func StockIDEQ(v uint64) predicate.TradeDate {
 	return predicate.TradeDate(sql.FieldEQ(FieldStockID, v))
@@ -382,6 +407,231 @@ func XueqiuCommentCountLT(v int64) predicate.TradeDate {
 // XueqiuCommentCountLTE applies the LTE predicate on the "xueqiu_comment_count" field.
 func XueqiuCommentCountLTE(v int64) predicate.TradeDate {
 	return predicate.TradeDate(sql.FieldLTE(FieldXueqiuCommentCount, v))
+}
+
+// OpenEQ applies the EQ predicate on the "open" field.
+func OpenEQ(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldEQ(FieldOpen, v))
+}
+
+// OpenNEQ applies the NEQ predicate on the "open" field.
+func OpenNEQ(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldNEQ(FieldOpen, v))
+}
+
+// OpenIn applies the In predicate on the "open" field.
+func OpenIn(vs ...float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldIn(FieldOpen, vs...))
+}
+
+// OpenNotIn applies the NotIn predicate on the "open" field.
+func OpenNotIn(vs ...float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldNotIn(FieldOpen, vs...))
+}
+
+// OpenGT applies the GT predicate on the "open" field.
+func OpenGT(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldGT(FieldOpen, v))
+}
+
+// OpenGTE applies the GTE predicate on the "open" field.
+func OpenGTE(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldGTE(FieldOpen, v))
+}
+
+// OpenLT applies the LT predicate on the "open" field.
+func OpenLT(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldLT(FieldOpen, v))
+}
+
+// OpenLTE applies the LTE predicate on the "open" field.
+func OpenLTE(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldLTE(FieldOpen, v))
+}
+
+// MaxEQ applies the EQ predicate on the "max" field.
+func MaxEQ(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldEQ(FieldMax, v))
+}
+
+// MaxNEQ applies the NEQ predicate on the "max" field.
+func MaxNEQ(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldNEQ(FieldMax, v))
+}
+
+// MaxIn applies the In predicate on the "max" field.
+func MaxIn(vs ...float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldIn(FieldMax, vs...))
+}
+
+// MaxNotIn applies the NotIn predicate on the "max" field.
+func MaxNotIn(vs ...float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldNotIn(FieldMax, vs...))
+}
+
+// MaxGT applies the GT predicate on the "max" field.
+func MaxGT(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldGT(FieldMax, v))
+}
+
+// MaxGTE applies the GTE predicate on the "max" field.
+func MaxGTE(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldGTE(FieldMax, v))
+}
+
+// MaxLT applies the LT predicate on the "max" field.
+func MaxLT(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldLT(FieldMax, v))
+}
+
+// MaxLTE applies the LTE predicate on the "max" field.
+func MaxLTE(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldLTE(FieldMax, v))
+}
+
+// MinEQ applies the EQ predicate on the "min" field.
+func MinEQ(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldEQ(FieldMin, v))
+}
+
+// MinNEQ applies the NEQ predicate on the "min" field.
+func MinNEQ(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldNEQ(FieldMin, v))
+}
+
+// MinIn applies the In predicate on the "min" field.
+func MinIn(vs ...float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldIn(FieldMin, vs...))
+}
+
+// MinNotIn applies the NotIn predicate on the "min" field.
+func MinNotIn(vs ...float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldNotIn(FieldMin, vs...))
+}
+
+// MinGT applies the GT predicate on the "min" field.
+func MinGT(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldGT(FieldMin, v))
+}
+
+// MinGTE applies the GTE predicate on the "min" field.
+func MinGTE(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldGTE(FieldMin, v))
+}
+
+// MinLT applies the LT predicate on the "min" field.
+func MinLT(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldLT(FieldMin, v))
+}
+
+// MinLTE applies the LTE predicate on the "min" field.
+func MinLTE(v float64) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldLTE(FieldMin, v))
+}
+
+// BullEQ applies the EQ predicate on the "bull" field.
+func BullEQ(v int) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldEQ(FieldBull, v))
+}
+
+// BullNEQ applies the NEQ predicate on the "bull" field.
+func BullNEQ(v int) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldNEQ(FieldBull, v))
+}
+
+// BullIn applies the In predicate on the "bull" field.
+func BullIn(vs ...int) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldIn(FieldBull, vs...))
+}
+
+// BullNotIn applies the NotIn predicate on the "bull" field.
+func BullNotIn(vs ...int) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldNotIn(FieldBull, vs...))
+}
+
+// BullGT applies the GT predicate on the "bull" field.
+func BullGT(v int) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldGT(FieldBull, v))
+}
+
+// BullGTE applies the GTE predicate on the "bull" field.
+func BullGTE(v int) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldGTE(FieldBull, v))
+}
+
+// BullLT applies the LT predicate on the "bull" field.
+func BullLT(v int) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldLT(FieldBull, v))
+}
+
+// BullLTE applies the LTE predicate on the "bull" field.
+func BullLTE(v int) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldLTE(FieldBull, v))
+}
+
+// ShortEQ applies the EQ predicate on the "short" field.
+func ShortEQ(v string) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldEQ(FieldShort, v))
+}
+
+// ShortNEQ applies the NEQ predicate on the "short" field.
+func ShortNEQ(v string) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldNEQ(FieldShort, v))
+}
+
+// ShortIn applies the In predicate on the "short" field.
+func ShortIn(vs ...string) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldIn(FieldShort, vs...))
+}
+
+// ShortNotIn applies the NotIn predicate on the "short" field.
+func ShortNotIn(vs ...string) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldNotIn(FieldShort, vs...))
+}
+
+// ShortGT applies the GT predicate on the "short" field.
+func ShortGT(v string) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldGT(FieldShort, v))
+}
+
+// ShortGTE applies the GTE predicate on the "short" field.
+func ShortGTE(v string) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldGTE(FieldShort, v))
+}
+
+// ShortLT applies the LT predicate on the "short" field.
+func ShortLT(v string) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldLT(FieldShort, v))
+}
+
+// ShortLTE applies the LTE predicate on the "short" field.
+func ShortLTE(v string) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldLTE(FieldShort, v))
+}
+
+// ShortContains applies the Contains predicate on the "short" field.
+func ShortContains(v string) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldContains(FieldShort, v))
+}
+
+// ShortHasPrefix applies the HasPrefix predicate on the "short" field.
+func ShortHasPrefix(v string) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldHasPrefix(FieldShort, v))
+}
+
+// ShortHasSuffix applies the HasSuffix predicate on the "short" field.
+func ShortHasSuffix(v string) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldHasSuffix(FieldShort, v))
+}
+
+// ShortEqualFold applies the EqualFold predicate on the "short" field.
+func ShortEqualFold(v string) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldEqualFold(FieldShort, v))
+}
+
+// ShortContainsFold applies the ContainsFold predicate on the "short" field.
+func ShortContainsFold(v string) predicate.TradeDate {
+	return predicate.TradeDate(sql.FieldContainsFold(FieldShort, v))
 }
 
 // HasStock applies the HasEdge predicate on the "stock" edge.

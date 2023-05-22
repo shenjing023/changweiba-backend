@@ -80,8 +80,8 @@ type ComplexityRoot struct {
 		ReportUser       func(childComplexity int, input models.ReportUser) int
 		SignIn           func(childComplexity int, input models.NewUser) int
 		SignUp           func(childComplexity int, input models.NewUser) int
-		SubscribeStock   func(childComplexity int, input int) int
-		UnsubscribeStock func(childComplexity int, input int) int
+		SubscribeStock   func(childComplexity int, input models.SubscribeStock) int
+		UnsubscribeStock func(childComplexity int, input string) int
 	}
 
 	Post struct {
@@ -133,6 +133,7 @@ type ComplexityRoot struct {
 	}
 
 	Stock struct {
+		Bull   func(childComplexity int) int
 		ID     func(childComplexity int) int
 		Name   func(childComplexity int) int
 		Symbol func(childComplexity int) int
@@ -191,8 +192,8 @@ type MutationResolver interface {
 	NewReply(ctx context.Context, input models.NewReply) (int, error)
 	DeletePost(ctx context.Context, input int) (bool, error)
 	RefreshAuthToken(ctx context.Context, input string) (*models.AuthToken, error)
-	SubscribeStock(ctx context.Context, input int) (bool, error)
-	UnsubscribeStock(ctx context.Context, input int) (bool, error)
+	SubscribeStock(ctx context.Context, input models.SubscribeStock) (bool, error)
+	UnsubscribeStock(ctx context.Context, input string) (bool, error)
 }
 type PostResolver interface {
 	User(ctx context.Context, obj *models.Post) (*models.User, error)
@@ -445,7 +446,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SubscribeStock(childComplexity, args["input"].(int)), true
+		return e.complexity.Mutation.SubscribeStock(childComplexity, args["input"].(models.SubscribeStock)), true
 
 	case "Mutation.unsubscribeStock":
 		if e.complexity.Mutation.UnsubscribeStock == nil {
@@ -457,7 +458,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UnsubscribeStock(childComplexity, args["input"].(int)), true
+		return e.complexity.Mutation.UnsubscribeStock(childComplexity, args["input"].(string)), true
 
 	case "Post.comments":
 		if e.complexity.Post.Comments == nil {
@@ -745,6 +746,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ReplyConnection.TotalCount(childComplexity), true
 
+	case "Stock.bull":
+		if e.complexity.Stock.Bull == nil {
+			break
+		}
+
+		return e.complexity.Stock.Bull(childComplexity), true
+
 	case "Stock.id":
 		if e.complexity.Stock.ID == nil {
 			break
@@ -950,6 +958,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputNewReply,
 		ec.unmarshalInputNewUser,
 		ec.unmarshalInputReportUser,
+		ec.unmarshalInputSubscribeStock,
 	)
 	first := true
 
@@ -1189,7 +1198,7 @@ type Query {
     """stock搜索"""
     searchStock(symbolorname: String!): StockConnection!
     """获取订阅stock"""
-    subscribedStocks: StockConnection!
+    subscribedStocks: StockConnection! @IsAuthenticated
     """获取stock交易数据"""
     stockTrades(
         stockId:Int!
@@ -1218,14 +1227,15 @@ type Mutation{
     """刷新auth_token"""
     refreshAuthToken(input: String!): AuthToken!
     """订阅stock"""
-    subscribeStock(input: Int!): Boolean! @IsAuthenticated
+    subscribeStock(input: SubscribeStock!): Boolean! @IsAuthenticated
     """取消订阅stock"""
-    unsubscribeStock(input: Int!): Boolean! @IsAuthenticated
+    unsubscribeStock(input: String!): Boolean! @IsAuthenticated
 }`, BuiltIn: false},
 	{Name: "../schema/stock.graphql", Input: `type Stock{
     id: Int!
     symbol: String!
     name: String!
+    bull: Int!
 }
 
 type StockConnection{
@@ -1244,6 +1254,11 @@ type TradeDateConnection{
     nodes:[TradeDate]
     totalCount:Int!
     id: Int!
+}
+
+input SubscribeStock{
+    symbol: String!
+    name: String!
 }`, BuiltIn: false},
 	{Name: "../schema/wencai.graphql", Input: `type WencaiStock{
     bull: Int!
@@ -1418,10 +1433,10 @@ func (ec *executionContext) field_Mutation_signUp_args(ctx context.Context, rawA
 func (ec *executionContext) field_Mutation_subscribeStock_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 int
+	var arg0 models.SubscribeStock
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		arg0, err = ec.unmarshalNSubscribeStock2gatewayᚋmodelsᚐSubscribeStock(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1433,10 +1448,10 @@ func (ec *executionContext) field_Mutation_subscribeStock_args(ctx context.Conte
 func (ec *executionContext) field_Mutation_unsubscribeStock_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 int
+	var arg0 string
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3018,7 +3033,7 @@ func (ec *executionContext) _Mutation_subscribeStock(ctx context.Context, field 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().SubscribeStock(rctx, fc.Args["input"].(int))
+			return ec.resolvers.Mutation().SubscribeStock(rctx, fc.Args["input"].(models.SubscribeStock))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsAuthenticated == nil {
@@ -3093,7 +3108,7 @@ func (ec *executionContext) _Mutation_unsubscribeStock(ctx context.Context, fiel
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UnsubscribeStock(rctx, fc.Args["input"].(int))
+			return ec.resolvers.Mutation().UnsubscribeStock(rctx, fc.Args["input"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsAuthenticated == nil {
@@ -4342,8 +4357,28 @@ func (ec *executionContext) _Query_subscribedStocks(ctx context.Context, field g
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().SubscribedStocks(rctx)
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().SubscribedStocks(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsAuthenticated == nil {
+				return nil, errors.New("directive IsAuthenticated is not implemented")
+			}
+			return ec.directives.IsAuthenticated(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*models.StockConnection); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *gateway/models.StockConnection`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5261,6 +5296,50 @@ func (ec *executionContext) fieldContext_Stock_name(ctx context.Context, field g
 	return fc, nil
 }
 
+func (ec *executionContext) _Stock_bull(ctx context.Context, field graphql.CollectedField, obj *models.Stock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Stock_bull(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Bull, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Stock_bull(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Stock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _StockConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.StockConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_StockConnection_nodes(ctx, field)
 	if err != nil {
@@ -5303,6 +5382,8 @@ func (ec *executionContext) fieldContext_StockConnection_nodes(ctx context.Conte
 				return ec.fieldContext_Stock_symbol(ctx, field)
 			case "name":
 				return ec.fieldContext_Stock_name(ctx, field)
+			case "bull":
+				return ec.fieldContext_Stock_bull(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Stock", field.Name)
 		},
@@ -8348,6 +8429,42 @@ func (ec *executionContext) unmarshalInputReportUser(ctx context.Context, obj in
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSubscribeStock(ctx context.Context, obj interface{}) (models.SubscribeStock, error) {
+	var it models.SubscribeStock
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"symbol", "name"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "symbol":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("symbol"))
+			it.Symbol, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -9275,6 +9392,13 @@ func (ec *executionContext) _Stock(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "bull":
+
+			out.Values[i] = ec._Stock_bull(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10112,6 +10236,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNSubscribeStock2gatewayᚋmodelsᚐSubscribeStock(ctx context.Context, v interface{}) (models.SubscribeStock, error) {
+	res, err := ec.unmarshalInputSubscribeStock(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNTradeDateConnection2gatewayᚋmodelsᚐTradeDateConnection(ctx context.Context, sel ast.SelectionSet, v models.TradeDateConnection) graphql.Marshaler {

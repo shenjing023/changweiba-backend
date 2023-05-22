@@ -2,6 +2,7 @@ type Stock{
     id: Int!
     symbol: String!
     name: String!
+    bull: Int!
 }
 
 type StockConnection{
@@ -20,4 +21,9 @@ type TradeDateConnection{
     nodes:[TradeDate]
     totalCount:Int!
     id: Int!
+}
+
+input SubscribeStock{
+    symbol: String!
+    name: String!
 }

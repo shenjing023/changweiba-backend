@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"stock_service/repository/ent/stock"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -22,6 +23,8 @@ type Stock struct {
 	Name string `json:"name,omitempty"`
 	// 持仓建议
 	Bull int `json:"bull,omitempty"`
+	// 最后被订阅的时间
+	LastSubscribeAt time.Time `json:"last_subscribe_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the StockQuery when eager-loading is set.
 	Edges        StockEdges `json:"edges"`
@@ -66,6 +69,8 @@ func (*Stock) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case stock.FieldSymbol, stock.FieldName:
 			values[i] = new(sql.NullString)
+		case stock.FieldLastSubscribeAt:
+			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -104,6 +109,12 @@ func (s *Stock) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field bull", values[i])
 			} else if value.Valid {
 				s.Bull = int(value.Int64)
+			}
+		case stock.FieldLastSubscribeAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_subscribe_at", values[i])
+			} else if value.Valid {
+				s.LastSubscribeAt = value.Time
 			}
 		default:
 			s.selectValues.Set(columns[i], values[i])
@@ -159,6 +170,9 @@ func (s *Stock) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("bull=")
 	builder.WriteString(fmt.Sprintf("%v", s.Bull))
+	builder.WriteString(", ")
+	builder.WriteString("last_subscribe_at=")
+	builder.WriteString(s.LastSubscribeAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

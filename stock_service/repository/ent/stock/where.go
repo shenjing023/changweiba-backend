@@ -4,6 +4,7 @@ package stock
 
 import (
 	"stock_service/repository/ent/predicate"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -67,6 +68,11 @@ func Name(v string) predicate.Stock {
 // Bull applies equality check predicate on the "bull" field. It's identical to BullEQ.
 func Bull(v int) predicate.Stock {
 	return predicate.Stock(sql.FieldEQ(FieldBull, v))
+}
+
+// LastSubscribeAt applies equality check predicate on the "last_subscribe_at" field. It's identical to LastSubscribeAtEQ.
+func LastSubscribeAt(v time.Time) predicate.Stock {
+	return predicate.Stock(sql.FieldEQ(FieldLastSubscribeAt, v))
 }
 
 // SymbolEQ applies the EQ predicate on the "symbol" field.
@@ -237,6 +243,46 @@ func BullLT(v int) predicate.Stock {
 // BullLTE applies the LTE predicate on the "bull" field.
 func BullLTE(v int) predicate.Stock {
 	return predicate.Stock(sql.FieldLTE(FieldBull, v))
+}
+
+// LastSubscribeAtEQ applies the EQ predicate on the "last_subscribe_at" field.
+func LastSubscribeAtEQ(v time.Time) predicate.Stock {
+	return predicate.Stock(sql.FieldEQ(FieldLastSubscribeAt, v))
+}
+
+// LastSubscribeAtNEQ applies the NEQ predicate on the "last_subscribe_at" field.
+func LastSubscribeAtNEQ(v time.Time) predicate.Stock {
+	return predicate.Stock(sql.FieldNEQ(FieldLastSubscribeAt, v))
+}
+
+// LastSubscribeAtIn applies the In predicate on the "last_subscribe_at" field.
+func LastSubscribeAtIn(vs ...time.Time) predicate.Stock {
+	return predicate.Stock(sql.FieldIn(FieldLastSubscribeAt, vs...))
+}
+
+// LastSubscribeAtNotIn applies the NotIn predicate on the "last_subscribe_at" field.
+func LastSubscribeAtNotIn(vs ...time.Time) predicate.Stock {
+	return predicate.Stock(sql.FieldNotIn(FieldLastSubscribeAt, vs...))
+}
+
+// LastSubscribeAtGT applies the GT predicate on the "last_subscribe_at" field.
+func LastSubscribeAtGT(v time.Time) predicate.Stock {
+	return predicate.Stock(sql.FieldGT(FieldLastSubscribeAt, v))
+}
+
+// LastSubscribeAtGTE applies the GTE predicate on the "last_subscribe_at" field.
+func LastSubscribeAtGTE(v time.Time) predicate.Stock {
+	return predicate.Stock(sql.FieldGTE(FieldLastSubscribeAt, v))
+}
+
+// LastSubscribeAtLT applies the LT predicate on the "last_subscribe_at" field.
+func LastSubscribeAtLT(v time.Time) predicate.Stock {
+	return predicate.Stock(sql.FieldLT(FieldLastSubscribeAt, v))
+}
+
+// LastSubscribeAtLTE applies the LTE predicate on the "last_subscribe_at" field.
+func LastSubscribeAtLTE(v time.Time) predicate.Stock {
+	return predicate.Stock(sql.FieldLTE(FieldLastSubscribeAt, v))
 }
 
 // HasTrades applies the HasEdge predicate on the "trades" edge.

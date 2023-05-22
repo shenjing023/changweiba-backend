@@ -90,7 +90,7 @@ func graphqlHandler() gin.HandlerFunc {
 	srv.SetRecoverFunc(func(ctx context.Context, err interface{}) error {
 		log.Errorf("service panic: %+v", err)
 		log.Error(string(debug.Stack()))
-		return errors.New("Internal system error")
+		return errors.New("internal system error")
 	})
 	// srv.Use(extension.FixedComplexityLimit(20))
 

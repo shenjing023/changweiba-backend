@@ -15,6 +15,7 @@ var (
 		{Name: "symbol", Type: field.TypeString, Unique: true, SchemaType: map[string]string{"mysql": "varchar(10)"}},
 		{Name: "name", Type: field.TypeString, Unique: true, SchemaType: map[string]string{"mysql": "varchar(10)"}},
 		{Name: "bull", Type: field.TypeInt, Default: 0},
+		{Name: "last_subscribe_at", Type: field.TypeTime},
 	}
 	// StockTable holds the schema information for the "stock" table.
 	StockTable = &schema.Table{
@@ -31,6 +32,11 @@ var (
 		{Name: "create_at", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 		{Name: "update_at", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 		{Name: "xueqiu_comment_count", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
+		{Name: "open", Type: field.TypeFloat64},
+		{Name: "max", Type: field.TypeFloat64},
+		{Name: "min", Type: field.TypeFloat64},
+		{Name: "bull", Type: field.TypeInt, Default: 0},
+		{Name: "short", Type: field.TypeString, Default: "------"},
 		{Name: "stock_id", Type: field.TypeUint64, Nullable: true},
 	}
 	// TradeDateTable holds the schema information for the "trade_date" table.
@@ -41,7 +47,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "trade_date_stock_trades",
-				Columns:    []*schema.Column{TradeDateColumns[7]},
+				Columns:    []*schema.Column{TradeDateColumns[12]},
 				RefColumns: []*schema.Column{StockColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -50,12 +56,12 @@ var (
 			{
 				Name:    "tradedate_stock_id",
 				Unique:  false,
-				Columns: []*schema.Column{TradeDateColumns[7]},
+				Columns: []*schema.Column{TradeDateColumns[12]},
 			},
 			{
 				Name:    "tradedate_stock_id_t_date",
 				Unique:  true,
-				Columns: []*schema.Column{TradeDateColumns[7], TradeDateColumns[1]},
+				Columns: []*schema.Column{TradeDateColumns[12], TradeDateColumns[1]},
 			},
 		},
 	}

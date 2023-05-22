@@ -39,7 +39,7 @@ func SearchStock(ctx context.Context, symbolorname string) (*models.StockConnect
 	}, nil
 }
 
-func SubscribeStock(ctx context.Context, intput int) (bool, error) {
+func SubscribeStock(ctx context.Context, symbol, name string) (bool, error) {
 	userID, err := common.GetUserIDFromContext(ctx)
 	if err != nil {
 		log.Errorf("subscribeStock get userID from context error: %+v", err)
@@ -49,8 +49,9 @@ func SubscribeStock(ctx context.Context, intput int) (bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 	request := pb.SubscribeStockRequest{
-		StockId: int64(intput),
-		UserId:  int64(userID),
+		Symbol: symbol,
+		UserId: int64(userID),
+		Name:   name,
 	}
 	_, err = client.SubscribeStock(ctx, &request)
 	if err != nil {
@@ -63,7 +64,7 @@ func SubscribeStock(ctx context.Context, intput int) (bool, error) {
 	return true, nil
 }
 
-func UnSubscribeStock(ctx context.Context, intput int) (bool, error) {
+func UnSubscribeStock(ctx context.Context, symbol string) (bool, error) {
 	userID, err := common.GetUserIDFromContext(ctx)
 	if err != nil {
 		log.Errorf("unscribeStock get userID from context error: %+v", err)
@@ -73,8 +74,8 @@ func UnSubscribeStock(ctx context.Context, intput int) (bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 	request := pb.UnSubscribeStockRequest{
-		StockId: int64(intput),
-		UserId:  int64(userID),
+		Symbol: symbol,
+		UserId: int64(userID),
 	}
 	_, err = client.UnSubscribeStock(ctx, &request)
 	if err != nil {

@@ -114,11 +114,17 @@ type Stock struct {
 	ID     int    `json:"id"`
 	Symbol string `json:"symbol"`
 	Name   string `json:"name"`
+	Bull   int    `json:"bull"`
 }
 
 type StockConnection struct {
 	Nodes      []*Stock `json:"nodes,omitempty"`
 	TotalCount int      `json:"totalCount"`
+}
+
+type SubscribeStock struct {
+	Symbol string `json:"symbol"`
+	Name   string `json:"name"`
 }
 
 type TradeDate struct {

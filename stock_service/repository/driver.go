@@ -7,6 +7,7 @@ import (
 	"stock_service/repository/ent/stock"
 	"stock_service/repository/ent/tradedate"
 	"stock_service/repository/ent/user"
+	"strings"
 	"time"
 
 	"stock_service/conf"
@@ -92,6 +93,8 @@ func SubscribeStock(ctx context.Context, userID int64, symbol, name string) erro
 			stockID = newStocks[0].ID
 		} else {
 			stockID = stocks[0].ID
+			// update latest subscribe time
+			entClient.Stock.UpdateOneID(stockID).SetLastSubscribeAt(time.Now()).Exec(ctx)
 		}
 	}
 	if err = user.Update().AddSubscribeStockIDs(stockID).Exec(ctx); err != nil {
@@ -161,7 +164,7 @@ func InsertStocks(ctx context.Context, symbols, names []string) ([]*ent.Stock, e
 	}
 	bulk := make([]*ent.StockCreate, len(symbols))
 	for i, symbol := range symbols {
-		bulk[i] = entClient.Stock.Create().SetSymbol(symbol).SetName(names[i])
+		bulk[i] = entClient.Stock.Create().SetSymbol(strings.ToUpper(symbol)).SetName(names[i])
 	}
 	stocks, err := entClient.Stock.CreateBulk(bulk...).Save(ctx)
 	if err != nil {
@@ -204,7 +207,8 @@ func GetStockLastPullTime(ctx context.Context, stockID uint64) (int64, error) {
 }
 
 // 插入股票每日交易数据
-func InsertStockTradeDate(ctx context.Context, stockID uint64, tradeDate string, close, volume float64, xq int64) error {
+func InsertStockTradeDate(ctx context.Context, stockID uint64, tradeDate string, open, close,
+	max, min, volume float64, xq int64, bull int, short string) error {
 	now := time.Now().Unix()
 	_, err := entClient.TradeDate.Create().
 		SetStockID(stockID).
@@ -214,6 +218,11 @@ func InsertStockTradeDate(ctx context.Context, stockID uint64, tradeDate string,
 		SetXueqiuCommentCount(xq).
 		SetCreateAt(now).
 		SetUpdateAt(now).
+		SetOpen(open).
+		SetMax(max).
+		SetMin(min).
+		SetBull(bull).
+		SetShort(short).
 		Save(ctx)
 	if err != nil {
 		if ent.IsConstraintError(err) {
@@ -234,4 +243,33 @@ func GetStockTradeDate(ctx context.Context, stockID uint64) ([]*ent.TradeDate, e
 		d.TDate = d.TDate[:10]
 	}
 	return data, nil
+}
+
+// 获取所有stock
+func GetAllStocks(ctx context.Context) ([]*ent.Stock, error) {
+	stocks, err := entClient.Stock.Query().All(ctx)
+	if err != nil {
+		return nil, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
+	}
+	return stocks, nil
+}
+
+func GetStockById(ctx context.Context, id uint64) (*ent.Stock, error) {
+	stock, err := entClient.Stock.Get(ctx, id)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, er.NewServiceErr(er.NotFound, errors.New("stock not exist"))
+		}
+		return nil, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
+	}
+	return stock, nil
+}
+
+func GetSubscribedUsersByStockId(ctx context.Context, stockID uint64) ([]*ent.User, error) {
+	users, err := entClient.Stock.Query().Where(stock.ID(stockID)).
+		QuerySubscribers().All(ctx)
+	if err != nil {
+		return nil, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
+	}
+	return users, nil
 }

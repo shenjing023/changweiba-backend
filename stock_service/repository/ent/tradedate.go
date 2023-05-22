@@ -31,6 +31,16 @@ type TradeDate struct {
 	UpdateAt int64 `json:"update_at,omitempty"`
 	// 雪球评论数
 	XueqiuCommentCount int64 `json:"xueqiu_comment_count,omitempty"`
+	// 开盘价
+	Open float64 `json:"open,omitempty"`
+	// 最高价
+	Max float64 `json:"max,omitempty"`
+	// 最低价
+	Min float64 `json:"min,omitempty"`
+	// 持仓建议
+	Bull int `json:"bull,omitempty"`
+	// 短期趋势
+	Short string `json:"short,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TradeDateQuery when eager-loading is set.
 	Edges        TradeDateEdges `json:"edges"`
@@ -64,11 +74,11 @@ func (*TradeDate) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case tradedate.FieldClose, tradedate.FieldVolume:
+		case tradedate.FieldClose, tradedate.FieldVolume, tradedate.FieldOpen, tradedate.FieldMax, tradedate.FieldMin:
 			values[i] = new(sql.NullFloat64)
-		case tradedate.FieldID, tradedate.FieldStockID, tradedate.FieldCreateAt, tradedate.FieldUpdateAt, tradedate.FieldXueqiuCommentCount:
+		case tradedate.FieldID, tradedate.FieldStockID, tradedate.FieldCreateAt, tradedate.FieldUpdateAt, tradedate.FieldXueqiuCommentCount, tradedate.FieldBull:
 			values[i] = new(sql.NullInt64)
-		case tradedate.FieldTDate:
+		case tradedate.FieldTDate, tradedate.FieldShort:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -133,6 +143,36 @@ func (td *TradeDate) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				td.XueqiuCommentCount = value.Int64
 			}
+		case tradedate.FieldOpen:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field open", values[i])
+			} else if value.Valid {
+				td.Open = value.Float64
+			}
+		case tradedate.FieldMax:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field max", values[i])
+			} else if value.Valid {
+				td.Max = value.Float64
+			}
+		case tradedate.FieldMin:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field min", values[i])
+			} else if value.Valid {
+				td.Min = value.Float64
+			}
+		case tradedate.FieldBull:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field bull", values[i])
+			} else if value.Valid {
+				td.Bull = int(value.Int64)
+			}
+		case tradedate.FieldShort:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field short", values[i])
+			} else if value.Valid {
+				td.Short = value.String
+			}
 		default:
 			td.selectValues.Set(columns[i], values[i])
 		}
@@ -194,6 +234,21 @@ func (td *TradeDate) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("xueqiu_comment_count=")
 	builder.WriteString(fmt.Sprintf("%v", td.XueqiuCommentCount))
+	builder.WriteString(", ")
+	builder.WriteString("open=")
+	builder.WriteString(fmt.Sprintf("%v", td.Open))
+	builder.WriteString(", ")
+	builder.WriteString("max=")
+	builder.WriteString(fmt.Sprintf("%v", td.Max))
+	builder.WriteString(", ")
+	builder.WriteString("min=")
+	builder.WriteString(fmt.Sprintf("%v", td.Min))
+	builder.WriteString(", ")
+	builder.WriteString("bull=")
+	builder.WriteString(fmt.Sprintf("%v", td.Bull))
+	builder.WriteString(", ")
+	builder.WriteString("short=")
+	builder.WriteString(td.Short)
 	builder.WriteByte(')')
 	return builder.String()
 }

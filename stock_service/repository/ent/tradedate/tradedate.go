@@ -26,6 +26,16 @@ const (
 	FieldUpdateAt = "update_at"
 	// FieldXueqiuCommentCount holds the string denoting the xueqiu_comment_count field in the database.
 	FieldXueqiuCommentCount = "xueqiu_comment_count"
+	// FieldOpen holds the string denoting the open field in the database.
+	FieldOpen = "open"
+	// FieldMax holds the string denoting the max field in the database.
+	FieldMax = "max"
+	// FieldMin holds the string denoting the min field in the database.
+	FieldMin = "min"
+	// FieldBull holds the string denoting the bull field in the database.
+	FieldBull = "bull"
+	// FieldShort holds the string denoting the short field in the database.
+	FieldShort = "short"
 	// EdgeStock holds the string denoting the stock edge name in mutations.
 	EdgeStock = "stock"
 	// Table holds the table name of the tradedate in the database.
@@ -49,6 +59,11 @@ var Columns = []string{
 	FieldCreateAt,
 	FieldUpdateAt,
 	FieldXueqiuCommentCount,
+	FieldOpen,
+	FieldMax,
+	FieldMin,
+	FieldBull,
+	FieldShort,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -78,6 +93,10 @@ var (
 	DefaultXueqiuCommentCount int64
 	// XueqiuCommentCountValidator is a validator for the "xueqiu_comment_count" field. It is called by the builders before save.
 	XueqiuCommentCountValidator func(int64) error
+	// DefaultBull holds the default value on creation for the "bull" field.
+	DefaultBull int
+	// DefaultShort holds the default value on creation for the "short" field.
+	DefaultShort string
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
 	IDValidator func(uint64) error
 )
@@ -123,6 +142,31 @@ func ByUpdateAt(opts ...sql.OrderTermOption) OrderOption {
 // ByXueqiuCommentCount orders the results by the xueqiu_comment_count field.
 func ByXueqiuCommentCount(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldXueqiuCommentCount, opts...).ToFunc()
+}
+
+// ByOpen orders the results by the open field.
+func ByOpen(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOpen, opts...).ToFunc()
+}
+
+// ByMax orders the results by the max field.
+func ByMax(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMax, opts...).ToFunc()
+}
+
+// ByMin orders the results by the min field.
+func ByMin(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMin, opts...).ToFunc()
+}
+
+// ByBull orders the results by the bull field.
+func ByBull(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBull, opts...).ToFunc()
+}
+
+// ByShort orders the results by the short field.
+func ByShort(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldShort, opts...).ToFunc()
 }
 
 // ByStockField orders the results by stock field.

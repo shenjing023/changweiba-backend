@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"time"
+
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
@@ -25,6 +27,8 @@ func (Stock) Fields() []ent.Field {
 			dialect.MySQL: "varchar(10)", // Override MySQL.
 		}).NotEmpty().Unique().Comment("股票名称"),
 		field.Int("bull").Comment("持仓建议").Default(0),
+		field.Time("last_subscribe_at").
+			Default(time.Now).Comment("最后被订阅的时间"),
 	}
 }
 
