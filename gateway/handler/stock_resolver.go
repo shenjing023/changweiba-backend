@@ -113,6 +113,7 @@ func SubscribedStocks(ctx context.Context) (*models.StockConnection, error) {
 			Symbol: stock.Symbol,
 			Name:   stock.Name,
 			ID:     int(stock.Id),
+			Bull:   int(stock.Bull),
 		})
 	}
 	return &models.StockConnection{

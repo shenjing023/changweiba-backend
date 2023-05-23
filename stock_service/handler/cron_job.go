@@ -141,7 +141,8 @@ func getUpdateStocks(ctx context.Context) (uStocks []*updateStock) {
 }
 
 func UpdateTradeData() {
-	uStocks := getUpdateStocks(context.Background())
+	ctx := context.Background()
+	uStocks := getUpdateStocks(ctx)
 	for _, uStock := range uStocks {
 		// 获取日k数据
 		tradeData, _ := getTradeData(uStock.Symbol)
@@ -153,19 +154,26 @@ func UpdateTradeData() {
 		wencaiData := getWencaiData(uStock.Symbol)
 
 		fmt.Printf("data:%+v\n", tradeData.Data)
-		// 插入数据
-		data := tradeData.Data[strings.ToLower(uStock.Symbol)].Qfqday[0]
-		date := data[0]
-		close, _ := strconv.ParseFloat(data[2], 64)
-		volume, _ := strconv.ParseFloat(data[5], 64)
-		open, _ := strconv.ParseFloat(data[1], 64)
-		max, _ := strconv.ParseFloat(data[3], 64)
-		min, _ := strconv.ParseFloat(data[4], 64)
 
-		if err := repository.InsertStockTradeDate(context.Background(), uint64(uStock.StockId),
-			date, open, close, max, min, volume, 0,
-			wencaiData.Bull, wencaiData.Short); err != nil {
-			log.Errorf("insert stock[%s] trade_date error:%+v", uStock.Symbol, err)
+		for _, data := range tradeData.Data[strings.ToLower(uStock.Symbol)].Qfqday {
+			// 插入数据
+			date := data[0]
+			close, _ := strconv.ParseFloat(data[2], 64)
+			volume, _ := strconv.ParseFloat(data[5], 64)
+			open, _ := strconv.ParseFloat(data[1], 64)
+			max, _ := strconv.ParseFloat(data[3], 64)
+			min, _ := strconv.ParseFloat(data[4], 64)
+
+			if err := repository.InsertStockTradeDate(ctx, uint64(uStock.StockId),
+				date, open, close, max, min, volume, 0,
+				wencaiData.Bull, wencaiData.Short); err != nil {
+				log.Errorf("insert stock[%s] trade_date error:%+v", uStock.Symbol, err)
+			}
+		}
+
+		// 更新bull
+		if err := repository.UpdateStockBull(ctx, uint64(uStock.StockId), wencaiData.Bull); err != nil {
+			log.Errorf("update stock[%s] bull error:%+v", uStock.Symbol, err)
 		}
 	}
 }
@@ -210,11 +218,11 @@ func getTradeData(symbol string) (*TradeData, error) {
 	return nil, nil
 }
 
-type wencaiData struct {
-	Bull  int    `json:"bull"`
-	Short string `json:"short"`
-}
-
-func getWencaiData(symbol string) *wencaiData {
-	return &wencaiData{}
+func getWencaiData(symbol string) *WencaiStockData {
+	data, err := getWencaiStock(context.Background(), symbol)
+	if err != nil {
+		log.Errorf("get wencai data error:%v", err)
+		return nil
+	}
+	return data
 }

@@ -29,6 +29,7 @@ message StockInfo {
     int64 id=1;
     string symbol=2;
     string name=3;
+    int64 bull=4;
 }
 
 message SubscribeStocksRequest {

@@ -24,7 +24,7 @@ var (
 		maxRetry: 3,
 		maxConns: 10,
 	}
-	defaultXueqiu = NewXueqiu()
+	// defaultXueqiu = NewXueqiu()
 )
 
 type Xueqiu struct {
@@ -171,13 +171,13 @@ func (x *Xueqiu) SearchStock(symbolorname string) ([]StockData, error) {
 	return nil, errors.New("request failed")
 }
 
-func SearchStock(symbolorname string) ([]StockData, error) {
-	return defaultXueqiu.SearchStock(symbolorname)
-}
+// func SearchStock(symbolorname string) ([]StockData, error) {
+// 	return defaultXueqiu.SearchStock(symbolorname)
+// }
 
-func GetXqCommentData(lastPullTime int64, symbol string) (map[string]int, error) {
-	return defaultXueqiu.GetCommentData(lastPullTime, symbol)
-}
+// func GetXqCommentData(lastPullTime int64, symbol string) (map[string]int, error) {
+// 	return defaultXueqiu.GetCommentData(lastPullTime, symbol)
+// }
 
 // 拉取股票讨论数据
 func (x *Xueqiu) GetCommentData(lastPullTime int64, symbol string) (map[string]int, error) {

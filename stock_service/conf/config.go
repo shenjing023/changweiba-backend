@@ -37,6 +37,10 @@ type YamlConf struct {
 	JaegerCollectURL       string `yaml:"jeager_collect_url"`
 	SubscribeStockLimit    int    `yaml:"subscribe_stock_limit"`    // 用户订阅stock的最大数量
 	SubscribeDurationLimit int    `yaml:"subscribe_duration_limit"` // 用户停止订阅stock的最大时间间隔，单位为小时
+	Wencai                 struct {
+		Host string `yaml:"host"`
+		Port int    `yaml:"port"`
+	}
 }
 
 // Cfg global config variate
