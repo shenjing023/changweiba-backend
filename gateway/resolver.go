@@ -91,6 +91,10 @@ func (r *queryResolver) Post(ctx context.Context, postID int) (*models.Post, err
 	panic("not implemented")
 }
 
+func (r *queryResolver) AllPosts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error) {
+	return handler.AllPosts(ctx, page, pageSize)
+}
+
 func (r *queryResolver) Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error) {
 	return handler.Posts(ctx, page, pageSize)
 }

@@ -11,7 +11,8 @@ import (
 // TODO 待优化
 func GetPosts(ctx context.Context, c *Client, page, pageSize int) ([]*Post, error) {
 	db := c.driver.(*sql.Driver).DB()
-	sql := `SELECT t1.* FROM post t1, 
+	// 数据量大时的一个方法
+	sql := `SELECT t1.id,t1.user_id,t1.title,t1.content,t1.reply_num,t1.status,t1.create_at,t1.update_at FROM post t1, 
 	(SELECT id FROM post WHERE status=? ORDER BY update_at DESC, id DESC LIMIT ?,?) t2 
 	WHERE t1.id=t2.id`
 	rows, err := db.QueryContext(ctx, sql, 0, pageSize*(page-1), pageSize)
@@ -22,7 +23,10 @@ func GetPosts(ctx context.Context, c *Client, page, pageSize int) ([]*Post, erro
 	defer rows.Close()
 	for rows.Next() {
 		var p Post
-		rows.Scan(&p)
+		if err := rows.Scan(&p.ID, &p.UserID, &p.Title, &p.Content, &p.ReplyNum,
+			&p.Status, &p.CreateAt, &p.UpdateAt); err != nil {
+			return nil, err
+		}
 		posts = append(posts, &p)
 	}
 	return posts, nil

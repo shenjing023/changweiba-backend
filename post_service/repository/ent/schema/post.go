@@ -22,9 +22,13 @@ func (Post) Fields() []ent.Field {
 
 		field.Uint64("user_id").Positive().Comment("The user that posted the message."),
 
-		field.String("topic").SchemaType(map[string]string{
+		field.String("title").SchemaType(map[string]string{
 			dialect.MySQL: "varchar(1024)", // Override MySQL.
-		}).NotEmpty().Comment("The topic of the message."),
+		}).NotEmpty().Comment("The title of the message."),
+
+		field.String("content").SchemaType(map[string]string{
+			dialect.MySQL: "varchar(1024)", // Override MySQL.
+		}).NotEmpty().Comment("The content of the message."),
 
 		field.Int8("status").SchemaType(map[string]string{
 			dialect.MySQL: "tinyint unsigned", // Override MySQL.

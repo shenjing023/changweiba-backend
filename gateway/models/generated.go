@@ -48,7 +48,7 @@ type NewComment struct {
 }
 
 type NewPost struct {
-	Topic   string `json:"topic"`
+	Title   string `json:"title"`
 	Content string `json:"content"`
 }
 
@@ -67,7 +67,8 @@ type NewUser struct {
 type Post struct {
 	ID        int    `json:"id"`
 	User      *User  `json:"user"`
-	Topic     string `json:"topic"`
+	Title     string `json:"title"`
+	Content   string `json:"content"`
 	CreatedAt int    `json:"createdAt"`
 	// 最后回复时间
 	UpdatedAt int `json:"updatedAt"`

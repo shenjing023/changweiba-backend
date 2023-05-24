@@ -23,10 +23,10 @@ type PostService struct {
 
 // NewPost new post
 func (PostService) NewPost(ctx context.Context, pr *pb.NewPostRequest) (*pb.NewPostResponse, error) {
-	if len(strings.TrimSpace(pr.Topic)) == 0 || len(strings.TrimSpace(pr.Content)) == 0 {
+	if len(strings.TrimSpace(pr.Title)) == 0 || len(strings.TrimSpace(pr.Content)) == 0 {
 		return nil, er.NewServiceErr(er.InvalidArgument, errors.New("topic or content can not be empty"))
 	}
-	postID, err := repository.InsertPost(ctx, pr.UserId, pr.Topic)
+	postID, err := repository.InsertPost(ctx, pr.UserId, pr.Title, pr.Content)
 	if err != nil {
 		log.Errorf("insert post error: %+v", err)
 		return nil, err
@@ -48,23 +48,26 @@ func (PostService) GetPost(ctx context.Context, pr *pb.PostRequest) (*pb.PostRes
 }
 
 // GetPosts get posts info by page and page_size
-func (PostService) GetPosts(ctx context.Context, pr *pb.PostsRequest) (*pb.PostsResponse, error) {
+func (PostService) GetAllPosts(ctx context.Context, pr *pb.AllPostsRequest) (*pb.PostsResponse, error) {
 	dbPosts, err := repository.GetPosts(ctx, int(pr.Page), int(pr.PageSize))
 	if err != nil {
 		log.Errorf("get posts error: %+v", err)
 		return nil, err
 	}
 
+	log.Infof("get posts: %+v", dbPosts)
+
 	var posts []*pb.Post
 	for _, v := range dbPosts {
 		posts = append(posts, &pb.Post{
 			Id:         int64(v.ID),
 			UserId:     int64(v.UserID),
-			Topic:      v.Topic,
+			Title:      v.Content,
 			CreateTime: v.CreateAt,
 			UpdateTime: v.UpdateAt,
 			ReplyNum:   v.ReplyNum,
 			Status:     pb.PostStatusEnum_Status(v.Status),
+			Content:    v.Content,
 		})
 	}
 	totalCount, err := repository.GetPostsTotalCount(ctx)
@@ -178,5 +181,36 @@ func (PostService) GetRepliesByCommentId(ctx context.Context, pr *pb.RepliesRequ
 	return &pb.RepliesResponse{
 		TotalCount: totalCount,
 		Replies:    replies,
+	}, nil
+}
+
+func (PostService) GetPostsByUserId(ctx context.Context, pr *pb.PostsByUserIdRequest) (*pb.PostsByUserIdResponse, error) {
+	dbPosts, err := repository.GetPostsByUserId(ctx, pr.UserId, int(pr.Page), int(pr.PageSize))
+	if err != nil {
+		log.Errorf("get user posts error: %+v", err)
+		return nil, err
+	}
+
+	var posts []*pb.Post
+	for _, v := range dbPosts {
+		posts = append(posts, &pb.Post{
+			Id:         int64(v.ID),
+			UserId:     int64(v.UserID),
+			Title:      v.Content,
+			CreateTime: v.CreateAt,
+			UpdateTime: v.UpdateAt,
+			ReplyNum:   v.ReplyNum,
+			Status:     pb.PostStatusEnum_Status(v.Status),
+			Content:    v.Content,
+		})
+	}
+	totalCount, err := repository.GetUserPostCount(ctx, pr.UserId)
+	if err != nil {
+		log.Errorf("get posts total count error: %+v", err)
+		return nil, err
+	}
+	return &pb.PostsByUserIdResponse{
+		Posts:      posts,
+		TotalCount: totalCount,
 	}, nil
 }

@@ -79,7 +79,7 @@ func Close() {
 }
 
 // InsertPost insert new post
-func InsertPost(ctx context.Context, userID int64, topic string) (int64, error) {
+func InsertPost(ctx context.Context, userID int64, title, content string) (int64, error) {
 	tx, err := entClient.Tx(ctx)
 	if err != nil {
 		return 0, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
@@ -87,11 +87,12 @@ func InsertPost(ctx context.Context, userID int64, topic string) (int64, error) 
 	now := time.Now().Unix()
 	post, err := tx.Post.Create().
 		SetUserID(uint64(userID)).
-		SetTopic(topic).
+		SetTitle(title).
 		SetStatus(0).
 		SetCreateAt(now).
 		SetUpdateAt(now).
 		SetReplyNum(0).
+		SetContent(content).
 		Save(ctx)
 	if err != nil {
 		tx.Rollback()
@@ -121,6 +122,12 @@ func GetPostByID(ctx context.Context, id int64) (*ent.Post, error) {
 
 // GetPosts get posts by page and page_size
 func GetPosts(ctx context.Context, page, pageSize int) ([]*ent.Post, error) {
+	// posts, err := entClient.Post.Query().Order(ent.Desc(post.FieldUpdateAt)).
+	// 	Offset((page - 1) * pageSize).Limit(pageSize).All(ctx)
+	// if err != nil {
+	// 	return nil, er.NewServiceErr(er.Internal, err)
+	// }
+	// return posts, nil
 	posts, err := ent.GetPosts(ctx, entClient, page, pageSize)
 	if err != nil {
 		return nil, er.NewServiceErr(er.Internal, err)
@@ -433,4 +440,39 @@ func GetCommentReplyTotalCount(ctx context.Context, commentID int64) (count int6
 		return 0, er.NewServiceErr(er.Internal, errors.Wrap(err, "redis error"))
 	}
 	return strconv.ParseInt(total, 10, 64)
+}
+
+func GetPostsByUserId(ctx context.Context, userID int64, page, pageSize int) (posts []*ent.Post, err error) {
+	posts, err = entClient.Post.Query().Where(post.UserID(uint64(userID)), post.Status(0)).
+		Offset(pageSize * (page - 1)).
+		Limit(pageSize).Order(ent.Desc(post.FieldUpdateAt)).All(ctx)
+	if err != nil {
+		return nil, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
+	}
+	return
+}
+
+func GetUserPostCount(ctx context.Context, userID int64) (count int64, err error) {
+	t, err := entClient.Post.Query().Where(post.UserID(uint64(userID)),
+		post.Status(0)).Count(ctx)
+	if err != nil {
+		return 0, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
+	}
+	count = int64(t)
+	return count, nil
+	// key := fmt.Sprintf("%s_%d", POSTSCOUNTKEY, userID)
+	// total, err := redisClient.Get(ctx, key).Result()
+	// if err == redis.Nil {
+	// 	// 不存在
+	// 	t, err := entClient.Post.Query().Where(post.UserID(uint64(userID)), post.Status(0)).Count(context.Background())
+	// 	if err != nil {
+	// 		return 0, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
+	// 	}
+	// 	count = int64(t)
+	// 	redisClient.Set(ctx, key, count, time.Hour*24)
+	// 	return count, nil
+	// } else if err != nil {
+	// 	return 0, er.NewServiceErr(er.Internal, errors.Wrap(err, "redis error"))
+	// }
+	// return strconv.ParseInt(total, 10, 64)
 }

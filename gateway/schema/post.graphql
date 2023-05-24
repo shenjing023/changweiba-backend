@@ -1,7 +1,8 @@
 type Post{
     id: Int!
     user: User!
-    topic: String!
+    title: String!
+    content: String!
     createdAt: Int!
     """最后回复时间"""
     updatedAt: Int!
@@ -62,7 +63,7 @@ type ReplyConnection{
 }
 
 input NewPost{
-    topic: String!
+    title: String!
     content: String!
 }
 

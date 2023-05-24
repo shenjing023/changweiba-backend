@@ -24,7 +24,7 @@ func NewPost(ctx context.Context, input models.NewPost) (int, error) {
 	defer cancel()
 	request := pb.NewPostRequest{
 		UserId:  userID,
-		Topic:   input.Topic,
+		Title:   input.Title,
 		Content: input.Content,
 	}
 	r, err := client.NewPost(ctx, &request)
@@ -38,15 +38,15 @@ func NewPost(ctx context.Context, input models.NewPost) (int, error) {
 }
 
 // Posts 帖子列表
-func Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error) {
+func AllPosts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error) {
 	client := pb.NewPostServiceClient(PostConn)
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
-	request := pb.PostsRequest{
+	request := pb.AllPostsRequest{
 		Page:     int64(page),
 		PageSize: int64(pageSize),
 	}
-	r, err := client.GetPosts(ctx, &request)
+	r, err := client.GetAllPosts(ctx, &request)
 	if err != nil {
 		log.Errorf("get posts error: %+v", err)
 		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
@@ -57,7 +57,54 @@ func Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection,
 	for _, v := range r.Posts {
 		posts = append(posts, &models.Post{
 			ID:        int(v.Id),
-			Topic:     v.Topic,
+			Title:     v.Title,
+			Content:   v.Content,
+			CreatedAt: int(v.CreateTime),
+			UpdatedAt: int(v.UpdateTime),
+			ReplyNum:  int(v.ReplyNum),
+			Status:    models.PostStatus(v.Status),
+			User: &models.User{
+				ID: int(v.UserId),
+			},
+			FirstComment: &models.Comment{
+				PostID: int(v.Id),
+			},
+		})
+	}
+
+	return &models.PostConnection{
+		Nodes:      posts,
+		TotalCount: int(r.TotalCount),
+	}, nil
+}
+
+func Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error) {
+	userID, err := common.GetUserIDFromContext(ctx)
+	if err != nil {
+		log.Errorf("posts get userID from context error: %+v", err)
+		return nil, common.NewGQLError(common.Internal, common.ServiceError)
+	}
+	client := pb.NewPostServiceClient(PostConn)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	request := pb.PostsByUserIdRequest{
+		Page:     int64(page),
+		PageSize: int64(pageSize),
+		UserId:   userID,
+	}
+	r, err := client.GetPostsByUserId(ctx, &request)
+	if err != nil {
+		log.Errorf("get posts error: %+v", err)
+		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
+			codes.Internal: common.ServiceError,
+		})
+	}
+	var posts []*models.Post
+	for _, v := range r.Posts {
+		posts = append(posts, &models.Post{
+			ID:        int(v.Id),
+			Title:     v.Title,
+			Content:   v.Content,
 			CreatedAt: int(v.CreateTime),
 			UpdatedAt: int(v.UpdateTime),
 			ReplyNum:  int(v.ReplyNum),

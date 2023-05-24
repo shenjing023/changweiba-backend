@@ -6,7 +6,7 @@ type Query {
     """获取帖子详情"""
     post(postId:Int!):Post!
     """获取帖子list"""
-    posts(
+    allPosts(
         page:Int!
         pageSize:Int!
     ):PostConnection!
@@ -38,6 +38,11 @@ type Query {
     wencai stock query
     """
     wencaiStock(stockId: Int!): WencaiStock!
+    """获取用户的帖子"""
+    posts(
+        page:Int!
+        pageSize:Int!
+    ): PostConnection! @IsAuthenticated
 }
 
 type Mutation{
