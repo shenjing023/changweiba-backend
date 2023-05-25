@@ -52,7 +52,7 @@ func (r *mutationResolver) NewReply(ctx context.Context, input models.NewReply) 
 }
 
 func (r *mutationResolver) DeletePost(ctx context.Context, input int) (bool, error) {
-	panic("not implemented")
+	return handler.DeletePost(ctx, input)
 }
 
 func (r *mutationResolver) RefreshAuthToken(ctx context.Context, input string) (*models.AuthToken, error) {

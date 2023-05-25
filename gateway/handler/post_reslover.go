@@ -20,7 +20,7 @@ func NewPost(ctx context.Context, input models.NewPost) (int, error) {
 		return 0, common.NewGQLError(common.Internal, common.ServiceError)
 	}
 	client := pb.NewPostServiceClient(PostConn)
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	request := pb.NewPostRequest{
 		UserId:  userID,
@@ -127,7 +127,7 @@ func Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection,
 // FirstCommentLoaderFunc 批量获取帖子第一个评论的dataloader func
 func FirstCommentLoaderFunc(ctx context.Context, keys []int64) (comments []*models.Comment, errs []error) {
 	client := pb.NewPostServiceClient(PostConn)
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	request := pb.FirstCommentRequest{
@@ -161,7 +161,7 @@ func NewComment(ctx context.Context, input models.NewComment) (int, error) {
 		return 0, common.NewGQLError(common.Internal, common.ServiceError)
 	}
 	client := pb.NewPostServiceClient(PostConn)
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	request := pb.NewCommentRequest{
 		UserId:  userID,
@@ -185,7 +185,7 @@ func NewReply(ctx context.Context, input models.NewReply) (int, error) {
 		return 0, common.NewGQLError(common.Internal, common.ServiceError)
 	}
 	client := pb.NewPostServiceClient(PostConn)
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	request := pb.NewReplyRequest{
 		UserId:    userID,
@@ -210,7 +210,7 @@ func NewReply(ctx context.Context, input models.NewReply) (int, error) {
 
 func GetCommentsByPostID(ctx context.Context, postID int, page int, pageSize int) (*models.CommentConnection, error) {
 	client := pb.NewPostServiceClient(PostConn)
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	request := pb.CommentsRequest{
@@ -246,7 +246,7 @@ func GetCommentsByPostID(ctx context.Context, postID int, page int, pageSize int
 
 func GetRepliesByCommentID(ctx context.Context, commentID int, page int, pageSize int) (*models.ReplyConnection, error) {
 	client := pb.NewPostServiceClient(PostConn)
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	request := pb.RepliesRequest{
@@ -281,4 +281,22 @@ func GetRepliesByCommentID(ctx context.Context, commentID int, page int, pageSiz
 		Nodes:      replies,
 		TotalCount: int(r.TotalCount),
 	}, nil
+}
+
+func DeletePost(ctx context.Context, postID int) (bool, error) {
+	client := pb.NewPostServiceClient(PostConn)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	request := pb.DeleteRequest{
+		Ids: []int64{int64(postID)},
+	}
+	_, err := client.DeletePosts(ctx, &request)
+	if err != nil {
+		log.Errorf("delete post error: %+v", err)
+		return false, common.GRPCErrorConvert(err, map[codes.Code]string{
+			codes.Internal: common.ServiceError,
+		})
+	}
+	return true, nil
 }

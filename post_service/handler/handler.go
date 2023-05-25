@@ -196,7 +196,7 @@ func (PostService) GetPostsByUserId(ctx context.Context, pr *pb.PostsByUserIdReq
 		posts = append(posts, &pb.Post{
 			Id:         int64(v.ID),
 			UserId:     int64(v.UserID),
-			Title:      v.Content,
+			Title:      v.Title,
 			CreateTime: v.CreateAt,
 			UpdateTime: v.UpdateAt,
 			ReplyNum:   v.ReplyNum,
@@ -212,5 +212,18 @@ func (PostService) GetPostsByUserId(ctx context.Context, pr *pb.PostsByUserIdReq
 	return &pb.PostsByUserIdResponse{
 		Posts:      posts,
 		TotalCount: totalCount,
+	}, nil
+}
+
+func (PostService) DeletePosts(ctx context.Context, pr *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+	for _, v := range pr.Ids {
+		err := repository.DeletePost(ctx, v)
+		if err != nil {
+			log.Errorf("delete post error: %+v", err)
+			return nil, err
+		}
+	}
+	return &pb.DeleteResponse{
+		Success: true,
 	}, nil
 }
