@@ -17,6 +17,7 @@ type Post{
     lastReplyUser: User!
     """一楼的评论，首页会用到"""
     firstComment: Comment!
+    pinStatus: Int!
 }
 
 type PostConnection{
@@ -81,4 +82,9 @@ input NewReply{
 
 input DeletePost{
     id: Int!
+}
+
+input PinPost{
+    id: Int!
+    pinStatus: Int!
 }

@@ -958,6 +958,8 @@ type PostMutation struct {
 	addcreate_at    *int64
 	update_at       *int64
 	addupdate_at    *int64
+	pin             *int8
+	addpin          *int8
 	clearedFields   map[string]struct{}
 	comments        map[uint64]struct{}
 	removedcomments map[uint64]struct{}
@@ -1423,6 +1425,62 @@ func (m *PostMutation) ResetUpdateAt() {
 	m.addupdate_at = nil
 }
 
+// SetPin sets the "pin" field.
+func (m *PostMutation) SetPin(i int8) {
+	m.pin = &i
+	m.addpin = nil
+}
+
+// Pin returns the value of the "pin" field in the mutation.
+func (m *PostMutation) Pin() (r int8, exists bool) {
+	v := m.pin
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPin returns the old "pin" field's value of the Post entity.
+// If the Post object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PostMutation) OldPin(ctx context.Context) (v int8, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPin is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPin requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPin: %w", err)
+	}
+	return oldValue.Pin, nil
+}
+
+// AddPin adds i to the "pin" field.
+func (m *PostMutation) AddPin(i int8) {
+	if m.addpin != nil {
+		*m.addpin += i
+	} else {
+		m.addpin = &i
+	}
+}
+
+// AddedPin returns the value that was added to the "pin" field in this mutation.
+func (m *PostMutation) AddedPin() (r int8, exists bool) {
+	v := m.addpin
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetPin resets all changes to the "pin" field.
+func (m *PostMutation) ResetPin() {
+	m.pin = nil
+	m.addpin = nil
+}
+
 // AddCommentIDs adds the "comments" edge to the Comment entity by ids.
 func (m *PostMutation) AddCommentIDs(ids ...uint64) {
 	if m.comments == nil {
@@ -1511,7 +1569,7 @@ func (m *PostMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PostMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.user_id != nil {
 		fields = append(fields, post.FieldUserID)
 	}
@@ -1532,6 +1590,9 @@ func (m *PostMutation) Fields() []string {
 	}
 	if m.update_at != nil {
 		fields = append(fields, post.FieldUpdateAt)
+	}
+	if m.pin != nil {
+		fields = append(fields, post.FieldPin)
 	}
 	return fields
 }
@@ -1555,6 +1616,8 @@ func (m *PostMutation) Field(name string) (ent.Value, bool) {
 		return m.CreateAt()
 	case post.FieldUpdateAt:
 		return m.UpdateAt()
+	case post.FieldPin:
+		return m.Pin()
 	}
 	return nil, false
 }
@@ -1578,6 +1641,8 @@ func (m *PostMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldCreateAt(ctx)
 	case post.FieldUpdateAt:
 		return m.OldUpdateAt(ctx)
+	case post.FieldPin:
+		return m.OldPin(ctx)
 	}
 	return nil, fmt.Errorf("unknown Post field %s", name)
 }
@@ -1636,6 +1701,13 @@ func (m *PostMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdateAt(v)
 		return nil
+	case post.FieldPin:
+		v, ok := value.(int8)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPin(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Post field %s", name)
 }
@@ -1659,6 +1731,9 @@ func (m *PostMutation) AddedFields() []string {
 	if m.addupdate_at != nil {
 		fields = append(fields, post.FieldUpdateAt)
 	}
+	if m.addpin != nil {
+		fields = append(fields, post.FieldPin)
+	}
 	return fields
 }
 
@@ -1677,6 +1752,8 @@ func (m *PostMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedCreateAt()
 	case post.FieldUpdateAt:
 		return m.AddedUpdateAt()
+	case post.FieldPin:
+		return m.AddedPin()
 	}
 	return nil, false
 }
@@ -1720,6 +1797,13 @@ func (m *PostMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddUpdateAt(v)
+		return nil
+	case post.FieldPin:
+		v, ok := value.(int8)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPin(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Post numeric field %s", name)
@@ -1768,6 +1852,9 @@ func (m *PostMutation) ResetField(name string) error {
 		return nil
 	case post.FieldUpdateAt:
 		m.ResetUpdateAt()
+		return nil
+	case post.FieldPin:
+		m.ResetPin()
 		return nil
 	}
 	return fmt.Errorf("unknown Post field %s", name)

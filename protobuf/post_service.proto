@@ -16,6 +16,7 @@ message Post {
     int64 reply_num = 6;
     enums.PostStatusEnum.Status status = 7;
     string content=8;
+    int64 pin=9;
 }
 
 message Comment {
@@ -167,6 +168,24 @@ message PostsByUserIdResponse{
     int64 total_count=2;
 }
 
+message PinPostRequest {
+    int64 post_id = 1;
+    int64 pin_status=2;
+}
+
+message PinPostResponse {
+    bool success=1;
+}
+
+message PinPostsRequest {
+    int64 user_id=1;
+}
+
+message PinPostsResponse {
+    repeated Post posts=1;
+    int64 total_count=2;
+}
+
 message CommentsByUserIdRequest{
     int64 user_id=1;
     int64 page=2;
@@ -217,4 +236,6 @@ service PostService{
     rpc GetRepliesByUserId(RepliesByUserIdRequest) returns(RepliesByUserIdResponse){}
     rpc GetPostFirstComment(FirstCommentRequest) returns(FirstCommentResponse){}
     rpc GetAllPosts(AllPostsRequest) returns(PostsResponse){}
+    rpc PinPost(PinPostRequest) returns(PinPostResponse){}
+    rpc GetPinPosts(PinPostsRequest) returns(PinPostsResponse){}
 }

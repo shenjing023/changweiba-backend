@@ -30,6 +30,8 @@ type Post struct {
 	CreateAt int64 `json:"create_at,omitempty"`
 	// 最后更新时间
 	UpdateAt int64 `json:"update_at,omitempty"`
+	// 是否置顶，0：否，1是
+	Pin int8 `json:"pin,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PostQuery when eager-loading is set.
 	Edges        PostEdges `json:"edges"`
@@ -59,7 +61,7 @@ func (*Post) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case post.FieldID, post.FieldUserID, post.FieldStatus, post.FieldReplyNum, post.FieldCreateAt, post.FieldUpdateAt:
+		case post.FieldID, post.FieldUserID, post.FieldStatus, post.FieldReplyNum, post.FieldCreateAt, post.FieldUpdateAt, post.FieldPin:
 			values[i] = new(sql.NullInt64)
 		case post.FieldTitle, post.FieldContent:
 			values[i] = new(sql.NullString)
@@ -126,6 +128,12 @@ func (po *Post) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				po.UpdateAt = value.Int64
 			}
+		case post.FieldPin:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field pin", values[i])
+			} else if value.Valid {
+				po.Pin = int8(value.Int64)
+			}
 		default:
 			po.selectValues.Set(columns[i], values[i])
 		}
@@ -187,6 +195,9 @@ func (po *Post) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("update_at=")
 	builder.WriteString(fmt.Sprintf("%v", po.UpdateAt))
+	builder.WriteString(", ")
+	builder.WriteString("pin=")
+	builder.WriteString(fmt.Sprintf("%v", po.Pin))
 	builder.WriteByte(')')
 	return builder.String()
 }

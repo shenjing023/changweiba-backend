@@ -94,6 +94,20 @@ func (pc *PostCreate) SetNillableUpdateAt(i *int64) *PostCreate {
 	return pc
 }
 
+// SetPin sets the "pin" field.
+func (pc *PostCreate) SetPin(i int8) *PostCreate {
+	pc.mutation.SetPin(i)
+	return pc
+}
+
+// SetNillablePin sets the "pin" field if the given value is not nil.
+func (pc *PostCreate) SetNillablePin(i *int8) *PostCreate {
+	if i != nil {
+		pc.SetPin(*i)
+	}
+	return pc
+}
+
 // SetID sets the "id" field.
 func (pc *PostCreate) SetID(u uint64) *PostCreate {
 	pc.mutation.SetID(u)
@@ -166,6 +180,10 @@ func (pc *PostCreate) defaults() {
 		v := post.DefaultUpdateAt
 		pc.mutation.SetUpdateAt(v)
 	}
+	if _, ok := pc.mutation.Pin(); !ok {
+		v := post.DefaultPin
+		pc.mutation.SetPin(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -224,6 +242,14 @@ func (pc *PostCreate) check() error {
 	if v, ok := pc.mutation.UpdateAt(); ok {
 		if err := post.UpdateAtValidator(v); err != nil {
 			return &ValidationError{Name: "update_at", err: fmt.Errorf(`ent: validator failed for field "Post.update_at": %w`, err)}
+		}
+	}
+	if _, ok := pc.mutation.Pin(); !ok {
+		return &ValidationError{Name: "pin", err: errors.New(`ent: missing required field "Post.pin"`)}
+	}
+	if v, ok := pc.mutation.Pin(); ok {
+		if err := post.PinValidator(v); err != nil {
+			return &ValidationError{Name: "pin", err: fmt.Errorf(`ent: validator failed for field "Post.pin": %w`, err)}
 		}
 	}
 	if v, ok := pc.mutation.ID(); ok {
@@ -290,6 +316,10 @@ func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 	if value, ok := pc.mutation.UpdateAt(); ok {
 		_spec.SetField(post.FieldUpdateAt, field.TypeInt64, value)
 		_node.UpdateAt = value
+	}
+	if value, ok := pc.mutation.Pin(); ok {
+		_spec.SetField(post.FieldPin, field.TypeInt8, value)
+		_node.Pin = value
 	}
 	if nodes := pc.mutation.CommentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

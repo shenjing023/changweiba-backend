@@ -443,7 +443,7 @@ func GetCommentReplyTotalCount(ctx context.Context, commentID int64) (count int6
 }
 
 func GetPostsByUserId(ctx context.Context, userID int64, page, pageSize int) (posts []*ent.Post, err error) {
-	posts, err = entClient.Post.Query().Where(post.UserID(uint64(userID)), post.Status(0)).
+	posts, err = entClient.Post.Query().Where(post.UserID(uint64(userID)), post.Status(0), post.Pin(0)).
 		Offset(pageSize * (page - 1)).
 		Limit(pageSize).Order(ent.Desc(post.FieldUpdateAt)).All(ctx)
 	if err != nil {
@@ -475,4 +475,24 @@ func GetUserPostCount(ctx context.Context, userID int64) (count int64, err error
 	// 	return 0, er.NewServiceErr(er.Internal, errors.Wrap(err, "redis error"))
 	// }
 	// return strconv.ParseInt(total, 10, 64)
+}
+
+func PinPost(ctx context.Context, postID int64, pinStatus int) error {
+	_, err := entClient.Post.UpdateOneID(uint64(postID)).
+		SetPin(int8(pinStatus)).
+		// SetUpdateAt(time.Now().Unix()).
+		Save(ctx)
+	if err != nil {
+		return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
+	}
+	return nil
+}
+
+func GetPinPostsByUserId(ctx context.Context, userID int64) (posts []*ent.Post, err error) {
+	posts, err = entClient.Post.Query().Where(post.UserID(uint64(userID)), post.Status(0), post.Pin(1)).
+		Order(ent.Desc(post.FieldUpdateAt)).All(ctx)
+	if err != nil {
+		return nil, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
+	}
+	return
 }

@@ -116,6 +116,27 @@ func (pu *PostUpdate) AddUpdateAt(i int64) *PostUpdate {
 	return pu
 }
 
+// SetPin sets the "pin" field.
+func (pu *PostUpdate) SetPin(i int8) *PostUpdate {
+	pu.mutation.ResetPin()
+	pu.mutation.SetPin(i)
+	return pu
+}
+
+// SetNillablePin sets the "pin" field if the given value is not nil.
+func (pu *PostUpdate) SetNillablePin(i *int8) *PostUpdate {
+	if i != nil {
+		pu.SetPin(*i)
+	}
+	return pu
+}
+
+// AddPin adds i to the "pin" field.
+func (pu *PostUpdate) AddPin(i int8) *PostUpdate {
+	pu.mutation.AddPin(i)
+	return pu
+}
+
 // AddCommentIDs adds the "comments" edge to the Comment entity by IDs.
 func (pu *PostUpdate) AddCommentIDs(ids ...uint64) *PostUpdate {
 	pu.mutation.AddCommentIDs(ids...)
@@ -216,6 +237,11 @@ func (pu *PostUpdate) check() error {
 			return &ValidationError{Name: "update_at", err: fmt.Errorf(`ent: validator failed for field "Post.update_at": %w`, err)}
 		}
 	}
+	if v, ok := pu.mutation.Pin(); ok {
+		if err := post.PinValidator(v); err != nil {
+			return &ValidationError{Name: "pin", err: fmt.Errorf(`ent: validator failed for field "Post.pin": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -260,6 +286,12 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := pu.mutation.AddedUpdateAt(); ok {
 		_spec.AddField(post.FieldUpdateAt, field.TypeInt64, value)
+	}
+	if value, ok := pu.mutation.Pin(); ok {
+		_spec.SetField(post.FieldPin, field.TypeInt8, value)
+	}
+	if value, ok := pu.mutation.AddedPin(); ok {
+		_spec.AddField(post.FieldPin, field.TypeInt8, value)
 	}
 	if pu.mutation.CommentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -414,6 +446,27 @@ func (puo *PostUpdateOne) AddUpdateAt(i int64) *PostUpdateOne {
 	return puo
 }
 
+// SetPin sets the "pin" field.
+func (puo *PostUpdateOne) SetPin(i int8) *PostUpdateOne {
+	puo.mutation.ResetPin()
+	puo.mutation.SetPin(i)
+	return puo
+}
+
+// SetNillablePin sets the "pin" field if the given value is not nil.
+func (puo *PostUpdateOne) SetNillablePin(i *int8) *PostUpdateOne {
+	if i != nil {
+		puo.SetPin(*i)
+	}
+	return puo
+}
+
+// AddPin adds i to the "pin" field.
+func (puo *PostUpdateOne) AddPin(i int8) *PostUpdateOne {
+	puo.mutation.AddPin(i)
+	return puo
+}
+
 // AddCommentIDs adds the "comments" edge to the Comment entity by IDs.
 func (puo *PostUpdateOne) AddCommentIDs(ids ...uint64) *PostUpdateOne {
 	puo.mutation.AddCommentIDs(ids...)
@@ -527,6 +580,11 @@ func (puo *PostUpdateOne) check() error {
 			return &ValidationError{Name: "update_at", err: fmt.Errorf(`ent: validator failed for field "Post.update_at": %w`, err)}
 		}
 	}
+	if v, ok := puo.mutation.Pin(); ok {
+		if err := post.PinValidator(v); err != nil {
+			return &ValidationError{Name: "pin", err: fmt.Errorf(`ent: validator failed for field "Post.pin": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -588,6 +646,12 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 	}
 	if value, ok := puo.mutation.AddedUpdateAt(); ok {
 		_spec.AddField(post.FieldUpdateAt, field.TypeInt64, value)
+	}
+	if value, ok := puo.mutation.Pin(); ok {
+		_spec.SetField(post.FieldPin, field.TypeInt8, value)
+	}
+	if value, ok := puo.mutation.AddedPin(); ok {
+		_spec.AddField(post.FieldPin, field.TypeInt8, value)
 	}
 	if puo.mutation.CommentsCleared() {
 		edge := &sqlgraph.EdgeSpec{

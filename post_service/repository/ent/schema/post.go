@@ -45,6 +45,10 @@ func (Post) Fields() []ent.Field {
 		field.Int64("update_at").SchemaType(map[string]string{
 			dialect.MySQL: "int UNSIGNED", // Override MySQL.
 		}).NonNegative().Default(0).Comment("最后更新时间"),
+
+		field.Int8("pin").SchemaType(map[string]string{
+			dialect.MySQL: "tinyint unsigned", // Override MySQL.
+		}).NonNegative().Default(0).Comment("是否置顶，0：否，1是"),
 	}
 }
 

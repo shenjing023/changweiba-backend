@@ -67,6 +67,10 @@ func (r *mutationResolver) UnsubscribeStock(ctx context.Context, input string) (
 	return handler.UnSubscribeStock(ctx, input)
 }
 
+func (r *mutationResolver) PinPost(ctx context.Context, input models.PinPost) (bool, error) {
+	return handler.PinPost(ctx, input.ID, input.PinStatus)
+}
+
 func (r *postResolver) User(ctx context.Context, obj *models.Post) (*models.User, error) {
 	return dataloader.Loader.UsersByIDs.Load(ctx, int64(obj.User.ID))
 }
@@ -95,7 +99,10 @@ func (r *queryResolver) AllPosts(ctx context.Context, page int, pageSize int) (*
 	return handler.AllPosts(ctx, page, pageSize)
 }
 
-func (r *queryResolver) Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error) {
+func (r *queryResolver) Posts(ctx context.Context, page int, pageSize int, isPin bool) (*models.PostConnection, error) {
+	if isPin {
+		return handler.PinnedPosts(ctx)
+	}
 	return handler.Posts(ctx, page, pageSize)
 }
 

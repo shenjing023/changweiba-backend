@@ -26,6 +26,8 @@ const (
 	FieldCreateAt = "create_at"
 	// FieldUpdateAt holds the string denoting the update_at field in the database.
 	FieldUpdateAt = "update_at"
+	// FieldPin holds the string denoting the pin field in the database.
+	FieldPin = "pin"
 	// EdgeComments holds the string denoting the comments edge name in mutations.
 	EdgeComments = "comments"
 	// Table holds the table name of the post in the database.
@@ -49,6 +51,7 @@ var Columns = []string{
 	FieldReplyNum,
 	FieldCreateAt,
 	FieldUpdateAt,
+	FieldPin,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -84,6 +87,10 @@ var (
 	DefaultUpdateAt int64
 	// UpdateAtValidator is a validator for the "update_at" field. It is called by the builders before save.
 	UpdateAtValidator func(int64) error
+	// DefaultPin holds the default value on creation for the "pin" field.
+	DefaultPin int8
+	// PinValidator is a validator for the "pin" field. It is called by the builders before save.
+	PinValidator func(int8) error
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
 	IDValidator func(uint64) error
 )
@@ -129,6 +136,11 @@ func ByCreateAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdateAt orders the results by the update_at field.
 func ByUpdateAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdateAt, opts...).ToFunc()
+}
+
+// ByPin orders the results by the pin field.
+func ByPin(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPin, opts...).ToFunc()
 }
 
 // ByCommentsCount orders the results by comments count.

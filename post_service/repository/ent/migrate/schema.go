@@ -50,6 +50,7 @@ var (
 		{Name: "reply_num", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 		{Name: "create_at", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
 		{Name: "update_at", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
+		{Name: "pin", Type: field.TypeInt8, Default: 0, SchemaType: map[string]string{"mysql": "tinyint unsigned"}},
 	}
 	// PostTable holds the schema information for the "post" table.
 	PostTable = &schema.Table{

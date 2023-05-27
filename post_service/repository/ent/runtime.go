@@ -85,6 +85,12 @@ func init() {
 	post.DefaultUpdateAt = postDescUpdateAt.Default.(int64)
 	// post.UpdateAtValidator is a validator for the "update_at" field. It is called by the builders before save.
 	post.UpdateAtValidator = postDescUpdateAt.Validators[0].(func(int64) error)
+	// postDescPin is the schema descriptor for pin field.
+	postDescPin := postFields[8].Descriptor()
+	// post.DefaultPin holds the default value on creation for the pin field.
+	post.DefaultPin = postDescPin.Default.(int8)
+	// post.PinValidator is a validator for the "pin" field. It is called by the builders before save.
+	post.PinValidator = postDescPin.Validators[0].(func(int8) error)
 	// postDescID is the schema descriptor for id field.
 	postDescID := postFields[0].Descriptor()
 	// post.IDValidator is a validator for the "id" field. It is called by the builders before save.

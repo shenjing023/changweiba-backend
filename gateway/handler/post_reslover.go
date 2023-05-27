@@ -78,6 +78,51 @@ func AllPosts(ctx context.Context, page int, pageSize int) (*models.PostConnecti
 	}, nil
 }
 
+func PinnedPosts(ctx context.Context) (*models.PostConnection, error) {
+	userID, err := common.GetUserIDFromContext(ctx)
+	if err != nil {
+		log.Errorf("posts get userID from context error: %+v", err)
+		return nil, common.NewGQLError(common.Internal, common.ServiceError)
+	}
+	client := pb.NewPostServiceClient(PostConn)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	request := pb.PinPostsRequest{
+		UserId: userID,
+	}
+	r, err := client.GetPinPosts(ctx, &request)
+	if err != nil {
+		log.Errorf("pin posts error: %+v", err)
+		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
+			codes.Internal: common.ServiceError,
+		})
+	}
+	var posts []*models.Post
+	for _, v := range r.Posts {
+		posts = append(posts, &models.Post{
+			ID:        int(v.Id),
+			Title:     v.Title,
+			Content:   v.Content,
+			CreatedAt: int(v.CreateTime),
+			UpdatedAt: int(v.UpdateTime),
+			ReplyNum:  int(v.ReplyNum),
+			Status:    models.PostStatus(v.Status),
+			User: &models.User{
+				ID: int(v.UserId),
+			},
+			FirstComment: &models.Comment{
+				PostID: int(v.Id),
+			},
+			PinStatus: int(v.Pin),
+		})
+	}
+
+	return &models.PostConnection{
+		Nodes:      posts,
+		TotalCount: int(r.TotalCount),
+	}, nil
+}
+
 func Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error) {
 	userID, err := common.GetUserIDFromContext(ctx)
 	if err != nil {
@@ -115,6 +160,7 @@ func Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection,
 			FirstComment: &models.Comment{
 				PostID: int(v.Id),
 			},
+			PinStatus: int(v.Pin),
 		})
 	}
 
@@ -292,6 +338,25 @@ func DeletePost(ctx context.Context, postID int) (bool, error) {
 		Ids: []int64{int64(postID)},
 	}
 	_, err := client.DeletePosts(ctx, &request)
+	if err != nil {
+		log.Errorf("delete post error: %+v", err)
+		return false, common.GRPCErrorConvert(err, map[codes.Code]string{
+			codes.Internal: common.ServiceError,
+		})
+	}
+	return true, nil
+}
+
+func PinPost(ctx context.Context, postID int, pinStatus int) (bool, error) {
+	client := pb.NewPostServiceClient(PostConn)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	request := pb.PinPostRequest{
+		PostId:    int64(postID),
+		PinStatus: int64(pinStatus),
+	}
+	_, err := client.PinPost(ctx, &request)
 	if err != nil {
 		log.Errorf("delete post error: %+v", err)
 		return false, common.GRPCErrorConvert(err, map[codes.Code]string{

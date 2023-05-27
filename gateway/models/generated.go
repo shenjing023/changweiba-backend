@@ -64,6 +64,11 @@ type NewUser struct {
 	Password string `json:"password"`
 }
 
+type PinPost struct {
+	ID        int `json:"id"`
+	PinStatus int `json:"pinStatus"`
+}
+
 type Post struct {
 	ID        int    `json:"id"`
 	User      *User  `json:"user"`
@@ -80,6 +85,7 @@ type Post struct {
 	LastReplyUser *User `json:"lastReplyUser"`
 	// 一楼的评论，首页会用到
 	FirstComment *Comment `json:"firstComment"`
+	PinStatus    int      `json:"pinStatus"`
 }
 
 type PostConnection struct {

@@ -202,6 +202,7 @@ func (PostService) GetPostsByUserId(ctx context.Context, pr *pb.PostsByUserIdReq
 			ReplyNum:   v.ReplyNum,
 			Status:     pb.PostStatusEnum_Status(v.Status),
 			Content:    v.Content,
+			Pin:        int64(v.Pin),
 		})
 	}
 	totalCount, err := repository.GetUserPostCount(ctx, pr.UserId)
@@ -225,5 +226,44 @@ func (PostService) DeletePosts(ctx context.Context, pr *pb.DeleteRequest) (*pb.D
 	}
 	return &pb.DeleteResponse{
 		Success: true,
+	}, nil
+}
+
+func (PostService) PinPost(ctx context.Context, pr *pb.PinPostRequest) (*pb.PinPostResponse, error) {
+	err := repository.PinPost(ctx, pr.PostId, int(pr.PinStatus))
+	if err != nil {
+		log.Errorf("pin post error: %+v", err)
+		return nil, err
+	}
+	return &pb.PinPostResponse{
+		Success: true,
+	}, nil
+}
+
+func (PostService) GetPinPosts(ctx context.Context, pr *pb.PinPostsRequest) (*pb.PinPostsResponse, error) {
+	dbPosts, err := repository.GetPinPostsByUserId(ctx, pr.UserId)
+	if err != nil {
+		log.Errorf("get user pin posts error: %+v", err)
+		return nil, err
+	}
+
+	var posts []*pb.Post
+	for _, v := range dbPosts {
+		posts = append(posts, &pb.Post{
+			Id:         int64(v.ID),
+			UserId:     int64(v.UserID),
+			Title:      v.Title,
+			CreateTime: v.CreateAt,
+			UpdateTime: v.UpdateAt,
+			ReplyNum:   v.ReplyNum,
+			Status:     pb.PostStatusEnum_Status(v.Status),
+			Content:    v.Content,
+			Pin:        int64(v.Pin),
+		})
+	}
+
+	return &pb.PinPostsResponse{
+		Posts:      posts,
+		TotalCount: int64(len(posts)),
 	}, nil
 }

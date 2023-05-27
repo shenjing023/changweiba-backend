@@ -89,6 +89,11 @@ func UpdateAt(v int64) predicate.Post {
 	return predicate.Post(sql.FieldEQ(FieldUpdateAt, v))
 }
 
+// Pin applies equality check predicate on the "pin" field. It's identical to PinEQ.
+func Pin(v int8) predicate.Post {
+	return predicate.Post(sql.FieldEQ(FieldPin, v))
+}
+
 // UserIDEQ applies the EQ predicate on the "user_id" field.
 func UserIDEQ(v uint64) predicate.Post {
 	return predicate.Post(sql.FieldEQ(FieldUserID, v))
@@ -417,6 +422,46 @@ func UpdateAtLT(v int64) predicate.Post {
 // UpdateAtLTE applies the LTE predicate on the "update_at" field.
 func UpdateAtLTE(v int64) predicate.Post {
 	return predicate.Post(sql.FieldLTE(FieldUpdateAt, v))
+}
+
+// PinEQ applies the EQ predicate on the "pin" field.
+func PinEQ(v int8) predicate.Post {
+	return predicate.Post(sql.FieldEQ(FieldPin, v))
+}
+
+// PinNEQ applies the NEQ predicate on the "pin" field.
+func PinNEQ(v int8) predicate.Post {
+	return predicate.Post(sql.FieldNEQ(FieldPin, v))
+}
+
+// PinIn applies the In predicate on the "pin" field.
+func PinIn(vs ...int8) predicate.Post {
+	return predicate.Post(sql.FieldIn(FieldPin, vs...))
+}
+
+// PinNotIn applies the NotIn predicate on the "pin" field.
+func PinNotIn(vs ...int8) predicate.Post {
+	return predicate.Post(sql.FieldNotIn(FieldPin, vs...))
+}
+
+// PinGT applies the GT predicate on the "pin" field.
+func PinGT(v int8) predicate.Post {
+	return predicate.Post(sql.FieldGT(FieldPin, v))
+}
+
+// PinGTE applies the GTE predicate on the "pin" field.
+func PinGTE(v int8) predicate.Post {
+	return predicate.Post(sql.FieldGTE(FieldPin, v))
+}
+
+// PinLT applies the LT predicate on the "pin" field.
+func PinLT(v int8) predicate.Post {
+	return predicate.Post(sql.FieldLT(FieldPin, v))
+}
+
+// PinLTE applies the LTE predicate on the "pin" field.
+func PinLTE(v int8) predicate.Post {
+	return predicate.Post(sql.FieldLTE(FieldPin, v))
 }
 
 // HasComments applies the HasEdge predicate on the "comments" edge.

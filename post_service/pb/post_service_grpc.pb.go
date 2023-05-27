@@ -40,6 +40,8 @@ type PostServiceClient interface {
 	GetRepliesByUserId(ctx context.Context, in *RepliesByUserIdRequest, opts ...grpc.CallOption) (*RepliesByUserIdResponse, error)
 	GetPostFirstComment(ctx context.Context, in *FirstCommentRequest, opts ...grpc.CallOption) (*FirstCommentResponse, error)
 	GetAllPosts(ctx context.Context, in *AllPostsRequest, opts ...grpc.CallOption) (*PostsResponse, error)
+	PinPost(ctx context.Context, in *PinPostRequest, opts ...grpc.CallOption) (*PinPostResponse, error)
+	GetPinPosts(ctx context.Context, in *PinPostsRequest, opts ...grpc.CallOption) (*PinPostsResponse, error)
 }
 
 type postServiceClient struct {
@@ -194,6 +196,24 @@ func (c *postServiceClient) GetAllPosts(ctx context.Context, in *AllPostsRequest
 	return out, nil
 }
 
+func (c *postServiceClient) PinPost(ctx context.Context, in *PinPostRequest, opts ...grpc.CallOption) (*PinPostResponse, error) {
+	out := new(PinPostResponse)
+	err := c.cc.Invoke(ctx, "/post.PostService/PinPost", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postServiceClient) GetPinPosts(ctx context.Context, in *PinPostsRequest, opts ...grpc.CallOption) (*PinPostsResponse, error) {
+	out := new(PinPostsResponse)
+	err := c.cc.Invoke(ctx, "/post.PostService/GetPinPosts", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PostServiceServer is the server API for PostService service.
 // All implementations must embed UnimplementedPostServiceServer
 // for forward compatibility
@@ -216,6 +236,8 @@ type PostServiceServer interface {
 	GetRepliesByUserId(context.Context, *RepliesByUserIdRequest) (*RepliesByUserIdResponse, error)
 	GetPostFirstComment(context.Context, *FirstCommentRequest) (*FirstCommentResponse, error)
 	GetAllPosts(context.Context, *AllPostsRequest) (*PostsResponse, error)
+	PinPost(context.Context, *PinPostRequest) (*PinPostResponse, error)
+	GetPinPosts(context.Context, *PinPostsRequest) (*PinPostsResponse, error)
 	mustEmbedUnimplementedPostServiceServer()
 }
 
@@ -270,6 +292,12 @@ func (UnimplementedPostServiceServer) GetPostFirstComment(context.Context, *Firs
 }
 func (UnimplementedPostServiceServer) GetAllPosts(context.Context, *AllPostsRequest) (*PostsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllPosts not implemented")
+}
+func (UnimplementedPostServiceServer) PinPost(context.Context, *PinPostRequest) (*PinPostResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PinPost not implemented")
+}
+func (UnimplementedPostServiceServer) GetPinPosts(context.Context, *PinPostsRequest) (*PinPostsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPinPosts not implemented")
 }
 func (UnimplementedPostServiceServer) mustEmbedUnimplementedPostServiceServer() {}
 
@@ -572,6 +600,42 @@ func _PostService_GetAllPosts_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PostService_PinPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PinPostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).PinPost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/post.PostService/PinPost",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).PinPost(ctx, req.(*PinPostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PostService_GetPinPosts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PinPostsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).GetPinPosts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/post.PostService/GetPinPosts",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).GetPinPosts(ctx, req.(*PinPostsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PostService_ServiceDesc is the grpc.ServiceDesc for PostService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -642,6 +706,14 @@ var PostService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAllPosts",
 			Handler:    _PostService_GetAllPosts_Handler,
+		},
+		{
+			MethodName: "PinPost",
+			Handler:    _PostService_PinPost_Handler,
+		},
+		{
+			MethodName: "GetPinPosts",
+			Handler:    _PostService_GetPinPosts_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

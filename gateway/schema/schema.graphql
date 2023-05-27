@@ -42,6 +42,7 @@ type Query {
     posts(
         page:Int!
         pageSize:Int!
+        isPin: Boolean!
     ): PostConnection! @IsAuthenticated
 }
 
@@ -66,4 +67,6 @@ type Mutation{
     subscribeStock(input: SubscribeStock!): Boolean! @IsAuthenticated
     """取消订阅stock"""
     unsubscribeStock(input: String!): Boolean! @IsAuthenticated
+    """是否置顶帖子"""
+    pinPost(input: PinPost!): Boolean! @IsAuthenticated
 }

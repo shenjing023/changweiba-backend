@@ -76,6 +76,7 @@ type ComplexityRoot struct {
 		NewComment       func(childComplexity int, input models.NewComment) int
 		NewPost          func(childComplexity int, input models.NewPost) int
 		NewReply         func(childComplexity int, input models.NewReply) int
+		PinPost          func(childComplexity int, input models.PinPost) int
 		RefreshAuthToken func(childComplexity int, input string) int
 		ReportUser       func(childComplexity int, input models.ReportUser) int
 		SignIn           func(childComplexity int, input models.NewUser) int
@@ -91,6 +92,7 @@ type ComplexityRoot struct {
 		FirstComment  func(childComplexity int) int
 		ID            func(childComplexity int) int
 		LastReplyUser func(childComplexity int) int
+		PinStatus     func(childComplexity int) int
 		ReplyNum      func(childComplexity int) int
 		Status        func(childComplexity int) int
 		Title         func(childComplexity int) int
@@ -108,7 +110,7 @@ type ComplexityRoot struct {
 		Comment          func(childComplexity int, commentID int) int
 		Comments         func(childComplexity int, postID int, page int, pageSize int) int
 		Post             func(childComplexity int, postID int) int
-		Posts            func(childComplexity int, page int, pageSize int) int
+		Posts            func(childComplexity int, page int, pageSize int, isPin bool) int
 		Replies          func(childComplexity int, commentID int, page int, pageSize int) int
 		Reply            func(childComplexity int, replyID int) int
 		SearchStock      func(childComplexity int, symbolorname string) int
@@ -196,6 +198,7 @@ type MutationResolver interface {
 	RefreshAuthToken(ctx context.Context, input string) (*models.AuthToken, error)
 	SubscribeStock(ctx context.Context, input models.SubscribeStock) (bool, error)
 	UnsubscribeStock(ctx context.Context, input string) (bool, error)
+	PinPost(ctx context.Context, input models.PinPost) (bool, error)
 }
 type PostResolver interface {
 	User(ctx context.Context, obj *models.Post) (*models.User, error)
@@ -216,7 +219,7 @@ type QueryResolver interface {
 	SubscribedStocks(ctx context.Context) (*models.StockConnection, error)
 	StockTrades(ctx context.Context, stockID int) (*models.TradeDateConnection, error)
 	WencaiStock(ctx context.Context, stockID int) (*models.WencaiStock, error)
-	Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error)
+	Posts(ctx context.Context, page int, pageSize int, isPin bool) (*models.PostConnection, error)
 }
 type ReplyResolver interface {
 	User(ctx context.Context, obj *models.Reply) (*models.User, error)
@@ -391,6 +394,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.NewReply(childComplexity, args["input"].(models.NewReply)), true
 
+	case "Mutation.pinPost":
+		if e.complexity.Mutation.PinPost == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_pinPost_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.PinPost(childComplexity, args["input"].(models.PinPost)), true
+
 	case "Mutation.refreshAuthToken":
 		if e.complexity.Mutation.RefreshAuthToken == nil {
 			break
@@ -510,6 +525,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Post.LastReplyUser(childComplexity), true
 
+	case "Post.pinStatus":
+		if e.complexity.Post.PinStatus == nil {
+			break
+		}
+
+		return e.complexity.Post.PinStatus(childComplexity), true
+
 	case "Post.replyNum":
 		if e.complexity.Post.ReplyNum == nil {
 			break
@@ -617,7 +639,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Posts(childComplexity, args["page"].(int), args["pageSize"].(int)), true
+		return e.complexity.Query.Posts(childComplexity, args["page"].(int), args["pageSize"].(int), args["isPin"].(bool)), true
 
 	case "Query.replies":
 		if e.complexity.Query.Replies == nil {
@@ -979,6 +1001,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputNewPost,
 		ec.unmarshalInputNewReply,
 		ec.unmarshalInputNewUser,
+		ec.unmarshalInputPinPost,
 		ec.unmarshalInputReportUser,
 		ec.unmarshalInputSubscribeStock,
 	)
@@ -1125,6 +1148,7 @@ enum PostStatus{
     lastReplyUser: User!
     """一楼的评论，首页会用到"""
     firstComment: Comment!
+    pinStatus: Int!
 }
 
 type PostConnection{
@@ -1189,6 +1213,11 @@ input NewReply{
 
 input DeletePost{
     id: Int!
+}
+
+input PinPost{
+    id: Int!
+    pinStatus: Int!
 }`, BuiltIn: false},
 	{Name: "../schema/schema.graphql", Input: `directive @IsAuthenticated on FIELD_DEFINITION
 
@@ -1234,6 +1263,7 @@ type Query {
     posts(
         page:Int!
         pageSize:Int!
+        isPin: Boolean!
     ): PostConnection! @IsAuthenticated
 }
 
@@ -1258,6 +1288,8 @@ type Mutation{
     subscribeStock(input: SubscribeStock!): Boolean! @IsAuthenticated
     """取消订阅stock"""
     unsubscribeStock(input: String!): Boolean! @IsAuthenticated
+    """是否置顶帖子"""
+    pinPost(input: PinPost!): Boolean! @IsAuthenticated
 }`, BuiltIn: false},
 	{Name: "../schema/stock.graphql", Input: `type Stock{
     id: Int!
@@ -1390,6 +1422,21 @@ func (ec *executionContext) field_Mutation_newReply_args(ctx context.Context, ra
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNNewReply2gatewayᚋmodelsᚐNewReply(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_pinPost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 models.PinPost
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNPinPost2gatewayᚋmodelsᚐPinPost(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1635,6 +1682,15 @@ func (ec *executionContext) field_Query_posts_args(ctx context.Context, rawArgs 
 		}
 	}
 	args["pageSize"] = arg1
+	var arg2 bool
+	if tmp, ok := rawArgs["isPin"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isPin"))
+		arg2, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["isPin"] = arg2
 	return args, nil
 }
 
@@ -3220,6 +3276,81 @@ func (ec *executionContext) fieldContext_Mutation_unsubscribeStock(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_pinPost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_pinPost(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().PinPost(rctx, fc.Args["input"].(models.PinPost))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsAuthenticated == nil {
+				return nil, errors.New("directive IsAuthenticated is not implemented")
+			}
+			return ec.directives.IsAuthenticated(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_pinPost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_pinPost_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Post_id(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_id(ctx, field)
 	if err != nil {
@@ -3787,6 +3918,50 @@ func (ec *executionContext) fieldContext_Post_firstComment(ctx context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Post_pinStatus(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Post_pinStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PinStatus, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Post_pinStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PostConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.PostConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PostConnection_nodes(ctx, field)
 	if err != nil {
@@ -3845,6 +4020,8 @@ func (ec *executionContext) fieldContext_PostConnection_nodes(ctx context.Contex
 				return ec.fieldContext_Post_lastReplyUser(ctx, field)
 			case "firstComment":
 				return ec.fieldContext_Post_firstComment(ctx, field)
+			case "pinStatus":
+				return ec.fieldContext_Post_pinStatus(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
 		},
@@ -4036,6 +4213,8 @@ func (ec *executionContext) fieldContext_Query_post(ctx context.Context, field g
 				return ec.fieldContext_Post_lastReplyUser(ctx, field)
 			case "firstComment":
 				return ec.fieldContext_Post_firstComment(ctx, field)
+			case "pinStatus":
+				return ec.fieldContext_Post_pinStatus(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
 		},
@@ -4653,7 +4832,7 @@ func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.Coll
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().Posts(rctx, fc.Args["page"].(int), fc.Args["pageSize"].(int))
+			return ec.resolvers.Query().Posts(rctx, fc.Args["page"].(int), fc.Args["pageSize"].(int), fc.Args["isPin"].(bool))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsAuthenticated == nil {
@@ -8566,6 +8745,42 @@ func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj inter
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputPinPost(ctx context.Context, obj interface{}) (models.PinPost, error) {
+	var it models.PinPost
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "pinStatus"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			it.ID, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "pinStatus":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pinStatus"))
+			it.PinStatus, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputReportUser(ctx context.Context, obj interface{}) (models.ReportUser, error) {
 	var it models.ReportUser
 	asMap := map[string]interface{}{}
@@ -8939,6 +9154,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "pinPost":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_pinPost(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9089,6 +9313,13 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 				return innerFunc(ctx)
 
 			})
+		case "pinStatus":
+
+			out.Values[i] = ec._Post_pinStatus(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10346,6 +10577,11 @@ func (ec *executionContext) unmarshalNNewReply2gatewayᚋmodelsᚐNewReply(ctx c
 
 func (ec *executionContext) unmarshalNNewUser2gatewayᚋmodelsᚐNewUser(ctx context.Context, v interface{}) (models.NewUser, error) {
 	res, err := ec.unmarshalInputNewUser(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNPinPost2gatewayᚋmodelsᚐPinPost(ctx context.Context, v interface{}) (models.PinPost, error) {
+	res, err := ec.unmarshalInputPinPost(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
