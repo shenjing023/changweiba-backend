@@ -31,12 +31,12 @@ func (PostService) NewPost(ctx context.Context, pr *pb.NewPostRequest) (*pb.NewP
 		log.Errorf("insert post error: %+v", err)
 		return nil, err
 	}
-	// 插入一楼
-	if _, err := repository.InsertComment(ctx, pr.UserId, postID, pr.Content); err != nil {
-		log.Errorf("insert post[%d] first comment error: %+v", postID, err)
-		go repository.DeletePost(ctx, postID)
-		return nil, err
-	}
+	// // 插入一楼
+	// if _, err := repository.InsertComment(ctx, pr.UserId, postID, pr.Content); err != nil {
+	// 	log.Errorf("insert post[%d] first comment error: %+v", postID, err)
+	// 	go repository.DeletePost(ctx, postID)
+	// 	return nil, err
+	// }
 	return &pb.NewPostResponse{
 		PostId: postID,
 	}, nil
@@ -44,18 +44,32 @@ func (PostService) NewPost(ctx context.Context, pr *pb.NewPostRequest) (*pb.NewP
 
 // GetPost get post info
 func (PostService) GetPost(ctx context.Context, pr *pb.PostRequest) (*pb.PostResponse, error) {
-	return nil, er.NewServiceErr(er.Unimplemented, errors.New("method GetPost not implemented"))
+	dbPost, err := repository.GetPostByID(ctx, pr.Id)
+	if err != nil {
+		log.Errorf("get post error: %+v", err)
+		return nil, err
+	}
+	return &pb.PostResponse{
+		Post: &pb.Post{
+			Id:         int64(dbPost.ID),
+			UserId:     int64(dbPost.UserID),
+			Title:      dbPost.Content,
+			CreateTime: dbPost.CreateAt,
+			UpdateTime: dbPost.UpdateAt,
+			ReplyNum:   dbPost.ReplyNum,
+			Status:     pb.PostStatusEnum_Status(dbPost.Status),
+			Content:    dbPost.Content,
+		},
+	}, nil
 }
 
 // GetPosts get posts info by page and page_size
 func (PostService) GetAllPosts(ctx context.Context, pr *pb.AllPostsRequest) (*pb.PostsResponse, error) {
 	dbPosts, err := repository.GetPosts(ctx, int(pr.Page), int(pr.PageSize))
 	if err != nil {
-		log.Errorf("get posts error: %+v", err)
+		log.Errorf("get all posts error: %+v", err)
 		return nil, err
 	}
-
-	log.Infof("get posts: %+v", dbPosts)
 
 	var posts []*pb.Post
 	for _, v := range dbPosts {
@@ -138,9 +152,12 @@ func (PostService) GetCommentsByPostId(ctx context.Context, pr *pb.CommentsReque
 	var comments []*pb.Comment
 	for _, v := range dbComments {
 		comments = append(comments, &pb.Comment{
-			Id:      int64(v.ID),
-			Content: v.Content,
-			Status:  pb.PostStatusEnum_Status(v.Status),
+			Id:         int64(v.ID),
+			Content:    v.Content,
+			Status:     pb.PostStatusEnum_Status(v.Status),
+			UserId:     int64(v.UserID),
+			CreateTime: v.CreateAt,
+			Floor:      int64(v.Floor),
 		})
 	}
 	totalCount, err := repository.GetPostCommentTotalCount(ctx, pr.PostId)

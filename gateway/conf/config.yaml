@@ -8,7 +8,7 @@ auth_token:
   refresh:
     sign_key: "ssdadasd2"
     expire: 604800
-query_deep: 3
+query_deep: 4
 log_dir: ""
 etcd:
   host: "127.0.0.1"

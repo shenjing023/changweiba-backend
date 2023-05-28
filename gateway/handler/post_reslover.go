@@ -170,6 +170,34 @@ func Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection,
 	}, nil
 }
 
+func PostDetail(ctx context.Context, postID int) (*models.Post, error) {
+	client := pb.NewPostServiceClient(PostConn)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	request := pb.PostRequest{
+		Id: int64(postID),
+	}
+	r, err := client.GetPost(ctx, &request)
+	if err != nil {
+		log.Errorf("get post detail error: %+v", err)
+		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
+			codes.Internal: common.ServiceError,
+			codes.NotFound: "post not found",
+		})
+	}
+	return &models.Post{
+		ID:        int(r.Post.Id),
+		Title:     r.Post.Title,
+		Content:   r.Post.Content,
+		CreatedAt: int(r.Post.CreateTime),
+		UpdatedAt: int(r.Post.UpdateTime),
+		ReplyNum:  int(r.Post.ReplyNum),
+		User: &models.User{
+			ID: int(r.Post.UserId),
+		},
+	}, nil
+}
+
 // FirstCommentLoaderFunc 批量获取帖子第一个评论的dataloader func
 func FirstCommentLoaderFunc(ctx context.Context, keys []int64) (comments []*models.Comment, errs []error) {
 	client := pb.NewPostServiceClient(PostConn)

@@ -92,7 +92,7 @@ func (r *queryResolver) User(ctx context.Context, userID int) (*models.User, err
 }
 
 func (r *queryResolver) Post(ctx context.Context, postID int) (*models.Post, error) {
-	panic("not implemented")
+	return handler.PostDetail(ctx, postID)
 }
 
 func (r *queryResolver) AllPosts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error) {
