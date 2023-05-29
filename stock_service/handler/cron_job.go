@@ -172,7 +172,7 @@ func UpdateTradeData() {
 		}
 
 		// 更新bull
-		if err := repository.UpdateStockBull(ctx, uint64(uStock.StockId), wencaiData.Bull); err != nil {
+		if err := repository.UpdateStockBullAndShort(ctx, uint64(uStock.StockId), wencaiData.Bull, wencaiData.Short); err != nil {
 			log.Errorf("update stock[%s] bull error:%+v", uStock.Symbol, err)
 		}
 	}

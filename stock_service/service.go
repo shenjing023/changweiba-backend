@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"net"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"stock_service/conf"
 	"stock_service/handler"
 	"stock_service/repository"
+	"stock_service/repository/ent"
 	"syscall"
 	"time"
 
@@ -26,20 +26,20 @@ import (
 )
 
 func main() {
-	pwd, _ := os.Getwd()
-	execDir := flag.String("d", pwd, "execute directory")
-	flag.Parse()
-	runStockService(*execDir + "/conf/config.yaml")
+	// pwd, _ := os.Getwd()
+	// execDir := flag.String("d", pwd, "execute directory")
+	// flag.Parse()
+	// runStockService(*execDir + "/conf/config.yaml")
 
-	// client, err := ent.Open("mysql", "root:123456@(127.0.0.1:3306)/changweiba?parseTime=true")
-	// if err != nil {
-	// 	log.Fatalf("failed opening connection to mysql: %v", err)
-	// }
-	// defer client.Close()
-	// // Run the auto migration tool.
-	// if err := client.Debug().Schema.Create(context.Background()); err != nil {
-	// 	log.Fatalf("failed creating schema resources: %v", err)
-	// }
+	client, err := ent.Open("mysql", "root:123456@(127.0.0.1:3306)/changweiba?parseTime=true")
+	if err != nil {
+		log.Fatalf("failed opening connection to mysql: %v", err)
+	}
+	defer client.Close()
+	// Run the auto migration tool.
+	if err := client.Debug().Schema.Create(context.Background()); err != nil {
+		log.Fatalf("failed creating schema resources: %v", err)
+	}
 }
 
 // runStockService create and run new service

@@ -77,6 +77,20 @@ func (su *StockUpdate) SetNillableLastSubscribeAt(t *time.Time) *StockUpdate {
 	return su
 }
 
+// SetShort sets the "short" field.
+func (su *StockUpdate) SetShort(s string) *StockUpdate {
+	su.mutation.SetShort(s)
+	return su
+}
+
+// SetNillableShort sets the "short" field if the given value is not nil.
+func (su *StockUpdate) SetNillableShort(s *string) *StockUpdate {
+	if s != nil {
+		su.SetShort(*s)
+	}
+	return su
+}
+
 // AddTradeIDs adds the "trades" edge to the TradeDate entity by IDs.
 func (su *StockUpdate) AddTradeIDs(ids ...uint64) *StockUpdate {
 	su.mutation.AddTradeIDs(ids...)
@@ -193,6 +207,11 @@ func (su *StockUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Stock.name": %w`, err)}
 		}
 	}
+	if v, ok := su.mutation.Short(); ok {
+		if err := stock.ShortValidator(v); err != nil {
+			return &ValidationError{Name: "short", err: fmt.Errorf(`ent: validator failed for field "Stock.short": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -222,6 +241,9 @@ func (su *StockUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := su.mutation.LastSubscribeAt(); ok {
 		_spec.SetField(stock.FieldLastSubscribeAt, field.TypeTime, value)
+	}
+	if value, ok := su.mutation.Short(); ok {
+		_spec.SetField(stock.FieldShort, field.TypeString, value)
 	}
 	if su.mutation.TradesCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -380,6 +402,20 @@ func (suo *StockUpdateOne) SetNillableLastSubscribeAt(t *time.Time) *StockUpdate
 	return suo
 }
 
+// SetShort sets the "short" field.
+func (suo *StockUpdateOne) SetShort(s string) *StockUpdateOne {
+	suo.mutation.SetShort(s)
+	return suo
+}
+
+// SetNillableShort sets the "short" field if the given value is not nil.
+func (suo *StockUpdateOne) SetNillableShort(s *string) *StockUpdateOne {
+	if s != nil {
+		suo.SetShort(*s)
+	}
+	return suo
+}
+
 // AddTradeIDs adds the "trades" edge to the TradeDate entity by IDs.
 func (suo *StockUpdateOne) AddTradeIDs(ids ...uint64) *StockUpdateOne {
 	suo.mutation.AddTradeIDs(ids...)
@@ -509,6 +545,11 @@ func (suo *StockUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Stock.name": %w`, err)}
 		}
 	}
+	if v, ok := suo.mutation.Short(); ok {
+		if err := stock.ShortValidator(v); err != nil {
+			return &ValidationError{Name: "short", err: fmt.Errorf(`ent: validator failed for field "Stock.short": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -555,6 +596,9 @@ func (suo *StockUpdateOne) sqlSave(ctx context.Context) (_node *Stock, err error
 	}
 	if value, ok := suo.mutation.LastSubscribeAt(); ok {
 		_spec.SetField(stock.FieldLastSubscribeAt, field.TypeTime, value)
+	}
+	if value, ok := suo.mutation.Short(); ok {
+		_spec.SetField(stock.FieldShort, field.TypeString, value)
 	}
 	if suo.mutation.TradesCleared() {
 		edge := &sqlgraph.EdgeSpec{

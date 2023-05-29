@@ -62,6 +62,20 @@ func (sc *StockCreate) SetNillableLastSubscribeAt(t *time.Time) *StockCreate {
 	return sc
 }
 
+// SetShort sets the "short" field.
+func (sc *StockCreate) SetShort(s string) *StockCreate {
+	sc.mutation.SetShort(s)
+	return sc
+}
+
+// SetNillableShort sets the "short" field if the given value is not nil.
+func (sc *StockCreate) SetNillableShort(s *string) *StockCreate {
+	if s != nil {
+		sc.SetShort(*s)
+	}
+	return sc
+}
+
 // SetID sets the "id" field.
 func (sc *StockCreate) SetID(u uint64) *StockCreate {
 	sc.mutation.SetID(u)
@@ -141,6 +155,10 @@ func (sc *StockCreate) defaults() {
 		v := stock.DefaultLastSubscribeAt()
 		sc.mutation.SetLastSubscribeAt(v)
 	}
+	if _, ok := sc.mutation.Short(); !ok {
+		v := stock.DefaultShort
+		sc.mutation.SetShort(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -166,6 +184,14 @@ func (sc *StockCreate) check() error {
 	}
 	if _, ok := sc.mutation.LastSubscribeAt(); !ok {
 		return &ValidationError{Name: "last_subscribe_at", err: errors.New(`ent: missing required field "Stock.last_subscribe_at"`)}
+	}
+	if _, ok := sc.mutation.Short(); !ok {
+		return &ValidationError{Name: "short", err: errors.New(`ent: missing required field "Stock.short"`)}
+	}
+	if v, ok := sc.mutation.Short(); ok {
+		if err := stock.ShortValidator(v); err != nil {
+			return &ValidationError{Name: "short", err: fmt.Errorf(`ent: validator failed for field "Stock.short": %w`, err)}
+		}
 	}
 	if v, ok := sc.mutation.ID(); ok {
 		if err := stock.IDValidator(v); err != nil {
@@ -219,6 +245,10 @@ func (sc *StockCreate) createSpec() (*Stock, *sqlgraph.CreateSpec) {
 	if value, ok := sc.mutation.LastSubscribeAt(); ok {
 		_spec.SetField(stock.FieldLastSubscribeAt, field.TypeTime, value)
 		_node.LastSubscribeAt = value
+	}
+	if value, ok := sc.mutation.Short(); ok {
+		_spec.SetField(stock.FieldShort, field.TypeString, value)
+		_node.Short = value
 	}
 	if nodes := sc.mutation.TradesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

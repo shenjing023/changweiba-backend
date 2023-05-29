@@ -75,6 +75,11 @@ func LastSubscribeAt(v time.Time) predicate.Stock {
 	return predicate.Stock(sql.FieldEQ(FieldLastSubscribeAt, v))
 }
 
+// Short applies equality check predicate on the "short" field. It's identical to ShortEQ.
+func Short(v string) predicate.Stock {
+	return predicate.Stock(sql.FieldEQ(FieldShort, v))
+}
+
 // SymbolEQ applies the EQ predicate on the "symbol" field.
 func SymbolEQ(v string) predicate.Stock {
 	return predicate.Stock(sql.FieldEQ(FieldSymbol, v))
@@ -283,6 +288,71 @@ func LastSubscribeAtLT(v time.Time) predicate.Stock {
 // LastSubscribeAtLTE applies the LTE predicate on the "last_subscribe_at" field.
 func LastSubscribeAtLTE(v time.Time) predicate.Stock {
 	return predicate.Stock(sql.FieldLTE(FieldLastSubscribeAt, v))
+}
+
+// ShortEQ applies the EQ predicate on the "short" field.
+func ShortEQ(v string) predicate.Stock {
+	return predicate.Stock(sql.FieldEQ(FieldShort, v))
+}
+
+// ShortNEQ applies the NEQ predicate on the "short" field.
+func ShortNEQ(v string) predicate.Stock {
+	return predicate.Stock(sql.FieldNEQ(FieldShort, v))
+}
+
+// ShortIn applies the In predicate on the "short" field.
+func ShortIn(vs ...string) predicate.Stock {
+	return predicate.Stock(sql.FieldIn(FieldShort, vs...))
+}
+
+// ShortNotIn applies the NotIn predicate on the "short" field.
+func ShortNotIn(vs ...string) predicate.Stock {
+	return predicate.Stock(sql.FieldNotIn(FieldShort, vs...))
+}
+
+// ShortGT applies the GT predicate on the "short" field.
+func ShortGT(v string) predicate.Stock {
+	return predicate.Stock(sql.FieldGT(FieldShort, v))
+}
+
+// ShortGTE applies the GTE predicate on the "short" field.
+func ShortGTE(v string) predicate.Stock {
+	return predicate.Stock(sql.FieldGTE(FieldShort, v))
+}
+
+// ShortLT applies the LT predicate on the "short" field.
+func ShortLT(v string) predicate.Stock {
+	return predicate.Stock(sql.FieldLT(FieldShort, v))
+}
+
+// ShortLTE applies the LTE predicate on the "short" field.
+func ShortLTE(v string) predicate.Stock {
+	return predicate.Stock(sql.FieldLTE(FieldShort, v))
+}
+
+// ShortContains applies the Contains predicate on the "short" field.
+func ShortContains(v string) predicate.Stock {
+	return predicate.Stock(sql.FieldContains(FieldShort, v))
+}
+
+// ShortHasPrefix applies the HasPrefix predicate on the "short" field.
+func ShortHasPrefix(v string) predicate.Stock {
+	return predicate.Stock(sql.FieldHasPrefix(FieldShort, v))
+}
+
+// ShortHasSuffix applies the HasSuffix predicate on the "short" field.
+func ShortHasSuffix(v string) predicate.Stock {
+	return predicate.Stock(sql.FieldHasSuffix(FieldShort, v))
+}
+
+// ShortEqualFold applies the EqualFold predicate on the "short" field.
+func ShortEqualFold(v string) predicate.Stock {
+	return predicate.Stock(sql.FieldEqualFold(FieldShort, v))
+}
+
+// ShortContainsFold applies the ContainsFold predicate on the "short" field.
+func ShortContainsFold(v string) predicate.Stock {
+	return predicate.Stock(sql.FieldContainsFold(FieldShort, v))
 }
 
 // HasTrades applies the HasEdge predicate on the "trades" edge.

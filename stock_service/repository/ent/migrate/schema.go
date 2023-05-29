@@ -16,6 +16,7 @@ var (
 		{Name: "name", Type: field.TypeString, Unique: true, SchemaType: map[string]string{"mysql": "varchar(10)"}},
 		{Name: "bull", Type: field.TypeInt, Default: 0},
 		{Name: "last_subscribe_at", Type: field.TypeTime},
+		{Name: "short", Type: field.TypeString, Default: "---"},
 	}
 	// StockTable holds the schema information for the "stock" table.
 	StockTable = &schema.Table{

@@ -274,8 +274,8 @@ func GetSubscribedUsersByStockId(ctx context.Context, stockID uint64) ([]*ent.Us
 	return users, nil
 }
 
-func UpdateStockBull(ctx context.Context, stockID uint64, bull int) error {
-	_, err := entClient.Stock.UpdateOneID(stockID).SetBull(bull).Save(ctx)
+func UpdateStockBullAndShort(ctx context.Context, stockID uint64, bull int, short string) error {
+	_, err := entClient.Stock.UpdateOneID(stockID).SetBull(bull).SetShort(short).Save(ctx)
 	if err != nil {
 		return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}

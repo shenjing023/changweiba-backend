@@ -29,6 +29,7 @@ func (Stock) Fields() []ent.Field {
 		field.Int("bull").Comment("持仓建议").Default(0),
 		field.Time("last_subscribe_at").
 			Default(time.Now).Comment("最后被订阅的时间"),
+		field.String("short").NotEmpty().Comment("短期趋势").Default("---"),
 	}
 }
 

@@ -42,6 +42,7 @@ type StockMutation struct {
 	bull               *int
 	addbull            *int
 	last_subscribe_at  *time.Time
+	short              *string
 	clearedFields      map[string]struct{}
 	trades             map[uint64]struct{}
 	removedtrades      map[uint64]struct{}
@@ -322,6 +323,42 @@ func (m *StockMutation) ResetLastSubscribeAt() {
 	m.last_subscribe_at = nil
 }
 
+// SetShort sets the "short" field.
+func (m *StockMutation) SetShort(s string) {
+	m.short = &s
+}
+
+// Short returns the value of the "short" field in the mutation.
+func (m *StockMutation) Short() (r string, exists bool) {
+	v := m.short
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldShort returns the old "short" field's value of the Stock entity.
+// If the Stock object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StockMutation) OldShort(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldShort is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldShort requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldShort: %w", err)
+	}
+	return oldValue.Short, nil
+}
+
+// ResetShort resets all changes to the "short" field.
+func (m *StockMutation) ResetShort() {
+	m.short = nil
+}
+
 // AddTradeIDs adds the "trades" edge to the TradeDate entity by ids.
 func (m *StockMutation) AddTradeIDs(ids ...uint64) {
 	if m.trades == nil {
@@ -464,7 +501,7 @@ func (m *StockMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *StockMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 5)
 	if m.symbol != nil {
 		fields = append(fields, stock.FieldSymbol)
 	}
@@ -476,6 +513,9 @@ func (m *StockMutation) Fields() []string {
 	}
 	if m.last_subscribe_at != nil {
 		fields = append(fields, stock.FieldLastSubscribeAt)
+	}
+	if m.short != nil {
+		fields = append(fields, stock.FieldShort)
 	}
 	return fields
 }
@@ -493,6 +533,8 @@ func (m *StockMutation) Field(name string) (ent.Value, bool) {
 		return m.Bull()
 	case stock.FieldLastSubscribeAt:
 		return m.LastSubscribeAt()
+	case stock.FieldShort:
+		return m.Short()
 	}
 	return nil, false
 }
@@ -510,6 +552,8 @@ func (m *StockMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldBull(ctx)
 	case stock.FieldLastSubscribeAt:
 		return m.OldLastSubscribeAt(ctx)
+	case stock.FieldShort:
+		return m.OldShort(ctx)
 	}
 	return nil, fmt.Errorf("unknown Stock field %s", name)
 }
@@ -546,6 +590,13 @@ func (m *StockMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLastSubscribeAt(v)
+		return nil
+	case stock.FieldShort:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetShort(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Stock field %s", name)
@@ -622,6 +673,9 @@ func (m *StockMutation) ResetField(name string) error {
 		return nil
 	case stock.FieldLastSubscribeAt:
 		m.ResetLastSubscribeAt()
+		return nil
+	case stock.FieldShort:
+		m.ResetShort()
 		return nil
 	}
 	return fmt.Errorf("unknown Stock field %s", name)

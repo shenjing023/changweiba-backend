@@ -25,6 +25,8 @@ type Stock struct {
 	Bull int `json:"bull,omitempty"`
 	// 最后被订阅的时间
 	LastSubscribeAt time.Time `json:"last_subscribe_at,omitempty"`
+	// 短期趋势
+	Short string `json:"short,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the StockQuery when eager-loading is set.
 	Edges        StockEdges `json:"edges"`
@@ -67,7 +69,7 @@ func (*Stock) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case stock.FieldID, stock.FieldBull:
 			values[i] = new(sql.NullInt64)
-		case stock.FieldSymbol, stock.FieldName:
+		case stock.FieldSymbol, stock.FieldName, stock.FieldShort:
 			values[i] = new(sql.NullString)
 		case stock.FieldLastSubscribeAt:
 			values[i] = new(sql.NullTime)
@@ -115,6 +117,12 @@ func (s *Stock) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field last_subscribe_at", values[i])
 			} else if value.Valid {
 				s.LastSubscribeAt = value.Time
+			}
+		case stock.FieldShort:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field short", values[i])
+			} else if value.Valid {
+				s.Short = value.String
 			}
 		default:
 			s.selectValues.Set(columns[i], values[i])
@@ -173,6 +181,9 @@ func (s *Stock) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("last_subscribe_at=")
 	builder.WriteString(s.LastSubscribeAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("short=")
+	builder.WriteString(s.Short)
 	builder.WriteByte(')')
 	return builder.String()
 }

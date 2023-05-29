@@ -32,6 +32,12 @@ func init() {
 	stockDescLastSubscribeAt := stockFields[4].Descriptor()
 	// stock.DefaultLastSubscribeAt holds the default value on creation for the last_subscribe_at field.
 	stock.DefaultLastSubscribeAt = stockDescLastSubscribeAt.Default.(func() time.Time)
+	// stockDescShort is the schema descriptor for short field.
+	stockDescShort := stockFields[5].Descriptor()
+	// stock.DefaultShort holds the default value on creation for the short field.
+	stock.DefaultShort = stockDescShort.Default.(string)
+	// stock.ShortValidator is a validator for the "short" field. It is called by the builders before save.
+	stock.ShortValidator = stockDescShort.Validators[0].(func(string) error)
 	// stockDescID is the schema descriptor for id field.
 	stockDescID := stockFields[0].Descriptor()
 	// stock.IDValidator is a validator for the "id" field. It is called by the builders before save.

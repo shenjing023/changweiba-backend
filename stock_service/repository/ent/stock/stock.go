@@ -22,6 +22,8 @@ const (
 	FieldBull = "bull"
 	// FieldLastSubscribeAt holds the string denoting the last_subscribe_at field in the database.
 	FieldLastSubscribeAt = "last_subscribe_at"
+	// FieldShort holds the string denoting the short field in the database.
+	FieldShort = "short"
 	// EdgeTrades holds the string denoting the trades edge name in mutations.
 	EdgeTrades = "trades"
 	// EdgeSubscribers holds the string denoting the subscribers edge name in mutations.
@@ -49,6 +51,7 @@ var Columns = []string{
 	FieldName,
 	FieldBull,
 	FieldLastSubscribeAt,
+	FieldShort,
 }
 
 var (
@@ -76,6 +79,10 @@ var (
 	DefaultBull int
 	// DefaultLastSubscribeAt holds the default value on creation for the "last_subscribe_at" field.
 	DefaultLastSubscribeAt func() time.Time
+	// DefaultShort holds the default value on creation for the "short" field.
+	DefaultShort string
+	// ShortValidator is a validator for the "short" field. It is called by the builders before save.
+	ShortValidator func(string) error
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
 	IDValidator func(uint64) error
 )
@@ -106,6 +113,11 @@ func ByBull(opts ...sql.OrderTermOption) OrderOption {
 // ByLastSubscribeAt orders the results by the last_subscribe_at field.
 func ByLastSubscribeAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLastSubscribeAt, opts...).ToFunc()
+}
+
+// ByShort orders the results by the short field.
+func ByShort(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldShort, opts...).ToFunc()
 }
 
 // ByTradesCount orders the results by trades count.
