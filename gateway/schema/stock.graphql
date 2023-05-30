@@ -3,6 +3,7 @@ type Stock{
     symbol: String!
     name: String!
     bull: Int!
+    short: String!
 }
 
 type StockConnection{
@@ -15,6 +16,11 @@ type TradeDate{
     close: Float!
     volume: Float!
     xq: Int!
+    open: Float!
+    bull: Int!
+    short: String!
+    max: Float!
+    min: Float!
 }
 
 type TradeDateConnection{

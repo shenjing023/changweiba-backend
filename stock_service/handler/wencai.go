@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"stock_service/conf"
+	"stock_service/models"
 	"time"
 
 	"encoding/json"
@@ -24,18 +25,18 @@ var httpCli = &http.Client{
 	},
 }
 
-type WencaiStockData struct {
-	Bull  int    `json:"bull"`
-	Short string `json:"short"`
-}
+// type WencaiStockData struct {
+// 	Bull  int    `json:"bull"`
+// 	Short string `json:"short"`
+// }
 
 type HTTPResponse struct {
-	Data WencaiStockData `json:"data"`
-	Code int             `json:"code"`
-	Msg  string          `json:"msg"`
+	Data models.WencaiStockData `json:"data"`
+	Code int                    `json:"code"`
+	Msg  string                 `json:"msg"`
 }
 
-func getWencaiStock(ctx context.Context, stockSymbol string) (*WencaiStockData, error) {
+func getWencaiStock(ctx context.Context, stockSymbol string) (*models.WencaiStockData, error) {
 	urL := fmt.Sprintf("http://%s:%d/query/%s",
 		conf.Cfg.Wencai.Host, conf.Cfg.Wencai.Port, stockSymbol)
 	resp, err := httpCli.Get(urL)
@@ -58,7 +59,7 @@ func getWencaiStock(ctx context.Context, stockSymbol string) (*WencaiStockData, 
 		return nil, err
 	}
 
-	return &WencaiStockData{
+	return &models.WencaiStockData{
 		Bull:  r.Data.Bull,
 		Short: r.Data.Short,
 	}, nil

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"stock_service/conf"
+	"stock_service/models"
 	"stock_service/repository"
 
 	"github.com/robfig/cron/v3"
@@ -120,6 +121,7 @@ func RunCronJob() {
 type updateStock struct {
 	Symbol  string `json:"symbol"`
 	StockId int64  `json:"stock_id"`
+	Date    string `json:"date"`
 }
 
 // 获取需要更新数据的stock
@@ -164,12 +166,33 @@ func UpdateTradeData() {
 			max, _ := strconv.ParseFloat(data[3], 64)
 			min, _ := strconv.ParseFloat(data[4], 64)
 
+			bull := wencaiData.Bull
+			short := wencaiData.Short
+
+			// 获取前一天的wencai数据
+			oldWencaiData, err := repository.GetWencaiData(ctx, int(uStock.StockId), date)
+			if err != nil {
+				log.Errorf("get wencai data error:%+v", err)
+				continue
+			}
+			if oldWencaiData != nil {
+				// 有前一天的数据
+				bull = oldWencaiData.Bull
+				short = oldWencaiData.Short
+			}
+
 			if err := repository.InsertStockTradeDate(ctx, uint64(uStock.StockId),
 				date, open, close, max, min, volume, 0,
-				wencaiData.Bull, wencaiData.Short); err != nil {
+				bull, short); err != nil {
 				log.Errorf("insert stock[%s] trade_date error:%+v", uStock.Symbol, err)
 			}
 		}
+
+		today := time.Now().Format("2006-01-02")
+		repository.SetWencaiData(ctx, int(uStock.StockId), today, &models.WencaiStockData{
+			Bull:  wencaiData.Bull,
+			Short: wencaiData.Short,
+		})
 
 		// 更新bull
 		if err := repository.UpdateStockBullAndShort(ctx, uint64(uStock.StockId), wencaiData.Bull, wencaiData.Short); err != nil {
@@ -218,7 +241,7 @@ func getTradeData(symbol string) (*TradeData, error) {
 	return nil, nil
 }
 
-func getWencaiData(symbol string) *WencaiStockData {
+func getWencaiData(symbol string) *models.WencaiStockData {
 	data, err := getWencaiStock(context.Background(), symbol)
 	if err != nil {
 		log.Errorf("get wencai data error:%v", err)

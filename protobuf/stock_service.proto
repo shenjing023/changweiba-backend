@@ -23,6 +23,11 @@ message TradeData {
     double close=2;
     int64 volume=3;
     int64 xueqiu_count=4;
+    double open=5;
+    double max=6;
+    double min=7;
+    int64 bull=8;
+    string short=9;
 }
 
 message StockInfo {
@@ -30,6 +35,7 @@ message StockInfo {
     string symbol=2;
     string name=3;
     int64 bull=4;
+    string short=5;
 }
 
 message SubscribeStocksRequest {

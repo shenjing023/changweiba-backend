@@ -114,6 +114,7 @@ func SubscribedStocks(ctx context.Context) (*models.StockConnection, error) {
 			Name:   stock.Name,
 			ID:     int(stock.Id),
 			Bull:   int(stock.Bull),
+			Short:  stock.Short,
 		})
 	}
 	return &models.StockConnection{
@@ -143,6 +144,11 @@ func StockTrades(ctx context.Context, stockID int) (*models.TradeDateConnection,
 			Close:  float64(trade.Close),
 			Volume: float64(trade.Volume),
 			Xq:     int(trade.XueqiuCount),
+			Open:   float64(trade.Open),
+			Max:    float64(trade.Max),
+			Min:    float64(trade.Min),
+			Bull:   int(trade.Bull),
+			Short:  trade.Short,
 		})
 	}
 	return &models.TradeDateConnection{

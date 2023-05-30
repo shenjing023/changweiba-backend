@@ -140,6 +140,7 @@ type ComplexityRoot struct {
 		Bull   func(childComplexity int) int
 		ID     func(childComplexity int) int
 		Name   func(childComplexity int) int
+		Short  func(childComplexity int) int
 		Symbol func(childComplexity int) int
 	}
 
@@ -149,8 +150,13 @@ type ComplexityRoot struct {
 	}
 
 	TradeDate struct {
+		Bull   func(childComplexity int) int
 		Close  func(childComplexity int) int
 		Date   func(childComplexity int) int
+		Max    func(childComplexity int) int
+		Min    func(childComplexity int) int
+		Open   func(childComplexity int) int
+		Short  func(childComplexity int) int
 		Volume func(childComplexity int) int
 		Xq     func(childComplexity int) int
 	}
@@ -811,6 +817,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Stock.Name(childComplexity), true
 
+	case "Stock.short":
+		if e.complexity.Stock.Short == nil {
+			break
+		}
+
+		return e.complexity.Stock.Short(childComplexity), true
+
 	case "Stock.symbol":
 		if e.complexity.Stock.Symbol == nil {
 			break
@@ -832,6 +845,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.StockConnection.TotalCount(childComplexity), true
 
+	case "TradeDate.bull":
+		if e.complexity.TradeDate.Bull == nil {
+			break
+		}
+
+		return e.complexity.TradeDate.Bull(childComplexity), true
+
 	case "TradeDate.close":
 		if e.complexity.TradeDate.Close == nil {
 			break
@@ -845,6 +865,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.TradeDate.Date(childComplexity), true
+
+	case "TradeDate.max":
+		if e.complexity.TradeDate.Max == nil {
+			break
+		}
+
+		return e.complexity.TradeDate.Max(childComplexity), true
+
+	case "TradeDate.min":
+		if e.complexity.TradeDate.Min == nil {
+			break
+		}
+
+		return e.complexity.TradeDate.Min(childComplexity), true
+
+	case "TradeDate.open":
+		if e.complexity.TradeDate.Open == nil {
+			break
+		}
+
+		return e.complexity.TradeDate.Open(childComplexity), true
+
+	case "TradeDate.short":
+		if e.complexity.TradeDate.Short == nil {
+			break
+		}
+
+		return e.complexity.TradeDate.Short(childComplexity), true
 
 	case "TradeDate.volume":
 		if e.complexity.TradeDate.Volume == nil {
@@ -1296,6 +1344,7 @@ type Mutation{
     symbol: String!
     name: String!
     bull: Int!
+    short: String!
 }
 
 type StockConnection{
@@ -1308,6 +1357,11 @@ type TradeDate{
     close: Float!
     volume: Float!
     xq: Int!
+    open: Float!
+    bull: Int!
+    short: String!
+    max: Float!
+    min: Float!
 }
 
 type TradeDateConnection{
@@ -5700,6 +5754,50 @@ func (ec *executionContext) fieldContext_Stock_bull(ctx context.Context, field g
 	return fc, nil
 }
 
+func (ec *executionContext) _Stock_short(ctx context.Context, field graphql.CollectedField, obj *models.Stock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Stock_short(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Short, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Stock_short(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Stock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _StockConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.StockConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_StockConnection_nodes(ctx, field)
 	if err != nil {
@@ -5744,6 +5842,8 @@ func (ec *executionContext) fieldContext_StockConnection_nodes(ctx context.Conte
 				return ec.fieldContext_Stock_name(ctx, field)
 			case "bull":
 				return ec.fieldContext_Stock_bull(ctx, field)
+			case "short":
+				return ec.fieldContext_Stock_short(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Stock", field.Name)
 		},
@@ -5971,6 +6071,226 @@ func (ec *executionContext) fieldContext_TradeDate_xq(ctx context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _TradeDate_open(ctx context.Context, field graphql.CollectedField, obj *models.TradeDate) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TradeDate_open(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Open, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TradeDate_open(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TradeDate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TradeDate_bull(ctx context.Context, field graphql.CollectedField, obj *models.TradeDate) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TradeDate_bull(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Bull, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TradeDate_bull(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TradeDate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TradeDate_short(ctx context.Context, field graphql.CollectedField, obj *models.TradeDate) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TradeDate_short(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Short, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TradeDate_short(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TradeDate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TradeDate_max(ctx context.Context, field graphql.CollectedField, obj *models.TradeDate) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TradeDate_max(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Max, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TradeDate_max(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TradeDate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TradeDate_min(ctx context.Context, field graphql.CollectedField, obj *models.TradeDate) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TradeDate_min(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Min, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TradeDate_min(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TradeDate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TradeDateConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.TradeDateConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TradeDateConnection_nodes(ctx, field)
 	if err != nil {
@@ -6015,6 +6335,16 @@ func (ec *executionContext) fieldContext_TradeDateConnection_nodes(ctx context.C
 				return ec.fieldContext_TradeDate_volume(ctx, field)
 			case "xq":
 				return ec.fieldContext_TradeDate_xq(ctx, field)
+			case "open":
+				return ec.fieldContext_TradeDate_open(ctx, field)
+			case "bull":
+				return ec.fieldContext_TradeDate_bull(ctx, field)
+			case "short":
+				return ec.fieldContext_TradeDate_short(ctx, field)
+			case "max":
+				return ec.fieldContext_TradeDate_max(ctx, field)
+			case "min":
+				return ec.fieldContext_TradeDate_min(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TradeDate", field.Name)
 		},
@@ -9841,6 +10171,13 @@ func (ec *executionContext) _Stock(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "short":
+
+			out.Values[i] = ec._Stock_short(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9918,6 +10255,41 @@ func (ec *executionContext) _TradeDate(ctx context.Context, sel ast.SelectionSet
 		case "xq":
 
 			out.Values[i] = ec._TradeDate_xq(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "open":
+
+			out.Values[i] = ec._TradeDate_open(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "bull":
+
+			out.Values[i] = ec._TradeDate_bull(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "short":
+
+			out.Values[i] = ec._TradeDate_short(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "max":
+
+			out.Values[i] = ec._TradeDate_max(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "min":
+
+			out.Values[i] = ec._TradeDate_min(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++

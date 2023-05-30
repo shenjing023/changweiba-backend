@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"stock_service/conf"
 	"stock_service/repository/ent"
@@ -13,6 +14,7 @@ import (
 )
 
 func init() {
+	fmt.Println("init")
 	conf.Init("../conf/config.yaml")
 	Init()
 }

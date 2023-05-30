@@ -94,6 +94,7 @@ func (StockService) SubscribedStocks(ctx context.Context, req *pb.SubscribeStock
 			Symbol: s.Symbol,
 			Name:   s.Name,
 			Bull:   int64(s.Bull),
+			Short:  s.Short,
 		})
 	}
 	return &pb.SubscribeStocksResponse{
@@ -114,6 +115,11 @@ func (StockService) StockTradeData(ctx context.Context, req *pb.StockTradeDataRe
 			Close:       d.Close,
 			Volume:      int64(d.Volume),
 			XueqiuCount: d.XueqiuCommentCount,
+			Open:        d.Open,
+			Max:         d.Max,
+			Min:         d.Min,
+			Bull:        int64(d.Bull),
+			Short:       d.Short,
 		})
 	}
 	return &pb.StockTradeDataResponse{

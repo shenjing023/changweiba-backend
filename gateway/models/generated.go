@@ -122,6 +122,7 @@ type Stock struct {
 	Symbol string `json:"symbol"`
 	Name   string `json:"name"`
 	Bull   int    `json:"bull"`
+	Short  string `json:"short"`
 }
 
 type StockConnection struct {
@@ -139,6 +140,11 @@ type TradeDate struct {
 	Close  float64 `json:"close"`
 	Volume float64 `json:"volume"`
 	Xq     int     `json:"xq"`
+	Open   float64 `json:"open"`
+	Bull   int     `json:"bull"`
+	Short  string  `json:"short"`
+	Max    float64 `json:"max"`
+	Min    float64 `json:"min"`
 }
 
 type TradeDateConnection struct {
