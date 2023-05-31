@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -155,8 +155,6 @@ func UpdateTradeData() {
 		// 获取wencai数据
 		wencaiData := getWencaiData(uStock.Symbol)
 
-		fmt.Printf("data:%+v\n", tradeData.Data)
-
 		for _, data := range tradeData.Data[strings.ToLower(uStock.Symbol)].Qfqday {
 			// 插入数据
 			date := data[0]
@@ -215,7 +213,7 @@ func getTradeData(symbol string) (*TradeData, error) {
 			continue
 		}
 		defer resp.Body.Close()
-		t, err := ioutil.ReadAll(resp.Body)
+		t, err := io.ReadAll(resp.Body)
 		if err != nil {
 			log.Errorf("read trade data error:%v", err)
 			return nil, err
