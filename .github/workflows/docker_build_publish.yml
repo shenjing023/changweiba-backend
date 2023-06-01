@@ -124,6 +124,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+    # wencai_service的镜像太大，先不弄了
+
   # gateway服务镜像构建
   build_gateway:
     runs-on: ubuntu-latest
