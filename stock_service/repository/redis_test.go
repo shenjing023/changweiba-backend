@@ -75,12 +75,15 @@ func TestGetWencaiData(t *testing.T) {
 				date:    "2022-01-01",
 			},
 			want:    nil,
-			wantErr: true,
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := GetWencaiData(tt.args.ctx, tt.args.stockID, tt.args.date)
+			if err != nil {
+				t.Errorf("GetWencaiData() error = %v", err)
+			}
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetWencaiData() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -8,6 +8,7 @@ import (
 	"stock_service/models"
 
 	"github.com/cockroachdb/errors"
+	"github.com/go-redis/redis/v8"
 	er "github.com/shenjing023/vivy-polaris/errors"
 )
 
@@ -28,7 +29,9 @@ func GetWencaiData(ctx context.Context, stockID int, date string) (*models.Wenca
 	key := fmt.Sprintf("%s:%d:%s", WCKEY, stockID, date)
 	data := new(models.WencaiStockData)
 	err := redisClient.Get(ctx, key).Scan(data)
-	if err != nil {
+	if err == redis.Nil {
+		return nil, nil
+	} else if err != nil {
 		return nil, er.NewServiceErr(er.Internal, errors.Wrap(err, "redis error"))
 	}
 

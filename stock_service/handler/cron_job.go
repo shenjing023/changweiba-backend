@@ -154,6 +154,10 @@ func UpdateTradeData() {
 		}
 		// 获取wencai数据
 		wencaiData := getWencaiData(uStock.Symbol)
+		if wencaiData == nil {
+			log.Errorf("get wencai data error")
+			continue
+		}
 
 		for _, data := range tradeData.Data[strings.ToLower(uStock.Symbol)].Qfqday {
 			// 插入数据
@@ -170,7 +174,7 @@ func UpdateTradeData() {
 			// 获取前一天的wencai数据
 			oldWencaiData, err := repository.GetWencaiData(ctx, int(uStock.StockId), date)
 			if err != nil {
-				log.Errorf("get wencai data error:%+v", err)
+				log.Errorf("get old wencai data error:%+v", err)
 				continue
 			}
 			if oldWencaiData != nil {
@@ -204,7 +208,7 @@ func getTradeData(symbol string) (*TradeData, error) {
 	var data *TradeData
 	url := fmt.Sprintf("http://web.ifzq.gtimg.cn/appstock/app/fqkline/get?_var=kline_dayqfq&param=%s,day,,,1,qfq&r=0.%d",
 		strings.ToLower(symbol), now.UnixNano())
-	fmt.Printf("url:%s\n", url)
+
 	for i := 0; i < 3; i++ {
 		resp, err := http.Get(url)
 		if err != nil {
