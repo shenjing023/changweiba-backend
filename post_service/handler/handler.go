@@ -53,7 +53,7 @@ func (PostService) GetPost(ctx context.Context, pr *pb.PostRequest) (*pb.PostRes
 		Post: &pb.Post{
 			Id:         int64(dbPost.ID),
 			UserId:     int64(dbPost.UserID),
-			Title:      dbPost.Content,
+			Title:      dbPost.Title,
 			CreateTime: dbPost.CreateAt,
 			UpdateTime: dbPost.UpdateAt,
 			ReplyNum:   dbPost.ReplyNum,
