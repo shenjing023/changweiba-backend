@@ -142,7 +142,7 @@ func StockTrades(ctx context.Context, stockID int) (*models.TradeDateConnection,
 		trades = append(trades, &models.TradeDate{
 			Date:   trade.Date,
 			Close:  float64(trade.Close),
-			Volume: float64(trade.Volume),
+			Volume: int(trade.Volume),
 			Xq:     int(trade.XueqiuCount),
 			Open:   float64(trade.Open),
 			Max:    float64(trade.Max),

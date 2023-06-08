@@ -138,7 +138,7 @@ type SubscribeStock struct {
 type TradeDate struct {
 	Date   string  `json:"date"`
 	Close  float64 `json:"close"`
-	Volume float64 `json:"volume"`
+	Volume int     `json:"volume"`
 	Xq     int     `json:"xq"`
 	Open   float64 `json:"open"`
 	Bull   int     `json:"bull"`

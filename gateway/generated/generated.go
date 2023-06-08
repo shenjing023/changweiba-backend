@@ -1355,7 +1355,7 @@ type StockConnection{
 type TradeDate{
     date: String!
     close: Float!
-    volume: Float!
+    volume: Int!
     xq: Int!
     open: Float!
     bull: Int!
@@ -6009,9 +6009,9 @@ func (ec *executionContext) _TradeDate_volume(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(float64)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TradeDate_volume(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6021,7 +6021,7 @@ func (ec *executionContext) fieldContext_TradeDate_volume(ctx context.Context, f
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil

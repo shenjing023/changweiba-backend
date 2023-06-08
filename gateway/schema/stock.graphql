@@ -14,7 +14,7 @@ type StockConnection{
 type TradeDate{
     date: String!
     close: Float!
-    volume: Float!
+    volume: Int!
     xq: Int!
     open: Float!
     bull: Int!
