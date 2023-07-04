@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Hot is the predicate function for hot builders.
+type Hot func(*sql.Selector)
+
 // Stock is the predicate function for stock builders.
 type Stock func(*sql.Selector)
 

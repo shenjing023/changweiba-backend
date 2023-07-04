@@ -115,6 +115,8 @@ func RunCronJob() {
 	c := cron.New()
 	// 每天凌晨1点更新股票交易数据
 	c.AddFunc("0 1 * * *", UpdateTradeData)
+	// 每天凌晨3点更新热榜数据
+	c.AddFunc("0 3 * * *", WencaiHot)
 	c.Start()
 }
 
@@ -250,4 +252,71 @@ func getWencaiData(symbol string) *models.WencaiStockData {
 		return nil
 	}
 	return data
+}
+
+type ChatGptParam struct {
+	Prompt          string `json:"prompt"`
+	Model           string `json:"model"`
+	MessageId       string `json:"message_id"`
+	ParentMessageId string `json:"parent_message_id"`
+	ConversationId  string `json:"conversation_id"`
+	Stream          bool   `json:"stream"`
+}
+
+func getTradeData2(symbol string, day int) ([]*models.DayTradeData, error) {
+	now := time.Now()
+	var data *TradeData
+	url := fmt.Sprintf("http://web.ifzq.gtimg.cn/appstock/app/fqkline/get?_var=kline_dayqfq&param=%s,day,,,%d,qfq&r=0.%d",
+		strings.ToLower(symbol), day, now.UnixNano())
+
+	for i := 0; i < 3; i++ {
+		resp, err := http.Get(url)
+		if err != nil {
+			log.Infof("trade_data url[%s] request failed: %v", url, err)
+			time.Sleep(time.Second)
+			continue
+		}
+		defer resp.Body.Close()
+		t, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Errorf("read trade data error:%v", err)
+			return nil, err
+		}
+		s := strings.Split(string(t), "=")
+		if len(s) < 2 {
+			log.Errorf("split trade data error:%v", err)
+			return nil, err
+		}
+		data = &TradeData{}
+		err = json.Unmarshal([]byte(s[1]), data)
+		if err != nil {
+			log.Errorf("unmarshal trade data error:%v", err)
+			return nil, err
+		}
+		if data.Code != 0 {
+			log.Info("get trade data retry")
+			time.Sleep(time.Second)
+			continue
+		}
+		break
+	}
+
+	result := make([]*models.DayTradeData, 0)
+	for _, d := range data.Data[strings.ToLower(symbol)].Qfqday {
+		date := d[0]
+		close, _ := strconv.ParseFloat(d[2], 64)
+		volume, _ := strconv.ParseFloat(d[5], 64)
+		open, _ := strconv.ParseFloat(d[1], 64)
+		high, _ := strconv.ParseFloat(d[3], 64)
+		low, _ := strconv.ParseFloat(d[4], 64)
+		result = append(result, &models.DayTradeData{
+			Date:   date,
+			Close:  close,
+			Volume: volume,
+			Open:   open,
+			High:   high,
+			Low:    low,
+		})
+	}
+	return result, nil
 }

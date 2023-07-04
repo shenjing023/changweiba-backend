@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"stock_service/repository/ent/hot"
 	"stock_service/repository/ent/predicate"
 	"stock_service/repository/ent/stock"
 	"stock_service/repository/ent/tradedate"
@@ -26,10 +27,790 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
+	TypeHot       = "Hot"
 	TypeStock     = "Stock"
 	TypeTradeDate = "TradeDate"
 	TypeUser      = "User"
 )
+
+// HotMutation represents an operation that mutates the Hot nodes in the graph.
+type HotMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *uint64
+	symbol        *string
+	name          *string
+	t_date        *string
+	_order        *int
+	add_order     *int
+	tag           *string
+	bull          *int
+	addbull       *int
+	short         *string
+	analyse       *string
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*Hot, error)
+	predicates    []predicate.Hot
+}
+
+var _ ent.Mutation = (*HotMutation)(nil)
+
+// hotOption allows management of the mutation configuration using functional options.
+type hotOption func(*HotMutation)
+
+// newHotMutation creates new mutation for the Hot entity.
+func newHotMutation(c config, op Op, opts ...hotOption) *HotMutation {
+	m := &HotMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeHot,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withHotID sets the ID field of the mutation.
+func withHotID(id uint64) hotOption {
+	return func(m *HotMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Hot
+		)
+		m.oldValue = func(ctx context.Context) (*Hot, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Hot.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withHot sets the old Hot of the mutation.
+func withHot(node *Hot) hotOption {
+	return func(m *HotMutation) {
+		m.oldValue = func(context.Context) (*Hot, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m HotMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m HotMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Hot entities.
+func (m *HotMutation) SetID(id uint64) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *HotMutation) ID() (id uint64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *HotMutation) IDs(ctx context.Context) ([]uint64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uint64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Hot.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetSymbol sets the "symbol" field.
+func (m *HotMutation) SetSymbol(s string) {
+	m.symbol = &s
+}
+
+// Symbol returns the value of the "symbol" field in the mutation.
+func (m *HotMutation) Symbol() (r string, exists bool) {
+	v := m.symbol
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSymbol returns the old "symbol" field's value of the Hot entity.
+// If the Hot object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HotMutation) OldSymbol(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSymbol is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSymbol requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSymbol: %w", err)
+	}
+	return oldValue.Symbol, nil
+}
+
+// ResetSymbol resets all changes to the "symbol" field.
+func (m *HotMutation) ResetSymbol() {
+	m.symbol = nil
+}
+
+// SetName sets the "name" field.
+func (m *HotMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *HotMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Hot entity.
+// If the Hot object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HotMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *HotMutation) ResetName() {
+	m.name = nil
+}
+
+// SetTDate sets the "t_date" field.
+func (m *HotMutation) SetTDate(s string) {
+	m.t_date = &s
+}
+
+// TDate returns the value of the "t_date" field in the mutation.
+func (m *HotMutation) TDate() (r string, exists bool) {
+	v := m.t_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTDate returns the old "t_date" field's value of the Hot entity.
+// If the Hot object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HotMutation) OldTDate(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTDate: %w", err)
+	}
+	return oldValue.TDate, nil
+}
+
+// ResetTDate resets all changes to the "t_date" field.
+func (m *HotMutation) ResetTDate() {
+	m.t_date = nil
+}
+
+// SetOrder sets the "order" field.
+func (m *HotMutation) SetOrder(i int) {
+	m._order = &i
+	m.add_order = nil
+}
+
+// Order returns the value of the "order" field in the mutation.
+func (m *HotMutation) Order() (r int, exists bool) {
+	v := m._order
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrder returns the old "order" field's value of the Hot entity.
+// If the Hot object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HotMutation) OldOrder(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrder is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrder requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrder: %w", err)
+	}
+	return oldValue.Order, nil
+}
+
+// AddOrder adds i to the "order" field.
+func (m *HotMutation) AddOrder(i int) {
+	if m.add_order != nil {
+		*m.add_order += i
+	} else {
+		m.add_order = &i
+	}
+}
+
+// AddedOrder returns the value that was added to the "order" field in this mutation.
+func (m *HotMutation) AddedOrder() (r int, exists bool) {
+	v := m.add_order
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetOrder resets all changes to the "order" field.
+func (m *HotMutation) ResetOrder() {
+	m._order = nil
+	m.add_order = nil
+}
+
+// SetTag sets the "tag" field.
+func (m *HotMutation) SetTag(s string) {
+	m.tag = &s
+}
+
+// Tag returns the value of the "tag" field in the mutation.
+func (m *HotMutation) Tag() (r string, exists bool) {
+	v := m.tag
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTag returns the old "tag" field's value of the Hot entity.
+// If the Hot object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HotMutation) OldTag(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTag is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTag requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTag: %w", err)
+	}
+	return oldValue.Tag, nil
+}
+
+// ResetTag resets all changes to the "tag" field.
+func (m *HotMutation) ResetTag() {
+	m.tag = nil
+}
+
+// SetBull sets the "bull" field.
+func (m *HotMutation) SetBull(i int) {
+	m.bull = &i
+	m.addbull = nil
+}
+
+// Bull returns the value of the "bull" field in the mutation.
+func (m *HotMutation) Bull() (r int, exists bool) {
+	v := m.bull
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBull returns the old "bull" field's value of the Hot entity.
+// If the Hot object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HotMutation) OldBull(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBull is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBull requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBull: %w", err)
+	}
+	return oldValue.Bull, nil
+}
+
+// AddBull adds i to the "bull" field.
+func (m *HotMutation) AddBull(i int) {
+	if m.addbull != nil {
+		*m.addbull += i
+	} else {
+		m.addbull = &i
+	}
+}
+
+// AddedBull returns the value that was added to the "bull" field in this mutation.
+func (m *HotMutation) AddedBull() (r int, exists bool) {
+	v := m.addbull
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetBull resets all changes to the "bull" field.
+func (m *HotMutation) ResetBull() {
+	m.bull = nil
+	m.addbull = nil
+}
+
+// SetShort sets the "short" field.
+func (m *HotMutation) SetShort(s string) {
+	m.short = &s
+}
+
+// Short returns the value of the "short" field in the mutation.
+func (m *HotMutation) Short() (r string, exists bool) {
+	v := m.short
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldShort returns the old "short" field's value of the Hot entity.
+// If the Hot object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HotMutation) OldShort(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldShort is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldShort requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldShort: %w", err)
+	}
+	return oldValue.Short, nil
+}
+
+// ResetShort resets all changes to the "short" field.
+func (m *HotMutation) ResetShort() {
+	m.short = nil
+}
+
+// SetAnalyse sets the "analyse" field.
+func (m *HotMutation) SetAnalyse(s string) {
+	m.analyse = &s
+}
+
+// Analyse returns the value of the "analyse" field in the mutation.
+func (m *HotMutation) Analyse() (r string, exists bool) {
+	v := m.analyse
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAnalyse returns the old "analyse" field's value of the Hot entity.
+// If the Hot object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HotMutation) OldAnalyse(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAnalyse is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAnalyse requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAnalyse: %w", err)
+	}
+	return oldValue.Analyse, nil
+}
+
+// ResetAnalyse resets all changes to the "analyse" field.
+func (m *HotMutation) ResetAnalyse() {
+	m.analyse = nil
+}
+
+// Where appends a list predicates to the HotMutation builder.
+func (m *HotMutation) Where(ps ...predicate.Hot) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the HotMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *HotMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Hot, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *HotMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *HotMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Hot).
+func (m *HotMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *HotMutation) Fields() []string {
+	fields := make([]string, 0, 8)
+	if m.symbol != nil {
+		fields = append(fields, hot.FieldSymbol)
+	}
+	if m.name != nil {
+		fields = append(fields, hot.FieldName)
+	}
+	if m.t_date != nil {
+		fields = append(fields, hot.FieldTDate)
+	}
+	if m._order != nil {
+		fields = append(fields, hot.FieldOrder)
+	}
+	if m.tag != nil {
+		fields = append(fields, hot.FieldTag)
+	}
+	if m.bull != nil {
+		fields = append(fields, hot.FieldBull)
+	}
+	if m.short != nil {
+		fields = append(fields, hot.FieldShort)
+	}
+	if m.analyse != nil {
+		fields = append(fields, hot.FieldAnalyse)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *HotMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case hot.FieldSymbol:
+		return m.Symbol()
+	case hot.FieldName:
+		return m.Name()
+	case hot.FieldTDate:
+		return m.TDate()
+	case hot.FieldOrder:
+		return m.Order()
+	case hot.FieldTag:
+		return m.Tag()
+	case hot.FieldBull:
+		return m.Bull()
+	case hot.FieldShort:
+		return m.Short()
+	case hot.FieldAnalyse:
+		return m.Analyse()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *HotMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case hot.FieldSymbol:
+		return m.OldSymbol(ctx)
+	case hot.FieldName:
+		return m.OldName(ctx)
+	case hot.FieldTDate:
+		return m.OldTDate(ctx)
+	case hot.FieldOrder:
+		return m.OldOrder(ctx)
+	case hot.FieldTag:
+		return m.OldTag(ctx)
+	case hot.FieldBull:
+		return m.OldBull(ctx)
+	case hot.FieldShort:
+		return m.OldShort(ctx)
+	case hot.FieldAnalyse:
+		return m.OldAnalyse(ctx)
+	}
+	return nil, fmt.Errorf("unknown Hot field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *HotMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case hot.FieldSymbol:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSymbol(v)
+		return nil
+	case hot.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case hot.FieldTDate:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTDate(v)
+		return nil
+	case hot.FieldOrder:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrder(v)
+		return nil
+	case hot.FieldTag:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTag(v)
+		return nil
+	case hot.FieldBull:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBull(v)
+		return nil
+	case hot.FieldShort:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetShort(v)
+		return nil
+	case hot.FieldAnalyse:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAnalyse(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Hot field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *HotMutation) AddedFields() []string {
+	var fields []string
+	if m.add_order != nil {
+		fields = append(fields, hot.FieldOrder)
+	}
+	if m.addbull != nil {
+		fields = append(fields, hot.FieldBull)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *HotMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case hot.FieldOrder:
+		return m.AddedOrder()
+	case hot.FieldBull:
+		return m.AddedBull()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *HotMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case hot.FieldOrder:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddOrder(v)
+		return nil
+	case hot.FieldBull:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBull(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Hot numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *HotMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *HotMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *HotMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Hot nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *HotMutation) ResetField(name string) error {
+	switch name {
+	case hot.FieldSymbol:
+		m.ResetSymbol()
+		return nil
+	case hot.FieldName:
+		m.ResetName()
+		return nil
+	case hot.FieldTDate:
+		m.ResetTDate()
+		return nil
+	case hot.FieldOrder:
+		m.ResetOrder()
+		return nil
+	case hot.FieldTag:
+		m.ResetTag()
+		return nil
+	case hot.FieldBull:
+		m.ResetBull()
+		return nil
+	case hot.FieldShort:
+		m.ResetShort()
+		return nil
+	case hot.FieldAnalyse:
+		m.ResetAnalyse()
+		return nil
+	}
+	return fmt.Errorf("unknown Hot field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *HotMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *HotMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *HotMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *HotMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *HotMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *HotMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *HotMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Hot unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *HotMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Hot edge %s", name)
+}
 
 // StockMutation represents an operation that mutates the Stock nodes in the graph.
 type StockMutation struct {

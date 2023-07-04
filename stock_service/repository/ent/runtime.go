@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"stock_service/repository/ent/hot"
 	"stock_service/repository/ent/schema"
 	"stock_service/repository/ent/stock"
 	"stock_service/repository/ent/tradedate"
@@ -14,6 +15,46 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	hotFields := schema.Hot{}.Fields()
+	_ = hotFields
+	// hotDescSymbol is the schema descriptor for symbol field.
+	hotDescSymbol := hotFields[1].Descriptor()
+	// hot.SymbolValidator is a validator for the "symbol" field. It is called by the builders before save.
+	hot.SymbolValidator = hotDescSymbol.Validators[0].(func(string) error)
+	// hotDescName is the schema descriptor for name field.
+	hotDescName := hotFields[2].Descriptor()
+	// hot.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	hot.NameValidator = hotDescName.Validators[0].(func(string) error)
+	// hotDescTDate is the schema descriptor for t_date field.
+	hotDescTDate := hotFields[3].Descriptor()
+	// hot.TDateValidator is a validator for the "t_date" field. It is called by the builders before save.
+	hot.TDateValidator = hotDescTDate.Validators[0].(func(string) error)
+	// hotDescOrder is the schema descriptor for order field.
+	hotDescOrder := hotFields[4].Descriptor()
+	// hot.DefaultOrder holds the default value on creation for the order field.
+	hot.DefaultOrder = hotDescOrder.Default.(int)
+	// hotDescTag is the schema descriptor for tag field.
+	hotDescTag := hotFields[5].Descriptor()
+	// hot.DefaultTag holds the default value on creation for the tag field.
+	hot.DefaultTag = hotDescTag.Default.(string)
+	// hotDescBull is the schema descriptor for bull field.
+	hotDescBull := hotFields[6].Descriptor()
+	// hot.DefaultBull holds the default value on creation for the bull field.
+	hot.DefaultBull = hotDescBull.Default.(int)
+	// hotDescShort is the schema descriptor for short field.
+	hotDescShort := hotFields[7].Descriptor()
+	// hot.DefaultShort holds the default value on creation for the short field.
+	hot.DefaultShort = hotDescShort.Default.(string)
+	// hot.ShortValidator is a validator for the "short" field. It is called by the builders before save.
+	hot.ShortValidator = hotDescShort.Validators[0].(func(string) error)
+	// hotDescAnalyse is the schema descriptor for analyse field.
+	hotDescAnalyse := hotFields[8].Descriptor()
+	// hot.DefaultAnalyse holds the default value on creation for the analyse field.
+	hot.DefaultAnalyse = hotDescAnalyse.Default.(string)
+	// hotDescID is the schema descriptor for id field.
+	hotDescID := hotFields[0].Descriptor()
+	// hot.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	hot.IDValidator = hotDescID.Validators[0].(func(uint64) error)
 	stockFields := schema.Stock{}.Fields()
 	_ = stockFields
 	// stockDescSymbol is the schema descriptor for symbol field.

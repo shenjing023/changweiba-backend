@@ -9,6 +9,31 @@ import (
 )
 
 var (
+	// StockHotColumns holds the columns for the "stock_hot" table.
+	StockHotColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUint64, Increment: true},
+		{Name: "symbol", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(10)"}},
+		{Name: "name", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(10)"}},
+		{Name: "t_date", Type: field.TypeString, SchemaType: map[string]string{"mysql": "date"}},
+		{Name: "order", Type: field.TypeInt, Default: 0},
+		{Name: "tag", Type: field.TypeString, Default: "[]"},
+		{Name: "bull", Type: field.TypeInt, Default: 0},
+		{Name: "short", Type: field.TypeString, Default: "---"},
+		{Name: "analyse", Type: field.TypeString, Size: 2147483647, Default: ""},
+	}
+	// StockHotTable holds the schema information for the "stock_hot" table.
+	StockHotTable = &schema.Table{
+		Name:       "stock_hot",
+		Columns:    StockHotColumns,
+		PrimaryKey: []*schema.Column{StockHotColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "hot_t_date",
+				Unique:  false,
+				Columns: []*schema.Column{StockHotColumns[3]},
+			},
+		},
+	}
 	// StockColumns holds the columns for the "stock" table.
 	StockColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUint64, Increment: true},
@@ -104,6 +129,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		StockHotTable,
 		StockTable,
 		TradeDateTable,
 		UserTable,
@@ -112,6 +138,9 @@ var (
 )
 
 func init() {
+	StockHotTable.Annotation = &entsql.Annotation{
+		Table: "stock_hot",
+	}
 	StockTable.Annotation = &entsql.Annotation{
 		Table: "stock",
 	}

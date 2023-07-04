@@ -10,6 +10,7 @@ import (
 
 	"stock_service/repository/ent/migrate"
 
+	"stock_service/repository/ent/hot"
 	"stock_service/repository/ent/stock"
 	"stock_service/repository/ent/tradedate"
 	"stock_service/repository/ent/user"
@@ -25,6 +26,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Hot is the client for interacting with the Hot builders.
+	Hot *HotClient
 	// Stock is the client for interacting with the Stock builders.
 	Stock *StockClient
 	// TradeDate is the client for interacting with the TradeDate builders.
@@ -44,6 +47,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Hot = NewHotClient(c.config)
 	c.Stock = NewStockClient(c.config)
 	c.TradeDate = NewTradeDateClient(c.config)
 	c.User = NewUserClient(c.config)
@@ -129,6 +133,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:       ctx,
 		config:    cfg,
+		Hot:       NewHotClient(cfg),
 		Stock:     NewStockClient(cfg),
 		TradeDate: NewTradeDateClient(cfg),
 		User:      NewUserClient(cfg),
@@ -151,6 +156,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:       ctx,
 		config:    cfg,
+		Hot:       NewHotClient(cfg),
 		Stock:     NewStockClient(cfg),
 		TradeDate: NewTradeDateClient(cfg),
 		User:      NewUserClient(cfg),
@@ -160,7 +166,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Stock.
+//		Hot.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -182,6 +188,7 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.Hot.Use(hooks...)
 	c.Stock.Use(hooks...)
 	c.TradeDate.Use(hooks...)
 	c.User.Use(hooks...)
@@ -190,6 +197,7 @@ func (c *Client) Use(hooks ...Hook) {
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.Hot.Intercept(interceptors...)
 	c.Stock.Intercept(interceptors...)
 	c.TradeDate.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
@@ -198,6 +206,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *HotMutation:
+		return c.Hot.mutate(ctx, m)
 	case *StockMutation:
 		return c.Stock.mutate(ctx, m)
 	case *TradeDateMutation:
@@ -206,6 +216,124 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.User.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// HotClient is a client for the Hot schema.
+type HotClient struct {
+	config
+}
+
+// NewHotClient returns a client for the Hot from the given config.
+func NewHotClient(c config) *HotClient {
+	return &HotClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `hot.Hooks(f(g(h())))`.
+func (c *HotClient) Use(hooks ...Hook) {
+	c.hooks.Hot = append(c.hooks.Hot, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `hot.Intercept(f(g(h())))`.
+func (c *HotClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Hot = append(c.inters.Hot, interceptors...)
+}
+
+// Create returns a builder for creating a Hot entity.
+func (c *HotClient) Create() *HotCreate {
+	mutation := newHotMutation(c.config, OpCreate)
+	return &HotCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Hot entities.
+func (c *HotClient) CreateBulk(builders ...*HotCreate) *HotCreateBulk {
+	return &HotCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Hot.
+func (c *HotClient) Update() *HotUpdate {
+	mutation := newHotMutation(c.config, OpUpdate)
+	return &HotUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *HotClient) UpdateOne(h *Hot) *HotUpdateOne {
+	mutation := newHotMutation(c.config, OpUpdateOne, withHot(h))
+	return &HotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *HotClient) UpdateOneID(id uint64) *HotUpdateOne {
+	mutation := newHotMutation(c.config, OpUpdateOne, withHotID(id))
+	return &HotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Hot.
+func (c *HotClient) Delete() *HotDelete {
+	mutation := newHotMutation(c.config, OpDelete)
+	return &HotDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *HotClient) DeleteOne(h *Hot) *HotDeleteOne {
+	return c.DeleteOneID(h.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *HotClient) DeleteOneID(id uint64) *HotDeleteOne {
+	builder := c.Delete().Where(hot.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &HotDeleteOne{builder}
+}
+
+// Query returns a query builder for Hot.
+func (c *HotClient) Query() *HotQuery {
+	return &HotQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeHot},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Hot entity by its id.
+func (c *HotClient) Get(ctx context.Context, id uint64) (*Hot, error) {
+	return c.Query().Where(hot.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *HotClient) GetX(ctx context.Context, id uint64) *Hot {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *HotClient) Hooks() []Hook {
+	return c.hooks.Hot
+}
+
+// Interceptors returns the client interceptors.
+func (c *HotClient) Interceptors() []Interceptor {
+	return c.inters.Hot
+}
+
+func (c *HotClient) mutate(ctx context.Context, m *HotMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&HotCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&HotUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&HotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&HotDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Hot mutation op: %q", m.Op())
 	}
 }
 
@@ -630,9 +758,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Stock, TradeDate, User []ent.Hook
+		Hot, Stock, TradeDate, User []ent.Hook
 	}
 	inters struct {
-		Stock, TradeDate, User []ent.Interceptor
+		Hot, Stock, TradeDate, User []ent.Interceptor
 	}
 )

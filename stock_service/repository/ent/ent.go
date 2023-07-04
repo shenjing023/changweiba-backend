@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"stock_service/repository/ent/hot"
 	"stock_service/repository/ent/stock"
 	"stock_service/repository/ent/tradedate"
 	"stock_service/repository/ent/user"
@@ -75,6 +76,7 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			hot.Table:       hot.ValidColumn,
 			stock.Table:     stock.ValidColumn,
 			tradedate.Table: tradedate.ValidColumn,
 			user.Table:      user.ValidColumn,

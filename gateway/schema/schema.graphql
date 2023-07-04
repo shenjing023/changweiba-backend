@@ -44,6 +44,8 @@ type Query {
         pageSize:Int!
         isPin: Boolean!
     ): PostConnection! @IsAuthenticated
+    """获取热门stock资讯"""
+    hotStocks(date: String!): HotStockConnection!
 }
 
 type Mutation{

@@ -127,3 +127,27 @@ func (StockService) StockTradeData(ctx context.Context, req *pb.StockTradeDataRe
 		Info:      &pb.StockInfo{Id: req.Id},
 	}, nil
 }
+
+func (StockService) HotStocks(ctx context.Context, req *pb.HotStocksRequest) (*pb.HotStocksResponse, error) {
+	stocks, err := repository.GetHotStocks2(ctx, req.Date)
+	if err != nil {
+		log.Errorf("HotStocks Error: %+v", err)
+		return nil, err
+	}
+	var replyStocks []*pb.HotStock
+	for _, s := range stocks {
+		replyStocks = append(replyStocks, &pb.HotStock{
+			Symbol:  s.Symbol,
+			Name:    s.Name,
+			Bull:    int64(s.Bull),
+			Short:   s.Short,
+			Analyse: s.Analyse,
+			Tag:     s.Tag,
+			Order:   int64(s.Order),
+			Date:    s.TDate,
+		})
+	}
+	return &pb.HotStocksResponse{
+		HotStocks: replyStocks,
+	}, nil
+}

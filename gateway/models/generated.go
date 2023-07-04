@@ -42,6 +42,22 @@ type EditUser struct {
 	Role     *UserRole   `json:"role,omitempty"`
 }
 
+type HotStock struct {
+	Date    string `json:"date"`
+	Symbol  string `json:"symbol"`
+	Name    string `json:"name"`
+	Bull    int    `json:"bull"`
+	Short   string `json:"short"`
+	Analyse string `json:"analyse"`
+	Tag     string `json:"tag"`
+	Order   int    `json:"order"`
+}
+
+type HotStockConnection struct {
+	Nodes      []*HotStock `json:"nodes,omitempty"`
+	TotalCount int         `json:"totalCount"`
+}
+
 type NewComment struct {
 	PostID  int    `json:"postId"`
 	Content string `json:"content"`

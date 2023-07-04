@@ -38,6 +38,17 @@ message StockInfo {
     string short=5;
 }
 
+message HotStock{
+    int64 order=1;
+    string symbol=2;
+    string name=3;
+    int64 bull=4;
+    string short=5;
+    string analyse=6;
+    string tag=7;
+    string date=8;
+}
+
 message SubscribeStocksRequest {
     int64 user_id=1;
 }
@@ -63,10 +74,19 @@ message SearchStockResponse {
     repeated StockInfo stocks=1;
 }
 
+message HotStocksRequest {
+    string date=1;
+}
+
+message HotStocksResponse {
+    repeated HotStock hot_stocks=1;
+}
+
 service StockService{
     rpc SubscribeStock(SubscribeStockRequest) returns(google.protobuf.Empty){}
     rpc UnSubscribeStock(UnSubscribeStockRequest) returns(google.protobuf.Empty){}
     rpc SubscribedStocks(SubscribeStocksRequest) returns(SubscribeStocksResponse){}
     rpc SearchStock(SearchStockRequest) returns(SearchStockResponse){}
     rpc StockTradeData(StockTradeDataRequest) returns(StockTradeDataResponse){}
+    rpc HotStocks(HotStocksRequest) returns(HotStocksResponse){}
 }

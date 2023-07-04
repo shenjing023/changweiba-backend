@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"reflect"
 	"stock_service/conf"
 	"stock_service/repository"
@@ -52,6 +53,29 @@ func TestUpdateTradeData(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			UpdateTradeData()
+		})
+	}
+}
+
+func TestGetWencaiHot(t *testing.T) {
+	type args struct {
+		ctx context.Context
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		// TODO: Add test cases.
+		{
+			name: "test",
+			args: args{
+				ctx: context.Background(),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			getWencaiHot(tt.args.ctx)
 		})
 	}
 }

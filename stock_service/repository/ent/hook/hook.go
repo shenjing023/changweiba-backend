@@ -8,6 +8,18 @@ import (
 	"stock_service/repository/ent"
 )
 
+// The HotFunc type is an adapter to allow the use of ordinary
+// function as Hot mutator.
+type HotFunc func(context.Context, *ent.HotMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f HotFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.HotMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.HotMutation", m)
+}
+
 // The StockFunc type is an adapter to allow the use of ordinary
 // function as Stock mutator.
 type StockFunc func(context.Context, *ent.StockMutation) (ent.Value, error)

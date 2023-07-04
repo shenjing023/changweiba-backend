@@ -21,3 +21,17 @@ func (w *WencaiStockData) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, w)
 
 }
+
+type WencaiHotStack struct {
+	Market int    `json:"market"`
+	Code   string `json:"code"`
+	Name   string `json:"name"`
+	Tag    struct {
+		ConceptTag []string `json:"concept_tag"`
+	} `json:"tag"`
+	Order int `json:"order"`
+}
+
+type WencaiStackAnalyse struct {
+	Result string `json:"result"`
+}

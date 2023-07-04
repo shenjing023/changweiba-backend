@@ -2,3 +2,6 @@ port: 8022
 etcd:
   host: "127.0.0.1"
   port: 2379
+chatgpt:
+  host: "http:127.0.0.1"
+  port: 8123

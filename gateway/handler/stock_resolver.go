@@ -157,3 +157,36 @@ func StockTrades(ctx context.Context, stockID int) (*models.TradeDateConnection,
 		ID:         stockID,
 	}, nil
 }
+
+func HotStocks(ctx context.Context, date string) (*models.HotStockConnection, error) {
+	client := pb.NewStockServiceClient(StockConn)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	request := pb.HotStocksRequest{
+		Date: date,
+	}
+	resp, err := client.HotStocks(ctx, &request)
+	if err != nil {
+		log.Errorf("get hot stocks error: %+v", err)
+		return nil, common.GRPCErrorConvert(err, map[codes.Code]string{
+			codes.Internal: common.ServiceError,
+		})
+	}
+	var stocks []*models.HotStock
+	for _, stock := range resp.HotStocks {
+		stocks = append(stocks, &models.HotStock{
+			Symbol:  stock.Symbol,
+			Name:    stock.Name,
+			Bull:    int(stock.Bull),
+			Short:   stock.Short,
+			Order:   int(stock.Order),
+			Analyse: stock.Analyse,
+			Tag:     stock.Tag,
+			Date:    stock.Date,
+		})
+	}
+	return &models.HotStockConnection{
+		Nodes:      stocks,
+		TotalCount: len(stocks),
+	}, nil
+}

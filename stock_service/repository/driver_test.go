@@ -202,3 +202,61 @@ func TestGetSubscribedStocksByUserID(t *testing.T) {
 		})
 	}
 }
+
+func TestInsertHotStock(t *testing.T) {
+	type args struct {
+		ctx     context.Context
+		symbol  string
+		name    string
+		date    string
+		analyse string
+		tag     string
+		order   int
+		bull    int
+		short   string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "normal test1",
+			args: args{
+				ctx:     context.Background(),
+				symbol:  "SZ600220",
+				name:    "恒立实业",
+				date:    "2018-01-02",
+				analyse: "sadasjdalfja\nsdjasid\n",
+				tag:     "[1,2,3]",
+				order:   1,
+				bull:    1,
+				short:   "---",
+			},
+			wantErr: false,
+		},
+		{
+			name: "normal test2",
+			args: args{
+				ctx:     context.Background(),
+				symbol:  "SH601991",
+				name:    "大唐发电",
+				date:    "2018-01-02",
+				analyse: "sadasjdalfja\nsdjasid\n",
+				tag:     "[1,2,3]",
+				order:   2,
+				bull:    2,
+				short:   "---",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := InsertHotStock(tt.args.ctx, tt.args.symbol, tt.args.name, tt.args.date, tt.args.analyse,
+				tt.args.tag, tt.args.order, tt.args.bull, tt.args.short); (err != nil) != tt.wantErr {
+				t.Errorf("InsertHotStock() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

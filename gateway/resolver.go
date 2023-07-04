@@ -138,6 +138,10 @@ func (r queryResolver) WencaiStock(ctx context.Context, stockID int) (*models.We
 	return handler.WencaiStock(ctx, stockID)
 }
 
+func (r queryResolver) HotStocks(ctx context.Context, date string) (*models.HotStockConnection, error) {
+	return handler.HotStocks(ctx, date)
+}
+
 func (r *replyResolver) User(ctx context.Context, obj *models.Reply) (*models.User, error) {
 	return dataloader.Loader.UsersByIDs.Load(ctx, int64(obj.User.ID))
 }

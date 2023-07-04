@@ -33,3 +33,19 @@ input SubscribeStock{
     symbol: String!
     name: String!
 }
+
+type HotStock{
+    date: String!
+    symbol: String!
+    name: String!
+    bull: Int!
+    short: String!
+    analyse: String!
+    tag: String!
+    order: Int!
+}
+
+type HotStockConnection{
+    nodes:[HotStock]
+    totalCount:Int!
+}

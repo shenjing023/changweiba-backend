@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"stock_service/repository/ent"
+	"stock_service/repository/ent/hot"
 	"stock_service/repository/ent/stock"
 	"stock_service/repository/ent/tradedate"
 	"stock_service/repository/ent/user"
@@ -280,4 +281,33 @@ func UpdateStockBullAndShort(ctx context.Context, stockID uint64, bull int, shor
 		return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
 	}
 	return nil
+}
+
+func InsertHotStock(ctx context.Context, symbol, name, date, analyse, tag string, order int, bull int, short string) error {
+	_, err := entClient.Hot.Create().
+		SetSymbol(symbol).
+		SetName(name).
+		SetTDate(date).
+		SetAnalyse(analyse).
+		SetTag(tag).
+		SetOrder(order).
+		SetBull(bull).
+		SetShort(short).
+		Save(ctx)
+	if err != nil {
+		if ent.IsConstraintError(err) {
+			return nil
+		}
+		return er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
+	}
+	return nil
+}
+
+// get hot stocks through date and order by order
+func GetHotStocks1(ctx context.Context, date string) ([]*ent.Hot, error) {
+	hots, err := entClient.Hot.Query().Where(hot.TDate(date)).Order(ent.Asc(hot.FieldOrder)).All(ctx)
+	if err != nil {
+		return nil, er.NewServiceErr(er.Internal, errors.Wrap(err, "ent error"))
+	}
+	return hots, nil
 }

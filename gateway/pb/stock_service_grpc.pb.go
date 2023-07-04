@@ -28,6 +28,7 @@ type StockServiceClient interface {
 	SubscribedStocks(ctx context.Context, in *SubscribeStocksRequest, opts ...grpc.CallOption) (*SubscribeStocksResponse, error)
 	SearchStock(ctx context.Context, in *SearchStockRequest, opts ...grpc.CallOption) (*SearchStockResponse, error)
 	StockTradeData(ctx context.Context, in *StockTradeDataRequest, opts ...grpc.CallOption) (*StockTradeDataResponse, error)
+	HotStocks(ctx context.Context, in *HotStocksRequest, opts ...grpc.CallOption) (*HotStocksResponse, error)
 }
 
 type stockServiceClient struct {
@@ -83,6 +84,15 @@ func (c *stockServiceClient) StockTradeData(ctx context.Context, in *StockTradeD
 	return out, nil
 }
 
+func (c *stockServiceClient) HotStocks(ctx context.Context, in *HotStocksRequest, opts ...grpc.CallOption) (*HotStocksResponse, error) {
+	out := new(HotStocksResponse)
+	err := c.cc.Invoke(ctx, "/stock.StockService/HotStocks", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StockServiceServer is the server API for StockService service.
 // All implementations must embed UnimplementedStockServiceServer
 // for forward compatibility
@@ -92,6 +102,7 @@ type StockServiceServer interface {
 	SubscribedStocks(context.Context, *SubscribeStocksRequest) (*SubscribeStocksResponse, error)
 	SearchStock(context.Context, *SearchStockRequest) (*SearchStockResponse, error)
 	StockTradeData(context.Context, *StockTradeDataRequest) (*StockTradeDataResponse, error)
+	HotStocks(context.Context, *HotStocksRequest) (*HotStocksResponse, error)
 	mustEmbedUnimplementedStockServiceServer()
 }
 
@@ -113,6 +124,9 @@ func (UnimplementedStockServiceServer) SearchStock(context.Context, *SearchStock
 }
 func (UnimplementedStockServiceServer) StockTradeData(context.Context, *StockTradeDataRequest) (*StockTradeDataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StockTradeData not implemented")
+}
+func (UnimplementedStockServiceServer) HotStocks(context.Context, *HotStocksRequest) (*HotStocksResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HotStocks not implemented")
 }
 func (UnimplementedStockServiceServer) mustEmbedUnimplementedStockServiceServer() {}
 
@@ -217,6 +231,24 @@ func _StockService_StockTradeData_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StockService_HotStocks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HotStocksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StockServiceServer).HotStocks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stock.StockService/HotStocks",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StockServiceServer).HotStocks(ctx, req.(*HotStocksRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StockService_ServiceDesc is the grpc.ServiceDesc for StockService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -243,6 +275,10 @@ var StockService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StockTradeData",
 			Handler:    _StockService_StockTradeData_Handler,
+		},
+		{
+			MethodName: "HotStocks",
+			Handler:    _StockService_HotStocks_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

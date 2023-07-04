@@ -70,6 +70,22 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
+	HotStock struct {
+		Analyse func(childComplexity int) int
+		Bull    func(childComplexity int) int
+		Date    func(childComplexity int) int
+		Name    func(childComplexity int) int
+		Order   func(childComplexity int) int
+		Short   func(childComplexity int) int
+		Symbol  func(childComplexity int) int
+		Tag     func(childComplexity int) int
+	}
+
+	HotStockConnection struct {
+		Nodes      func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
 	Mutation struct {
 		DeletePost       func(childComplexity int, input int) int
 		EditUser         func(childComplexity int, input models.EditUser) int
@@ -109,6 +125,7 @@ type ComplexityRoot struct {
 		AllPosts         func(childComplexity int, page int, pageSize int) int
 		Comment          func(childComplexity int, commentID int) int
 		Comments         func(childComplexity int, postID int, page int, pageSize int) int
+		HotStocks        func(childComplexity int, date string) int
 		Post             func(childComplexity int, postID int) int
 		Posts            func(childComplexity int, page int, pageSize int, isPin bool) int
 		Replies          func(childComplexity int, commentID int, page int, pageSize int) int
@@ -226,6 +243,7 @@ type QueryResolver interface {
 	StockTrades(ctx context.Context, stockID int) (*models.TradeDateConnection, error)
 	WencaiStock(ctx context.Context, stockID int) (*models.WencaiStock, error)
 	Posts(ctx context.Context, page int, pageSize int, isPin bool) (*models.PostConnection, error)
+	HotStocks(ctx context.Context, date string) (*models.HotStockConnection, error)
 }
 type ReplyResolver interface {
 	User(ctx context.Context, obj *models.Reply) (*models.User, error)
@@ -339,6 +357,76 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CommentConnection.TotalCount(childComplexity), true
+
+	case "HotStock.analyse":
+		if e.complexity.HotStock.Analyse == nil {
+			break
+		}
+
+		return e.complexity.HotStock.Analyse(childComplexity), true
+
+	case "HotStock.bull":
+		if e.complexity.HotStock.Bull == nil {
+			break
+		}
+
+		return e.complexity.HotStock.Bull(childComplexity), true
+
+	case "HotStock.date":
+		if e.complexity.HotStock.Date == nil {
+			break
+		}
+
+		return e.complexity.HotStock.Date(childComplexity), true
+
+	case "HotStock.name":
+		if e.complexity.HotStock.Name == nil {
+			break
+		}
+
+		return e.complexity.HotStock.Name(childComplexity), true
+
+	case "HotStock.order":
+		if e.complexity.HotStock.Order == nil {
+			break
+		}
+
+		return e.complexity.HotStock.Order(childComplexity), true
+
+	case "HotStock.short":
+		if e.complexity.HotStock.Short == nil {
+			break
+		}
+
+		return e.complexity.HotStock.Short(childComplexity), true
+
+	case "HotStock.symbol":
+		if e.complexity.HotStock.Symbol == nil {
+			break
+		}
+
+		return e.complexity.HotStock.Symbol(childComplexity), true
+
+	case "HotStock.tag":
+		if e.complexity.HotStock.Tag == nil {
+			break
+		}
+
+		return e.complexity.HotStock.Tag(childComplexity), true
+
+	case "HotStockConnection.nodes":
+		if e.complexity.HotStockConnection.Nodes == nil {
+			break
+		}
+
+		return e.complexity.HotStockConnection.Nodes(childComplexity), true
+
+	case "HotStockConnection.totalCount":
+		if e.complexity.HotStockConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.HotStockConnection.TotalCount(childComplexity), true
 
 	case "Mutation.deletePost":
 		if e.complexity.Mutation.DeletePost == nil {
@@ -622,6 +710,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Comments(childComplexity, args["postId"].(int), args["page"].(int), args["pageSize"].(int)), true
+
+	case "Query.hotStocks":
+		if e.complexity.Query.HotStocks == nil {
+			break
+		}
+
+		args, err := ec.field_Query_hotStocks_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.HotStocks(childComplexity, args["date"].(string)), true
 
 	case "Query.post":
 		if e.complexity.Query.Post == nil {
@@ -1313,6 +1413,8 @@ type Query {
         pageSize:Int!
         isPin: Boolean!
     ): PostConnection! @IsAuthenticated
+    """获取热门stock资讯"""
+    hotStocks(date: String!): HotStockConnection!
 }
 
 type Mutation{
@@ -1373,6 +1475,22 @@ type TradeDateConnection{
 input SubscribeStock{
     symbol: String!
     name: String!
+}
+
+type HotStock{
+    date: String!
+    symbol: String!
+    name: String!
+    bull: Int!
+    short: String!
+    analyse: String!
+    tag: String!
+    order: Int!
+}
+
+type HotStockConnection{
+    nodes:[HotStock]
+    totalCount:Int!
 }`, BuiltIn: false},
 	{Name: "../schema/wencai.graphql", Input: `type WencaiStock{
     bull: Int!
@@ -1697,6 +1815,21 @@ func (ec *executionContext) field_Query_comments_args(ctx context.Context, rawAr
 		}
 	}
 	args["pageSize"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_hotStocks_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["date"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("date"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["date"] = arg0
 	return args, nil
 }
 
@@ -2537,6 +2670,461 @@ func (ec *executionContext) _CommentConnection_totalCount(ctx context.Context, f
 func (ec *executionContext) fieldContext_CommentConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CommentConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HotStock_date(ctx context.Context, field graphql.CollectedField, obj *models.HotStock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HotStock_date(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Date, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HotStock_date(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HotStock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HotStock_symbol(ctx context.Context, field graphql.CollectedField, obj *models.HotStock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HotStock_symbol(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Symbol, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HotStock_symbol(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HotStock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HotStock_name(ctx context.Context, field graphql.CollectedField, obj *models.HotStock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HotStock_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HotStock_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HotStock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HotStock_bull(ctx context.Context, field graphql.CollectedField, obj *models.HotStock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HotStock_bull(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Bull, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HotStock_bull(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HotStock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HotStock_short(ctx context.Context, field graphql.CollectedField, obj *models.HotStock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HotStock_short(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Short, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HotStock_short(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HotStock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HotStock_analyse(ctx context.Context, field graphql.CollectedField, obj *models.HotStock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HotStock_analyse(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Analyse, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HotStock_analyse(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HotStock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HotStock_tag(ctx context.Context, field graphql.CollectedField, obj *models.HotStock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HotStock_tag(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Tag, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HotStock_tag(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HotStock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HotStock_order(ctx context.Context, field graphql.CollectedField, obj *models.HotStock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HotStock_order(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Order, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HotStock_order(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HotStock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HotStockConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.HotStockConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HotStockConnection_nodes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nodes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*models.HotStock)
+	fc.Result = res
+	return ec.marshalOHotStock2ᚕᚖgatewayᚋmodelsᚐHotStock(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HotStockConnection_nodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HotStockConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "date":
+				return ec.fieldContext_HotStock_date(ctx, field)
+			case "symbol":
+				return ec.fieldContext_HotStock_symbol(ctx, field)
+			case "name":
+				return ec.fieldContext_HotStock_name(ctx, field)
+			case "bull":
+				return ec.fieldContext_HotStock_bull(ctx, field)
+			case "short":
+				return ec.fieldContext_HotStock_short(ctx, field)
+			case "analyse":
+				return ec.fieldContext_HotStock_analyse(ctx, field)
+			case "tag":
+				return ec.fieldContext_HotStock_tag(ctx, field)
+			case "order":
+				return ec.fieldContext_HotStock_order(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HotStock", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HotStockConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *models.HotStockConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HotStockConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HotStockConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HotStockConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -4946,6 +5534,67 @@ func (ec *executionContext) fieldContext_Query_posts(ctx context.Context, field 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_posts_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_hotStocks(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_hotStocks(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().HotStocks(rctx, fc.Args["date"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.HotStockConnection)
+	fc.Result = res
+	return ec.marshalNHotStockConnection2ᚖgatewayᚋmodelsᚐHotStockConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_hotStocks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "nodes":
+				return ec.fieldContext_HotStockConnection_nodes(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_HotStockConnection_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type HotStockConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_hotStocks_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -9366,6 +10015,115 @@ func (ec *executionContext) _CommentConnection(ctx context.Context, sel ast.Sele
 	return out
 }
 
+var hotStockImplementors = []string{"HotStock"}
+
+func (ec *executionContext) _HotStock(ctx context.Context, sel ast.SelectionSet, obj *models.HotStock) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, hotStockImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HotStock")
+		case "date":
+
+			out.Values[i] = ec._HotStock_date(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "symbol":
+
+			out.Values[i] = ec._HotStock_symbol(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "name":
+
+			out.Values[i] = ec._HotStock_name(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "bull":
+
+			out.Values[i] = ec._HotStock_bull(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "short":
+
+			out.Values[i] = ec._HotStock_short(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "analyse":
+
+			out.Values[i] = ec._HotStock_analyse(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "tag":
+
+			out.Values[i] = ec._HotStock_tag(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "order":
+
+			out.Values[i] = ec._HotStock_order(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var hotStockConnectionImplementors = []string{"HotStockConnection"}
+
+func (ec *executionContext) _HotStockConnection(ctx context.Context, sel ast.SelectionSet, obj *models.HotStockConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, hotStockConnectionImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HotStockConnection")
+		case "nodes":
+
+			out.Values[i] = ec._HotStockConnection_nodes(ctx, field, obj)
+
+		case "totalCount":
+
+			out.Values[i] = ec._HotStockConnection_totalCount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -9975,6 +10733,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_posts(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "hotStocks":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_hotStocks(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -10902,6 +11683,20 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
+func (ec *executionContext) marshalNHotStockConnection2gatewayᚋmodelsᚐHotStockConnection(ctx context.Context, sel ast.SelectionSet, v models.HotStockConnection) graphql.Marshaler {
+	return ec._HotStockConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNHotStockConnection2ᚖgatewayᚋmodelsᚐHotStockConnection(ctx context.Context, sel ast.SelectionSet, v *models.HotStockConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._HotStockConnection(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -11456,6 +12251,54 @@ func (ec *executionContext) marshalOCommentConnection2ᚖgatewayᚋmodelsᚐComm
 		return graphql.Null
 	}
 	return ec._CommentConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOHotStock2ᚕᚖgatewayᚋmodelsᚐHotStock(ctx context.Context, sel ast.SelectionSet, v []*models.HotStock) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOHotStock2ᚖgatewayᚋmodelsᚐHotStock(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOHotStock2ᚖgatewayᚋmodelsᚐHotStock(ctx context.Context, sel ast.SelectionSet, v *models.HotStock) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._HotStock(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
