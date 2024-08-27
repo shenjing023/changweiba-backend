@@ -58,6 +58,9 @@ type HotStockConnection struct {
 	TotalCount int         `json:"totalCount"`
 }
 
+type Mutation struct {
+}
+
 type NewComment struct {
 	PostID  int    `json:"postId"`
 	Content string `json:"content"`
@@ -107,6 +110,9 @@ type Post struct {
 type PostConnection struct {
 	Nodes      []*Post `json:"nodes,omitempty"`
 	TotalCount int     `json:"totalCount"`
+}
+
+type Query struct {
 }
 
 type Reply struct {
