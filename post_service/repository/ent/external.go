@@ -2,7 +2,7 @@ package ent
 
 import (
 	"context"
-	"time"
+	"cw_post_service/repository/ent/post"
 
 	"entgo.io/ent/dialect/sql"
 )
@@ -12,10 +12,24 @@ import (
 func GetPosts(ctx context.Context, c *Client, page, pageSize int) ([]*Post, error) {
 	db := c.driver.(*sql.Driver).DB()
 	// 数据量大时的一个方法
-	sql := `SELECT t1.id,t1.user_id,t1.title,t1.content,t1.reply_num,t1.status,t1.create_at,t1.update_at FROM post t1, 
-	(SELECT id FROM post WHERE status=? ORDER BY update_at DESC, id DESC LIMIT ?,?) t2 
-	WHERE t1.id=t2.id`
-	rows, err := db.QueryContext(ctx, sql, 0, pageSize*(page-1), pageSize)
+	sql := `SELECT 
+		t1.id,
+		t1.author_id,
+		t1.title,
+		t1.content,
+		t1.reply_num,
+		t1.status,
+		t1.created_at,
+		t1.updated_at 
+	FROM post t1 
+	JOIN (
+		SELECT id 
+		FROM post 
+		WHERE status=$1 
+		ORDER BY updated_at DESC, id DESC 
+		LIMIT $2 OFFSET $3
+	) t2 ON t1.id = t2.id`
+	rows, err := db.QueryContext(ctx, sql, post.StatusNORMAL, pageSize, pageSize*(page-1))
 	if err != nil {
 		return nil, err
 	}
@@ -23,8 +37,8 @@ func GetPosts(ctx context.Context, c *Client, page, pageSize int) ([]*Post, erro
 	defer rows.Close()
 	for rows.Next() {
 		var p Post
-		if err := rows.Scan(&p.ID, &p.UserID, &p.Title, &p.Content, &p.ReplyNum,
-			&p.Status, &p.CreateAt, &p.UpdateAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.AuthorID, &p.Title, &p.Content, &p.ReplyNum,
+			&p.Status, &p.CreatedAt, &p.UpdatedAt); err != nil {
 			return nil, err
 		}
 		posts = append(posts, &p)
@@ -32,7 +46,7 @@ func GetPosts(ctx context.Context, c *Client, page, pageSize int) ([]*Post, erro
 	return posts, nil
 }
 
-func InsertReply(ctx context.Context, c *Client, userID, commentID, parentID uint64, content string) (int64, error) {
+func InsertReply(ctx context.Context, c *Client, userID, commentID, parentID int, content string) (int64, error) {
 	db := c.driver.(*sql.Driver).DB()
 	//先获取楼层数
 	var floor int64
@@ -50,11 +64,11 @@ func InsertReply(ctx context.Context, c *Client, userID, commentID, parentID uin
 
 	// 再插入
 	rc := c.Reply.Create().
-		SetUserID(userID).
-		SetFloor(uint64(floor + 1)).
+		SetAuthorID(userID).
+		// SetFloor(uint64(floor + 1)).
 		SetContent(content).
-		SetStatus(0).
-		SetCreateAt(time.Now().Unix()).
+		// SetStatus(0).
+		// SetCreateAt(time.Now().Unix()).
 		SetOwnerID(commentID)
 	if parentID != 0 {
 		rc.SetParentID(parentID)

@@ -7,8 +7,10 @@ import (
 	"cw_post_service/repository/ent/comment"
 	"cw_post_service/repository/ent/post"
 	"cw_post_service/repository/ent/predicate"
+	"cw_post_service/repository/ent/user"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -28,16 +30,29 @@ func (pu *PostUpdate) Where(ps ...predicate.Post) *PostUpdate {
 	return pu
 }
 
-// SetUserID sets the "user_id" field.
-func (pu *PostUpdate) SetUserID(u uint64) *PostUpdate {
-	pu.mutation.ResetUserID()
-	pu.mutation.SetUserID(u)
+// SetUpdatedAt sets the "updated_at" field.
+func (pu *PostUpdate) SetUpdatedAt(t time.Time) *PostUpdate {
+	pu.mutation.SetUpdatedAt(t)
 	return pu
 }
 
-// AddUserID adds u to the "user_id" field.
-func (pu *PostUpdate) AddUserID(u int64) *PostUpdate {
-	pu.mutation.AddUserID(u)
+// SetAuthorID sets the "author_id" field.
+func (pu *PostUpdate) SetAuthorID(i int) *PostUpdate {
+	pu.mutation.SetAuthorID(i)
+	return pu
+}
+
+// SetNillableAuthorID sets the "author_id" field if the given value is not nil.
+func (pu *PostUpdate) SetNillableAuthorID(i *int) *PostUpdate {
+	if i != nil {
+		pu.SetAuthorID(*i)
+	}
+	return pu
+}
+
+// ClearAuthorID clears the value of the "author_id" field.
+func (pu *PostUpdate) ClearAuthorID() *PostUpdate {
+	pu.mutation.ClearAuthorID()
 	return pu
 }
 
@@ -47,42 +62,51 @@ func (pu *PostUpdate) SetTitle(s string) *PostUpdate {
 	return pu
 }
 
+// SetNillableTitle sets the "title" field if the given value is not nil.
+func (pu *PostUpdate) SetNillableTitle(s *string) *PostUpdate {
+	if s != nil {
+		pu.SetTitle(*s)
+	}
+	return pu
+}
+
 // SetContent sets the "content" field.
 func (pu *PostUpdate) SetContent(s string) *PostUpdate {
 	pu.mutation.SetContent(s)
 	return pu
 }
 
-// SetStatus sets the "status" field.
-func (pu *PostUpdate) SetStatus(i int8) *PostUpdate {
-	pu.mutation.ResetStatus()
-	pu.mutation.SetStatus(i)
-	return pu
-}
-
-// SetNillableStatus sets the "status" field if the given value is not nil.
-func (pu *PostUpdate) SetNillableStatus(i *int8) *PostUpdate {
-	if i != nil {
-		pu.SetStatus(*i)
+// SetNillableContent sets the "content" field if the given value is not nil.
+func (pu *PostUpdate) SetNillableContent(s *string) *PostUpdate {
+	if s != nil {
+		pu.SetContent(*s)
 	}
 	return pu
 }
 
-// AddStatus adds i to the "status" field.
-func (pu *PostUpdate) AddStatus(i int8) *PostUpdate {
-	pu.mutation.AddStatus(i)
+// SetStatus sets the "status" field.
+func (pu *PostUpdate) SetStatus(po post.Status) *PostUpdate {
+	pu.mutation.SetStatus(po)
+	return pu
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (pu *PostUpdate) SetNillableStatus(po *post.Status) *PostUpdate {
+	if po != nil {
+		pu.SetStatus(*po)
+	}
 	return pu
 }
 
 // SetReplyNum sets the "reply_num" field.
-func (pu *PostUpdate) SetReplyNum(i int64) *PostUpdate {
+func (pu *PostUpdate) SetReplyNum(i int) *PostUpdate {
 	pu.mutation.ResetReplyNum()
 	pu.mutation.SetReplyNum(i)
 	return pu
 }
 
 // SetNillableReplyNum sets the "reply_num" field if the given value is not nil.
-func (pu *PostUpdate) SetNillableReplyNum(i *int64) *PostUpdate {
+func (pu *PostUpdate) SetNillableReplyNum(i *int) *PostUpdate {
 	if i != nil {
 		pu.SetReplyNum(*i)
 	}
@@ -90,29 +114,8 @@ func (pu *PostUpdate) SetNillableReplyNum(i *int64) *PostUpdate {
 }
 
 // AddReplyNum adds i to the "reply_num" field.
-func (pu *PostUpdate) AddReplyNum(i int64) *PostUpdate {
+func (pu *PostUpdate) AddReplyNum(i int) *PostUpdate {
 	pu.mutation.AddReplyNum(i)
-	return pu
-}
-
-// SetUpdateAt sets the "update_at" field.
-func (pu *PostUpdate) SetUpdateAt(i int64) *PostUpdate {
-	pu.mutation.ResetUpdateAt()
-	pu.mutation.SetUpdateAt(i)
-	return pu
-}
-
-// SetNillableUpdateAt sets the "update_at" field if the given value is not nil.
-func (pu *PostUpdate) SetNillableUpdateAt(i *int64) *PostUpdate {
-	if i != nil {
-		pu.SetUpdateAt(*i)
-	}
-	return pu
-}
-
-// AddUpdateAt adds i to the "update_at" field.
-func (pu *PostUpdate) AddUpdateAt(i int64) *PostUpdate {
-	pu.mutation.AddUpdateAt(i)
 	return pu
 }
 
@@ -138,18 +141,23 @@ func (pu *PostUpdate) AddPin(i int8) *PostUpdate {
 }
 
 // AddCommentIDs adds the "comments" edge to the Comment entity by IDs.
-func (pu *PostUpdate) AddCommentIDs(ids ...uint64) *PostUpdate {
+func (pu *PostUpdate) AddCommentIDs(ids ...int) *PostUpdate {
 	pu.mutation.AddCommentIDs(ids...)
 	return pu
 }
 
 // AddComments adds the "comments" edges to the Comment entity.
 func (pu *PostUpdate) AddComments(c ...*Comment) *PostUpdate {
-	ids := make([]uint64, len(c))
+	ids := make([]int, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
 	return pu.AddCommentIDs(ids...)
+}
+
+// SetAuthor sets the "author" edge to the User entity.
+func (pu *PostUpdate) SetAuthor(u *User) *PostUpdate {
+	return pu.SetAuthorID(u.ID)
 }
 
 // Mutation returns the PostMutation object of the builder.
@@ -164,23 +172,30 @@ func (pu *PostUpdate) ClearComments() *PostUpdate {
 }
 
 // RemoveCommentIDs removes the "comments" edge to Comment entities by IDs.
-func (pu *PostUpdate) RemoveCommentIDs(ids ...uint64) *PostUpdate {
+func (pu *PostUpdate) RemoveCommentIDs(ids ...int) *PostUpdate {
 	pu.mutation.RemoveCommentIDs(ids...)
 	return pu
 }
 
 // RemoveComments removes "comments" edges to Comment entities.
 func (pu *PostUpdate) RemoveComments(c ...*Comment) *PostUpdate {
-	ids := make([]uint64, len(c))
+	ids := make([]int, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
 	return pu.RemoveCommentIDs(ids...)
 }
 
+// ClearAuthor clears the "author" edge to the User entity.
+func (pu *PostUpdate) ClearAuthor() *PostUpdate {
+	pu.mutation.ClearAuthor()
+	return pu
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (pu *PostUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks[int, PostMutation](ctx, pu.sqlSave, pu.mutation, pu.hooks)
+	pu.defaults()
+	return withHooks(ctx, pu.sqlSave, pu.mutation, pu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -205,11 +220,19 @@ func (pu *PostUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (pu *PostUpdate) defaults() {
+	if _, ok := pu.mutation.UpdatedAt(); !ok {
+		v := post.UpdateDefaultUpdatedAt()
+		pu.mutation.SetUpdatedAt(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (pu *PostUpdate) check() error {
-	if v, ok := pu.mutation.UserID(); ok {
-		if err := post.UserIDValidator(v); err != nil {
-			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "Post.user_id": %w`, err)}
+	if v, ok := pu.mutation.AuthorID(); ok {
+		if err := post.AuthorIDValidator(v); err != nil {
+			return &ValidationError{Name: "author_id", err: fmt.Errorf(`ent: validator failed for field "Post.author_id": %w`, err)}
 		}
 	}
 	if v, ok := pu.mutation.Title(); ok {
@@ -232,11 +255,6 @@ func (pu *PostUpdate) check() error {
 			return &ValidationError{Name: "reply_num", err: fmt.Errorf(`ent: validator failed for field "Post.reply_num": %w`, err)}
 		}
 	}
-	if v, ok := pu.mutation.UpdateAt(); ok {
-		if err := post.UpdateAtValidator(v); err != nil {
-			return &ValidationError{Name: "update_at", err: fmt.Errorf(`ent: validator failed for field "Post.update_at": %w`, err)}
-		}
-	}
 	if v, ok := pu.mutation.Pin(); ok {
 		if err := post.PinValidator(v); err != nil {
 			return &ValidationError{Name: "pin", err: fmt.Errorf(`ent: validator failed for field "Post.pin": %w`, err)}
@@ -249,7 +267,7 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := pu.check(); err != nil {
 		return n, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(post.Table, post.Columns, sqlgraph.NewFieldSpec(post.FieldID, field.TypeUint64))
+	_spec := sqlgraph.NewUpdateSpec(post.Table, post.Columns, sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt))
 	if ps := pu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -257,11 +275,8 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := pu.mutation.UserID(); ok {
-		_spec.SetField(post.FieldUserID, field.TypeUint64, value)
-	}
-	if value, ok := pu.mutation.AddedUserID(); ok {
-		_spec.AddField(post.FieldUserID, field.TypeUint64, value)
+	if value, ok := pu.mutation.UpdatedAt(); ok {
+		_spec.SetField(post.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := pu.mutation.Title(); ok {
 		_spec.SetField(post.FieldTitle, field.TypeString, value)
@@ -270,22 +285,13 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.SetField(post.FieldContent, field.TypeString, value)
 	}
 	if value, ok := pu.mutation.Status(); ok {
-		_spec.SetField(post.FieldStatus, field.TypeInt8, value)
-	}
-	if value, ok := pu.mutation.AddedStatus(); ok {
-		_spec.AddField(post.FieldStatus, field.TypeInt8, value)
+		_spec.SetField(post.FieldStatus, field.TypeEnum, value)
 	}
 	if value, ok := pu.mutation.ReplyNum(); ok {
-		_spec.SetField(post.FieldReplyNum, field.TypeInt64, value)
+		_spec.SetField(post.FieldReplyNum, field.TypeInt, value)
 	}
 	if value, ok := pu.mutation.AddedReplyNum(); ok {
-		_spec.AddField(post.FieldReplyNum, field.TypeInt64, value)
-	}
-	if value, ok := pu.mutation.UpdateAt(); ok {
-		_spec.SetField(post.FieldUpdateAt, field.TypeInt64, value)
-	}
-	if value, ok := pu.mutation.AddedUpdateAt(); ok {
-		_spec.AddField(post.FieldUpdateAt, field.TypeInt64, value)
+		_spec.AddField(post.FieldReplyNum, field.TypeInt, value)
 	}
 	if value, ok := pu.mutation.Pin(); ok {
 		_spec.SetField(post.FieldPin, field.TypeInt8, value)
@@ -301,7 +307,7 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{post.CommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(comment.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(comment.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -314,7 +320,7 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{post.CommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(comment.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(comment.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -330,7 +336,36 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{post.CommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(comment.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(comment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if pu.mutation.AuthorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   post.AuthorTable,
+			Columns: []string{post.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.AuthorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   post.AuthorTable,
+			Columns: []string{post.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -358,16 +393,29 @@ type PostUpdateOne struct {
 	mutation *PostMutation
 }
 
-// SetUserID sets the "user_id" field.
-func (puo *PostUpdateOne) SetUserID(u uint64) *PostUpdateOne {
-	puo.mutation.ResetUserID()
-	puo.mutation.SetUserID(u)
+// SetUpdatedAt sets the "updated_at" field.
+func (puo *PostUpdateOne) SetUpdatedAt(t time.Time) *PostUpdateOne {
+	puo.mutation.SetUpdatedAt(t)
 	return puo
 }
 
-// AddUserID adds u to the "user_id" field.
-func (puo *PostUpdateOne) AddUserID(u int64) *PostUpdateOne {
-	puo.mutation.AddUserID(u)
+// SetAuthorID sets the "author_id" field.
+func (puo *PostUpdateOne) SetAuthorID(i int) *PostUpdateOne {
+	puo.mutation.SetAuthorID(i)
+	return puo
+}
+
+// SetNillableAuthorID sets the "author_id" field if the given value is not nil.
+func (puo *PostUpdateOne) SetNillableAuthorID(i *int) *PostUpdateOne {
+	if i != nil {
+		puo.SetAuthorID(*i)
+	}
+	return puo
+}
+
+// ClearAuthorID clears the value of the "author_id" field.
+func (puo *PostUpdateOne) ClearAuthorID() *PostUpdateOne {
+	puo.mutation.ClearAuthorID()
 	return puo
 }
 
@@ -377,42 +425,51 @@ func (puo *PostUpdateOne) SetTitle(s string) *PostUpdateOne {
 	return puo
 }
 
+// SetNillableTitle sets the "title" field if the given value is not nil.
+func (puo *PostUpdateOne) SetNillableTitle(s *string) *PostUpdateOne {
+	if s != nil {
+		puo.SetTitle(*s)
+	}
+	return puo
+}
+
 // SetContent sets the "content" field.
 func (puo *PostUpdateOne) SetContent(s string) *PostUpdateOne {
 	puo.mutation.SetContent(s)
 	return puo
 }
 
-// SetStatus sets the "status" field.
-func (puo *PostUpdateOne) SetStatus(i int8) *PostUpdateOne {
-	puo.mutation.ResetStatus()
-	puo.mutation.SetStatus(i)
-	return puo
-}
-
-// SetNillableStatus sets the "status" field if the given value is not nil.
-func (puo *PostUpdateOne) SetNillableStatus(i *int8) *PostUpdateOne {
-	if i != nil {
-		puo.SetStatus(*i)
+// SetNillableContent sets the "content" field if the given value is not nil.
+func (puo *PostUpdateOne) SetNillableContent(s *string) *PostUpdateOne {
+	if s != nil {
+		puo.SetContent(*s)
 	}
 	return puo
 }
 
-// AddStatus adds i to the "status" field.
-func (puo *PostUpdateOne) AddStatus(i int8) *PostUpdateOne {
-	puo.mutation.AddStatus(i)
+// SetStatus sets the "status" field.
+func (puo *PostUpdateOne) SetStatus(po post.Status) *PostUpdateOne {
+	puo.mutation.SetStatus(po)
+	return puo
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (puo *PostUpdateOne) SetNillableStatus(po *post.Status) *PostUpdateOne {
+	if po != nil {
+		puo.SetStatus(*po)
+	}
 	return puo
 }
 
 // SetReplyNum sets the "reply_num" field.
-func (puo *PostUpdateOne) SetReplyNum(i int64) *PostUpdateOne {
+func (puo *PostUpdateOne) SetReplyNum(i int) *PostUpdateOne {
 	puo.mutation.ResetReplyNum()
 	puo.mutation.SetReplyNum(i)
 	return puo
 }
 
 // SetNillableReplyNum sets the "reply_num" field if the given value is not nil.
-func (puo *PostUpdateOne) SetNillableReplyNum(i *int64) *PostUpdateOne {
+func (puo *PostUpdateOne) SetNillableReplyNum(i *int) *PostUpdateOne {
 	if i != nil {
 		puo.SetReplyNum(*i)
 	}
@@ -420,29 +477,8 @@ func (puo *PostUpdateOne) SetNillableReplyNum(i *int64) *PostUpdateOne {
 }
 
 // AddReplyNum adds i to the "reply_num" field.
-func (puo *PostUpdateOne) AddReplyNum(i int64) *PostUpdateOne {
+func (puo *PostUpdateOne) AddReplyNum(i int) *PostUpdateOne {
 	puo.mutation.AddReplyNum(i)
-	return puo
-}
-
-// SetUpdateAt sets the "update_at" field.
-func (puo *PostUpdateOne) SetUpdateAt(i int64) *PostUpdateOne {
-	puo.mutation.ResetUpdateAt()
-	puo.mutation.SetUpdateAt(i)
-	return puo
-}
-
-// SetNillableUpdateAt sets the "update_at" field if the given value is not nil.
-func (puo *PostUpdateOne) SetNillableUpdateAt(i *int64) *PostUpdateOne {
-	if i != nil {
-		puo.SetUpdateAt(*i)
-	}
-	return puo
-}
-
-// AddUpdateAt adds i to the "update_at" field.
-func (puo *PostUpdateOne) AddUpdateAt(i int64) *PostUpdateOne {
-	puo.mutation.AddUpdateAt(i)
 	return puo
 }
 
@@ -468,18 +504,23 @@ func (puo *PostUpdateOne) AddPin(i int8) *PostUpdateOne {
 }
 
 // AddCommentIDs adds the "comments" edge to the Comment entity by IDs.
-func (puo *PostUpdateOne) AddCommentIDs(ids ...uint64) *PostUpdateOne {
+func (puo *PostUpdateOne) AddCommentIDs(ids ...int) *PostUpdateOne {
 	puo.mutation.AddCommentIDs(ids...)
 	return puo
 }
 
 // AddComments adds the "comments" edges to the Comment entity.
 func (puo *PostUpdateOne) AddComments(c ...*Comment) *PostUpdateOne {
-	ids := make([]uint64, len(c))
+	ids := make([]int, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
 	return puo.AddCommentIDs(ids...)
+}
+
+// SetAuthor sets the "author" edge to the User entity.
+func (puo *PostUpdateOne) SetAuthor(u *User) *PostUpdateOne {
+	return puo.SetAuthorID(u.ID)
 }
 
 // Mutation returns the PostMutation object of the builder.
@@ -494,18 +535,24 @@ func (puo *PostUpdateOne) ClearComments() *PostUpdateOne {
 }
 
 // RemoveCommentIDs removes the "comments" edge to Comment entities by IDs.
-func (puo *PostUpdateOne) RemoveCommentIDs(ids ...uint64) *PostUpdateOne {
+func (puo *PostUpdateOne) RemoveCommentIDs(ids ...int) *PostUpdateOne {
 	puo.mutation.RemoveCommentIDs(ids...)
 	return puo
 }
 
 // RemoveComments removes "comments" edges to Comment entities.
 func (puo *PostUpdateOne) RemoveComments(c ...*Comment) *PostUpdateOne {
-	ids := make([]uint64, len(c))
+	ids := make([]int, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
 	return puo.RemoveCommentIDs(ids...)
+}
+
+// ClearAuthor clears the "author" edge to the User entity.
+func (puo *PostUpdateOne) ClearAuthor() *PostUpdateOne {
+	puo.mutation.ClearAuthor()
+	return puo
 }
 
 // Where appends a list predicates to the PostUpdate builder.
@@ -523,7 +570,8 @@ func (puo *PostUpdateOne) Select(field string, fields ...string) *PostUpdateOne 
 
 // Save executes the query and returns the updated Post entity.
 func (puo *PostUpdateOne) Save(ctx context.Context) (*Post, error) {
-	return withHooks[*Post, PostMutation](ctx, puo.sqlSave, puo.mutation, puo.hooks)
+	puo.defaults()
+	return withHooks(ctx, puo.sqlSave, puo.mutation, puo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -548,11 +596,19 @@ func (puo *PostUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (puo *PostUpdateOne) defaults() {
+	if _, ok := puo.mutation.UpdatedAt(); !ok {
+		v := post.UpdateDefaultUpdatedAt()
+		puo.mutation.SetUpdatedAt(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (puo *PostUpdateOne) check() error {
-	if v, ok := puo.mutation.UserID(); ok {
-		if err := post.UserIDValidator(v); err != nil {
-			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "Post.user_id": %w`, err)}
+	if v, ok := puo.mutation.AuthorID(); ok {
+		if err := post.AuthorIDValidator(v); err != nil {
+			return &ValidationError{Name: "author_id", err: fmt.Errorf(`ent: validator failed for field "Post.author_id": %w`, err)}
 		}
 	}
 	if v, ok := puo.mutation.Title(); ok {
@@ -575,11 +631,6 @@ func (puo *PostUpdateOne) check() error {
 			return &ValidationError{Name: "reply_num", err: fmt.Errorf(`ent: validator failed for field "Post.reply_num": %w`, err)}
 		}
 	}
-	if v, ok := puo.mutation.UpdateAt(); ok {
-		if err := post.UpdateAtValidator(v); err != nil {
-			return &ValidationError{Name: "update_at", err: fmt.Errorf(`ent: validator failed for field "Post.update_at": %w`, err)}
-		}
-	}
 	if v, ok := puo.mutation.Pin(); ok {
 		if err := post.PinValidator(v); err != nil {
 			return &ValidationError{Name: "pin", err: fmt.Errorf(`ent: validator failed for field "Post.pin": %w`, err)}
@@ -592,7 +643,7 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 	if err := puo.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(post.Table, post.Columns, sqlgraph.NewFieldSpec(post.FieldID, field.TypeUint64))
+	_spec := sqlgraph.NewUpdateSpec(post.Table, post.Columns, sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt))
 	id, ok := puo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Post.id" for update`)}
@@ -617,11 +668,8 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 			}
 		}
 	}
-	if value, ok := puo.mutation.UserID(); ok {
-		_spec.SetField(post.FieldUserID, field.TypeUint64, value)
-	}
-	if value, ok := puo.mutation.AddedUserID(); ok {
-		_spec.AddField(post.FieldUserID, field.TypeUint64, value)
+	if value, ok := puo.mutation.UpdatedAt(); ok {
+		_spec.SetField(post.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := puo.mutation.Title(); ok {
 		_spec.SetField(post.FieldTitle, field.TypeString, value)
@@ -630,22 +678,13 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 		_spec.SetField(post.FieldContent, field.TypeString, value)
 	}
 	if value, ok := puo.mutation.Status(); ok {
-		_spec.SetField(post.FieldStatus, field.TypeInt8, value)
-	}
-	if value, ok := puo.mutation.AddedStatus(); ok {
-		_spec.AddField(post.FieldStatus, field.TypeInt8, value)
+		_spec.SetField(post.FieldStatus, field.TypeEnum, value)
 	}
 	if value, ok := puo.mutation.ReplyNum(); ok {
-		_spec.SetField(post.FieldReplyNum, field.TypeInt64, value)
+		_spec.SetField(post.FieldReplyNum, field.TypeInt, value)
 	}
 	if value, ok := puo.mutation.AddedReplyNum(); ok {
-		_spec.AddField(post.FieldReplyNum, field.TypeInt64, value)
-	}
-	if value, ok := puo.mutation.UpdateAt(); ok {
-		_spec.SetField(post.FieldUpdateAt, field.TypeInt64, value)
-	}
-	if value, ok := puo.mutation.AddedUpdateAt(); ok {
-		_spec.AddField(post.FieldUpdateAt, field.TypeInt64, value)
+		_spec.AddField(post.FieldReplyNum, field.TypeInt, value)
 	}
 	if value, ok := puo.mutation.Pin(); ok {
 		_spec.SetField(post.FieldPin, field.TypeInt8, value)
@@ -661,7 +700,7 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 			Columns: []string{post.CommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(comment.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(comment.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -674,7 +713,7 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 			Columns: []string{post.CommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(comment.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(comment.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -690,7 +729,36 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 			Columns: []string{post.CommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(comment.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(comment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if puo.mutation.AuthorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   post.AuthorTable,
+			Columns: []string{post.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.AuthorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   post.AuthorTable,
+			Columns: []string{post.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

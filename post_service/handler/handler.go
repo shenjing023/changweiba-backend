@@ -4,11 +4,15 @@ import (
 	"context"
 	pb "cw_post_service/pb"
 	"cw_post_service/repository"
+	"cw_post_service/repository/ent/comment"
+	"cw_post_service/repository/ent/post"
+	"cw_post_service/repository/ent/reply"
 	"strings"
 
 	"github.com/cockroachdb/errors"
 	log "github.com/shenjing023/llog"
 	er "github.com/shenjing023/vivy-polaris/errors"
+	"google.golang.org/grpc/codes"
 )
 
 const (
@@ -24,7 +28,8 @@ type PostService struct {
 // NewPost new post
 func (PostService) NewPost(ctx context.Context, pr *pb.NewPostRequest) (*pb.NewPostResponse, error) {
 	if len(strings.TrimSpace(pr.Title)) == 0 || len(strings.TrimSpace(pr.Content)) == 0 {
-		return nil, er.NewServiceErr(er.InvalidArgument, errors.New("topic or content can not be empty"))
+		return nil, er.NewServiceErr(codes.InvalidArgument,
+			errors.New("user name or password can not be empty"))
 	}
 	postID, err := repository.InsertPost(ctx, pr.UserId, pr.Title, pr.Content)
 	if err != nil {
@@ -52,15 +57,54 @@ func (PostService) GetPost(ctx context.Context, pr *pb.PostRequest) (*pb.PostRes
 	return &pb.PostResponse{
 		Post: &pb.Post{
 			Id:         int64(dbPost.ID),
-			UserId:     int64(dbPost.UserID),
+			UserId:     int64(dbPost.AuthorID),
 			Title:      dbPost.Title,
-			CreateTime: dbPost.CreateAt,
-			UpdateTime: dbPost.UpdateAt,
-			ReplyNum:   dbPost.ReplyNum,
-			Status:     pb.PostStatusEnum_Status(dbPost.Status),
+			CreateTime: dbPost.CreatedAt.Unix(),
+			UpdateTime: dbPost.UpdatedAt.Unix(),
+			ReplyNum:   int64(dbPost.ReplyNum),
+			Status:     convertPostStatus(dbPost.Status),
 			Content:    dbPost.Content,
 		},
 	}, nil
+}
+
+func convertPostStatus(status post.Status) pb.PostStatusEnum_Status {
+	switch status {
+	case post.StatusNORMAL:
+		return pb.PostStatusEnum_NORMAL
+	case post.StatusBANNED:
+		return pb.PostStatusEnum_BANNED
+	case post.StatusDELETED:
+		return pb.PostStatusEnum_DELETE
+	default:
+		return pb.PostStatusEnum_NORMAL
+	}
+}
+
+func convertCommentStatus(status comment.Status) pb.CommentStatusEnum_Status {
+	switch status {
+	case comment.StatusNORMAL:
+		return pb.CommentStatusEnum_NORMAL
+	case comment.StatusBANNED:
+		return pb.CommentStatusEnum_BANNED
+	case comment.StatusDELETED:
+		return pb.CommentStatusEnum_DELETE
+	default:
+		return pb.CommentStatusEnum_NORMAL
+	}
+}
+
+func convertReplyStatus(status reply.Status) pb.ReplyStatusEnum_Status {
+	switch status {
+	case reply.StatusNORMAL:
+		return pb.ReplyStatusEnum_NORMAL
+	case reply.StatusBANNED:
+		return pb.ReplyStatusEnum_BANNED
+	case reply.StatusDELETED:
+		return pb.ReplyStatusEnum_DELETE
+	default:
+		return pb.ReplyStatusEnum_NORMAL
+	}
 }
 
 // GetPosts get posts info by page and page_size
@@ -68,26 +112,26 @@ func (PostService) GetAllPosts(ctx context.Context, pr *pb.AllPostsRequest) (*pb
 	dbPosts, err := repository.GetPosts(ctx, int(pr.Page), int(pr.PageSize))
 	if err != nil {
 		log.Errorf("get all posts error: %+v", err)
-		return nil, err
+		return nil, er.NewInternalError()
 	}
 
 	var posts []*pb.Post
 	for _, v := range dbPosts {
 		posts = append(posts, &pb.Post{
 			Id:         int64(v.ID),
-			UserId:     int64(v.UserID),
+			UserId:     int64(v.AuthorID),
 			Title:      v.Content,
-			CreateTime: v.CreateAt,
-			UpdateTime: v.UpdateAt,
-			ReplyNum:   v.ReplyNum,
-			Status:     pb.PostStatusEnum_Status(v.Status),
+			CreateTime: v.CreatedAt.Unix(),
+			UpdateTime: v.UpdatedAt.Unix(),
+			ReplyNum:   int64(v.ReplyNum),
+			Status:     convertPostStatus(v.Status),
 			Content:    v.Content,
 		})
 	}
 	totalCount, err := repository.GetPostsTotalCount(ctx)
 	if err != nil {
 		log.Errorf("get posts total count error: %+v", err)
-		return nil, err
+		return nil, er.NewInternalError()
 	}
 	return &pb.PostsResponse{
 		Posts:      posts,
@@ -96,11 +140,11 @@ func (PostService) GetAllPosts(ctx context.Context, pr *pb.AllPostsRequest) (*pb
 }
 
 func (PostService) NewComment(ctx context.Context, pr *pb.NewCommentRequest) (*pb.NewCommentResponse, error) {
-	// TODO 解析content 文本 图片 视频
-	commentID, err := repository.InsertComment(ctx, pr.UserId, pr.PostId, pr.Content)
+	commentID, err := repository.InsertComment(ctx, pr.UserId,
+		pr.PostId, pr.Content)
 	if err != nil {
 		log.Errorf("insert comment error: %+v", err)
-		return nil, err
+		return nil, er.NewInternalError()
 	}
 	return &pb.NewCommentResponse{
 		CommentId: commentID,
@@ -112,7 +156,7 @@ func (PostService) NewReply(ctx context.Context, pr *pb.NewReplyRequest) (*pb.Ne
 		pr.CommentId, pr.ParentId, pr.Content)
 	if err != nil {
 		log.Errorf("insert reply error: %+v", err)
-		return nil, err
+		return nil, er.NewInternalError()
 	}
 	return &pb.NewReplyResponse{
 		ReplyId: replyID,
@@ -123,18 +167,18 @@ func (PostService) GetPostFirstComment(ctx context.Context, pr *pb.FirstCommentR
 	dbComments, err := repository.GetPostFirstComment(ctx, pr.PostIds)
 	if err != nil {
 		log.Errorf("get first comment error: %+v", err)
-		return nil, err
+		return nil, er.NewInternalError()
 	}
 	var comments []*pb.Comment
 	for _, v := range dbComments {
-		if v.Status != 0 {
+		if v.Status != comment.StatusDELETED {
 			// 被删了
 			comments = append(comments, &pb.Comment{})
 		} else {
 			comments = append(comments, &pb.Comment{
 				Id:      int64(v.ID),
 				Content: v.Content,
-				Status:  pb.PostStatusEnum_Status(v.Status),
+				Status:  convertCommentStatus(v.Status),
 			})
 		}
 	}
@@ -147,23 +191,23 @@ func (PostService) GetCommentsByPostId(ctx context.Context, pr *pb.CommentsReque
 	dbComments, err := repository.GetCommentsByPostID(ctx, pr.PostId, int(pr.Page), int(pr.PageSize))
 	if err != nil {
 		log.Errorf("get post comments error: %+v", err)
-		return nil, err
+		return nil, er.NewInternalError()
 	}
 	var comments []*pb.Comment
 	for _, v := range dbComments {
 		comments = append(comments, &pb.Comment{
 			Id:         int64(v.ID),
 			Content:    v.Content,
-			Status:     pb.PostStatusEnum_Status(v.Status),
-			UserId:     int64(v.UserID),
-			CreateTime: v.CreateAt,
+			Status:     convertCommentStatus(v.Status),
+			UserId:     int64(v.AuthorID),
+			CreateTime: v.CreatedAt.Unix(),
 			Floor:      int64(v.Floor),
 		})
 	}
 	totalCount, err := repository.GetPostCommentTotalCount(ctx, pr.PostId)
 	if err != nil {
 		log.Errorf("get post comments total count error: %+v", err)
-		return nil, err
+		return nil, er.NewInternalError()
 	}
 	return &pb.CommentsResponse{
 		TotalCount: totalCount,
@@ -175,25 +219,24 @@ func (PostService) GetRepliesByCommentId(ctx context.Context, pr *pb.RepliesRequ
 	dbReplies, err := repository.GetRepliesByCommentID(ctx, pr.CommentId, int(pr.Page), int(pr.PageSize))
 	if err != nil {
 		log.Errorf("get comment replies error: %+v", err)
-		return nil, err
+		return nil, er.NewInternalError()
 	}
 	var replies []*pb.Reply
 	for _, v := range dbReplies {
 		replies = append(replies, &pb.Reply{
 			Id:         int64(v.ID),
 			Content:    v.Content,
-			Status:     pb.PostStatusEnum_Status(v.Status),
-			CreateTime: v.CreateAt,
+			Status:     convertReplyStatus(v.Status),
+			CreateTime: v.CreatedAt.Unix(),
 			ParentId:   int64(v.ParentID),
-			Floor:      int64(v.Floor),
-			UserId:     int64(v.UserID),
+			UserId:     int64(v.AuthorID),
 			CommentId:  pr.CommentId,
 		})
 	}
 	totalCount, err := repository.GetCommentReplyTotalCount(ctx, pr.CommentId)
 	if err != nil {
 		log.Errorf("get comment replies total count error: %+v", err)
-		return nil, err
+		return nil, er.NewInternalError()
 	}
 	return &pb.RepliesResponse{
 		TotalCount: totalCount,
@@ -205,19 +248,19 @@ func (PostService) GetPostsByUserId(ctx context.Context, pr *pb.PostsByUserIdReq
 	dbPosts, err := repository.GetPostsByUserId(ctx, pr.UserId, int(pr.Page), int(pr.PageSize))
 	if err != nil {
 		log.Errorf("get user posts error: %+v", err)
-		return nil, err
+		return nil, er.NewInternalError()
 	}
 
 	var posts []*pb.Post
 	for _, v := range dbPosts {
 		posts = append(posts, &pb.Post{
 			Id:         int64(v.ID),
-			UserId:     int64(v.UserID),
+			UserId:     int64(v.AuthorID),
 			Title:      v.Title,
-			CreateTime: v.CreateAt,
-			UpdateTime: v.UpdateAt,
-			ReplyNum:   v.ReplyNum,
-			Status:     pb.PostStatusEnum_Status(v.Status),
+			CreateTime: v.CreatedAt.Unix(),
+			UpdateTime: v.UpdatedAt.Unix(),
+			ReplyNum:   int64(v.ReplyNum),
+			Status:     convertPostStatus(v.Status),
 			Content:    v.Content,
 			Pin:        int64(v.Pin),
 		})
@@ -225,7 +268,7 @@ func (PostService) GetPostsByUserId(ctx context.Context, pr *pb.PostsByUserIdReq
 	totalCount, err := repository.GetUserPostCount(ctx, pr.UserId)
 	if err != nil {
 		log.Errorf("get posts total count error: %+v", err)
-		return nil, err
+		return nil, er.NewInternalError()
 	}
 	return &pb.PostsByUserIdResponse{
 		Posts:      posts,
@@ -238,7 +281,7 @@ func (PostService) DeletePosts(ctx context.Context, pr *pb.DeleteRequest) (*pb.D
 		err := repository.DeletePost(ctx, v)
 		if err != nil {
 			log.Errorf("delete post error: %+v", err)
-			return nil, err
+			return nil, er.NewInternalError()
 		}
 	}
 	return &pb.DeleteResponse{
@@ -250,7 +293,7 @@ func (PostService) PinPost(ctx context.Context, pr *pb.PinPostRequest) (*pb.PinP
 	err := repository.PinPost(ctx, pr.PostId, int(pr.PinStatus))
 	if err != nil {
 		log.Errorf("pin post error: %+v", err)
-		return nil, err
+		return nil, er.NewInternalError()
 	}
 	return &pb.PinPostResponse{
 		Success: true,
@@ -261,19 +304,19 @@ func (PostService) GetPinPosts(ctx context.Context, pr *pb.PinPostsRequest) (*pb
 	dbPosts, err := repository.GetPinPostsByUserId(ctx, pr.UserId)
 	if err != nil {
 		log.Errorf("get user pin posts error: %+v", err)
-		return nil, err
+		return nil, er.NewInternalError()
 	}
 
 	var posts []*pb.Post
 	for _, v := range dbPosts {
 		posts = append(posts, &pb.Post{
 			Id:         int64(v.ID),
-			UserId:     int64(v.UserID),
+			UserId:     int64(v.AuthorID),
 			Title:      v.Title,
-			CreateTime: v.CreateAt,
-			UpdateTime: v.UpdateAt,
-			ReplyNum:   v.ReplyNum,
-			Status:     pb.PostStatusEnum_Status(v.Status),
+			CreateTime: v.CreatedAt.Unix(),
+			UpdateTime: v.UpdatedAt.Unix(),
+			ReplyNum:   int64(v.ReplyNum),
+			Status:     convertPostStatus(v.Status),
 			Content:    v.Content,
 			Pin:        int64(v.Pin),
 		})

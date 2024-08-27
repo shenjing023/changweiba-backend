@@ -6,8 +6,10 @@ import (
 	"context"
 	"cw_post_service/repository/ent/comment"
 	"cw_post_service/repository/ent/reply"
+	"cw_post_service/repository/ent/user"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -20,36 +22,72 @@ type ReplyCreate struct {
 	hooks    []Hook
 }
 
-// SetUserID sets the "user_id" field.
-func (rc *ReplyCreate) SetUserID(u uint64) *ReplyCreate {
-	rc.mutation.SetUserID(u)
+// SetCreatedAt sets the "created_at" field.
+func (rc *ReplyCreate) SetCreatedAt(t time.Time) *ReplyCreate {
+	rc.mutation.SetCreatedAt(t)
+	return rc
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (rc *ReplyCreate) SetNillableCreatedAt(t *time.Time) *ReplyCreate {
+	if t != nil {
+		rc.SetCreatedAt(*t)
+	}
+	return rc
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (rc *ReplyCreate) SetUpdatedAt(t time.Time) *ReplyCreate {
+	rc.mutation.SetUpdatedAt(t)
+	return rc
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (rc *ReplyCreate) SetNillableUpdatedAt(t *time.Time) *ReplyCreate {
+	if t != nil {
+		rc.SetUpdatedAt(*t)
+	}
+	return rc
+}
+
+// SetAuthorID sets the "author_id" field.
+func (rc *ReplyCreate) SetAuthorID(i int) *ReplyCreate {
+	rc.mutation.SetAuthorID(i)
+	return rc
+}
+
+// SetNillableAuthorID sets the "author_id" field if the given value is not nil.
+func (rc *ReplyCreate) SetNillableAuthorID(i *int) *ReplyCreate {
+	if i != nil {
+		rc.SetAuthorID(*i)
+	}
 	return rc
 }
 
 // SetCommentID sets the "comment_id" field.
-func (rc *ReplyCreate) SetCommentID(u uint64) *ReplyCreate {
-	rc.mutation.SetCommentID(u)
+func (rc *ReplyCreate) SetCommentID(i int) *ReplyCreate {
+	rc.mutation.SetCommentID(i)
 	return rc
 }
 
 // SetNillableCommentID sets the "comment_id" field if the given value is not nil.
-func (rc *ReplyCreate) SetNillableCommentID(u *uint64) *ReplyCreate {
-	if u != nil {
-		rc.SetCommentID(*u)
+func (rc *ReplyCreate) SetNillableCommentID(i *int) *ReplyCreate {
+	if i != nil {
+		rc.SetCommentID(*i)
 	}
 	return rc
 }
 
 // SetParentID sets the "parent_id" field.
-func (rc *ReplyCreate) SetParentID(u uint64) *ReplyCreate {
-	rc.mutation.SetParentID(u)
+func (rc *ReplyCreate) SetParentID(i int) *ReplyCreate {
+	rc.mutation.SetParentID(i)
 	return rc
 }
 
 // SetNillableParentID sets the "parent_id" field if the given value is not nil.
-func (rc *ReplyCreate) SetNillableParentID(u *uint64) *ReplyCreate {
-	if u != nil {
-		rc.SetParentID(*u)
+func (rc *ReplyCreate) SetNillableParentID(i *int) *ReplyCreate {
+	if i != nil {
+		rc.SetParentID(*i)
 	}
 	return rc
 }
@@ -61,53 +99,27 @@ func (rc *ReplyCreate) SetContent(s string) *ReplyCreate {
 }
 
 // SetStatus sets the "status" field.
-func (rc *ReplyCreate) SetStatus(i int8) *ReplyCreate {
-	rc.mutation.SetStatus(i)
+func (rc *ReplyCreate) SetStatus(r reply.Status) *ReplyCreate {
+	rc.mutation.SetStatus(r)
 	return rc
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (rc *ReplyCreate) SetNillableStatus(i *int8) *ReplyCreate {
-	if i != nil {
-		rc.SetStatus(*i)
+func (rc *ReplyCreate) SetNillableStatus(r *reply.Status) *ReplyCreate {
+	if r != nil {
+		rc.SetStatus(*r)
 	}
-	return rc
-}
-
-// SetFloor sets the "floor" field.
-func (rc *ReplyCreate) SetFloor(u uint64) *ReplyCreate {
-	rc.mutation.SetFloor(u)
-	return rc
-}
-
-// SetCreateAt sets the "create_at" field.
-func (rc *ReplyCreate) SetCreateAt(i int64) *ReplyCreate {
-	rc.mutation.SetCreateAt(i)
-	return rc
-}
-
-// SetNillableCreateAt sets the "create_at" field if the given value is not nil.
-func (rc *ReplyCreate) SetNillableCreateAt(i *int64) *ReplyCreate {
-	if i != nil {
-		rc.SetCreateAt(*i)
-	}
-	return rc
-}
-
-// SetID sets the "id" field.
-func (rc *ReplyCreate) SetID(u uint64) *ReplyCreate {
-	rc.mutation.SetID(u)
 	return rc
 }
 
 // SetOwnerID sets the "owner" edge to the Comment entity by ID.
-func (rc *ReplyCreate) SetOwnerID(id uint64) *ReplyCreate {
+func (rc *ReplyCreate) SetOwnerID(id int) *ReplyCreate {
 	rc.mutation.SetOwnerID(id)
 	return rc
 }
 
 // SetNillableOwnerID sets the "owner" edge to the Comment entity by ID if the given value is not nil.
-func (rc *ReplyCreate) SetNillableOwnerID(id *uint64) *ReplyCreate {
+func (rc *ReplyCreate) SetNillableOwnerID(id *int) *ReplyCreate {
 	if id != nil {
 		rc = rc.SetOwnerID(*id)
 	}
@@ -125,18 +137,23 @@ func (rc *ReplyCreate) SetParent(r *Reply) *ReplyCreate {
 }
 
 // AddChildIDs adds the "children" edge to the Reply entity by IDs.
-func (rc *ReplyCreate) AddChildIDs(ids ...uint64) *ReplyCreate {
+func (rc *ReplyCreate) AddChildIDs(ids ...int) *ReplyCreate {
 	rc.mutation.AddChildIDs(ids...)
 	return rc
 }
 
 // AddChildren adds the "children" edges to the Reply entity.
 func (rc *ReplyCreate) AddChildren(r ...*Reply) *ReplyCreate {
-	ids := make([]uint64, len(r))
+	ids := make([]int, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
 	return rc.AddChildIDs(ids...)
+}
+
+// SetAuthor sets the "author" edge to the User entity.
+func (rc *ReplyCreate) SetAuthor(u *User) *ReplyCreate {
+	return rc.SetAuthorID(u.ID)
 }
 
 // Mutation returns the ReplyMutation object of the builder.
@@ -147,7 +164,7 @@ func (rc *ReplyCreate) Mutation() *ReplyMutation {
 // Save creates the Reply in the database.
 func (rc *ReplyCreate) Save(ctx context.Context) (*Reply, error) {
 	rc.defaults()
-	return withHooks[*Reply, ReplyMutation](ctx, rc.sqlSave, rc.mutation, rc.hooks)
+	return withHooks(ctx, rc.sqlSave, rc.mutation, rc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -174,24 +191,31 @@ func (rc *ReplyCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (rc *ReplyCreate) defaults() {
+	if _, ok := rc.mutation.CreatedAt(); !ok {
+		v := reply.DefaultCreatedAt()
+		rc.mutation.SetCreatedAt(v)
+	}
+	if _, ok := rc.mutation.UpdatedAt(); !ok {
+		v := reply.DefaultUpdatedAt()
+		rc.mutation.SetUpdatedAt(v)
+	}
 	if _, ok := rc.mutation.Status(); !ok {
 		v := reply.DefaultStatus
 		rc.mutation.SetStatus(v)
-	}
-	if _, ok := rc.mutation.CreateAt(); !ok {
-		v := reply.DefaultCreateAt
-		rc.mutation.SetCreateAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (rc *ReplyCreate) check() error {
-	if _, ok := rc.mutation.UserID(); !ok {
-		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "Reply.user_id"`)}
+	if _, ok := rc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Reply.created_at"`)}
 	}
-	if v, ok := rc.mutation.UserID(); ok {
-		if err := reply.UserIDValidator(v); err != nil {
-			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "Reply.user_id": %w`, err)}
+	if _, ok := rc.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Reply.updated_at"`)}
+	}
+	if v, ok := rc.mutation.AuthorID(); ok {
+		if err := reply.AuthorIDValidator(v); err != nil {
+			return &ValidationError{Name: "author_id", err: fmt.Errorf(`ent: validator failed for field "Reply.author_id": %w`, err)}
 		}
 	}
 	if v, ok := rc.mutation.CommentID(); ok {
@@ -220,27 +244,6 @@ func (rc *ReplyCreate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Reply.status": %w`, err)}
 		}
 	}
-	if _, ok := rc.mutation.Floor(); !ok {
-		return &ValidationError{Name: "floor", err: errors.New(`ent: missing required field "Reply.floor"`)}
-	}
-	if v, ok := rc.mutation.Floor(); ok {
-		if err := reply.FloorValidator(v); err != nil {
-			return &ValidationError{Name: "floor", err: fmt.Errorf(`ent: validator failed for field "Reply.floor": %w`, err)}
-		}
-	}
-	if _, ok := rc.mutation.CreateAt(); !ok {
-		return &ValidationError{Name: "create_at", err: errors.New(`ent: missing required field "Reply.create_at"`)}
-	}
-	if v, ok := rc.mutation.CreateAt(); ok {
-		if err := reply.CreateAtValidator(v); err != nil {
-			return &ValidationError{Name: "create_at", err: fmt.Errorf(`ent: validator failed for field "Reply.create_at": %w`, err)}
-		}
-	}
-	if v, ok := rc.mutation.ID(); ok {
-		if err := reply.IDValidator(v); err != nil {
-			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "Reply.id": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -255,10 +258,8 @@ func (rc *ReplyCreate) sqlSave(ctx context.Context) (*Reply, error) {
 		}
 		return nil, err
 	}
-	if _spec.ID.Value != _node.ID {
-		id := _spec.ID.Value.(int64)
-		_node.ID = uint64(id)
-	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
 	rc.mutation.id = &_node.ID
 	rc.mutation.done = true
 	return _node, nil
@@ -267,31 +268,23 @@ func (rc *ReplyCreate) sqlSave(ctx context.Context) (*Reply, error) {
 func (rc *ReplyCreate) createSpec() (*Reply, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Reply{config: rc.config}
-		_spec = sqlgraph.NewCreateSpec(reply.Table, sqlgraph.NewFieldSpec(reply.FieldID, field.TypeUint64))
+		_spec = sqlgraph.NewCreateSpec(reply.Table, sqlgraph.NewFieldSpec(reply.FieldID, field.TypeInt))
 	)
-	if id, ok := rc.mutation.ID(); ok {
-		_node.ID = id
-		_spec.ID.Value = id
+	if value, ok := rc.mutation.CreatedAt(); ok {
+		_spec.SetField(reply.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
 	}
-	if value, ok := rc.mutation.UserID(); ok {
-		_spec.SetField(reply.FieldUserID, field.TypeUint64, value)
-		_node.UserID = value
+	if value, ok := rc.mutation.UpdatedAt(); ok {
+		_spec.SetField(reply.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
 	}
 	if value, ok := rc.mutation.Content(); ok {
 		_spec.SetField(reply.FieldContent, field.TypeString, value)
 		_node.Content = value
 	}
 	if value, ok := rc.mutation.Status(); ok {
-		_spec.SetField(reply.FieldStatus, field.TypeInt8, value)
+		_spec.SetField(reply.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
-	}
-	if value, ok := rc.mutation.Floor(); ok {
-		_spec.SetField(reply.FieldFloor, field.TypeUint64, value)
-		_node.Floor = value
-	}
-	if value, ok := rc.mutation.CreateAt(); ok {
-		_spec.SetField(reply.FieldCreateAt, field.TypeInt64, value)
-		_node.CreateAt = value
 	}
 	if nodes := rc.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -301,7 +294,7 @@ func (rc *ReplyCreate) createSpec() (*Reply, *sqlgraph.CreateSpec) {
 			Columns: []string{reply.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(comment.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(comment.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -318,7 +311,7 @@ func (rc *ReplyCreate) createSpec() (*Reply, *sqlgraph.CreateSpec) {
 			Columns: []string{reply.ParentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -335,12 +328,29 @@ func (rc *ReplyCreate) createSpec() (*Reply, *sqlgraph.CreateSpec) {
 			Columns: []string{reply.ChildrenColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := rc.mutation.AuthorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   reply.AuthorTable,
+			Columns: []string{reply.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.AuthorID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -349,11 +359,15 @@ func (rc *ReplyCreate) createSpec() (*Reply, *sqlgraph.CreateSpec) {
 // ReplyCreateBulk is the builder for creating many Reply entities in bulk.
 type ReplyCreateBulk struct {
 	config
+	err      error
 	builders []*ReplyCreate
 }
 
 // Save creates the Reply entities in the database.
 func (rcb *ReplyCreateBulk) Save(ctx context.Context) ([]*Reply, error) {
+	if rcb.err != nil {
+		return nil, rcb.err
+	}
 	specs := make([]*sqlgraph.CreateSpec, len(rcb.builders))
 	nodes := make([]*Reply, len(rcb.builders))
 	mutators := make([]Mutator, len(rcb.builders))
@@ -387,9 +401,9 @@ func (rcb *ReplyCreateBulk) Save(ctx context.Context) ([]*Reply, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
+				if specs[i].ID.Value != nil {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = uint64(id)
+					nodes[i].ID = int(id)
 				}
 				mutation.done = true
 				return nodes[i], nil

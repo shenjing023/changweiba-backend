@@ -4,63 +4,74 @@ package comment
 
 import (
 	"cw_post_service/repository/ent/predicate"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
-func ID(id uint64) predicate.Comment {
+func ID(id int) predicate.Comment {
 	return predicate.Comment(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id uint64) predicate.Comment {
+func IDEQ(id int) predicate.Comment {
 	return predicate.Comment(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id uint64) predicate.Comment {
+func IDNEQ(id int) predicate.Comment {
 	return predicate.Comment(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...uint64) predicate.Comment {
+func IDIn(ids ...int) predicate.Comment {
 	return predicate.Comment(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...uint64) predicate.Comment {
+func IDNotIn(ids ...int) predicate.Comment {
 	return predicate.Comment(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id uint64) predicate.Comment {
+func IDGT(id int) predicate.Comment {
 	return predicate.Comment(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id uint64) predicate.Comment {
+func IDGTE(id int) predicate.Comment {
 	return predicate.Comment(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id uint64) predicate.Comment {
+func IDLT(id int) predicate.Comment {
 	return predicate.Comment(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id uint64) predicate.Comment {
+func IDLTE(id int) predicate.Comment {
 	return predicate.Comment(sql.FieldLTE(FieldID, id))
 }
 
-// UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
-func UserID(v uint64) predicate.Comment {
-	return predicate.Comment(sql.FieldEQ(FieldUserID, v))
+// CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
+func CreatedAt(v time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
+func UpdatedAt(v time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// AuthorID applies equality check predicate on the "author_id" field. It's identical to AuthorIDEQ.
+func AuthorID(v int) predicate.Comment {
+	return predicate.Comment(sql.FieldEQ(FieldAuthorID, v))
 }
 
 // PostID applies equality check predicate on the "post_id" field. It's identical to PostIDEQ.
-func PostID(v uint64) predicate.Comment {
+func PostID(v int) predicate.Comment {
 	return predicate.Comment(sql.FieldEQ(FieldPostID, v))
 }
 
@@ -69,78 +80,138 @@ func Content(v string) predicate.Comment {
 	return predicate.Comment(sql.FieldEQ(FieldContent, v))
 }
 
-// Status applies equality check predicate on the "status" field. It's identical to StatusEQ.
-func Status(v int8) predicate.Comment {
-	return predicate.Comment(sql.FieldEQ(FieldStatus, v))
-}
-
 // Floor applies equality check predicate on the "floor" field. It's identical to FloorEQ.
-func Floor(v uint64) predicate.Comment {
+func Floor(v int) predicate.Comment {
 	return predicate.Comment(sql.FieldEQ(FieldFloor, v))
 }
 
-// CreateAt applies equality check predicate on the "create_at" field. It's identical to CreateAtEQ.
-func CreateAt(v int64) predicate.Comment {
-	return predicate.Comment(sql.FieldEQ(FieldCreateAt, v))
+// CreatedAtEQ applies the EQ predicate on the "created_at" field.
+func CreatedAtEQ(v time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldEQ(FieldCreatedAt, v))
 }
 
-// UserIDEQ applies the EQ predicate on the "user_id" field.
-func UserIDEQ(v uint64) predicate.Comment {
-	return predicate.Comment(sql.FieldEQ(FieldUserID, v))
+// CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
+func CreatedAtNEQ(v time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldNEQ(FieldCreatedAt, v))
 }
 
-// UserIDNEQ applies the NEQ predicate on the "user_id" field.
-func UserIDNEQ(v uint64) predicate.Comment {
-	return predicate.Comment(sql.FieldNEQ(FieldUserID, v))
+// CreatedAtIn applies the In predicate on the "created_at" field.
+func CreatedAtIn(vs ...time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldIn(FieldCreatedAt, vs...))
 }
 
-// UserIDIn applies the In predicate on the "user_id" field.
-func UserIDIn(vs ...uint64) predicate.Comment {
-	return predicate.Comment(sql.FieldIn(FieldUserID, vs...))
+// CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
+func CreatedAtNotIn(vs ...time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldNotIn(FieldCreatedAt, vs...))
 }
 
-// UserIDNotIn applies the NotIn predicate on the "user_id" field.
-func UserIDNotIn(vs ...uint64) predicate.Comment {
-	return predicate.Comment(sql.FieldNotIn(FieldUserID, vs...))
+// CreatedAtGT applies the GT predicate on the "created_at" field.
+func CreatedAtGT(v time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldGT(FieldCreatedAt, v))
 }
 
-// UserIDGT applies the GT predicate on the "user_id" field.
-func UserIDGT(v uint64) predicate.Comment {
-	return predicate.Comment(sql.FieldGT(FieldUserID, v))
+// CreatedAtGTE applies the GTE predicate on the "created_at" field.
+func CreatedAtGTE(v time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldGTE(FieldCreatedAt, v))
 }
 
-// UserIDGTE applies the GTE predicate on the "user_id" field.
-func UserIDGTE(v uint64) predicate.Comment {
-	return predicate.Comment(sql.FieldGTE(FieldUserID, v))
+// CreatedAtLT applies the LT predicate on the "created_at" field.
+func CreatedAtLT(v time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldLT(FieldCreatedAt, v))
 }
 
-// UserIDLT applies the LT predicate on the "user_id" field.
-func UserIDLT(v uint64) predicate.Comment {
-	return predicate.Comment(sql.FieldLT(FieldUserID, v))
+// CreatedAtLTE applies the LTE predicate on the "created_at" field.
+func CreatedAtLTE(v time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldLTE(FieldCreatedAt, v))
 }
 
-// UserIDLTE applies the LTE predicate on the "user_id" field.
-func UserIDLTE(v uint64) predicate.Comment {
-	return predicate.Comment(sql.FieldLTE(FieldUserID, v))
+// UpdatedAtEQ applies the EQ predicate on the "updated_at" field.
+func UpdatedAtEQ(v time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// UpdatedAtNEQ applies the NEQ predicate on the "updated_at" field.
+func UpdatedAtNEQ(v time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldNEQ(FieldUpdatedAt, v))
+}
+
+// UpdatedAtIn applies the In predicate on the "updated_at" field.
+func UpdatedAtIn(vs ...time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldIn(FieldUpdatedAt, vs...))
+}
+
+// UpdatedAtNotIn applies the NotIn predicate on the "updated_at" field.
+func UpdatedAtNotIn(vs ...time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldNotIn(FieldUpdatedAt, vs...))
+}
+
+// UpdatedAtGT applies the GT predicate on the "updated_at" field.
+func UpdatedAtGT(v time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldGT(FieldUpdatedAt, v))
+}
+
+// UpdatedAtGTE applies the GTE predicate on the "updated_at" field.
+func UpdatedAtGTE(v time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldGTE(FieldUpdatedAt, v))
+}
+
+// UpdatedAtLT applies the LT predicate on the "updated_at" field.
+func UpdatedAtLT(v time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldLT(FieldUpdatedAt, v))
+}
+
+// UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
+func UpdatedAtLTE(v time.Time) predicate.Comment {
+	return predicate.Comment(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// AuthorIDEQ applies the EQ predicate on the "author_id" field.
+func AuthorIDEQ(v int) predicate.Comment {
+	return predicate.Comment(sql.FieldEQ(FieldAuthorID, v))
+}
+
+// AuthorIDNEQ applies the NEQ predicate on the "author_id" field.
+func AuthorIDNEQ(v int) predicate.Comment {
+	return predicate.Comment(sql.FieldNEQ(FieldAuthorID, v))
+}
+
+// AuthorIDIn applies the In predicate on the "author_id" field.
+func AuthorIDIn(vs ...int) predicate.Comment {
+	return predicate.Comment(sql.FieldIn(FieldAuthorID, vs...))
+}
+
+// AuthorIDNotIn applies the NotIn predicate on the "author_id" field.
+func AuthorIDNotIn(vs ...int) predicate.Comment {
+	return predicate.Comment(sql.FieldNotIn(FieldAuthorID, vs...))
+}
+
+// AuthorIDIsNil applies the IsNil predicate on the "author_id" field.
+func AuthorIDIsNil() predicate.Comment {
+	return predicate.Comment(sql.FieldIsNull(FieldAuthorID))
+}
+
+// AuthorIDNotNil applies the NotNil predicate on the "author_id" field.
+func AuthorIDNotNil() predicate.Comment {
+	return predicate.Comment(sql.FieldNotNull(FieldAuthorID))
 }
 
 // PostIDEQ applies the EQ predicate on the "post_id" field.
-func PostIDEQ(v uint64) predicate.Comment {
+func PostIDEQ(v int) predicate.Comment {
 	return predicate.Comment(sql.FieldEQ(FieldPostID, v))
 }
 
 // PostIDNEQ applies the NEQ predicate on the "post_id" field.
-func PostIDNEQ(v uint64) predicate.Comment {
+func PostIDNEQ(v int) predicate.Comment {
 	return predicate.Comment(sql.FieldNEQ(FieldPostID, v))
 }
 
 // PostIDIn applies the In predicate on the "post_id" field.
-func PostIDIn(vs ...uint64) predicate.Comment {
+func PostIDIn(vs ...int) predicate.Comment {
 	return predicate.Comment(sql.FieldIn(FieldPostID, vs...))
 }
 
 // PostIDNotIn applies the NotIn predicate on the "post_id" field.
-func PostIDNotIn(vs ...uint64) predicate.Comment {
+func PostIDNotIn(vs ...int) predicate.Comment {
 	return predicate.Comment(sql.FieldNotIn(FieldPostID, vs...))
 }
 
@@ -220,123 +291,63 @@ func ContentContainsFold(v string) predicate.Comment {
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.
-func StatusEQ(v int8) predicate.Comment {
+func StatusEQ(v Status) predicate.Comment {
 	return predicate.Comment(sql.FieldEQ(FieldStatus, v))
 }
 
 // StatusNEQ applies the NEQ predicate on the "status" field.
-func StatusNEQ(v int8) predicate.Comment {
+func StatusNEQ(v Status) predicate.Comment {
 	return predicate.Comment(sql.FieldNEQ(FieldStatus, v))
 }
 
 // StatusIn applies the In predicate on the "status" field.
-func StatusIn(vs ...int8) predicate.Comment {
+func StatusIn(vs ...Status) predicate.Comment {
 	return predicate.Comment(sql.FieldIn(FieldStatus, vs...))
 }
 
 // StatusNotIn applies the NotIn predicate on the "status" field.
-func StatusNotIn(vs ...int8) predicate.Comment {
+func StatusNotIn(vs ...Status) predicate.Comment {
 	return predicate.Comment(sql.FieldNotIn(FieldStatus, vs...))
 }
 
-// StatusGT applies the GT predicate on the "status" field.
-func StatusGT(v int8) predicate.Comment {
-	return predicate.Comment(sql.FieldGT(FieldStatus, v))
-}
-
-// StatusGTE applies the GTE predicate on the "status" field.
-func StatusGTE(v int8) predicate.Comment {
-	return predicate.Comment(sql.FieldGTE(FieldStatus, v))
-}
-
-// StatusLT applies the LT predicate on the "status" field.
-func StatusLT(v int8) predicate.Comment {
-	return predicate.Comment(sql.FieldLT(FieldStatus, v))
-}
-
-// StatusLTE applies the LTE predicate on the "status" field.
-func StatusLTE(v int8) predicate.Comment {
-	return predicate.Comment(sql.FieldLTE(FieldStatus, v))
-}
-
 // FloorEQ applies the EQ predicate on the "floor" field.
-func FloorEQ(v uint64) predicate.Comment {
+func FloorEQ(v int) predicate.Comment {
 	return predicate.Comment(sql.FieldEQ(FieldFloor, v))
 }
 
 // FloorNEQ applies the NEQ predicate on the "floor" field.
-func FloorNEQ(v uint64) predicate.Comment {
+func FloorNEQ(v int) predicate.Comment {
 	return predicate.Comment(sql.FieldNEQ(FieldFloor, v))
 }
 
 // FloorIn applies the In predicate on the "floor" field.
-func FloorIn(vs ...uint64) predicate.Comment {
+func FloorIn(vs ...int) predicate.Comment {
 	return predicate.Comment(sql.FieldIn(FieldFloor, vs...))
 }
 
 // FloorNotIn applies the NotIn predicate on the "floor" field.
-func FloorNotIn(vs ...uint64) predicate.Comment {
+func FloorNotIn(vs ...int) predicate.Comment {
 	return predicate.Comment(sql.FieldNotIn(FieldFloor, vs...))
 }
 
 // FloorGT applies the GT predicate on the "floor" field.
-func FloorGT(v uint64) predicate.Comment {
+func FloorGT(v int) predicate.Comment {
 	return predicate.Comment(sql.FieldGT(FieldFloor, v))
 }
 
 // FloorGTE applies the GTE predicate on the "floor" field.
-func FloorGTE(v uint64) predicate.Comment {
+func FloorGTE(v int) predicate.Comment {
 	return predicate.Comment(sql.FieldGTE(FieldFloor, v))
 }
 
 // FloorLT applies the LT predicate on the "floor" field.
-func FloorLT(v uint64) predicate.Comment {
+func FloorLT(v int) predicate.Comment {
 	return predicate.Comment(sql.FieldLT(FieldFloor, v))
 }
 
 // FloorLTE applies the LTE predicate on the "floor" field.
-func FloorLTE(v uint64) predicate.Comment {
+func FloorLTE(v int) predicate.Comment {
 	return predicate.Comment(sql.FieldLTE(FieldFloor, v))
-}
-
-// CreateAtEQ applies the EQ predicate on the "create_at" field.
-func CreateAtEQ(v int64) predicate.Comment {
-	return predicate.Comment(sql.FieldEQ(FieldCreateAt, v))
-}
-
-// CreateAtNEQ applies the NEQ predicate on the "create_at" field.
-func CreateAtNEQ(v int64) predicate.Comment {
-	return predicate.Comment(sql.FieldNEQ(FieldCreateAt, v))
-}
-
-// CreateAtIn applies the In predicate on the "create_at" field.
-func CreateAtIn(vs ...int64) predicate.Comment {
-	return predicate.Comment(sql.FieldIn(FieldCreateAt, vs...))
-}
-
-// CreateAtNotIn applies the NotIn predicate on the "create_at" field.
-func CreateAtNotIn(vs ...int64) predicate.Comment {
-	return predicate.Comment(sql.FieldNotIn(FieldCreateAt, vs...))
-}
-
-// CreateAtGT applies the GT predicate on the "create_at" field.
-func CreateAtGT(v int64) predicate.Comment {
-	return predicate.Comment(sql.FieldGT(FieldCreateAt, v))
-}
-
-// CreateAtGTE applies the GTE predicate on the "create_at" field.
-func CreateAtGTE(v int64) predicate.Comment {
-	return predicate.Comment(sql.FieldGTE(FieldCreateAt, v))
-}
-
-// CreateAtLT applies the LT predicate on the "create_at" field.
-func CreateAtLT(v int64) predicate.Comment {
-	return predicate.Comment(sql.FieldLT(FieldCreateAt, v))
-}
-
-// CreateAtLTE applies the LTE predicate on the "create_at" field.
-func CreateAtLTE(v int64) predicate.Comment {
-	return predicate.Comment(sql.FieldLTE(FieldCreateAt, v))
 }
 
 // HasOwner applies the HasEdge predicate on the "owner" edge.
@@ -385,34 +396,40 @@ func HasRepliesWith(preds ...predicate.Reply) predicate.Comment {
 	})
 }
 
+// HasAuthor applies the HasEdge predicate on the "author" edge.
+func HasAuthor() predicate.Comment {
+	return predicate.Comment(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, AuthorTable, AuthorColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAuthorWith applies the HasEdge predicate on the "author" edge with a given conditions (other predicates).
+func HasAuthorWith(preds ...predicate.User) predicate.Comment {
+	return predicate.Comment(func(s *sql.Selector) {
+		step := newAuthorStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Comment) predicate.Comment {
-	return predicate.Comment(func(s *sql.Selector) {
-		s1 := s.Clone().SetP(nil)
-		for _, p := range predicates {
-			p(s1)
-		}
-		s.Where(s1.P())
-	})
+	return predicate.Comment(sql.AndPredicates(predicates...))
 }
 
 // Or groups predicates with the OR operator between them.
 func Or(predicates ...predicate.Comment) predicate.Comment {
-	return predicate.Comment(func(s *sql.Selector) {
-		s1 := s.Clone().SetP(nil)
-		for i, p := range predicates {
-			if i > 0 {
-				s1.Or()
-			}
-			p(s1)
-		}
-		s.Where(s1.P())
-	})
+	return predicate.Comment(sql.OrPredicates(predicates...))
 }
 
 // Not applies the not operator on the given predicate.
 func Not(p predicate.Comment) predicate.Comment {
-	return predicate.Comment(func(s *sql.Selector) {
-		p(s.Not())
-	})
+	return predicate.Comment(sql.NotPredicates(p))
 }

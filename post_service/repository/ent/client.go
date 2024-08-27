@@ -7,12 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"reflect"
 
 	"cw_post_service/repository/ent/migrate"
 
 	"cw_post_service/repository/ent/comment"
 	"cw_post_service/repository/ent/post"
 	"cw_post_service/repository/ent/reply"
+	"cw_post_service/repository/ent/user"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
@@ -31,13 +33,13 @@ type Client struct {
 	Post *PostClient
 	// Reply is the client for interacting with the Reply builders.
 	Reply *ReplyClient
+	// User is the client for interacting with the User builders.
+	User *UserClient
 }
 
 // NewClient creates a new client configured with the given options.
 func NewClient(opts ...Option) *Client {
-	cfg := config{log: log.Println, hooks: &hooks{}, inters: &inters{}}
-	cfg.options(opts...)
-	client := &Client{config: cfg}
+	client := &Client{config: newConfig(opts...)}
 	client.init()
 	return client
 }
@@ -47,6 +49,7 @@ func (c *Client) init() {
 	c.Comment = NewCommentClient(c.config)
 	c.Post = NewPostClient(c.config)
 	c.Reply = NewReplyClient(c.config)
+	c.User = NewUserClient(c.config)
 }
 
 type (
@@ -66,6 +69,13 @@ type (
 	// Option function to configure the client.
 	Option func(*config)
 )
+
+// newConfig creates a new config for the client.
+func newConfig(opts ...Option) config {
+	cfg := config{log: log.Println, hooks: &hooks{}, inters: &inters{}}
+	cfg.options(opts...)
+	return cfg
+}
 
 // options applies the options on the config object.
 func (c *config) options(opts ...Option) {
@@ -114,11 +124,14 @@ func Open(driverName, dataSourceName string, options ...Option) (*Client, error)
 	}
 }
 
+// ErrTxStarted is returned when trying to start a new transaction from a transactional client.
+var ErrTxStarted = errors.New("ent: cannot start a transaction within a transaction")
+
 // Tx returns a new transactional client. The provided context
 // is used until the transaction is committed or rolled back.
 func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	if _, ok := c.driver.(*txDriver); ok {
-		return nil, errors.New("ent: cannot start a transaction within a transaction")
+		return nil, ErrTxStarted
 	}
 	tx, err := newTx(ctx, c.driver)
 	if err != nil {
@@ -132,6 +145,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Comment: NewCommentClient(cfg),
 		Post:    NewPostClient(cfg),
 		Reply:   NewReplyClient(cfg),
+		User:    NewUserClient(cfg),
 	}, nil
 }
 
@@ -154,6 +168,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Comment: NewCommentClient(cfg),
 		Post:    NewPostClient(cfg),
 		Reply:   NewReplyClient(cfg),
+		User:    NewUserClient(cfg),
 	}, nil
 }
 
@@ -185,6 +200,7 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Comment.Use(hooks...)
 	c.Post.Use(hooks...)
 	c.Reply.Use(hooks...)
+	c.User.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
@@ -193,6 +209,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Comment.Intercept(interceptors...)
 	c.Post.Intercept(interceptors...)
 	c.Reply.Intercept(interceptors...)
+	c.User.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -204,6 +221,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Post.mutate(ctx, m)
 	case *ReplyMutation:
 		return c.Reply.mutate(ctx, m)
+	case *UserMutation:
+		return c.User.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -242,6 +261,21 @@ func (c *CommentClient) CreateBulk(builders ...*CommentCreate) *CommentCreateBul
 	return &CommentCreateBulk{config: c.config, builders: builders}
 }
 
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CommentClient) MapCreateBulk(slice any, setFunc func(*CommentCreate, int)) *CommentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CommentCreateBulk{err: fmt.Errorf("calling to CommentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CommentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CommentCreateBulk{config: c.config, builders: builders}
+}
+
 // Update returns an update builder for Comment.
 func (c *CommentClient) Update() *CommentUpdate {
 	mutation := newCommentMutation(c.config, OpUpdate)
@@ -255,7 +289,7 @@ func (c *CommentClient) UpdateOne(co *Comment) *CommentUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *CommentClient) UpdateOneID(id uint64) *CommentUpdateOne {
+func (c *CommentClient) UpdateOneID(id int) *CommentUpdateOne {
 	mutation := newCommentMutation(c.config, OpUpdateOne, withCommentID(id))
 	return &CommentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -272,7 +306,7 @@ func (c *CommentClient) DeleteOne(co *Comment) *CommentDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *CommentClient) DeleteOneID(id uint64) *CommentDeleteOne {
+func (c *CommentClient) DeleteOneID(id int) *CommentDeleteOne {
 	builder := c.Delete().Where(comment.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -289,12 +323,12 @@ func (c *CommentClient) Query() *CommentQuery {
 }
 
 // Get returns a Comment entity by its id.
-func (c *CommentClient) Get(ctx context.Context, id uint64) (*Comment, error) {
+func (c *CommentClient) Get(ctx context.Context, id int) (*Comment, error) {
 	return c.Query().Where(comment.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *CommentClient) GetX(ctx context.Context, id uint64) *Comment {
+func (c *CommentClient) GetX(ctx context.Context, id int) *Comment {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -327,6 +361,22 @@ func (c *CommentClient) QueryReplies(co *Comment) *ReplyQuery {
 			sqlgraph.From(comment.Table, comment.FieldID, id),
 			sqlgraph.To(reply.Table, reply.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, comment.RepliesTable, comment.RepliesColumn),
+		)
+		fromV = sqlgraph.Neighbors(co.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAuthor queries the author edge of a Comment.
+func (c *CommentClient) QueryAuthor(co *Comment) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := co.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(comment.Table, comment.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, comment.AuthorTable, comment.AuthorColumn),
 		)
 		fromV = sqlgraph.Neighbors(co.driver.Dialect(), step)
 		return fromV, nil
@@ -392,6 +442,21 @@ func (c *PostClient) CreateBulk(builders ...*PostCreate) *PostCreateBulk {
 	return &PostCreateBulk{config: c.config, builders: builders}
 }
 
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PostClient) MapCreateBulk(slice any, setFunc func(*PostCreate, int)) *PostCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PostCreateBulk{err: fmt.Errorf("calling to PostClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PostCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PostCreateBulk{config: c.config, builders: builders}
+}
+
 // Update returns an update builder for Post.
 func (c *PostClient) Update() *PostUpdate {
 	mutation := newPostMutation(c.config, OpUpdate)
@@ -405,7 +470,7 @@ func (c *PostClient) UpdateOne(po *Post) *PostUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *PostClient) UpdateOneID(id uint64) *PostUpdateOne {
+func (c *PostClient) UpdateOneID(id int) *PostUpdateOne {
 	mutation := newPostMutation(c.config, OpUpdateOne, withPostID(id))
 	return &PostUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -422,7 +487,7 @@ func (c *PostClient) DeleteOne(po *Post) *PostDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *PostClient) DeleteOneID(id uint64) *PostDeleteOne {
+func (c *PostClient) DeleteOneID(id int) *PostDeleteOne {
 	builder := c.Delete().Where(post.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -439,12 +504,12 @@ func (c *PostClient) Query() *PostQuery {
 }
 
 // Get returns a Post entity by its id.
-func (c *PostClient) Get(ctx context.Context, id uint64) (*Post, error) {
+func (c *PostClient) Get(ctx context.Context, id int) (*Post, error) {
 	return c.Query().Where(post.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *PostClient) GetX(ctx context.Context, id uint64) *Post {
+func (c *PostClient) GetX(ctx context.Context, id int) *Post {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -461,6 +526,22 @@ func (c *PostClient) QueryComments(po *Post) *CommentQuery {
 			sqlgraph.From(post.Table, post.FieldID, id),
 			sqlgraph.To(comment.Table, comment.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, post.CommentsTable, post.CommentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(po.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAuthor queries the author edge of a Post.
+func (c *PostClient) QueryAuthor(po *Post) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := po.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(post.Table, post.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, post.AuthorTable, post.AuthorColumn),
 		)
 		fromV = sqlgraph.Neighbors(po.driver.Dialect(), step)
 		return fromV, nil
@@ -526,6 +607,21 @@ func (c *ReplyClient) CreateBulk(builders ...*ReplyCreate) *ReplyCreateBulk {
 	return &ReplyCreateBulk{config: c.config, builders: builders}
 }
 
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ReplyClient) MapCreateBulk(slice any, setFunc func(*ReplyCreate, int)) *ReplyCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ReplyCreateBulk{err: fmt.Errorf("calling to ReplyClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ReplyCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ReplyCreateBulk{config: c.config, builders: builders}
+}
+
 // Update returns an update builder for Reply.
 func (c *ReplyClient) Update() *ReplyUpdate {
 	mutation := newReplyMutation(c.config, OpUpdate)
@@ -539,7 +635,7 @@ func (c *ReplyClient) UpdateOne(r *Reply) *ReplyUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *ReplyClient) UpdateOneID(id uint64) *ReplyUpdateOne {
+func (c *ReplyClient) UpdateOneID(id int) *ReplyUpdateOne {
 	mutation := newReplyMutation(c.config, OpUpdateOne, withReplyID(id))
 	return &ReplyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -556,7 +652,7 @@ func (c *ReplyClient) DeleteOne(r *Reply) *ReplyDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *ReplyClient) DeleteOneID(id uint64) *ReplyDeleteOne {
+func (c *ReplyClient) DeleteOneID(id int) *ReplyDeleteOne {
 	builder := c.Delete().Where(reply.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -573,12 +669,12 @@ func (c *ReplyClient) Query() *ReplyQuery {
 }
 
 // Get returns a Reply entity by its id.
-func (c *ReplyClient) Get(ctx context.Context, id uint64) (*Reply, error) {
+func (c *ReplyClient) Get(ctx context.Context, id int) (*Reply, error) {
 	return c.Query().Where(reply.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *ReplyClient) GetX(ctx context.Context, id uint64) *Reply {
+func (c *ReplyClient) GetX(ctx context.Context, id int) *Reply {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -634,6 +730,22 @@ func (c *ReplyClient) QueryChildren(r *Reply) *ReplyQuery {
 	return query
 }
 
+// QueryAuthor queries the author edge of a Reply.
+func (c *ReplyClient) QueryAuthor(r *Reply) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(reply.Table, reply.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, reply.AuthorTable, reply.AuthorColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ReplyClient) Hooks() []Hook {
 	return c.hooks.Reply
@@ -659,12 +771,209 @@ func (c *ReplyClient) mutate(ctx context.Context, m *ReplyMutation) (Value, erro
 	}
 }
 
+// UserClient is a client for the User schema.
+type UserClient struct {
+	config
+}
+
+// NewUserClient returns a client for the User from the given config.
+func NewUserClient(c config) *UserClient {
+	return &UserClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `user.Hooks(f(g(h())))`.
+func (c *UserClient) Use(hooks ...Hook) {
+	c.hooks.User = append(c.hooks.User, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `user.Intercept(f(g(h())))`.
+func (c *UserClient) Intercept(interceptors ...Interceptor) {
+	c.inters.User = append(c.inters.User, interceptors...)
+}
+
+// Create returns a builder for creating a User entity.
+func (c *UserClient) Create() *UserCreate {
+	mutation := newUserMutation(c.config, OpCreate)
+	return &UserCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of User entities.
+func (c *UserClient) CreateBulk(builders ...*UserCreate) *UserCreateBulk {
+	return &UserCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *UserClient) MapCreateBulk(slice any, setFunc func(*UserCreate, int)) *UserCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &UserCreateBulk{err: fmt.Errorf("calling to UserClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*UserCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &UserCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for User.
+func (c *UserClient) Update() *UserUpdate {
+	mutation := newUserMutation(c.config, OpUpdate)
+	return &UserUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UserClient) UpdateOne(u *User) *UserUpdateOne {
+	mutation := newUserMutation(c.config, OpUpdateOne, withUser(u))
+	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UserClient) UpdateOneID(id int) *UserUpdateOne {
+	mutation := newUserMutation(c.config, OpUpdateOne, withUserID(id))
+	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for User.
+func (c *UserClient) Delete() *UserDelete {
+	mutation := newUserMutation(c.config, OpDelete)
+	return &UserDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
+	return c.DeleteOneID(u.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *UserClient) DeleteOneID(id int) *UserDeleteOne {
+	builder := c.Delete().Where(user.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &UserDeleteOne{builder}
+}
+
+// Query returns a query builder for User.
+func (c *UserClient) Query() *UserQuery {
+	return &UserQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeUser},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a User entity by its id.
+func (c *UserClient) Get(ctx context.Context, id int) (*User, error) {
+	return c.Query().Where(user.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UserClient) GetX(ctx context.Context, id int) *User {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPosts queries the posts edge of a User.
+func (c *UserClient) QueryPosts(u *User) *PostQuery {
+	query := (&PostClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(post.Table, post.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.PostsTable, user.PostsColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryComments queries the comments edge of a User.
+func (c *UserClient) QueryComments(u *User) *CommentQuery {
+	query := (&CommentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(comment.Table, comment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.CommentsTable, user.CommentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLikes queries the likes edge of a User.
+func (c *UserClient) QueryLikes(u *User) *PostQuery {
+	query := (&PostClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(post.Table, post.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.LikesTable, user.LikesColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReplies queries the replies edge of a User.
+func (c *UserClient) QueryReplies(u *User) *ReplyQuery {
+	query := (&ReplyClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(reply.Table, reply.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.RepliesTable, user.RepliesColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *UserClient) Hooks() []Hook {
+	return c.hooks.User
+}
+
+// Interceptors returns the client interceptors.
+func (c *UserClient) Interceptors() []Interceptor {
+	return c.inters.User
+}
+
+func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&UserCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&UserUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&UserDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown User mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Comment, Post, Reply []ent.Hook
+		Comment, Post, Reply, User []ent.Hook
 	}
 	inters struct {
-		Comment, Post, Reply []ent.Interceptor
+		Comment, Post, Reply, User []ent.Interceptor
 	}
 )

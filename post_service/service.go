@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"net"
@@ -19,8 +18,6 @@ import (
 
 	log "github.com/shenjing023/llog"
 	"github.com/shenjing023/vivy-polaris/contrib/registry"
-	"github.com/shenjing023/vivy-polaris/contrib/tracing"
-	"github.com/shenjing023/vivy-polaris/options"
 	vp_server "github.com/shenjing023/vivy-polaris/server"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
@@ -40,21 +37,21 @@ func runPostService(configPath string) {
 	}
 	defer r.Deregister()
 
-	tp, err := tracing.NewJaegerTracerProvider(conf.Cfg.JaegerCollectURL, "post-server")
-	if err != nil {
-		log.Fatalf("new JaegerTracerProvider error: %+v", err)
-	}
-	defer func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
-			log.Fatalf("Error shutting down tracer provider: %v", err)
-		}
-	}()
+	// tp, err := tracing.NewJaegerTracerProvider(conf.Cfg.JaegerCollectURL, "post-server")
+	// if err != nil {
+	// 	log.Fatalf("new JaegerTracerProvider error: %+v", err)
+	// }
+	// defer func() {
+	// 	if err := tp.Shutdown(context.Background()); err != nil {
+	// 		log.Fatalf("Error shutting down tracer provider: %v", err)
+	// 	}
+	// }()
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", conf.Cfg.Port))
 	if err != nil {
 		log.Fatalf("failed to listen: %+v", err)
 	}
-	s := vp_server.NewServer(options.WithDebug(conf.Cfg.Debug), options.WithServerTracing(tp))
+	s := vp_server.NewServer(vp_server.WithDebug(conf.Cfg.Debug) /*vp_server.WithServerTracing(tp)*/)
 	pb.RegisterPostServiceServer(s, &handler.PostService{})
 	go func() {
 		if err := s.Serve(lis); err != nil {

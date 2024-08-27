@@ -7,6 +7,7 @@ import (
 	"cw_post_service/repository/ent/comment"
 	"cw_post_service/repository/ent/post"
 	"cw_post_service/repository/ent/reply"
+	"cw_post_service/repository/ent/user"
 	"errors"
 	"fmt"
 	"reflect"
@@ -71,13 +72,14 @@ var (
 	columnCheck sql.ColumnCheck
 )
 
-// columnChecker checks if the column exists in the given table.
+// checkColumn checks if the column exists in the given table.
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			comment.Table: comment.ValidColumn,
 			post.Table:    post.ValidColumn,
 			reply.Table:   reply.ValidColumn,
+			user.Table:    user.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

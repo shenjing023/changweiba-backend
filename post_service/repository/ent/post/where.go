@@ -4,59 +4,70 @@ package post
 
 import (
 	"cw_post_service/repository/ent/predicate"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
-func ID(id uint64) predicate.Post {
+func ID(id int) predicate.Post {
 	return predicate.Post(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id uint64) predicate.Post {
+func IDEQ(id int) predicate.Post {
 	return predicate.Post(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id uint64) predicate.Post {
+func IDNEQ(id int) predicate.Post {
 	return predicate.Post(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...uint64) predicate.Post {
+func IDIn(ids ...int) predicate.Post {
 	return predicate.Post(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...uint64) predicate.Post {
+func IDNotIn(ids ...int) predicate.Post {
 	return predicate.Post(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id uint64) predicate.Post {
+func IDGT(id int) predicate.Post {
 	return predicate.Post(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id uint64) predicate.Post {
+func IDGTE(id int) predicate.Post {
 	return predicate.Post(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id uint64) predicate.Post {
+func IDLT(id int) predicate.Post {
 	return predicate.Post(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id uint64) predicate.Post {
+func IDLTE(id int) predicate.Post {
 	return predicate.Post(sql.FieldLTE(FieldID, id))
 }
 
-// UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
-func UserID(v uint64) predicate.Post {
-	return predicate.Post(sql.FieldEQ(FieldUserID, v))
+// CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
+func CreatedAt(v time.Time) predicate.Post {
+	return predicate.Post(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
+func UpdatedAt(v time.Time) predicate.Post {
+	return predicate.Post(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// AuthorID applies equality check predicate on the "author_id" field. It's identical to AuthorIDEQ.
+func AuthorID(v int) predicate.Post {
+	return predicate.Post(sql.FieldEQ(FieldAuthorID, v))
 }
 
 // Title applies equality check predicate on the "title" field. It's identical to TitleEQ.
@@ -69,24 +80,9 @@ func Content(v string) predicate.Post {
 	return predicate.Post(sql.FieldEQ(FieldContent, v))
 }
 
-// Status applies equality check predicate on the "status" field. It's identical to StatusEQ.
-func Status(v int8) predicate.Post {
-	return predicate.Post(sql.FieldEQ(FieldStatus, v))
-}
-
 // ReplyNum applies equality check predicate on the "reply_num" field. It's identical to ReplyNumEQ.
-func ReplyNum(v int64) predicate.Post {
+func ReplyNum(v int) predicate.Post {
 	return predicate.Post(sql.FieldEQ(FieldReplyNum, v))
-}
-
-// CreateAt applies equality check predicate on the "create_at" field. It's identical to CreateAtEQ.
-func CreateAt(v int64) predicate.Post {
-	return predicate.Post(sql.FieldEQ(FieldCreateAt, v))
-}
-
-// UpdateAt applies equality check predicate on the "update_at" field. It's identical to UpdateAtEQ.
-func UpdateAt(v int64) predicate.Post {
-	return predicate.Post(sql.FieldEQ(FieldUpdateAt, v))
 }
 
 // Pin applies equality check predicate on the "pin" field. It's identical to PinEQ.
@@ -94,44 +90,114 @@ func Pin(v int8) predicate.Post {
 	return predicate.Post(sql.FieldEQ(FieldPin, v))
 }
 
-// UserIDEQ applies the EQ predicate on the "user_id" field.
-func UserIDEQ(v uint64) predicate.Post {
-	return predicate.Post(sql.FieldEQ(FieldUserID, v))
+// CreatedAtEQ applies the EQ predicate on the "created_at" field.
+func CreatedAtEQ(v time.Time) predicate.Post {
+	return predicate.Post(sql.FieldEQ(FieldCreatedAt, v))
 }
 
-// UserIDNEQ applies the NEQ predicate on the "user_id" field.
-func UserIDNEQ(v uint64) predicate.Post {
-	return predicate.Post(sql.FieldNEQ(FieldUserID, v))
+// CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
+func CreatedAtNEQ(v time.Time) predicate.Post {
+	return predicate.Post(sql.FieldNEQ(FieldCreatedAt, v))
 }
 
-// UserIDIn applies the In predicate on the "user_id" field.
-func UserIDIn(vs ...uint64) predicate.Post {
-	return predicate.Post(sql.FieldIn(FieldUserID, vs...))
+// CreatedAtIn applies the In predicate on the "created_at" field.
+func CreatedAtIn(vs ...time.Time) predicate.Post {
+	return predicate.Post(sql.FieldIn(FieldCreatedAt, vs...))
 }
 
-// UserIDNotIn applies the NotIn predicate on the "user_id" field.
-func UserIDNotIn(vs ...uint64) predicate.Post {
-	return predicate.Post(sql.FieldNotIn(FieldUserID, vs...))
+// CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
+func CreatedAtNotIn(vs ...time.Time) predicate.Post {
+	return predicate.Post(sql.FieldNotIn(FieldCreatedAt, vs...))
 }
 
-// UserIDGT applies the GT predicate on the "user_id" field.
-func UserIDGT(v uint64) predicate.Post {
-	return predicate.Post(sql.FieldGT(FieldUserID, v))
+// CreatedAtGT applies the GT predicate on the "created_at" field.
+func CreatedAtGT(v time.Time) predicate.Post {
+	return predicate.Post(sql.FieldGT(FieldCreatedAt, v))
 }
 
-// UserIDGTE applies the GTE predicate on the "user_id" field.
-func UserIDGTE(v uint64) predicate.Post {
-	return predicate.Post(sql.FieldGTE(FieldUserID, v))
+// CreatedAtGTE applies the GTE predicate on the "created_at" field.
+func CreatedAtGTE(v time.Time) predicate.Post {
+	return predicate.Post(sql.FieldGTE(FieldCreatedAt, v))
 }
 
-// UserIDLT applies the LT predicate on the "user_id" field.
-func UserIDLT(v uint64) predicate.Post {
-	return predicate.Post(sql.FieldLT(FieldUserID, v))
+// CreatedAtLT applies the LT predicate on the "created_at" field.
+func CreatedAtLT(v time.Time) predicate.Post {
+	return predicate.Post(sql.FieldLT(FieldCreatedAt, v))
 }
 
-// UserIDLTE applies the LTE predicate on the "user_id" field.
-func UserIDLTE(v uint64) predicate.Post {
-	return predicate.Post(sql.FieldLTE(FieldUserID, v))
+// CreatedAtLTE applies the LTE predicate on the "created_at" field.
+func CreatedAtLTE(v time.Time) predicate.Post {
+	return predicate.Post(sql.FieldLTE(FieldCreatedAt, v))
+}
+
+// UpdatedAtEQ applies the EQ predicate on the "updated_at" field.
+func UpdatedAtEQ(v time.Time) predicate.Post {
+	return predicate.Post(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// UpdatedAtNEQ applies the NEQ predicate on the "updated_at" field.
+func UpdatedAtNEQ(v time.Time) predicate.Post {
+	return predicate.Post(sql.FieldNEQ(FieldUpdatedAt, v))
+}
+
+// UpdatedAtIn applies the In predicate on the "updated_at" field.
+func UpdatedAtIn(vs ...time.Time) predicate.Post {
+	return predicate.Post(sql.FieldIn(FieldUpdatedAt, vs...))
+}
+
+// UpdatedAtNotIn applies the NotIn predicate on the "updated_at" field.
+func UpdatedAtNotIn(vs ...time.Time) predicate.Post {
+	return predicate.Post(sql.FieldNotIn(FieldUpdatedAt, vs...))
+}
+
+// UpdatedAtGT applies the GT predicate on the "updated_at" field.
+func UpdatedAtGT(v time.Time) predicate.Post {
+	return predicate.Post(sql.FieldGT(FieldUpdatedAt, v))
+}
+
+// UpdatedAtGTE applies the GTE predicate on the "updated_at" field.
+func UpdatedAtGTE(v time.Time) predicate.Post {
+	return predicate.Post(sql.FieldGTE(FieldUpdatedAt, v))
+}
+
+// UpdatedAtLT applies the LT predicate on the "updated_at" field.
+func UpdatedAtLT(v time.Time) predicate.Post {
+	return predicate.Post(sql.FieldLT(FieldUpdatedAt, v))
+}
+
+// UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
+func UpdatedAtLTE(v time.Time) predicate.Post {
+	return predicate.Post(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// AuthorIDEQ applies the EQ predicate on the "author_id" field.
+func AuthorIDEQ(v int) predicate.Post {
+	return predicate.Post(sql.FieldEQ(FieldAuthorID, v))
+}
+
+// AuthorIDNEQ applies the NEQ predicate on the "author_id" field.
+func AuthorIDNEQ(v int) predicate.Post {
+	return predicate.Post(sql.FieldNEQ(FieldAuthorID, v))
+}
+
+// AuthorIDIn applies the In predicate on the "author_id" field.
+func AuthorIDIn(vs ...int) predicate.Post {
+	return predicate.Post(sql.FieldIn(FieldAuthorID, vs...))
+}
+
+// AuthorIDNotIn applies the NotIn predicate on the "author_id" field.
+func AuthorIDNotIn(vs ...int) predicate.Post {
+	return predicate.Post(sql.FieldNotIn(FieldAuthorID, vs...))
+}
+
+// AuthorIDIsNil applies the IsNil predicate on the "author_id" field.
+func AuthorIDIsNil() predicate.Post {
+	return predicate.Post(sql.FieldIsNull(FieldAuthorID))
+}
+
+// AuthorIDNotNil applies the NotNil predicate on the "author_id" field.
+func AuthorIDNotNil() predicate.Post {
+	return predicate.Post(sql.FieldNotNull(FieldAuthorID))
 }
 
 // TitleEQ applies the EQ predicate on the "title" field.
@@ -265,163 +331,63 @@ func ContentContainsFold(v string) predicate.Post {
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.
-func StatusEQ(v int8) predicate.Post {
+func StatusEQ(v Status) predicate.Post {
 	return predicate.Post(sql.FieldEQ(FieldStatus, v))
 }
 
 // StatusNEQ applies the NEQ predicate on the "status" field.
-func StatusNEQ(v int8) predicate.Post {
+func StatusNEQ(v Status) predicate.Post {
 	return predicate.Post(sql.FieldNEQ(FieldStatus, v))
 }
 
 // StatusIn applies the In predicate on the "status" field.
-func StatusIn(vs ...int8) predicate.Post {
+func StatusIn(vs ...Status) predicate.Post {
 	return predicate.Post(sql.FieldIn(FieldStatus, vs...))
 }
 
 // StatusNotIn applies the NotIn predicate on the "status" field.
-func StatusNotIn(vs ...int8) predicate.Post {
+func StatusNotIn(vs ...Status) predicate.Post {
 	return predicate.Post(sql.FieldNotIn(FieldStatus, vs...))
 }
 
-// StatusGT applies the GT predicate on the "status" field.
-func StatusGT(v int8) predicate.Post {
-	return predicate.Post(sql.FieldGT(FieldStatus, v))
-}
-
-// StatusGTE applies the GTE predicate on the "status" field.
-func StatusGTE(v int8) predicate.Post {
-	return predicate.Post(sql.FieldGTE(FieldStatus, v))
-}
-
-// StatusLT applies the LT predicate on the "status" field.
-func StatusLT(v int8) predicate.Post {
-	return predicate.Post(sql.FieldLT(FieldStatus, v))
-}
-
-// StatusLTE applies the LTE predicate on the "status" field.
-func StatusLTE(v int8) predicate.Post {
-	return predicate.Post(sql.FieldLTE(FieldStatus, v))
-}
-
 // ReplyNumEQ applies the EQ predicate on the "reply_num" field.
-func ReplyNumEQ(v int64) predicate.Post {
+func ReplyNumEQ(v int) predicate.Post {
 	return predicate.Post(sql.FieldEQ(FieldReplyNum, v))
 }
 
 // ReplyNumNEQ applies the NEQ predicate on the "reply_num" field.
-func ReplyNumNEQ(v int64) predicate.Post {
+func ReplyNumNEQ(v int) predicate.Post {
 	return predicate.Post(sql.FieldNEQ(FieldReplyNum, v))
 }
 
 // ReplyNumIn applies the In predicate on the "reply_num" field.
-func ReplyNumIn(vs ...int64) predicate.Post {
+func ReplyNumIn(vs ...int) predicate.Post {
 	return predicate.Post(sql.FieldIn(FieldReplyNum, vs...))
 }
 
 // ReplyNumNotIn applies the NotIn predicate on the "reply_num" field.
-func ReplyNumNotIn(vs ...int64) predicate.Post {
+func ReplyNumNotIn(vs ...int) predicate.Post {
 	return predicate.Post(sql.FieldNotIn(FieldReplyNum, vs...))
 }
 
 // ReplyNumGT applies the GT predicate on the "reply_num" field.
-func ReplyNumGT(v int64) predicate.Post {
+func ReplyNumGT(v int) predicate.Post {
 	return predicate.Post(sql.FieldGT(FieldReplyNum, v))
 }
 
 // ReplyNumGTE applies the GTE predicate on the "reply_num" field.
-func ReplyNumGTE(v int64) predicate.Post {
+func ReplyNumGTE(v int) predicate.Post {
 	return predicate.Post(sql.FieldGTE(FieldReplyNum, v))
 }
 
 // ReplyNumLT applies the LT predicate on the "reply_num" field.
-func ReplyNumLT(v int64) predicate.Post {
+func ReplyNumLT(v int) predicate.Post {
 	return predicate.Post(sql.FieldLT(FieldReplyNum, v))
 }
 
 // ReplyNumLTE applies the LTE predicate on the "reply_num" field.
-func ReplyNumLTE(v int64) predicate.Post {
+func ReplyNumLTE(v int) predicate.Post {
 	return predicate.Post(sql.FieldLTE(FieldReplyNum, v))
-}
-
-// CreateAtEQ applies the EQ predicate on the "create_at" field.
-func CreateAtEQ(v int64) predicate.Post {
-	return predicate.Post(sql.FieldEQ(FieldCreateAt, v))
-}
-
-// CreateAtNEQ applies the NEQ predicate on the "create_at" field.
-func CreateAtNEQ(v int64) predicate.Post {
-	return predicate.Post(sql.FieldNEQ(FieldCreateAt, v))
-}
-
-// CreateAtIn applies the In predicate on the "create_at" field.
-func CreateAtIn(vs ...int64) predicate.Post {
-	return predicate.Post(sql.FieldIn(FieldCreateAt, vs...))
-}
-
-// CreateAtNotIn applies the NotIn predicate on the "create_at" field.
-func CreateAtNotIn(vs ...int64) predicate.Post {
-	return predicate.Post(sql.FieldNotIn(FieldCreateAt, vs...))
-}
-
-// CreateAtGT applies the GT predicate on the "create_at" field.
-func CreateAtGT(v int64) predicate.Post {
-	return predicate.Post(sql.FieldGT(FieldCreateAt, v))
-}
-
-// CreateAtGTE applies the GTE predicate on the "create_at" field.
-func CreateAtGTE(v int64) predicate.Post {
-	return predicate.Post(sql.FieldGTE(FieldCreateAt, v))
-}
-
-// CreateAtLT applies the LT predicate on the "create_at" field.
-func CreateAtLT(v int64) predicate.Post {
-	return predicate.Post(sql.FieldLT(FieldCreateAt, v))
-}
-
-// CreateAtLTE applies the LTE predicate on the "create_at" field.
-func CreateAtLTE(v int64) predicate.Post {
-	return predicate.Post(sql.FieldLTE(FieldCreateAt, v))
-}
-
-// UpdateAtEQ applies the EQ predicate on the "update_at" field.
-func UpdateAtEQ(v int64) predicate.Post {
-	return predicate.Post(sql.FieldEQ(FieldUpdateAt, v))
-}
-
-// UpdateAtNEQ applies the NEQ predicate on the "update_at" field.
-func UpdateAtNEQ(v int64) predicate.Post {
-	return predicate.Post(sql.FieldNEQ(FieldUpdateAt, v))
-}
-
-// UpdateAtIn applies the In predicate on the "update_at" field.
-func UpdateAtIn(vs ...int64) predicate.Post {
-	return predicate.Post(sql.FieldIn(FieldUpdateAt, vs...))
-}
-
-// UpdateAtNotIn applies the NotIn predicate on the "update_at" field.
-func UpdateAtNotIn(vs ...int64) predicate.Post {
-	return predicate.Post(sql.FieldNotIn(FieldUpdateAt, vs...))
-}
-
-// UpdateAtGT applies the GT predicate on the "update_at" field.
-func UpdateAtGT(v int64) predicate.Post {
-	return predicate.Post(sql.FieldGT(FieldUpdateAt, v))
-}
-
-// UpdateAtGTE applies the GTE predicate on the "update_at" field.
-func UpdateAtGTE(v int64) predicate.Post {
-	return predicate.Post(sql.FieldGTE(FieldUpdateAt, v))
-}
-
-// UpdateAtLT applies the LT predicate on the "update_at" field.
-func UpdateAtLT(v int64) predicate.Post {
-	return predicate.Post(sql.FieldLT(FieldUpdateAt, v))
-}
-
-// UpdateAtLTE applies the LTE predicate on the "update_at" field.
-func UpdateAtLTE(v int64) predicate.Post {
-	return predicate.Post(sql.FieldLTE(FieldUpdateAt, v))
 }
 
 // PinEQ applies the EQ predicate on the "pin" field.
@@ -487,34 +453,40 @@ func HasCommentsWith(preds ...predicate.Comment) predicate.Post {
 	})
 }
 
+// HasAuthor applies the HasEdge predicate on the "author" edge.
+func HasAuthor() predicate.Post {
+	return predicate.Post(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, AuthorTable, AuthorColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAuthorWith applies the HasEdge predicate on the "author" edge with a given conditions (other predicates).
+func HasAuthorWith(preds ...predicate.User) predicate.Post {
+	return predicate.Post(func(s *sql.Selector) {
+		step := newAuthorStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Post) predicate.Post {
-	return predicate.Post(func(s *sql.Selector) {
-		s1 := s.Clone().SetP(nil)
-		for _, p := range predicates {
-			p(s1)
-		}
-		s.Where(s1.P())
-	})
+	return predicate.Post(sql.AndPredicates(predicates...))
 }
 
 // Or groups predicates with the OR operator between them.
 func Or(predicates ...predicate.Post) predicate.Post {
-	return predicate.Post(func(s *sql.Selector) {
-		s1 := s.Clone().SetP(nil)
-		for i, p := range predicates {
-			if i > 0 {
-				s1.Or()
-			}
-			p(s1)
-		}
-		s.Where(s1.P())
-	})
+	return predicate.Post(sql.OrPredicates(predicates...))
 }
 
 // Not applies the not operator on the given predicate.
 func Not(p predicate.Post) predicate.Post {
-	return predicate.Post(func(s *sql.Selector) {
-		p(s.Not())
-	})
+	return predicate.Post(sql.NotPredicates(p))
 }

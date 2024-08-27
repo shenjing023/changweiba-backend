@@ -14,3 +14,6 @@ type Post func(*sql.Selector)
 
 // Reply is the predicate function for reply builders.
 type Reply func(*sql.Selector)
+
+// User is the predicate function for user builders.
+type User func(*sql.Selector)

@@ -8,8 +8,10 @@ import (
 	"cw_post_service/repository/ent/post"
 	"cw_post_service/repository/ent/predicate"
 	"cw_post_service/repository/ent/reply"
+	"cw_post_service/repository/ent/user"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -29,29 +31,42 @@ func (cu *CommentUpdate) Where(ps ...predicate.Comment) *CommentUpdate {
 	return cu
 }
 
-// SetUserID sets the "user_id" field.
-func (cu *CommentUpdate) SetUserID(u uint64) *CommentUpdate {
-	cu.mutation.ResetUserID()
-	cu.mutation.SetUserID(u)
+// SetUpdatedAt sets the "updated_at" field.
+func (cu *CommentUpdate) SetUpdatedAt(t time.Time) *CommentUpdate {
+	cu.mutation.SetUpdatedAt(t)
 	return cu
 }
 
-// AddUserID adds u to the "user_id" field.
-func (cu *CommentUpdate) AddUserID(u int64) *CommentUpdate {
-	cu.mutation.AddUserID(u)
+// SetAuthorID sets the "author_id" field.
+func (cu *CommentUpdate) SetAuthorID(i int) *CommentUpdate {
+	cu.mutation.SetAuthorID(i)
+	return cu
+}
+
+// SetNillableAuthorID sets the "author_id" field if the given value is not nil.
+func (cu *CommentUpdate) SetNillableAuthorID(i *int) *CommentUpdate {
+	if i != nil {
+		cu.SetAuthorID(*i)
+	}
+	return cu
+}
+
+// ClearAuthorID clears the value of the "author_id" field.
+func (cu *CommentUpdate) ClearAuthorID() *CommentUpdate {
+	cu.mutation.ClearAuthorID()
 	return cu
 }
 
 // SetPostID sets the "post_id" field.
-func (cu *CommentUpdate) SetPostID(u uint64) *CommentUpdate {
-	cu.mutation.SetPostID(u)
+func (cu *CommentUpdate) SetPostID(i int) *CommentUpdate {
+	cu.mutation.SetPostID(i)
 	return cu
 }
 
 // SetNillablePostID sets the "post_id" field if the given value is not nil.
-func (cu *CommentUpdate) SetNillablePostID(u *uint64) *CommentUpdate {
-	if u != nil {
-		cu.SetPostID(*u)
+func (cu *CommentUpdate) SetNillablePostID(i *int) *CommentUpdate {
+	if i != nil {
+		cu.SetPostID(*i)
 	}
 	return cu
 }
@@ -68,48 +83,57 @@ func (cu *CommentUpdate) SetContent(s string) *CommentUpdate {
 	return cu
 }
 
-// SetStatus sets the "status" field.
-func (cu *CommentUpdate) SetStatus(i int8) *CommentUpdate {
-	cu.mutation.ResetStatus()
-	cu.mutation.SetStatus(i)
-	return cu
-}
-
-// SetNillableStatus sets the "status" field if the given value is not nil.
-func (cu *CommentUpdate) SetNillableStatus(i *int8) *CommentUpdate {
-	if i != nil {
-		cu.SetStatus(*i)
+// SetNillableContent sets the "content" field if the given value is not nil.
+func (cu *CommentUpdate) SetNillableContent(s *string) *CommentUpdate {
+	if s != nil {
+		cu.SetContent(*s)
 	}
 	return cu
 }
 
-// AddStatus adds i to the "status" field.
-func (cu *CommentUpdate) AddStatus(i int8) *CommentUpdate {
-	cu.mutation.AddStatus(i)
+// SetStatus sets the "status" field.
+func (cu *CommentUpdate) SetStatus(c comment.Status) *CommentUpdate {
+	cu.mutation.SetStatus(c)
+	return cu
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (cu *CommentUpdate) SetNillableStatus(c *comment.Status) *CommentUpdate {
+	if c != nil {
+		cu.SetStatus(*c)
+	}
 	return cu
 }
 
 // SetFloor sets the "floor" field.
-func (cu *CommentUpdate) SetFloor(u uint64) *CommentUpdate {
+func (cu *CommentUpdate) SetFloor(i int) *CommentUpdate {
 	cu.mutation.ResetFloor()
-	cu.mutation.SetFloor(u)
+	cu.mutation.SetFloor(i)
 	return cu
 }
 
-// AddFloor adds u to the "floor" field.
-func (cu *CommentUpdate) AddFloor(u int64) *CommentUpdate {
-	cu.mutation.AddFloor(u)
+// SetNillableFloor sets the "floor" field if the given value is not nil.
+func (cu *CommentUpdate) SetNillableFloor(i *int) *CommentUpdate {
+	if i != nil {
+		cu.SetFloor(*i)
+	}
+	return cu
+}
+
+// AddFloor adds i to the "floor" field.
+func (cu *CommentUpdate) AddFloor(i int) *CommentUpdate {
+	cu.mutation.AddFloor(i)
 	return cu
 }
 
 // SetOwnerID sets the "owner" edge to the Post entity by ID.
-func (cu *CommentUpdate) SetOwnerID(id uint64) *CommentUpdate {
+func (cu *CommentUpdate) SetOwnerID(id int) *CommentUpdate {
 	cu.mutation.SetOwnerID(id)
 	return cu
 }
 
 // SetNillableOwnerID sets the "owner" edge to the Post entity by ID if the given value is not nil.
-func (cu *CommentUpdate) SetNillableOwnerID(id *uint64) *CommentUpdate {
+func (cu *CommentUpdate) SetNillableOwnerID(id *int) *CommentUpdate {
 	if id != nil {
 		cu = cu.SetOwnerID(*id)
 	}
@@ -122,18 +146,23 @@ func (cu *CommentUpdate) SetOwner(p *Post) *CommentUpdate {
 }
 
 // AddReplyIDs adds the "replies" edge to the Reply entity by IDs.
-func (cu *CommentUpdate) AddReplyIDs(ids ...uint64) *CommentUpdate {
+func (cu *CommentUpdate) AddReplyIDs(ids ...int) *CommentUpdate {
 	cu.mutation.AddReplyIDs(ids...)
 	return cu
 }
 
 // AddReplies adds the "replies" edges to the Reply entity.
 func (cu *CommentUpdate) AddReplies(r ...*Reply) *CommentUpdate {
-	ids := make([]uint64, len(r))
+	ids := make([]int, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
 	return cu.AddReplyIDs(ids...)
+}
+
+// SetAuthor sets the "author" edge to the User entity.
+func (cu *CommentUpdate) SetAuthor(u *User) *CommentUpdate {
+	return cu.SetAuthorID(u.ID)
 }
 
 // Mutation returns the CommentMutation object of the builder.
@@ -154,23 +183,30 @@ func (cu *CommentUpdate) ClearReplies() *CommentUpdate {
 }
 
 // RemoveReplyIDs removes the "replies" edge to Reply entities by IDs.
-func (cu *CommentUpdate) RemoveReplyIDs(ids ...uint64) *CommentUpdate {
+func (cu *CommentUpdate) RemoveReplyIDs(ids ...int) *CommentUpdate {
 	cu.mutation.RemoveReplyIDs(ids...)
 	return cu
 }
 
 // RemoveReplies removes "replies" edges to Reply entities.
 func (cu *CommentUpdate) RemoveReplies(r ...*Reply) *CommentUpdate {
-	ids := make([]uint64, len(r))
+	ids := make([]int, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
 	return cu.RemoveReplyIDs(ids...)
 }
 
+// ClearAuthor clears the "author" edge to the User entity.
+func (cu *CommentUpdate) ClearAuthor() *CommentUpdate {
+	cu.mutation.ClearAuthor()
+	return cu
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (cu *CommentUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks[int, CommentMutation](ctx, cu.sqlSave, cu.mutation, cu.hooks)
+	cu.defaults()
+	return withHooks(ctx, cu.sqlSave, cu.mutation, cu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -195,11 +231,19 @@ func (cu *CommentUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (cu *CommentUpdate) defaults() {
+	if _, ok := cu.mutation.UpdatedAt(); !ok {
+		v := comment.UpdateDefaultUpdatedAt()
+		cu.mutation.SetUpdatedAt(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (cu *CommentUpdate) check() error {
-	if v, ok := cu.mutation.UserID(); ok {
-		if err := comment.UserIDValidator(v); err != nil {
-			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "Comment.user_id": %w`, err)}
+	if v, ok := cu.mutation.AuthorID(); ok {
+		if err := comment.AuthorIDValidator(v); err != nil {
+			return &ValidationError{Name: "author_id", err: fmt.Errorf(`ent: validator failed for field "Comment.author_id": %w`, err)}
 		}
 	}
 	if v, ok := cu.mutation.PostID(); ok {
@@ -229,7 +273,7 @@ func (cu *CommentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := cu.check(); err != nil {
 		return n, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(comment.Table, comment.Columns, sqlgraph.NewFieldSpec(comment.FieldID, field.TypeUint64))
+	_spec := sqlgraph.NewUpdateSpec(comment.Table, comment.Columns, sqlgraph.NewFieldSpec(comment.FieldID, field.TypeInt))
 	if ps := cu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -237,26 +281,20 @@ func (cu *CommentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := cu.mutation.UserID(); ok {
-		_spec.SetField(comment.FieldUserID, field.TypeUint64, value)
-	}
-	if value, ok := cu.mutation.AddedUserID(); ok {
-		_spec.AddField(comment.FieldUserID, field.TypeUint64, value)
+	if value, ok := cu.mutation.UpdatedAt(); ok {
+		_spec.SetField(comment.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := cu.mutation.Content(); ok {
 		_spec.SetField(comment.FieldContent, field.TypeString, value)
 	}
 	if value, ok := cu.mutation.Status(); ok {
-		_spec.SetField(comment.FieldStatus, field.TypeInt8, value)
-	}
-	if value, ok := cu.mutation.AddedStatus(); ok {
-		_spec.AddField(comment.FieldStatus, field.TypeInt8, value)
+		_spec.SetField(comment.FieldStatus, field.TypeEnum, value)
 	}
 	if value, ok := cu.mutation.Floor(); ok {
-		_spec.SetField(comment.FieldFloor, field.TypeUint64, value)
+		_spec.SetField(comment.FieldFloor, field.TypeInt, value)
 	}
 	if value, ok := cu.mutation.AddedFloor(); ok {
-		_spec.AddField(comment.FieldFloor, field.TypeUint64, value)
+		_spec.AddField(comment.FieldFloor, field.TypeInt, value)
 	}
 	if cu.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -266,7 +304,7 @@ func (cu *CommentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{comment.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -279,7 +317,7 @@ func (cu *CommentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{comment.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -295,7 +333,7 @@ func (cu *CommentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{comment.RepliesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -308,7 +346,7 @@ func (cu *CommentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{comment.RepliesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -324,7 +362,36 @@ func (cu *CommentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{comment.RepliesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cu.mutation.AuthorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   comment.AuthorTable,
+			Columns: []string{comment.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.AuthorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   comment.AuthorTable,
+			Columns: []string{comment.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -352,29 +419,42 @@ type CommentUpdateOne struct {
 	mutation *CommentMutation
 }
 
-// SetUserID sets the "user_id" field.
-func (cuo *CommentUpdateOne) SetUserID(u uint64) *CommentUpdateOne {
-	cuo.mutation.ResetUserID()
-	cuo.mutation.SetUserID(u)
+// SetUpdatedAt sets the "updated_at" field.
+func (cuo *CommentUpdateOne) SetUpdatedAt(t time.Time) *CommentUpdateOne {
+	cuo.mutation.SetUpdatedAt(t)
 	return cuo
 }
 
-// AddUserID adds u to the "user_id" field.
-func (cuo *CommentUpdateOne) AddUserID(u int64) *CommentUpdateOne {
-	cuo.mutation.AddUserID(u)
+// SetAuthorID sets the "author_id" field.
+func (cuo *CommentUpdateOne) SetAuthorID(i int) *CommentUpdateOne {
+	cuo.mutation.SetAuthorID(i)
+	return cuo
+}
+
+// SetNillableAuthorID sets the "author_id" field if the given value is not nil.
+func (cuo *CommentUpdateOne) SetNillableAuthorID(i *int) *CommentUpdateOne {
+	if i != nil {
+		cuo.SetAuthorID(*i)
+	}
+	return cuo
+}
+
+// ClearAuthorID clears the value of the "author_id" field.
+func (cuo *CommentUpdateOne) ClearAuthorID() *CommentUpdateOne {
+	cuo.mutation.ClearAuthorID()
 	return cuo
 }
 
 // SetPostID sets the "post_id" field.
-func (cuo *CommentUpdateOne) SetPostID(u uint64) *CommentUpdateOne {
-	cuo.mutation.SetPostID(u)
+func (cuo *CommentUpdateOne) SetPostID(i int) *CommentUpdateOne {
+	cuo.mutation.SetPostID(i)
 	return cuo
 }
 
 // SetNillablePostID sets the "post_id" field if the given value is not nil.
-func (cuo *CommentUpdateOne) SetNillablePostID(u *uint64) *CommentUpdateOne {
-	if u != nil {
-		cuo.SetPostID(*u)
+func (cuo *CommentUpdateOne) SetNillablePostID(i *int) *CommentUpdateOne {
+	if i != nil {
+		cuo.SetPostID(*i)
 	}
 	return cuo
 }
@@ -391,48 +471,57 @@ func (cuo *CommentUpdateOne) SetContent(s string) *CommentUpdateOne {
 	return cuo
 }
 
-// SetStatus sets the "status" field.
-func (cuo *CommentUpdateOne) SetStatus(i int8) *CommentUpdateOne {
-	cuo.mutation.ResetStatus()
-	cuo.mutation.SetStatus(i)
-	return cuo
-}
-
-// SetNillableStatus sets the "status" field if the given value is not nil.
-func (cuo *CommentUpdateOne) SetNillableStatus(i *int8) *CommentUpdateOne {
-	if i != nil {
-		cuo.SetStatus(*i)
+// SetNillableContent sets the "content" field if the given value is not nil.
+func (cuo *CommentUpdateOne) SetNillableContent(s *string) *CommentUpdateOne {
+	if s != nil {
+		cuo.SetContent(*s)
 	}
 	return cuo
 }
 
-// AddStatus adds i to the "status" field.
-func (cuo *CommentUpdateOne) AddStatus(i int8) *CommentUpdateOne {
-	cuo.mutation.AddStatus(i)
+// SetStatus sets the "status" field.
+func (cuo *CommentUpdateOne) SetStatus(c comment.Status) *CommentUpdateOne {
+	cuo.mutation.SetStatus(c)
+	return cuo
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (cuo *CommentUpdateOne) SetNillableStatus(c *comment.Status) *CommentUpdateOne {
+	if c != nil {
+		cuo.SetStatus(*c)
+	}
 	return cuo
 }
 
 // SetFloor sets the "floor" field.
-func (cuo *CommentUpdateOne) SetFloor(u uint64) *CommentUpdateOne {
+func (cuo *CommentUpdateOne) SetFloor(i int) *CommentUpdateOne {
 	cuo.mutation.ResetFloor()
-	cuo.mutation.SetFloor(u)
+	cuo.mutation.SetFloor(i)
 	return cuo
 }
 
-// AddFloor adds u to the "floor" field.
-func (cuo *CommentUpdateOne) AddFloor(u int64) *CommentUpdateOne {
-	cuo.mutation.AddFloor(u)
+// SetNillableFloor sets the "floor" field if the given value is not nil.
+func (cuo *CommentUpdateOne) SetNillableFloor(i *int) *CommentUpdateOne {
+	if i != nil {
+		cuo.SetFloor(*i)
+	}
+	return cuo
+}
+
+// AddFloor adds i to the "floor" field.
+func (cuo *CommentUpdateOne) AddFloor(i int) *CommentUpdateOne {
+	cuo.mutation.AddFloor(i)
 	return cuo
 }
 
 // SetOwnerID sets the "owner" edge to the Post entity by ID.
-func (cuo *CommentUpdateOne) SetOwnerID(id uint64) *CommentUpdateOne {
+func (cuo *CommentUpdateOne) SetOwnerID(id int) *CommentUpdateOne {
 	cuo.mutation.SetOwnerID(id)
 	return cuo
 }
 
 // SetNillableOwnerID sets the "owner" edge to the Post entity by ID if the given value is not nil.
-func (cuo *CommentUpdateOne) SetNillableOwnerID(id *uint64) *CommentUpdateOne {
+func (cuo *CommentUpdateOne) SetNillableOwnerID(id *int) *CommentUpdateOne {
 	if id != nil {
 		cuo = cuo.SetOwnerID(*id)
 	}
@@ -445,18 +534,23 @@ func (cuo *CommentUpdateOne) SetOwner(p *Post) *CommentUpdateOne {
 }
 
 // AddReplyIDs adds the "replies" edge to the Reply entity by IDs.
-func (cuo *CommentUpdateOne) AddReplyIDs(ids ...uint64) *CommentUpdateOne {
+func (cuo *CommentUpdateOne) AddReplyIDs(ids ...int) *CommentUpdateOne {
 	cuo.mutation.AddReplyIDs(ids...)
 	return cuo
 }
 
 // AddReplies adds the "replies" edges to the Reply entity.
 func (cuo *CommentUpdateOne) AddReplies(r ...*Reply) *CommentUpdateOne {
-	ids := make([]uint64, len(r))
+	ids := make([]int, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
 	return cuo.AddReplyIDs(ids...)
+}
+
+// SetAuthor sets the "author" edge to the User entity.
+func (cuo *CommentUpdateOne) SetAuthor(u *User) *CommentUpdateOne {
+	return cuo.SetAuthorID(u.ID)
 }
 
 // Mutation returns the CommentMutation object of the builder.
@@ -477,18 +571,24 @@ func (cuo *CommentUpdateOne) ClearReplies() *CommentUpdateOne {
 }
 
 // RemoveReplyIDs removes the "replies" edge to Reply entities by IDs.
-func (cuo *CommentUpdateOne) RemoveReplyIDs(ids ...uint64) *CommentUpdateOne {
+func (cuo *CommentUpdateOne) RemoveReplyIDs(ids ...int) *CommentUpdateOne {
 	cuo.mutation.RemoveReplyIDs(ids...)
 	return cuo
 }
 
 // RemoveReplies removes "replies" edges to Reply entities.
 func (cuo *CommentUpdateOne) RemoveReplies(r ...*Reply) *CommentUpdateOne {
-	ids := make([]uint64, len(r))
+	ids := make([]int, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
 	return cuo.RemoveReplyIDs(ids...)
+}
+
+// ClearAuthor clears the "author" edge to the User entity.
+func (cuo *CommentUpdateOne) ClearAuthor() *CommentUpdateOne {
+	cuo.mutation.ClearAuthor()
+	return cuo
 }
 
 // Where appends a list predicates to the CommentUpdate builder.
@@ -506,7 +606,8 @@ func (cuo *CommentUpdateOne) Select(field string, fields ...string) *CommentUpda
 
 // Save executes the query and returns the updated Comment entity.
 func (cuo *CommentUpdateOne) Save(ctx context.Context) (*Comment, error) {
-	return withHooks[*Comment, CommentMutation](ctx, cuo.sqlSave, cuo.mutation, cuo.hooks)
+	cuo.defaults()
+	return withHooks(ctx, cuo.sqlSave, cuo.mutation, cuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -531,11 +632,19 @@ func (cuo *CommentUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (cuo *CommentUpdateOne) defaults() {
+	if _, ok := cuo.mutation.UpdatedAt(); !ok {
+		v := comment.UpdateDefaultUpdatedAt()
+		cuo.mutation.SetUpdatedAt(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (cuo *CommentUpdateOne) check() error {
-	if v, ok := cuo.mutation.UserID(); ok {
-		if err := comment.UserIDValidator(v); err != nil {
-			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "Comment.user_id": %w`, err)}
+	if v, ok := cuo.mutation.AuthorID(); ok {
+		if err := comment.AuthorIDValidator(v); err != nil {
+			return &ValidationError{Name: "author_id", err: fmt.Errorf(`ent: validator failed for field "Comment.author_id": %w`, err)}
 		}
 	}
 	if v, ok := cuo.mutation.PostID(); ok {
@@ -565,7 +674,7 @@ func (cuo *CommentUpdateOne) sqlSave(ctx context.Context) (_node *Comment, err e
 	if err := cuo.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(comment.Table, comment.Columns, sqlgraph.NewFieldSpec(comment.FieldID, field.TypeUint64))
+	_spec := sqlgraph.NewUpdateSpec(comment.Table, comment.Columns, sqlgraph.NewFieldSpec(comment.FieldID, field.TypeInt))
 	id, ok := cuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Comment.id" for update`)}
@@ -590,26 +699,20 @@ func (cuo *CommentUpdateOne) sqlSave(ctx context.Context) (_node *Comment, err e
 			}
 		}
 	}
-	if value, ok := cuo.mutation.UserID(); ok {
-		_spec.SetField(comment.FieldUserID, field.TypeUint64, value)
-	}
-	if value, ok := cuo.mutation.AddedUserID(); ok {
-		_spec.AddField(comment.FieldUserID, field.TypeUint64, value)
+	if value, ok := cuo.mutation.UpdatedAt(); ok {
+		_spec.SetField(comment.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := cuo.mutation.Content(); ok {
 		_spec.SetField(comment.FieldContent, field.TypeString, value)
 	}
 	if value, ok := cuo.mutation.Status(); ok {
-		_spec.SetField(comment.FieldStatus, field.TypeInt8, value)
-	}
-	if value, ok := cuo.mutation.AddedStatus(); ok {
-		_spec.AddField(comment.FieldStatus, field.TypeInt8, value)
+		_spec.SetField(comment.FieldStatus, field.TypeEnum, value)
 	}
 	if value, ok := cuo.mutation.Floor(); ok {
-		_spec.SetField(comment.FieldFloor, field.TypeUint64, value)
+		_spec.SetField(comment.FieldFloor, field.TypeInt, value)
 	}
 	if value, ok := cuo.mutation.AddedFloor(); ok {
-		_spec.AddField(comment.FieldFloor, field.TypeUint64, value)
+		_spec.AddField(comment.FieldFloor, field.TypeInt, value)
 	}
 	if cuo.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -619,7 +722,7 @@ func (cuo *CommentUpdateOne) sqlSave(ctx context.Context) (_node *Comment, err e
 			Columns: []string{comment.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -632,7 +735,7 @@ func (cuo *CommentUpdateOne) sqlSave(ctx context.Context) (_node *Comment, err e
 			Columns: []string{comment.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -648,7 +751,7 @@ func (cuo *CommentUpdateOne) sqlSave(ctx context.Context) (_node *Comment, err e
 			Columns: []string{comment.RepliesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -661,7 +764,7 @@ func (cuo *CommentUpdateOne) sqlSave(ctx context.Context) (_node *Comment, err e
 			Columns: []string{comment.RepliesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -677,7 +780,36 @@ func (cuo *CommentUpdateOne) sqlSave(ctx context.Context) (_node *Comment, err e
 			Columns: []string{comment.RepliesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cuo.mutation.AuthorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   comment.AuthorTable,
+			Columns: []string{comment.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.AuthorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   comment.AuthorTable,
+			Columns: []string{comment.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

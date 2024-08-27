@@ -5,8 +5,10 @@ package ent
 import (
 	"cw_post_service/repository/ent/comment"
 	"cw_post_service/repository/ent/post"
+	"cw_post_service/repository/ent/user"
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -16,19 +18,21 @@ import (
 type Comment struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID uint64 `json:"id,omitempty"`
+	ID int `json:"id,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// The user that posted the message.
-	UserID uint64 `json:"user_id,omitempty"`
+	AuthorID int `json:"author_id,omitempty"`
 	// The post that the message belongs to.
-	PostID uint64 `json:"post_id,omitempty"`
+	PostID int `json:"post_id,omitempty"`
 	// The content of the message.
 	Content string `json:"content,omitempty"`
-	// 状态,是否被封，0：正常，大于0被封
-	Status int8 `json:"status,omitempty"`
+	// 状态
+	Status comment.Status `json:"status,omitempty"`
 	// 第几楼
-	Floor uint64 `json:"floor,omitempty"`
-	// 创建时间
-	CreateAt int64 `json:"create_at,omitempty"`
+	Floor int `json:"floor,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the CommentQuery when eager-loading is set.
 	Edges        CommentEdges `json:"edges"`
@@ -41,20 +45,20 @@ type CommentEdges struct {
 	Owner *Post `json:"owner,omitempty"`
 	// Replies holds the value of the replies edge.
 	Replies []*Reply `json:"replies,omitempty"`
+	// Author holds the value of the author edge.
+	Author *User `json:"author,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e CommentEdges) OwnerOrErr() (*Post, error) {
-	if e.loadedTypes[0] {
-		if e.Owner == nil {
-			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: post.Label}
-		}
+	if e.Owner != nil {
 		return e.Owner, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: post.Label}
 	}
 	return nil, &NotLoadedError{edge: "owner"}
 }
@@ -68,15 +72,28 @@ func (e CommentEdges) RepliesOrErr() ([]*Reply, error) {
 	return nil, &NotLoadedError{edge: "replies"}
 }
 
+// AuthorOrErr returns the Author value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e CommentEdges) AuthorOrErr() (*User, error) {
+	if e.Author != nil {
+		return e.Author, nil
+	} else if e.loadedTypes[2] {
+		return nil, &NotFoundError{label: user.Label}
+	}
+	return nil, &NotLoadedError{edge: "author"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Comment) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case comment.FieldID, comment.FieldUserID, comment.FieldPostID, comment.FieldStatus, comment.FieldFloor, comment.FieldCreateAt:
+		case comment.FieldID, comment.FieldAuthorID, comment.FieldPostID, comment.FieldFloor:
 			values[i] = new(sql.NullInt64)
-		case comment.FieldContent:
+		case comment.FieldContent, comment.FieldStatus:
 			values[i] = new(sql.NullString)
+		case comment.FieldCreatedAt, comment.FieldUpdatedAt:
+			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -97,18 +114,30 @@ func (c *Comment) assignValues(columns []string, values []any) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			c.ID = uint64(value.Int64)
-		case comment.FieldUserID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field user_id", values[i])
+			c.ID = int(value.Int64)
+		case comment.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
-				c.UserID = uint64(value.Int64)
+				c.CreatedAt = value.Time
+			}
+		case comment.FieldUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+			} else if value.Valid {
+				c.UpdatedAt = value.Time
+			}
+		case comment.FieldAuthorID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field author_id", values[i])
+			} else if value.Valid {
+				c.AuthorID = int(value.Int64)
 			}
 		case comment.FieldPostID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field post_id", values[i])
 			} else if value.Valid {
-				c.PostID = uint64(value.Int64)
+				c.PostID = int(value.Int64)
 			}
 		case comment.FieldContent:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -117,22 +146,16 @@ func (c *Comment) assignValues(columns []string, values []any) error {
 				c.Content = value.String
 			}
 		case comment.FieldStatus:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
-				c.Status = int8(value.Int64)
+				c.Status = comment.Status(value.String)
 			}
 		case comment.FieldFloor:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field floor", values[i])
 			} else if value.Valid {
-				c.Floor = uint64(value.Int64)
-			}
-		case comment.FieldCreateAt:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field create_at", values[i])
-			} else if value.Valid {
-				c.CreateAt = value.Int64
+				c.Floor = int(value.Int64)
 			}
 		default:
 			c.selectValues.Set(columns[i], values[i])
@@ -155,6 +178,11 @@ func (c *Comment) QueryOwner() *PostQuery {
 // QueryReplies queries the "replies" edge of the Comment entity.
 func (c *Comment) QueryReplies() *ReplyQuery {
 	return NewCommentClient(c.config).QueryReplies(c)
+}
+
+// QueryAuthor queries the "author" edge of the Comment entity.
+func (c *Comment) QueryAuthor() *UserQuery {
+	return NewCommentClient(c.config).QueryAuthor(c)
 }
 
 // Update returns a builder for updating this Comment.
@@ -180,8 +208,14 @@ func (c *Comment) String() string {
 	var builder strings.Builder
 	builder.WriteString("Comment(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", c.ID))
-	builder.WriteString("user_id=")
-	builder.WriteString(fmt.Sprintf("%v", c.UserID))
+	builder.WriteString("created_at=")
+	builder.WriteString(c.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("updated_at=")
+	builder.WriteString(c.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("author_id=")
+	builder.WriteString(fmt.Sprintf("%v", c.AuthorID))
 	builder.WriteString(", ")
 	builder.WriteString("post_id=")
 	builder.WriteString(fmt.Sprintf("%v", c.PostID))
@@ -194,9 +228,6 @@ func (c *Comment) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("floor=")
 	builder.WriteString(fmt.Sprintf("%v", c.Floor))
-	builder.WriteString(", ")
-	builder.WriteString("create_at=")
-	builder.WriteString(fmt.Sprintf("%v", c.CreateAt))
 	builder.WriteByte(')')
 	return builder.String()
 }

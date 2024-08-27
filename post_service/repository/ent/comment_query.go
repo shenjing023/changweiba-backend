@@ -8,10 +8,12 @@ import (
 	"cw_post_service/repository/ent/post"
 	"cw_post_service/repository/ent/predicate"
 	"cw_post_service/repository/ent/reply"
+	"cw_post_service/repository/ent/user"
 	"database/sql/driver"
 	"fmt"
 	"math"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -26,6 +28,7 @@ type CommentQuery struct {
 	predicates  []predicate.Comment
 	withOwner   *PostQuery
 	withReplies *ReplyQuery
+	withAuthor  *UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -106,10 +109,32 @@ func (cq *CommentQuery) QueryReplies() *ReplyQuery {
 	return query
 }
 
+// QueryAuthor chains the current query on the "author" edge.
+func (cq *CommentQuery) QueryAuthor() *UserQuery {
+	query := (&UserClient{config: cq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(comment.Table, comment.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, comment.AuthorTable, comment.AuthorColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Comment entity from the query.
 // Returns a *NotFoundError when no Comment was found.
 func (cq *CommentQuery) First(ctx context.Context) (*Comment, error) {
-	nodes, err := cq.Limit(1).All(setContextOp(ctx, cq.ctx, "First"))
+	nodes, err := cq.Limit(1).All(setContextOp(ctx, cq.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -130,9 +155,9 @@ func (cq *CommentQuery) FirstX(ctx context.Context) *Comment {
 
 // FirstID returns the first Comment ID from the query.
 // Returns a *NotFoundError when no Comment ID was found.
-func (cq *CommentQuery) FirstID(ctx context.Context) (id uint64, err error) {
-	var ids []uint64
-	if ids, err = cq.Limit(1).IDs(setContextOp(ctx, cq.ctx, "FirstID")); err != nil {
+func (cq *CommentQuery) FirstID(ctx context.Context) (id int, err error) {
+	var ids []int
+	if ids, err = cq.Limit(1).IDs(setContextOp(ctx, cq.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -143,7 +168,7 @@ func (cq *CommentQuery) FirstID(ctx context.Context) (id uint64, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (cq *CommentQuery) FirstIDX(ctx context.Context) uint64 {
+func (cq *CommentQuery) FirstIDX(ctx context.Context) int {
 	id, err := cq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -155,7 +180,7 @@ func (cq *CommentQuery) FirstIDX(ctx context.Context) uint64 {
 // Returns a *NotSingularError when more than one Comment entity is found.
 // Returns a *NotFoundError when no Comment entities are found.
 func (cq *CommentQuery) Only(ctx context.Context) (*Comment, error) {
-	nodes, err := cq.Limit(2).All(setContextOp(ctx, cq.ctx, "Only"))
+	nodes, err := cq.Limit(2).All(setContextOp(ctx, cq.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -181,9 +206,9 @@ func (cq *CommentQuery) OnlyX(ctx context.Context) *Comment {
 // OnlyID is like Only, but returns the only Comment ID in the query.
 // Returns a *NotSingularError when more than one Comment ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (cq *CommentQuery) OnlyID(ctx context.Context) (id uint64, err error) {
-	var ids []uint64
-	if ids, err = cq.Limit(2).IDs(setContextOp(ctx, cq.ctx, "OnlyID")); err != nil {
+func (cq *CommentQuery) OnlyID(ctx context.Context) (id int, err error) {
+	var ids []int
+	if ids, err = cq.Limit(2).IDs(setContextOp(ctx, cq.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -198,7 +223,7 @@ func (cq *CommentQuery) OnlyID(ctx context.Context) (id uint64, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (cq *CommentQuery) OnlyIDX(ctx context.Context) uint64 {
+func (cq *CommentQuery) OnlyIDX(ctx context.Context) int {
 	id, err := cq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -208,7 +233,7 @@ func (cq *CommentQuery) OnlyIDX(ctx context.Context) uint64 {
 
 // All executes the query and returns a list of Comments.
 func (cq *CommentQuery) All(ctx context.Context) ([]*Comment, error) {
-	ctx = setContextOp(ctx, cq.ctx, "All")
+	ctx = setContextOp(ctx, cq.ctx, ent.OpQueryAll)
 	if err := cq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
@@ -226,11 +251,11 @@ func (cq *CommentQuery) AllX(ctx context.Context) []*Comment {
 }
 
 // IDs executes the query and returns a list of Comment IDs.
-func (cq *CommentQuery) IDs(ctx context.Context) (ids []uint64, err error) {
+func (cq *CommentQuery) IDs(ctx context.Context) (ids []int, err error) {
 	if cq.ctx.Unique == nil && cq.path != nil {
 		cq.Unique(true)
 	}
-	ctx = setContextOp(ctx, cq.ctx, "IDs")
+	ctx = setContextOp(ctx, cq.ctx, ent.OpQueryIDs)
 	if err = cq.Select(comment.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -238,7 +263,7 @@ func (cq *CommentQuery) IDs(ctx context.Context) (ids []uint64, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (cq *CommentQuery) IDsX(ctx context.Context) []uint64 {
+func (cq *CommentQuery) IDsX(ctx context.Context) []int {
 	ids, err := cq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -248,7 +273,7 @@ func (cq *CommentQuery) IDsX(ctx context.Context) []uint64 {
 
 // Count returns the count of the given query.
 func (cq *CommentQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, cq.ctx, "Count")
+	ctx = setContextOp(ctx, cq.ctx, ent.OpQueryCount)
 	if err := cq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
@@ -266,7 +291,7 @@ func (cq *CommentQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (cq *CommentQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, cq.ctx, "Exist")
+	ctx = setContextOp(ctx, cq.ctx, ent.OpQueryExist)
 	switch _, err := cq.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
@@ -300,6 +325,7 @@ func (cq *CommentQuery) Clone() *CommentQuery {
 		predicates:  append([]predicate.Comment{}, cq.predicates...),
 		withOwner:   cq.withOwner.Clone(),
 		withReplies: cq.withReplies.Clone(),
+		withAuthor:  cq.withAuthor.Clone(),
 		// clone intermediate query.
 		sql:  cq.sql.Clone(),
 		path: cq.path,
@@ -328,18 +354,29 @@ func (cq *CommentQuery) WithReplies(opts ...func(*ReplyQuery)) *CommentQuery {
 	return cq
 }
 
+// WithAuthor tells the query-builder to eager-load the nodes that are connected to
+// the "author" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *CommentQuery) WithAuthor(opts ...func(*UserQuery)) *CommentQuery {
+	query := (&UserClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withAuthor = query
+	return cq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
 // Example:
 //
 //	var v []struct {
-//		UserID uint64 `json:"user_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Comment.Query().
-//		GroupBy(comment.FieldUserID).
+//		GroupBy(comment.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (cq *CommentQuery) GroupBy(field string, fields ...string) *CommentGroupBy {
@@ -357,11 +394,11 @@ func (cq *CommentQuery) GroupBy(field string, fields ...string) *CommentGroupBy 
 // Example:
 //
 //	var v []struct {
-//		UserID uint64 `json:"user_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Comment.Query().
-//		Select(comment.FieldUserID).
+//		Select(comment.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (cq *CommentQuery) Select(fields ...string) *CommentSelect {
 	cq.ctx.Fields = append(cq.ctx.Fields, fields...)
@@ -406,9 +443,10 @@ func (cq *CommentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Comm
 	var (
 		nodes       = []*Comment{}
 		_spec       = cq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			cq.withOwner != nil,
 			cq.withReplies != nil,
+			cq.withAuthor != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -442,12 +480,18 @@ func (cq *CommentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Comm
 			return nil, err
 		}
 	}
+	if query := cq.withAuthor; query != nil {
+		if err := cq.loadAuthor(ctx, query, nodes, nil,
+			func(n *Comment, e *User) { n.Edges.Author = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
 func (cq *CommentQuery) loadOwner(ctx context.Context, query *PostQuery, nodes []*Comment, init func(*Comment), assign func(*Comment, *Post)) error {
-	ids := make([]uint64, 0, len(nodes))
-	nodeids := make(map[uint64][]*Comment)
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Comment)
 	for i := range nodes {
 		fk := nodes[i].PostID
 		if _, ok := nodeids[fk]; !ok {
@@ -476,7 +520,7 @@ func (cq *CommentQuery) loadOwner(ctx context.Context, query *PostQuery, nodes [
 }
 func (cq *CommentQuery) loadReplies(ctx context.Context, query *ReplyQuery, nodes []*Comment, init func(*Comment), assign func(*Comment, *Reply)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[uint64]*Comment)
+	nodeids := make(map[int]*Comment)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -504,6 +548,35 @@ func (cq *CommentQuery) loadReplies(ctx context.Context, query *ReplyQuery, node
 	}
 	return nil
 }
+func (cq *CommentQuery) loadAuthor(ctx context.Context, query *UserQuery, nodes []*Comment, init func(*Comment), assign func(*Comment, *User)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Comment)
+	for i := range nodes {
+		fk := nodes[i].AuthorID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "author_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
 func (cq *CommentQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := cq.querySpec()
@@ -515,7 +588,7 @@ func (cq *CommentQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (cq *CommentQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(comment.Table, comment.Columns, sqlgraph.NewFieldSpec(comment.FieldID, field.TypeUint64))
+	_spec := sqlgraph.NewQuerySpec(comment.Table, comment.Columns, sqlgraph.NewFieldSpec(comment.FieldID, field.TypeInt))
 	_spec.From = cq.sql
 	if unique := cq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -532,6 +605,9 @@ func (cq *CommentQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if cq.withOwner != nil {
 			_spec.Node.AddColumnOnce(comment.FieldPostID)
+		}
+		if cq.withAuthor != nil {
+			_spec.Node.AddColumnOnce(comment.FieldAuthorID)
 		}
 	}
 	if ps := cq.predicates; len(ps) > 0 {
@@ -603,7 +679,7 @@ func (cgb *CommentGroupBy) Aggregate(fns ...AggregateFunc) *CommentGroupBy {
 
 // Scan applies the selector query and scans the result into the given value.
 func (cgb *CommentGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, cgb.build.ctx, "GroupBy")
+	ctx = setContextOp(ctx, cgb.build.ctx, ent.OpQueryGroupBy)
 	if err := cgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
@@ -651,7 +727,7 @@ func (cs *CommentSelect) Aggregate(fns ...AggregateFunc) *CommentSelect {
 
 // Scan applies the selector query and scans the result into the given value.
 func (cs *CommentSelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, cs.ctx, "Select")
+	ctx = setContextOp(ctx, cs.ctx, ent.OpQuerySelect)
 	if err := cs.prepareQuery(ctx); err != nil {
 		return err
 	}

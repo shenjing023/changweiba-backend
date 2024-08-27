@@ -27,7 +27,7 @@ func (rd *ReplyDelete) Where(ps ...predicate.Reply) *ReplyDelete {
 
 // Exec executes the deletion query and returns how many vertices were deleted.
 func (rd *ReplyDelete) Exec(ctx context.Context) (int, error) {
-	return withHooks[int, ReplyMutation](ctx, rd.sqlExec, rd.mutation, rd.hooks)
+	return withHooks(ctx, rd.sqlExec, rd.mutation, rd.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
@@ -40,7 +40,7 @@ func (rd *ReplyDelete) ExecX(ctx context.Context) int {
 }
 
 func (rd *ReplyDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(reply.Table, sqlgraph.NewFieldSpec(reply.FieldID, field.TypeUint64))
+	_spec := sqlgraph.NewDeleteSpec(reply.Table, sqlgraph.NewFieldSpec(reply.FieldID, field.TypeInt))
 	if ps := rd.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {

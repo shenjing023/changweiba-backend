@@ -5,8 +5,10 @@ package ent
 import (
 	"cw_post_service/repository/ent/comment"
 	"cw_post_service/repository/ent/reply"
+	"cw_post_service/repository/ent/user"
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -16,21 +18,21 @@ import (
 type Reply struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID uint64 `json:"id,omitempty"`
+	ID int `json:"id,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// The user that posted the message.
-	UserID uint64 `json:"user_id,omitempty"`
+	AuthorID int `json:"author_id,omitempty"`
 	// The comment that this reply is for.
-	CommentID uint64 `json:"comment_id,omitempty"`
+	CommentID int `json:"comment_id,omitempty"`
 	// 回复哪个回复的id
-	ParentID uint64 `json:"parent_id,omitempty"`
+	ParentID int `json:"parent_id,omitempty"`
 	// The content of the message.
 	Content string `json:"content,omitempty"`
-	// 状态,是否被封，0：正常，大于0被封
-	Status int8 `json:"status,omitempty"`
-	// 第几楼
-	Floor uint64 `json:"floor,omitempty"`
-	// 创建时间
-	CreateAt int64 `json:"create_at,omitempty"`
+	// 状态
+	Status reply.Status `json:"status,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ReplyQuery when eager-loading is set.
 	Edges        ReplyEdges `json:"edges"`
@@ -45,20 +47,20 @@ type ReplyEdges struct {
 	Parent *Reply `json:"parent,omitempty"`
 	// Children holds the value of the children edge.
 	Children []*Reply `json:"children,omitempty"`
+	// Author holds the value of the author edge.
+	Author *User `json:"author,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e ReplyEdges) OwnerOrErr() (*Comment, error) {
-	if e.loadedTypes[0] {
-		if e.Owner == nil {
-			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: comment.Label}
-		}
+	if e.Owner != nil {
 		return e.Owner, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: comment.Label}
 	}
 	return nil, &NotLoadedError{edge: "owner"}
 }
@@ -66,12 +68,10 @@ func (e ReplyEdges) OwnerOrErr() (*Comment, error) {
 // ParentOrErr returns the Parent value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e ReplyEdges) ParentOrErr() (*Reply, error) {
-	if e.loadedTypes[1] {
-		if e.Parent == nil {
-			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: reply.Label}
-		}
+	if e.Parent != nil {
 		return e.Parent, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: reply.Label}
 	}
 	return nil, &NotLoadedError{edge: "parent"}
 }
@@ -85,15 +85,28 @@ func (e ReplyEdges) ChildrenOrErr() ([]*Reply, error) {
 	return nil, &NotLoadedError{edge: "children"}
 }
 
+// AuthorOrErr returns the Author value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ReplyEdges) AuthorOrErr() (*User, error) {
+	if e.Author != nil {
+		return e.Author, nil
+	} else if e.loadedTypes[3] {
+		return nil, &NotFoundError{label: user.Label}
+	}
+	return nil, &NotLoadedError{edge: "author"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Reply) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case reply.FieldID, reply.FieldUserID, reply.FieldCommentID, reply.FieldParentID, reply.FieldStatus, reply.FieldFloor, reply.FieldCreateAt:
+		case reply.FieldID, reply.FieldAuthorID, reply.FieldCommentID, reply.FieldParentID:
 			values[i] = new(sql.NullInt64)
-		case reply.FieldContent:
+		case reply.FieldContent, reply.FieldStatus:
 			values[i] = new(sql.NullString)
+		case reply.FieldCreatedAt, reply.FieldUpdatedAt:
+			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -114,24 +127,36 @@ func (r *Reply) assignValues(columns []string, values []any) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			r.ID = uint64(value.Int64)
-		case reply.FieldUserID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field user_id", values[i])
+			r.ID = int(value.Int64)
+		case reply.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
-				r.UserID = uint64(value.Int64)
+				r.CreatedAt = value.Time
+			}
+		case reply.FieldUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+			} else if value.Valid {
+				r.UpdatedAt = value.Time
+			}
+		case reply.FieldAuthorID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field author_id", values[i])
+			} else if value.Valid {
+				r.AuthorID = int(value.Int64)
 			}
 		case reply.FieldCommentID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field comment_id", values[i])
 			} else if value.Valid {
-				r.CommentID = uint64(value.Int64)
+				r.CommentID = int(value.Int64)
 			}
 		case reply.FieldParentID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field parent_id", values[i])
 			} else if value.Valid {
-				r.ParentID = uint64(value.Int64)
+				r.ParentID = int(value.Int64)
 			}
 		case reply.FieldContent:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -140,22 +165,10 @@ func (r *Reply) assignValues(columns []string, values []any) error {
 				r.Content = value.String
 			}
 		case reply.FieldStatus:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
-				r.Status = int8(value.Int64)
-			}
-		case reply.FieldFloor:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field floor", values[i])
-			} else if value.Valid {
-				r.Floor = uint64(value.Int64)
-			}
-		case reply.FieldCreateAt:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field create_at", values[i])
-			} else if value.Valid {
-				r.CreateAt = value.Int64
+				r.Status = reply.Status(value.String)
 			}
 		default:
 			r.selectValues.Set(columns[i], values[i])
@@ -185,6 +198,11 @@ func (r *Reply) QueryChildren() *ReplyQuery {
 	return NewReplyClient(r.config).QueryChildren(r)
 }
 
+// QueryAuthor queries the "author" edge of the Reply entity.
+func (r *Reply) QueryAuthor() *UserQuery {
+	return NewReplyClient(r.config).QueryAuthor(r)
+}
+
 // Update returns a builder for updating this Reply.
 // Note that you need to call Reply.Unwrap() before calling this method if this Reply
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -208,8 +226,14 @@ func (r *Reply) String() string {
 	var builder strings.Builder
 	builder.WriteString("Reply(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", r.ID))
-	builder.WriteString("user_id=")
-	builder.WriteString(fmt.Sprintf("%v", r.UserID))
+	builder.WriteString("created_at=")
+	builder.WriteString(r.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("updated_at=")
+	builder.WriteString(r.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("author_id=")
+	builder.WriteString(fmt.Sprintf("%v", r.AuthorID))
 	builder.WriteString(", ")
 	builder.WriteString("comment_id=")
 	builder.WriteString(fmt.Sprintf("%v", r.CommentID))
@@ -222,12 +246,6 @@ func (r *Reply) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", r.Status))
-	builder.WriteString(", ")
-	builder.WriteString("floor=")
-	builder.WriteString(fmt.Sprintf("%v", r.Floor))
-	builder.WriteString(", ")
-	builder.WriteString("create_at=")
-	builder.WriteString(fmt.Sprintf("%v", r.CreateAt))
 	builder.WriteByte(')')
 	return builder.String()
 }

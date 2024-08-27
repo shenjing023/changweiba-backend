@@ -11,13 +11,14 @@ import (
 var (
 	// CommentColumns holds the columns for the "comment" table.
 	CommentColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUint64, Increment: true},
-		{Name: "user_id", Type: field.TypeUint64},
-		{Name: "content", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(1024)"}},
-		{Name: "status", Type: field.TypeInt8, Default: 0, SchemaType: map[string]string{"mysql": "tinyint unsigned"}},
-		{Name: "floor", Type: field.TypeUint64},
-		{Name: "create_at", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
-		{Name: "post_id", Type: field.TypeUint64, Nullable: true},
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "content", Type: field.TypeString, Size: 1024},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"NORMAL", "BANNED", "DELETED"}, Default: "NORMAL"},
+		{Name: "floor", Type: field.TypeInt},
+		{Name: "post_id", Type: field.TypeInt, Nullable: true},
+		{Name: "author_id", Type: field.TypeInt, Nullable: true},
 	}
 	// CommentTable holds the schema information for the "comment" table.
 	CommentTable = &schema.Table{
@@ -31,50 +32,76 @@ var (
 				RefColumns: []*schema.Column{PostColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
+			{
+				Symbol:     "comment_user_comments",
+				Columns:    []*schema.Column{CommentColumns[7]},
+				RefColumns: []*schema.Column{UserColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "comment_user_id",
+				Name:    "comment_author_id",
 				Unique:  false,
-				Columns: []*schema.Column{CommentColumns[1]},
+				Columns: []*schema.Column{CommentColumns[7]},
+			},
+			{
+				Name:    "comment_post_id",
+				Unique:  false,
+				Columns: []*schema.Column{CommentColumns[6]},
 			},
 		},
 	}
 	// PostColumns holds the columns for the "post" table.
 	PostColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUint64, Increment: true},
-		{Name: "user_id", Type: field.TypeUint64},
-		{Name: "title", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(1024)"}},
-		{Name: "content", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(1024)"}},
-		{Name: "status", Type: field.TypeInt8, Default: 0, SchemaType: map[string]string{"mysql": "tinyint unsigned"}},
-		{Name: "reply_num", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
-		{Name: "create_at", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
-		{Name: "update_at", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
-		{Name: "pin", Type: field.TypeInt8, Default: 0, SchemaType: map[string]string{"mysql": "tinyint unsigned"}},
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "title", Type: field.TypeString, Size: 30},
+		{Name: "content", Type: field.TypeString, Size: 1024},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"NORMAL", "BANNED", "DELETED"}, Default: "NORMAL"},
+		{Name: "reply_num", Type: field.TypeInt, Default: 0},
+		{Name: "pin", Type: field.TypeInt8, Default: 0},
+		{Name: "author_id", Type: field.TypeInt, Nullable: true},
+		{Name: "user_likes", Type: field.TypeInt, Nullable: true},
 	}
 	// PostTable holds the schema information for the "post" table.
 	PostTable = &schema.Table{
 		Name:       "post",
 		Columns:    PostColumns,
 		PrimaryKey: []*schema.Column{PostColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "post_user_posts",
+				Columns:    []*schema.Column{PostColumns[8]},
+				RefColumns: []*schema.Column{UserColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "post_user_likes",
+				Columns:    []*schema.Column{PostColumns[9]},
+				RefColumns: []*schema.Column{UserColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "post_user_id",
+				Name:    "post_author_id",
 				Unique:  false,
-				Columns: []*schema.Column{PostColumns[1]},
+				Columns: []*schema.Column{PostColumns[8]},
 			},
 		},
 	}
 	// ReplyColumns holds the columns for the "reply" table.
 	ReplyColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUint64, Increment: true},
-		{Name: "user_id", Type: field.TypeUint64},
-		{Name: "content", Type: field.TypeString, SchemaType: map[string]string{"mysql": "varchar(1024)"}},
-		{Name: "status", Type: field.TypeInt8, Default: 0, SchemaType: map[string]string{"mysql": "tinyint unsigned"}},
-		{Name: "floor", Type: field.TypeUint64},
-		{Name: "create_at", Type: field.TypeInt64, Default: 0, SchemaType: map[string]string{"mysql": "int UNSIGNED"}},
-		{Name: "comment_id", Type: field.TypeUint64, Nullable: true},
-		{Name: "parent_id", Type: field.TypeUint64, Nullable: true},
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "content", Type: field.TypeString, Size: 50},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"NORMAL", "BANNED", "DELETED"}, Default: "NORMAL"},
+		{Name: "comment_id", Type: field.TypeInt, Nullable: true},
+		{Name: "parent_id", Type: field.TypeInt, Nullable: true},
+		{Name: "author_id", Type: field.TypeInt, Nullable: true},
 	}
 	// ReplyTable holds the schema information for the "reply" table.
 	ReplyTable = &schema.Table{
@@ -84,44 +111,77 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "reply_comment_replies",
-				Columns:    []*schema.Column{ReplyColumns[6]},
+				Columns:    []*schema.Column{ReplyColumns[5]},
 				RefColumns: []*schema.Column{CommentColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "reply_reply_children",
-				Columns:    []*schema.Column{ReplyColumns[7]},
+				Columns:    []*schema.Column{ReplyColumns[6]},
 				RefColumns: []*schema.Column{ReplyColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "reply_user_replies",
+				Columns:    []*schema.Column{ReplyColumns[7]},
+				RefColumns: []*schema.Column{UserColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "reply_user_id",
+				Name:    "reply_author_id",
 				Unique:  false,
-				Columns: []*schema.Column{ReplyColumns[1]},
+				Columns: []*schema.Column{ReplyColumns[7]},
+			},
+			{
+				Name:    "reply_comment_id",
+				Unique:  false,
+				Columns: []*schema.Column{ReplyColumns[5]},
 			},
 		},
+	}
+	// UserColumns holds the columns for the "user" table.
+	UserColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString, Unique: true, Size: 20},
+		{Name: "avatar", Type: field.TypeString},
+	}
+	// UserTable holds the schema information for the "user" table.
+	UserTable = &schema.Table{
+		Name:       "user",
+		Columns:    UserColumns,
+		PrimaryKey: []*schema.Column{UserColumns[0]},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		CommentTable,
 		PostTable,
 		ReplyTable,
+		UserTable,
 	}
 )
 
 func init() {
 	CommentTable.ForeignKeys[0].RefTable = PostTable
+	CommentTable.ForeignKeys[1].RefTable = UserTable
 	CommentTable.Annotation = &entsql.Annotation{
 		Table: "comment",
 	}
+	PostTable.ForeignKeys[0].RefTable = UserTable
+	PostTable.ForeignKeys[1].RefTable = UserTable
 	PostTable.Annotation = &entsql.Annotation{
 		Table: "post",
 	}
 	ReplyTable.ForeignKeys[0].RefTable = CommentTable
 	ReplyTable.ForeignKeys[1].RefTable = ReplyTable
+	ReplyTable.ForeignKeys[2].RefTable = UserTable
 	ReplyTable.Annotation = &entsql.Annotation{
 		Table: "reply",
+	}
+	UserTable.Annotation = &entsql.Annotation{
+		Table: "user",
 	}
 }

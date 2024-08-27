@@ -4,6 +4,7 @@ package enttest
 
 import (
 	"context"
+
 	"cw_post_service/repository/ent"
 	// required by schema hooks.
 	_ "cw_post_service/repository/ent/runtime"

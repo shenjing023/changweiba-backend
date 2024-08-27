@@ -7,10 +7,12 @@ import (
 	"cw_post_service/repository/ent/comment"
 	"cw_post_service/repository/ent/predicate"
 	"cw_post_service/repository/ent/reply"
+	"cw_post_service/repository/ent/user"
 	"database/sql/driver"
 	"fmt"
 	"math"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -26,6 +28,7 @@ type ReplyQuery struct {
 	withOwner    *CommentQuery
 	withParent   *ReplyQuery
 	withChildren *ReplyQuery
+	withAuthor   *UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -128,10 +131,32 @@ func (rq *ReplyQuery) QueryChildren() *ReplyQuery {
 	return query
 }
 
+// QueryAuthor chains the current query on the "author" edge.
+func (rq *ReplyQuery) QueryAuthor() *UserQuery {
+	query := (&UserClient{config: rq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(reply.Table, reply.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, reply.AuthorTable, reply.AuthorColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Reply entity from the query.
 // Returns a *NotFoundError when no Reply was found.
 func (rq *ReplyQuery) First(ctx context.Context) (*Reply, error) {
-	nodes, err := rq.Limit(1).All(setContextOp(ctx, rq.ctx, "First"))
+	nodes, err := rq.Limit(1).All(setContextOp(ctx, rq.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -152,9 +177,9 @@ func (rq *ReplyQuery) FirstX(ctx context.Context) *Reply {
 
 // FirstID returns the first Reply ID from the query.
 // Returns a *NotFoundError when no Reply ID was found.
-func (rq *ReplyQuery) FirstID(ctx context.Context) (id uint64, err error) {
-	var ids []uint64
-	if ids, err = rq.Limit(1).IDs(setContextOp(ctx, rq.ctx, "FirstID")); err != nil {
+func (rq *ReplyQuery) FirstID(ctx context.Context) (id int, err error) {
+	var ids []int
+	if ids, err = rq.Limit(1).IDs(setContextOp(ctx, rq.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -165,7 +190,7 @@ func (rq *ReplyQuery) FirstID(ctx context.Context) (id uint64, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (rq *ReplyQuery) FirstIDX(ctx context.Context) uint64 {
+func (rq *ReplyQuery) FirstIDX(ctx context.Context) int {
 	id, err := rq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -177,7 +202,7 @@ func (rq *ReplyQuery) FirstIDX(ctx context.Context) uint64 {
 // Returns a *NotSingularError when more than one Reply entity is found.
 // Returns a *NotFoundError when no Reply entities are found.
 func (rq *ReplyQuery) Only(ctx context.Context) (*Reply, error) {
-	nodes, err := rq.Limit(2).All(setContextOp(ctx, rq.ctx, "Only"))
+	nodes, err := rq.Limit(2).All(setContextOp(ctx, rq.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -203,9 +228,9 @@ func (rq *ReplyQuery) OnlyX(ctx context.Context) *Reply {
 // OnlyID is like Only, but returns the only Reply ID in the query.
 // Returns a *NotSingularError when more than one Reply ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (rq *ReplyQuery) OnlyID(ctx context.Context) (id uint64, err error) {
-	var ids []uint64
-	if ids, err = rq.Limit(2).IDs(setContextOp(ctx, rq.ctx, "OnlyID")); err != nil {
+func (rq *ReplyQuery) OnlyID(ctx context.Context) (id int, err error) {
+	var ids []int
+	if ids, err = rq.Limit(2).IDs(setContextOp(ctx, rq.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -220,7 +245,7 @@ func (rq *ReplyQuery) OnlyID(ctx context.Context) (id uint64, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (rq *ReplyQuery) OnlyIDX(ctx context.Context) uint64 {
+func (rq *ReplyQuery) OnlyIDX(ctx context.Context) int {
 	id, err := rq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -230,7 +255,7 @@ func (rq *ReplyQuery) OnlyIDX(ctx context.Context) uint64 {
 
 // All executes the query and returns a list of Replies.
 func (rq *ReplyQuery) All(ctx context.Context) ([]*Reply, error) {
-	ctx = setContextOp(ctx, rq.ctx, "All")
+	ctx = setContextOp(ctx, rq.ctx, ent.OpQueryAll)
 	if err := rq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
@@ -248,11 +273,11 @@ func (rq *ReplyQuery) AllX(ctx context.Context) []*Reply {
 }
 
 // IDs executes the query and returns a list of Reply IDs.
-func (rq *ReplyQuery) IDs(ctx context.Context) (ids []uint64, err error) {
+func (rq *ReplyQuery) IDs(ctx context.Context) (ids []int, err error) {
 	if rq.ctx.Unique == nil && rq.path != nil {
 		rq.Unique(true)
 	}
-	ctx = setContextOp(ctx, rq.ctx, "IDs")
+	ctx = setContextOp(ctx, rq.ctx, ent.OpQueryIDs)
 	if err = rq.Select(reply.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -260,7 +285,7 @@ func (rq *ReplyQuery) IDs(ctx context.Context) (ids []uint64, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (rq *ReplyQuery) IDsX(ctx context.Context) []uint64 {
+func (rq *ReplyQuery) IDsX(ctx context.Context) []int {
 	ids, err := rq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -270,7 +295,7 @@ func (rq *ReplyQuery) IDsX(ctx context.Context) []uint64 {
 
 // Count returns the count of the given query.
 func (rq *ReplyQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, rq.ctx, "Count")
+	ctx = setContextOp(ctx, rq.ctx, ent.OpQueryCount)
 	if err := rq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
@@ -288,7 +313,7 @@ func (rq *ReplyQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (rq *ReplyQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, rq.ctx, "Exist")
+	ctx = setContextOp(ctx, rq.ctx, ent.OpQueryExist)
 	switch _, err := rq.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
@@ -323,6 +348,7 @@ func (rq *ReplyQuery) Clone() *ReplyQuery {
 		withOwner:    rq.withOwner.Clone(),
 		withParent:   rq.withParent.Clone(),
 		withChildren: rq.withChildren.Clone(),
+		withAuthor:   rq.withAuthor.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
 		path: rq.path,
@@ -362,18 +388,29 @@ func (rq *ReplyQuery) WithChildren(opts ...func(*ReplyQuery)) *ReplyQuery {
 	return rq
 }
 
+// WithAuthor tells the query-builder to eager-load the nodes that are connected to
+// the "author" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *ReplyQuery) WithAuthor(opts ...func(*UserQuery)) *ReplyQuery {
+	query := (&UserClient{config: rq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withAuthor = query
+	return rq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
 // Example:
 //
 //	var v []struct {
-//		UserID uint64 `json:"user_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Reply.Query().
-//		GroupBy(reply.FieldUserID).
+//		GroupBy(reply.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (rq *ReplyQuery) GroupBy(field string, fields ...string) *ReplyGroupBy {
@@ -391,11 +428,11 @@ func (rq *ReplyQuery) GroupBy(field string, fields ...string) *ReplyGroupBy {
 // Example:
 //
 //	var v []struct {
-//		UserID uint64 `json:"user_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Reply.Query().
-//		Select(reply.FieldUserID).
+//		Select(reply.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (rq *ReplyQuery) Select(fields ...string) *ReplySelect {
 	rq.ctx.Fields = append(rq.ctx.Fields, fields...)
@@ -440,10 +477,11 @@ func (rq *ReplyQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Reply,
 	var (
 		nodes       = []*Reply{}
 		_spec       = rq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			rq.withOwner != nil,
 			rq.withParent != nil,
 			rq.withChildren != nil,
+			rq.withAuthor != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -483,12 +521,18 @@ func (rq *ReplyQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Reply,
 			return nil, err
 		}
 	}
+	if query := rq.withAuthor; query != nil {
+		if err := rq.loadAuthor(ctx, query, nodes, nil,
+			func(n *Reply, e *User) { n.Edges.Author = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
 func (rq *ReplyQuery) loadOwner(ctx context.Context, query *CommentQuery, nodes []*Reply, init func(*Reply), assign func(*Reply, *Comment)) error {
-	ids := make([]uint64, 0, len(nodes))
-	nodeids := make(map[uint64][]*Reply)
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Reply)
 	for i := range nodes {
 		fk := nodes[i].CommentID
 		if _, ok := nodeids[fk]; !ok {
@@ -516,8 +560,8 @@ func (rq *ReplyQuery) loadOwner(ctx context.Context, query *CommentQuery, nodes 
 	return nil
 }
 func (rq *ReplyQuery) loadParent(ctx context.Context, query *ReplyQuery, nodes []*Reply, init func(*Reply), assign func(*Reply, *Reply)) error {
-	ids := make([]uint64, 0, len(nodes))
-	nodeids := make(map[uint64][]*Reply)
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Reply)
 	for i := range nodes {
 		fk := nodes[i].ParentID
 		if _, ok := nodeids[fk]; !ok {
@@ -546,7 +590,7 @@ func (rq *ReplyQuery) loadParent(ctx context.Context, query *ReplyQuery, nodes [
 }
 func (rq *ReplyQuery) loadChildren(ctx context.Context, query *ReplyQuery, nodes []*Reply, init func(*Reply), assign func(*Reply, *Reply)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[uint64]*Reply)
+	nodeids := make(map[int]*Reply)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -574,6 +618,35 @@ func (rq *ReplyQuery) loadChildren(ctx context.Context, query *ReplyQuery, nodes
 	}
 	return nil
 }
+func (rq *ReplyQuery) loadAuthor(ctx context.Context, query *UserQuery, nodes []*Reply, init func(*Reply), assign func(*Reply, *User)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Reply)
+	for i := range nodes {
+		fk := nodes[i].AuthorID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "author_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
 func (rq *ReplyQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := rq.querySpec()
@@ -585,7 +658,7 @@ func (rq *ReplyQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (rq *ReplyQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(reply.Table, reply.Columns, sqlgraph.NewFieldSpec(reply.FieldID, field.TypeUint64))
+	_spec := sqlgraph.NewQuerySpec(reply.Table, reply.Columns, sqlgraph.NewFieldSpec(reply.FieldID, field.TypeInt))
 	_spec.From = rq.sql
 	if unique := rq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -605,6 +678,9 @@ func (rq *ReplyQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if rq.withParent != nil {
 			_spec.Node.AddColumnOnce(reply.FieldParentID)
+		}
+		if rq.withAuthor != nil {
+			_spec.Node.AddColumnOnce(reply.FieldAuthorID)
 		}
 	}
 	if ps := rq.predicates; len(ps) > 0 {
@@ -676,7 +752,7 @@ func (rgb *ReplyGroupBy) Aggregate(fns ...AggregateFunc) *ReplyGroupBy {
 
 // Scan applies the selector query and scans the result into the given value.
 func (rgb *ReplyGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, rgb.build.ctx, "GroupBy")
+	ctx = setContextOp(ctx, rgb.build.ctx, ent.OpQueryGroupBy)
 	if err := rgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
@@ -724,7 +800,7 @@ func (rs *ReplySelect) Aggregate(fns ...AggregateFunc) *ReplySelect {
 
 // Scan applies the selector query and scans the result into the given value.
 func (rs *ReplySelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, rs.ctx, "Select")
+	ctx = setContextOp(ctx, rs.ctx, ent.OpQuerySelect)
 	if err := rs.prepareQuery(ctx); err != nil {
 		return err
 	}

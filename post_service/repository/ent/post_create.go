@@ -6,8 +6,10 @@ import (
 	"context"
 	"cw_post_service/repository/ent/comment"
 	"cw_post_service/repository/ent/post"
+	"cw_post_service/repository/ent/user"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -20,9 +22,45 @@ type PostCreate struct {
 	hooks    []Hook
 }
 
-// SetUserID sets the "user_id" field.
-func (pc *PostCreate) SetUserID(u uint64) *PostCreate {
-	pc.mutation.SetUserID(u)
+// SetCreatedAt sets the "created_at" field.
+func (pc *PostCreate) SetCreatedAt(t time.Time) *PostCreate {
+	pc.mutation.SetCreatedAt(t)
+	return pc
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (pc *PostCreate) SetNillableCreatedAt(t *time.Time) *PostCreate {
+	if t != nil {
+		pc.SetCreatedAt(*t)
+	}
+	return pc
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (pc *PostCreate) SetUpdatedAt(t time.Time) *PostCreate {
+	pc.mutation.SetUpdatedAt(t)
+	return pc
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (pc *PostCreate) SetNillableUpdatedAt(t *time.Time) *PostCreate {
+	if t != nil {
+		pc.SetUpdatedAt(*t)
+	}
+	return pc
+}
+
+// SetAuthorID sets the "author_id" field.
+func (pc *PostCreate) SetAuthorID(i int) *PostCreate {
+	pc.mutation.SetAuthorID(i)
+	return pc
+}
+
+// SetNillableAuthorID sets the "author_id" field if the given value is not nil.
+func (pc *PostCreate) SetNillableAuthorID(i *int) *PostCreate {
+	if i != nil {
+		pc.SetAuthorID(*i)
+	}
 	return pc
 }
 
@@ -39,57 +77,29 @@ func (pc *PostCreate) SetContent(s string) *PostCreate {
 }
 
 // SetStatus sets the "status" field.
-func (pc *PostCreate) SetStatus(i int8) *PostCreate {
-	pc.mutation.SetStatus(i)
+func (pc *PostCreate) SetStatus(po post.Status) *PostCreate {
+	pc.mutation.SetStatus(po)
 	return pc
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (pc *PostCreate) SetNillableStatus(i *int8) *PostCreate {
-	if i != nil {
-		pc.SetStatus(*i)
+func (pc *PostCreate) SetNillableStatus(po *post.Status) *PostCreate {
+	if po != nil {
+		pc.SetStatus(*po)
 	}
 	return pc
 }
 
 // SetReplyNum sets the "reply_num" field.
-func (pc *PostCreate) SetReplyNum(i int64) *PostCreate {
+func (pc *PostCreate) SetReplyNum(i int) *PostCreate {
 	pc.mutation.SetReplyNum(i)
 	return pc
 }
 
 // SetNillableReplyNum sets the "reply_num" field if the given value is not nil.
-func (pc *PostCreate) SetNillableReplyNum(i *int64) *PostCreate {
+func (pc *PostCreate) SetNillableReplyNum(i *int) *PostCreate {
 	if i != nil {
 		pc.SetReplyNum(*i)
-	}
-	return pc
-}
-
-// SetCreateAt sets the "create_at" field.
-func (pc *PostCreate) SetCreateAt(i int64) *PostCreate {
-	pc.mutation.SetCreateAt(i)
-	return pc
-}
-
-// SetNillableCreateAt sets the "create_at" field if the given value is not nil.
-func (pc *PostCreate) SetNillableCreateAt(i *int64) *PostCreate {
-	if i != nil {
-		pc.SetCreateAt(*i)
-	}
-	return pc
-}
-
-// SetUpdateAt sets the "update_at" field.
-func (pc *PostCreate) SetUpdateAt(i int64) *PostCreate {
-	pc.mutation.SetUpdateAt(i)
-	return pc
-}
-
-// SetNillableUpdateAt sets the "update_at" field if the given value is not nil.
-func (pc *PostCreate) SetNillableUpdateAt(i *int64) *PostCreate {
-	if i != nil {
-		pc.SetUpdateAt(*i)
 	}
 	return pc
 }
@@ -108,25 +118,24 @@ func (pc *PostCreate) SetNillablePin(i *int8) *PostCreate {
 	return pc
 }
 
-// SetID sets the "id" field.
-func (pc *PostCreate) SetID(u uint64) *PostCreate {
-	pc.mutation.SetID(u)
-	return pc
-}
-
 // AddCommentIDs adds the "comments" edge to the Comment entity by IDs.
-func (pc *PostCreate) AddCommentIDs(ids ...uint64) *PostCreate {
+func (pc *PostCreate) AddCommentIDs(ids ...int) *PostCreate {
 	pc.mutation.AddCommentIDs(ids...)
 	return pc
 }
 
 // AddComments adds the "comments" edges to the Comment entity.
 func (pc *PostCreate) AddComments(c ...*Comment) *PostCreate {
-	ids := make([]uint64, len(c))
+	ids := make([]int, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
 	return pc.AddCommentIDs(ids...)
+}
+
+// SetAuthor sets the "author" edge to the User entity.
+func (pc *PostCreate) SetAuthor(u *User) *PostCreate {
+	return pc.SetAuthorID(u.ID)
 }
 
 // Mutation returns the PostMutation object of the builder.
@@ -137,7 +146,7 @@ func (pc *PostCreate) Mutation() *PostMutation {
 // Save creates the Post in the database.
 func (pc *PostCreate) Save(ctx context.Context) (*Post, error) {
 	pc.defaults()
-	return withHooks[*Post, PostMutation](ctx, pc.sqlSave, pc.mutation, pc.hooks)
+	return withHooks(ctx, pc.sqlSave, pc.mutation, pc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -164,6 +173,14 @@ func (pc *PostCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (pc *PostCreate) defaults() {
+	if _, ok := pc.mutation.CreatedAt(); !ok {
+		v := post.DefaultCreatedAt()
+		pc.mutation.SetCreatedAt(v)
+	}
+	if _, ok := pc.mutation.UpdatedAt(); !ok {
+		v := post.DefaultUpdatedAt()
+		pc.mutation.SetUpdatedAt(v)
+	}
 	if _, ok := pc.mutation.Status(); !ok {
 		v := post.DefaultStatus
 		pc.mutation.SetStatus(v)
@@ -171,14 +188,6 @@ func (pc *PostCreate) defaults() {
 	if _, ok := pc.mutation.ReplyNum(); !ok {
 		v := post.DefaultReplyNum
 		pc.mutation.SetReplyNum(v)
-	}
-	if _, ok := pc.mutation.CreateAt(); !ok {
-		v := post.DefaultCreateAt
-		pc.mutation.SetCreateAt(v)
-	}
-	if _, ok := pc.mutation.UpdateAt(); !ok {
-		v := post.DefaultUpdateAt
-		pc.mutation.SetUpdateAt(v)
 	}
 	if _, ok := pc.mutation.Pin(); !ok {
 		v := post.DefaultPin
@@ -188,12 +197,15 @@ func (pc *PostCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (pc *PostCreate) check() error {
-	if _, ok := pc.mutation.UserID(); !ok {
-		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "Post.user_id"`)}
+	if _, ok := pc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Post.created_at"`)}
 	}
-	if v, ok := pc.mutation.UserID(); ok {
-		if err := post.UserIDValidator(v); err != nil {
-			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "Post.user_id": %w`, err)}
+	if _, ok := pc.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Post.updated_at"`)}
+	}
+	if v, ok := pc.mutation.AuthorID(); ok {
+		if err := post.AuthorIDValidator(v); err != nil {
+			return &ValidationError{Name: "author_id", err: fmt.Errorf(`ent: validator failed for field "Post.author_id": %w`, err)}
 		}
 	}
 	if _, ok := pc.mutation.Title(); !ok {
@@ -228,33 +240,12 @@ func (pc *PostCreate) check() error {
 			return &ValidationError{Name: "reply_num", err: fmt.Errorf(`ent: validator failed for field "Post.reply_num": %w`, err)}
 		}
 	}
-	if _, ok := pc.mutation.CreateAt(); !ok {
-		return &ValidationError{Name: "create_at", err: errors.New(`ent: missing required field "Post.create_at"`)}
-	}
-	if v, ok := pc.mutation.CreateAt(); ok {
-		if err := post.CreateAtValidator(v); err != nil {
-			return &ValidationError{Name: "create_at", err: fmt.Errorf(`ent: validator failed for field "Post.create_at": %w`, err)}
-		}
-	}
-	if _, ok := pc.mutation.UpdateAt(); !ok {
-		return &ValidationError{Name: "update_at", err: errors.New(`ent: missing required field "Post.update_at"`)}
-	}
-	if v, ok := pc.mutation.UpdateAt(); ok {
-		if err := post.UpdateAtValidator(v); err != nil {
-			return &ValidationError{Name: "update_at", err: fmt.Errorf(`ent: validator failed for field "Post.update_at": %w`, err)}
-		}
-	}
 	if _, ok := pc.mutation.Pin(); !ok {
 		return &ValidationError{Name: "pin", err: errors.New(`ent: missing required field "Post.pin"`)}
 	}
 	if v, ok := pc.mutation.Pin(); ok {
 		if err := post.PinValidator(v); err != nil {
 			return &ValidationError{Name: "pin", err: fmt.Errorf(`ent: validator failed for field "Post.pin": %w`, err)}
-		}
-	}
-	if v, ok := pc.mutation.ID(); ok {
-		if err := post.IDValidator(v); err != nil {
-			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "Post.id": %w`, err)}
 		}
 	}
 	return nil
@@ -271,10 +262,8 @@ func (pc *PostCreate) sqlSave(ctx context.Context) (*Post, error) {
 		}
 		return nil, err
 	}
-	if _spec.ID.Value != _node.ID {
-		id := _spec.ID.Value.(int64)
-		_node.ID = uint64(id)
-	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
 	pc.mutation.id = &_node.ID
 	pc.mutation.done = true
 	return _node, nil
@@ -283,15 +272,15 @@ func (pc *PostCreate) sqlSave(ctx context.Context) (*Post, error) {
 func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Post{config: pc.config}
-		_spec = sqlgraph.NewCreateSpec(post.Table, sqlgraph.NewFieldSpec(post.FieldID, field.TypeUint64))
+		_spec = sqlgraph.NewCreateSpec(post.Table, sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt))
 	)
-	if id, ok := pc.mutation.ID(); ok {
-		_node.ID = id
-		_spec.ID.Value = id
+	if value, ok := pc.mutation.CreatedAt(); ok {
+		_spec.SetField(post.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
 	}
-	if value, ok := pc.mutation.UserID(); ok {
-		_spec.SetField(post.FieldUserID, field.TypeUint64, value)
-		_node.UserID = value
+	if value, ok := pc.mutation.UpdatedAt(); ok {
+		_spec.SetField(post.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
 	}
 	if value, ok := pc.mutation.Title(); ok {
 		_spec.SetField(post.FieldTitle, field.TypeString, value)
@@ -302,20 +291,12 @@ func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 		_node.Content = value
 	}
 	if value, ok := pc.mutation.Status(); ok {
-		_spec.SetField(post.FieldStatus, field.TypeInt8, value)
+		_spec.SetField(post.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
 	}
 	if value, ok := pc.mutation.ReplyNum(); ok {
-		_spec.SetField(post.FieldReplyNum, field.TypeInt64, value)
+		_spec.SetField(post.FieldReplyNum, field.TypeInt, value)
 		_node.ReplyNum = value
-	}
-	if value, ok := pc.mutation.CreateAt(); ok {
-		_spec.SetField(post.FieldCreateAt, field.TypeInt64, value)
-		_node.CreateAt = value
-	}
-	if value, ok := pc.mutation.UpdateAt(); ok {
-		_spec.SetField(post.FieldUpdateAt, field.TypeInt64, value)
-		_node.UpdateAt = value
 	}
 	if value, ok := pc.mutation.Pin(); ok {
 		_spec.SetField(post.FieldPin, field.TypeInt8, value)
@@ -329,12 +310,29 @@ func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 			Columns: []string{post.CommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(comment.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(comment.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := pc.mutation.AuthorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   post.AuthorTable,
+			Columns: []string{post.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.AuthorID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -343,11 +341,15 @@ func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 // PostCreateBulk is the builder for creating many Post entities in bulk.
 type PostCreateBulk struct {
 	config
+	err      error
 	builders []*PostCreate
 }
 
 // Save creates the Post entities in the database.
 func (pcb *PostCreateBulk) Save(ctx context.Context) ([]*Post, error) {
+	if pcb.err != nil {
+		return nil, pcb.err
+	}
 	specs := make([]*sqlgraph.CreateSpec, len(pcb.builders))
 	nodes := make([]*Post, len(pcb.builders))
 	mutators := make([]Mutator, len(pcb.builders))
@@ -381,9 +383,9 @@ func (pcb *PostCreateBulk) Save(ctx context.Context) ([]*Post, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
+				if specs[i].ID.Value != nil {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = uint64(id)
+					nodes[i].ID = int(id)
 				}
 				mutation.done = true
 				return nodes[i], nil

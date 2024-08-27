@@ -4,8 +4,10 @@ package ent
 
 import (
 	"cw_post_service/repository/ent/post"
+	"cw_post_service/repository/ent/user"
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -15,26 +17,27 @@ import (
 type Post struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID uint64 `json:"id,omitempty"`
+	ID int `json:"id,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// The user that posted the message.
-	UserID uint64 `json:"user_id,omitempty"`
+	AuthorID int `json:"author_id,omitempty"`
 	// The title of the message.
 	Title string `json:"title,omitempty"`
 	// The content of the message.
 	Content string `json:"content,omitempty"`
-	// 状态,是否被封，0：正常，大于0被封
-	Status int8 `json:"status,omitempty"`
+	// 状态
+	Status post.Status `json:"status,omitempty"`
 	// 回复数
-	ReplyNum int64 `json:"reply_num,omitempty"`
-	// 创建时间
-	CreateAt int64 `json:"create_at,omitempty"`
-	// 最后更新时间
-	UpdateAt int64 `json:"update_at,omitempty"`
+	ReplyNum int `json:"reply_num,omitempty"`
 	// 是否置顶，0：否，1是
 	Pin int8 `json:"pin,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PostQuery when eager-loading is set.
 	Edges        PostEdges `json:"edges"`
+	user_likes   *int
 	selectValues sql.SelectValues
 }
 
@@ -42,9 +45,11 @@ type Post struct {
 type PostEdges struct {
 	// Comments holds the value of the comments edge.
 	Comments []*Comment `json:"comments,omitempty"`
+	// Author holds the value of the author edge.
+	Author *User `json:"author,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // CommentsOrErr returns the Comments value or an error if the edge
@@ -56,15 +61,30 @@ func (e PostEdges) CommentsOrErr() ([]*Comment, error) {
 	return nil, &NotLoadedError{edge: "comments"}
 }
 
+// AuthorOrErr returns the Author value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e PostEdges) AuthorOrErr() (*User, error) {
+	if e.Author != nil {
+		return e.Author, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: user.Label}
+	}
+	return nil, &NotLoadedError{edge: "author"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Post) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case post.FieldID, post.FieldUserID, post.FieldStatus, post.FieldReplyNum, post.FieldCreateAt, post.FieldUpdateAt, post.FieldPin:
+		case post.FieldID, post.FieldAuthorID, post.FieldReplyNum, post.FieldPin:
 			values[i] = new(sql.NullInt64)
-		case post.FieldTitle, post.FieldContent:
+		case post.FieldTitle, post.FieldContent, post.FieldStatus:
 			values[i] = new(sql.NullString)
+		case post.FieldCreatedAt, post.FieldUpdatedAt:
+			values[i] = new(sql.NullTime)
+		case post.ForeignKeys[0]: // user_likes
+			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -85,12 +105,24 @@ func (po *Post) assignValues(columns []string, values []any) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			po.ID = uint64(value.Int64)
-		case post.FieldUserID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field user_id", values[i])
+			po.ID = int(value.Int64)
+		case post.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
-				po.UserID = uint64(value.Int64)
+				po.CreatedAt = value.Time
+			}
+		case post.FieldUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+			} else if value.Valid {
+				po.UpdatedAt = value.Time
+			}
+		case post.FieldAuthorID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field author_id", values[i])
+			} else if value.Valid {
+				po.AuthorID = int(value.Int64)
 			}
 		case post.FieldTitle:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -105,34 +137,29 @@ func (po *Post) assignValues(columns []string, values []any) error {
 				po.Content = value.String
 			}
 		case post.FieldStatus:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
-				po.Status = int8(value.Int64)
+				po.Status = post.Status(value.String)
 			}
 		case post.FieldReplyNum:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field reply_num", values[i])
 			} else if value.Valid {
-				po.ReplyNum = value.Int64
-			}
-		case post.FieldCreateAt:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field create_at", values[i])
-			} else if value.Valid {
-				po.CreateAt = value.Int64
-			}
-		case post.FieldUpdateAt:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field update_at", values[i])
-			} else if value.Valid {
-				po.UpdateAt = value.Int64
+				po.ReplyNum = int(value.Int64)
 			}
 		case post.FieldPin:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field pin", values[i])
 			} else if value.Valid {
 				po.Pin = int8(value.Int64)
+			}
+		case post.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field user_likes", value)
+			} else if value.Valid {
+				po.user_likes = new(int)
+				*po.user_likes = int(value.Int64)
 			}
 		default:
 			po.selectValues.Set(columns[i], values[i])
@@ -150,6 +177,11 @@ func (po *Post) Value(name string) (ent.Value, error) {
 // QueryComments queries the "comments" edge of the Post entity.
 func (po *Post) QueryComments() *CommentQuery {
 	return NewPostClient(po.config).QueryComments(po)
+}
+
+// QueryAuthor queries the "author" edge of the Post entity.
+func (po *Post) QueryAuthor() *UserQuery {
+	return NewPostClient(po.config).QueryAuthor(po)
 }
 
 // Update returns a builder for updating this Post.
@@ -175,8 +207,14 @@ func (po *Post) String() string {
 	var builder strings.Builder
 	builder.WriteString("Post(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", po.ID))
-	builder.WriteString("user_id=")
-	builder.WriteString(fmt.Sprintf("%v", po.UserID))
+	builder.WriteString("created_at=")
+	builder.WriteString(po.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("updated_at=")
+	builder.WriteString(po.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("author_id=")
+	builder.WriteString(fmt.Sprintf("%v", po.AuthorID))
 	builder.WriteString(", ")
 	builder.WriteString("title=")
 	builder.WriteString(po.Title)
@@ -189,12 +227,6 @@ func (po *Post) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("reply_num=")
 	builder.WriteString(fmt.Sprintf("%v", po.ReplyNum))
-	builder.WriteString(", ")
-	builder.WriteString("create_at=")
-	builder.WriteString(fmt.Sprintf("%v", po.CreateAt))
-	builder.WriteString(", ")
-	builder.WriteString("update_at=")
-	builder.WriteString(fmt.Sprintf("%v", po.UpdateAt))
 	builder.WriteString(", ")
 	builder.WriteString("pin=")
 	builder.WriteString(fmt.Sprintf("%v", po.Pin))

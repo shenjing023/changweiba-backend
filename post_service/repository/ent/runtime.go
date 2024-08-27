@@ -7,130 +7,206 @@ import (
 	"cw_post_service/repository/ent/post"
 	"cw_post_service/repository/ent/reply"
 	"cw_post_service/repository/ent/schema"
+	"cw_post_service/repository/ent/user"
+	"time"
 )
 
 // The init function reads all schema descriptors with runtime code
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	commentMixin := schema.Comment{}.Mixin()
+	commentMixinFields0 := commentMixin[0].Fields()
+	_ = commentMixinFields0
 	commentFields := schema.Comment{}.Fields()
 	_ = commentFields
-	// commentDescUserID is the schema descriptor for user_id field.
-	commentDescUserID := commentFields[1].Descriptor()
-	// comment.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
-	comment.UserIDValidator = commentDescUserID.Validators[0].(func(uint64) error)
+	// commentDescCreatedAt is the schema descriptor for created_at field.
+	commentDescCreatedAt := commentMixinFields0[0].Descriptor()
+	// comment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	comment.DefaultCreatedAt = commentDescCreatedAt.Default.(func() time.Time)
+	// commentDescUpdatedAt is the schema descriptor for updated_at field.
+	commentDescUpdatedAt := commentMixinFields0[1].Descriptor()
+	// comment.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	comment.DefaultUpdatedAt = commentDescUpdatedAt.Default.(func() time.Time)
+	// comment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	comment.UpdateDefaultUpdatedAt = commentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// commentDescAuthorID is the schema descriptor for author_id field.
+	commentDescAuthorID := commentFields[0].Descriptor()
+	// comment.AuthorIDValidator is a validator for the "author_id" field. It is called by the builders before save.
+	comment.AuthorIDValidator = commentDescAuthorID.Validators[0].(func(int) error)
 	// commentDescPostID is the schema descriptor for post_id field.
-	commentDescPostID := commentFields[2].Descriptor()
+	commentDescPostID := commentFields[1].Descriptor()
 	// comment.PostIDValidator is a validator for the "post_id" field. It is called by the builders before save.
-	comment.PostIDValidator = commentDescPostID.Validators[0].(func(uint64) error)
+	comment.PostIDValidator = commentDescPostID.Validators[0].(func(int) error)
 	// commentDescContent is the schema descriptor for content field.
-	commentDescContent := commentFields[3].Descriptor()
+	commentDescContent := commentFields[2].Descriptor()
 	// comment.ContentValidator is a validator for the "content" field. It is called by the builders before save.
-	comment.ContentValidator = commentDescContent.Validators[0].(func(string) error)
-	// commentDescStatus is the schema descriptor for status field.
-	commentDescStatus := commentFields[4].Descriptor()
-	// comment.DefaultStatus holds the default value on creation for the status field.
-	comment.DefaultStatus = commentDescStatus.Default.(int8)
-	// comment.StatusValidator is a validator for the "status" field. It is called by the builders before save.
-	comment.StatusValidator = commentDescStatus.Validators[0].(func(int8) error)
+	comment.ContentValidator = func() func(string) error {
+		validators := commentDescContent.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(content string) error {
+			for _, fn := range fns {
+				if err := fn(content); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// commentDescFloor is the schema descriptor for floor field.
-	commentDescFloor := commentFields[5].Descriptor()
+	commentDescFloor := commentFields[4].Descriptor()
 	// comment.FloorValidator is a validator for the "floor" field. It is called by the builders before save.
-	comment.FloorValidator = commentDescFloor.Validators[0].(func(uint64) error)
-	// commentDescCreateAt is the schema descriptor for create_at field.
-	commentDescCreateAt := commentFields[6].Descriptor()
-	// comment.DefaultCreateAt holds the default value on creation for the create_at field.
-	comment.DefaultCreateAt = commentDescCreateAt.Default.(int64)
-	// comment.CreateAtValidator is a validator for the "create_at" field. It is called by the builders before save.
-	comment.CreateAtValidator = commentDescCreateAt.Validators[0].(func(int64) error)
-	// commentDescID is the schema descriptor for id field.
-	commentDescID := commentFields[0].Descriptor()
-	// comment.IDValidator is a validator for the "id" field. It is called by the builders before save.
-	comment.IDValidator = commentDescID.Validators[0].(func(uint64) error)
+	comment.FloorValidator = commentDescFloor.Validators[0].(func(int) error)
+	postMixin := schema.Post{}.Mixin()
+	postMixinFields0 := postMixin[0].Fields()
+	_ = postMixinFields0
 	postFields := schema.Post{}.Fields()
 	_ = postFields
-	// postDescUserID is the schema descriptor for user_id field.
-	postDescUserID := postFields[1].Descriptor()
-	// post.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
-	post.UserIDValidator = postDescUserID.Validators[0].(func(uint64) error)
+	// postDescCreatedAt is the schema descriptor for created_at field.
+	postDescCreatedAt := postMixinFields0[0].Descriptor()
+	// post.DefaultCreatedAt holds the default value on creation for the created_at field.
+	post.DefaultCreatedAt = postDescCreatedAt.Default.(func() time.Time)
+	// postDescUpdatedAt is the schema descriptor for updated_at field.
+	postDescUpdatedAt := postMixinFields0[1].Descriptor()
+	// post.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	post.DefaultUpdatedAt = postDescUpdatedAt.Default.(func() time.Time)
+	// post.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	post.UpdateDefaultUpdatedAt = postDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// postDescAuthorID is the schema descriptor for author_id field.
+	postDescAuthorID := postFields[0].Descriptor()
+	// post.AuthorIDValidator is a validator for the "author_id" field. It is called by the builders before save.
+	post.AuthorIDValidator = postDescAuthorID.Validators[0].(func(int) error)
 	// postDescTitle is the schema descriptor for title field.
-	postDescTitle := postFields[2].Descriptor()
+	postDescTitle := postFields[1].Descriptor()
 	// post.TitleValidator is a validator for the "title" field. It is called by the builders before save.
-	post.TitleValidator = postDescTitle.Validators[0].(func(string) error)
+	post.TitleValidator = func() func(string) error {
+		validators := postDescTitle.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(title string) error {
+			for _, fn := range fns {
+				if err := fn(title); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// postDescContent is the schema descriptor for content field.
-	postDescContent := postFields[3].Descriptor()
+	postDescContent := postFields[2].Descriptor()
 	// post.ContentValidator is a validator for the "content" field. It is called by the builders before save.
-	post.ContentValidator = postDescContent.Validators[0].(func(string) error)
-	// postDescStatus is the schema descriptor for status field.
-	postDescStatus := postFields[4].Descriptor()
-	// post.DefaultStatus holds the default value on creation for the status field.
-	post.DefaultStatus = postDescStatus.Default.(int8)
-	// post.StatusValidator is a validator for the "status" field. It is called by the builders before save.
-	post.StatusValidator = postDescStatus.Validators[0].(func(int8) error)
+	post.ContentValidator = func() func(string) error {
+		validators := postDescContent.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(content string) error {
+			for _, fn := range fns {
+				if err := fn(content); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// postDescReplyNum is the schema descriptor for reply_num field.
-	postDescReplyNum := postFields[5].Descriptor()
+	postDescReplyNum := postFields[4].Descriptor()
 	// post.DefaultReplyNum holds the default value on creation for the reply_num field.
-	post.DefaultReplyNum = postDescReplyNum.Default.(int64)
+	post.DefaultReplyNum = postDescReplyNum.Default.(int)
 	// post.ReplyNumValidator is a validator for the "reply_num" field. It is called by the builders before save.
-	post.ReplyNumValidator = postDescReplyNum.Validators[0].(func(int64) error)
-	// postDescCreateAt is the schema descriptor for create_at field.
-	postDescCreateAt := postFields[6].Descriptor()
-	// post.DefaultCreateAt holds the default value on creation for the create_at field.
-	post.DefaultCreateAt = postDescCreateAt.Default.(int64)
-	// post.CreateAtValidator is a validator for the "create_at" field. It is called by the builders before save.
-	post.CreateAtValidator = postDescCreateAt.Validators[0].(func(int64) error)
-	// postDescUpdateAt is the schema descriptor for update_at field.
-	postDescUpdateAt := postFields[7].Descriptor()
-	// post.DefaultUpdateAt holds the default value on creation for the update_at field.
-	post.DefaultUpdateAt = postDescUpdateAt.Default.(int64)
-	// post.UpdateAtValidator is a validator for the "update_at" field. It is called by the builders before save.
-	post.UpdateAtValidator = postDescUpdateAt.Validators[0].(func(int64) error)
+	post.ReplyNumValidator = postDescReplyNum.Validators[0].(func(int) error)
 	// postDescPin is the schema descriptor for pin field.
-	postDescPin := postFields[8].Descriptor()
+	postDescPin := postFields[5].Descriptor()
 	// post.DefaultPin holds the default value on creation for the pin field.
 	post.DefaultPin = postDescPin.Default.(int8)
 	// post.PinValidator is a validator for the "pin" field. It is called by the builders before save.
 	post.PinValidator = postDescPin.Validators[0].(func(int8) error)
-	// postDescID is the schema descriptor for id field.
-	postDescID := postFields[0].Descriptor()
-	// post.IDValidator is a validator for the "id" field. It is called by the builders before save.
-	post.IDValidator = postDescID.Validators[0].(func(uint64) error)
+	replyMixin := schema.Reply{}.Mixin()
+	replyMixinFields0 := replyMixin[0].Fields()
+	_ = replyMixinFields0
 	replyFields := schema.Reply{}.Fields()
 	_ = replyFields
-	// replyDescUserID is the schema descriptor for user_id field.
-	replyDescUserID := replyFields[1].Descriptor()
-	// reply.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
-	reply.UserIDValidator = replyDescUserID.Validators[0].(func(uint64) error)
+	// replyDescCreatedAt is the schema descriptor for created_at field.
+	replyDescCreatedAt := replyMixinFields0[0].Descriptor()
+	// reply.DefaultCreatedAt holds the default value on creation for the created_at field.
+	reply.DefaultCreatedAt = replyDescCreatedAt.Default.(func() time.Time)
+	// replyDescUpdatedAt is the schema descriptor for updated_at field.
+	replyDescUpdatedAt := replyMixinFields0[1].Descriptor()
+	// reply.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	reply.DefaultUpdatedAt = replyDescUpdatedAt.Default.(func() time.Time)
+	// reply.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	reply.UpdateDefaultUpdatedAt = replyDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// replyDescAuthorID is the schema descriptor for author_id field.
+	replyDescAuthorID := replyFields[0].Descriptor()
+	// reply.AuthorIDValidator is a validator for the "author_id" field. It is called by the builders before save.
+	reply.AuthorIDValidator = replyDescAuthorID.Validators[0].(func(int) error)
 	// replyDescCommentID is the schema descriptor for comment_id field.
-	replyDescCommentID := replyFields[2].Descriptor()
+	replyDescCommentID := replyFields[1].Descriptor()
 	// reply.CommentIDValidator is a validator for the "comment_id" field. It is called by the builders before save.
-	reply.CommentIDValidator = replyDescCommentID.Validators[0].(func(uint64) error)
+	reply.CommentIDValidator = replyDescCommentID.Validators[0].(func(int) error)
 	// replyDescParentID is the schema descriptor for parent_id field.
-	replyDescParentID := replyFields[3].Descriptor()
+	replyDescParentID := replyFields[2].Descriptor()
 	// reply.ParentIDValidator is a validator for the "parent_id" field. It is called by the builders before save.
-	reply.ParentIDValidator = replyDescParentID.Validators[0].(func(uint64) error)
+	reply.ParentIDValidator = replyDescParentID.Validators[0].(func(int) error)
 	// replyDescContent is the schema descriptor for content field.
-	replyDescContent := replyFields[4].Descriptor()
+	replyDescContent := replyFields[3].Descriptor()
 	// reply.ContentValidator is a validator for the "content" field. It is called by the builders before save.
-	reply.ContentValidator = replyDescContent.Validators[0].(func(string) error)
-	// replyDescStatus is the schema descriptor for status field.
-	replyDescStatus := replyFields[5].Descriptor()
-	// reply.DefaultStatus holds the default value on creation for the status field.
-	reply.DefaultStatus = replyDescStatus.Default.(int8)
-	// reply.StatusValidator is a validator for the "status" field. It is called by the builders before save.
-	reply.StatusValidator = replyDescStatus.Validators[0].(func(int8) error)
-	// replyDescFloor is the schema descriptor for floor field.
-	replyDescFloor := replyFields[6].Descriptor()
-	// reply.FloorValidator is a validator for the "floor" field. It is called by the builders before save.
-	reply.FloorValidator = replyDescFloor.Validators[0].(func(uint64) error)
-	// replyDescCreateAt is the schema descriptor for create_at field.
-	replyDescCreateAt := replyFields[7].Descriptor()
-	// reply.DefaultCreateAt holds the default value on creation for the create_at field.
-	reply.DefaultCreateAt = replyDescCreateAt.Default.(int64)
-	// reply.CreateAtValidator is a validator for the "create_at" field. It is called by the builders before save.
-	reply.CreateAtValidator = replyDescCreateAt.Validators[0].(func(int64) error)
-	// replyDescID is the schema descriptor for id field.
-	replyDescID := replyFields[0].Descriptor()
-	// reply.IDValidator is a validator for the "id" field. It is called by the builders before save.
-	reply.IDValidator = replyDescID.Validators[0].(func(uint64) error)
+	reply.ContentValidator = func() func(string) error {
+		validators := replyDescContent.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(content string) error {
+			for _, fn := range fns {
+				if err := fn(content); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	userMixin := schema.User{}.Mixin()
+	userMixinFields0 := userMixin[0].Fields()
+	_ = userMixinFields0
+	userFields := schema.User{}.Fields()
+	_ = userFields
+	// userDescCreatedAt is the schema descriptor for created_at field.
+	userDescCreatedAt := userMixinFields0[0].Descriptor()
+	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
+	user.DefaultCreatedAt = userDescCreatedAt.Default.(func() time.Time)
+	// userDescUpdatedAt is the schema descriptor for updated_at field.
+	userDescUpdatedAt := userMixinFields0[1].Descriptor()
+	// user.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(func() time.Time)
+	// user.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	user.UpdateDefaultUpdatedAt = userDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// userDescName is the schema descriptor for name field.
+	userDescName := userFields[0].Descriptor()
+	// user.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	user.NameValidator = func() func(string) error {
+		validators := userDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// userDescAvatar is the schema descriptor for avatar field.
+	userDescAvatar := userFields[1].Descriptor()
+	// user.AvatarValidator is a validator for the "avatar" field. It is called by the builders before save.
+	user.AvatarValidator = userDescAvatar.Validators[0].(func(string) error)
 }

@@ -7,8 +7,10 @@ import (
 	"cw_post_service/repository/ent/comment"
 	"cw_post_service/repository/ent/post"
 	"cw_post_service/repository/ent/reply"
+	"cw_post_service/repository/ent/user"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -21,22 +23,58 @@ type CommentCreate struct {
 	hooks    []Hook
 }
 
-// SetUserID sets the "user_id" field.
-func (cc *CommentCreate) SetUserID(u uint64) *CommentCreate {
-	cc.mutation.SetUserID(u)
+// SetCreatedAt sets the "created_at" field.
+func (cc *CommentCreate) SetCreatedAt(t time.Time) *CommentCreate {
+	cc.mutation.SetCreatedAt(t)
+	return cc
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (cc *CommentCreate) SetNillableCreatedAt(t *time.Time) *CommentCreate {
+	if t != nil {
+		cc.SetCreatedAt(*t)
+	}
+	return cc
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (cc *CommentCreate) SetUpdatedAt(t time.Time) *CommentCreate {
+	cc.mutation.SetUpdatedAt(t)
+	return cc
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (cc *CommentCreate) SetNillableUpdatedAt(t *time.Time) *CommentCreate {
+	if t != nil {
+		cc.SetUpdatedAt(*t)
+	}
+	return cc
+}
+
+// SetAuthorID sets the "author_id" field.
+func (cc *CommentCreate) SetAuthorID(i int) *CommentCreate {
+	cc.mutation.SetAuthorID(i)
+	return cc
+}
+
+// SetNillableAuthorID sets the "author_id" field if the given value is not nil.
+func (cc *CommentCreate) SetNillableAuthorID(i *int) *CommentCreate {
+	if i != nil {
+		cc.SetAuthorID(*i)
+	}
 	return cc
 }
 
 // SetPostID sets the "post_id" field.
-func (cc *CommentCreate) SetPostID(u uint64) *CommentCreate {
-	cc.mutation.SetPostID(u)
+func (cc *CommentCreate) SetPostID(i int) *CommentCreate {
+	cc.mutation.SetPostID(i)
 	return cc
 }
 
 // SetNillablePostID sets the "post_id" field if the given value is not nil.
-func (cc *CommentCreate) SetNillablePostID(u *uint64) *CommentCreate {
-	if u != nil {
-		cc.SetPostID(*u)
+func (cc *CommentCreate) SetNillablePostID(i *int) *CommentCreate {
+	if i != nil {
+		cc.SetPostID(*i)
 	}
 	return cc
 }
@@ -48,53 +86,33 @@ func (cc *CommentCreate) SetContent(s string) *CommentCreate {
 }
 
 // SetStatus sets the "status" field.
-func (cc *CommentCreate) SetStatus(i int8) *CommentCreate {
-	cc.mutation.SetStatus(i)
+func (cc *CommentCreate) SetStatus(c comment.Status) *CommentCreate {
+	cc.mutation.SetStatus(c)
 	return cc
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (cc *CommentCreate) SetNillableStatus(i *int8) *CommentCreate {
-	if i != nil {
-		cc.SetStatus(*i)
+func (cc *CommentCreate) SetNillableStatus(c *comment.Status) *CommentCreate {
+	if c != nil {
+		cc.SetStatus(*c)
 	}
 	return cc
 }
 
 // SetFloor sets the "floor" field.
-func (cc *CommentCreate) SetFloor(u uint64) *CommentCreate {
-	cc.mutation.SetFloor(u)
-	return cc
-}
-
-// SetCreateAt sets the "create_at" field.
-func (cc *CommentCreate) SetCreateAt(i int64) *CommentCreate {
-	cc.mutation.SetCreateAt(i)
-	return cc
-}
-
-// SetNillableCreateAt sets the "create_at" field if the given value is not nil.
-func (cc *CommentCreate) SetNillableCreateAt(i *int64) *CommentCreate {
-	if i != nil {
-		cc.SetCreateAt(*i)
-	}
-	return cc
-}
-
-// SetID sets the "id" field.
-func (cc *CommentCreate) SetID(u uint64) *CommentCreate {
-	cc.mutation.SetID(u)
+func (cc *CommentCreate) SetFloor(i int) *CommentCreate {
+	cc.mutation.SetFloor(i)
 	return cc
 }
 
 // SetOwnerID sets the "owner" edge to the Post entity by ID.
-func (cc *CommentCreate) SetOwnerID(id uint64) *CommentCreate {
+func (cc *CommentCreate) SetOwnerID(id int) *CommentCreate {
 	cc.mutation.SetOwnerID(id)
 	return cc
 }
 
 // SetNillableOwnerID sets the "owner" edge to the Post entity by ID if the given value is not nil.
-func (cc *CommentCreate) SetNillableOwnerID(id *uint64) *CommentCreate {
+func (cc *CommentCreate) SetNillableOwnerID(id *int) *CommentCreate {
 	if id != nil {
 		cc = cc.SetOwnerID(*id)
 	}
@@ -107,18 +125,23 @@ func (cc *CommentCreate) SetOwner(p *Post) *CommentCreate {
 }
 
 // AddReplyIDs adds the "replies" edge to the Reply entity by IDs.
-func (cc *CommentCreate) AddReplyIDs(ids ...uint64) *CommentCreate {
+func (cc *CommentCreate) AddReplyIDs(ids ...int) *CommentCreate {
 	cc.mutation.AddReplyIDs(ids...)
 	return cc
 }
 
 // AddReplies adds the "replies" edges to the Reply entity.
 func (cc *CommentCreate) AddReplies(r ...*Reply) *CommentCreate {
-	ids := make([]uint64, len(r))
+	ids := make([]int, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
 	return cc.AddReplyIDs(ids...)
+}
+
+// SetAuthor sets the "author" edge to the User entity.
+func (cc *CommentCreate) SetAuthor(u *User) *CommentCreate {
+	return cc.SetAuthorID(u.ID)
 }
 
 // Mutation returns the CommentMutation object of the builder.
@@ -129,7 +152,7 @@ func (cc *CommentCreate) Mutation() *CommentMutation {
 // Save creates the Comment in the database.
 func (cc *CommentCreate) Save(ctx context.Context) (*Comment, error) {
 	cc.defaults()
-	return withHooks[*Comment, CommentMutation](ctx, cc.sqlSave, cc.mutation, cc.hooks)
+	return withHooks(ctx, cc.sqlSave, cc.mutation, cc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -156,24 +179,31 @@ func (cc *CommentCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (cc *CommentCreate) defaults() {
+	if _, ok := cc.mutation.CreatedAt(); !ok {
+		v := comment.DefaultCreatedAt()
+		cc.mutation.SetCreatedAt(v)
+	}
+	if _, ok := cc.mutation.UpdatedAt(); !ok {
+		v := comment.DefaultUpdatedAt()
+		cc.mutation.SetUpdatedAt(v)
+	}
 	if _, ok := cc.mutation.Status(); !ok {
 		v := comment.DefaultStatus
 		cc.mutation.SetStatus(v)
-	}
-	if _, ok := cc.mutation.CreateAt(); !ok {
-		v := comment.DefaultCreateAt
-		cc.mutation.SetCreateAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (cc *CommentCreate) check() error {
-	if _, ok := cc.mutation.UserID(); !ok {
-		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "Comment.user_id"`)}
+	if _, ok := cc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Comment.created_at"`)}
 	}
-	if v, ok := cc.mutation.UserID(); ok {
-		if err := comment.UserIDValidator(v); err != nil {
-			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "Comment.user_id": %w`, err)}
+	if _, ok := cc.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Comment.updated_at"`)}
+	}
+	if v, ok := cc.mutation.AuthorID(); ok {
+		if err := comment.AuthorIDValidator(v); err != nil {
+			return &ValidationError{Name: "author_id", err: fmt.Errorf(`ent: validator failed for field "Comment.author_id": %w`, err)}
 		}
 	}
 	if v, ok := cc.mutation.PostID(); ok {
@@ -205,19 +235,6 @@ func (cc *CommentCreate) check() error {
 			return &ValidationError{Name: "floor", err: fmt.Errorf(`ent: validator failed for field "Comment.floor": %w`, err)}
 		}
 	}
-	if _, ok := cc.mutation.CreateAt(); !ok {
-		return &ValidationError{Name: "create_at", err: errors.New(`ent: missing required field "Comment.create_at"`)}
-	}
-	if v, ok := cc.mutation.CreateAt(); ok {
-		if err := comment.CreateAtValidator(v); err != nil {
-			return &ValidationError{Name: "create_at", err: fmt.Errorf(`ent: validator failed for field "Comment.create_at": %w`, err)}
-		}
-	}
-	if v, ok := cc.mutation.ID(); ok {
-		if err := comment.IDValidator(v); err != nil {
-			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "Comment.id": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -232,10 +249,8 @@ func (cc *CommentCreate) sqlSave(ctx context.Context) (*Comment, error) {
 		}
 		return nil, err
 	}
-	if _spec.ID.Value != _node.ID {
-		id := _spec.ID.Value.(int64)
-		_node.ID = uint64(id)
-	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
 	cc.mutation.id = &_node.ID
 	cc.mutation.done = true
 	return _node, nil
@@ -244,31 +259,27 @@ func (cc *CommentCreate) sqlSave(ctx context.Context) (*Comment, error) {
 func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Comment{config: cc.config}
-		_spec = sqlgraph.NewCreateSpec(comment.Table, sqlgraph.NewFieldSpec(comment.FieldID, field.TypeUint64))
+		_spec = sqlgraph.NewCreateSpec(comment.Table, sqlgraph.NewFieldSpec(comment.FieldID, field.TypeInt))
 	)
-	if id, ok := cc.mutation.ID(); ok {
-		_node.ID = id
-		_spec.ID.Value = id
+	if value, ok := cc.mutation.CreatedAt(); ok {
+		_spec.SetField(comment.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
 	}
-	if value, ok := cc.mutation.UserID(); ok {
-		_spec.SetField(comment.FieldUserID, field.TypeUint64, value)
-		_node.UserID = value
+	if value, ok := cc.mutation.UpdatedAt(); ok {
+		_spec.SetField(comment.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
 	}
 	if value, ok := cc.mutation.Content(); ok {
 		_spec.SetField(comment.FieldContent, field.TypeString, value)
 		_node.Content = value
 	}
 	if value, ok := cc.mutation.Status(); ok {
-		_spec.SetField(comment.FieldStatus, field.TypeInt8, value)
+		_spec.SetField(comment.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
 	}
 	if value, ok := cc.mutation.Floor(); ok {
-		_spec.SetField(comment.FieldFloor, field.TypeUint64, value)
+		_spec.SetField(comment.FieldFloor, field.TypeInt, value)
 		_node.Floor = value
-	}
-	if value, ok := cc.mutation.CreateAt(); ok {
-		_spec.SetField(comment.FieldCreateAt, field.TypeInt64, value)
-		_node.CreateAt = value
 	}
 	if nodes := cc.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -278,7 +289,7 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 			Columns: []string{comment.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -295,12 +306,29 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 			Columns: []string{comment.RepliesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(reply.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := cc.mutation.AuthorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   comment.AuthorTable,
+			Columns: []string{comment.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.AuthorID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -309,11 +337,15 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 // CommentCreateBulk is the builder for creating many Comment entities in bulk.
 type CommentCreateBulk struct {
 	config
+	err      error
 	builders []*CommentCreate
 }
 
 // Save creates the Comment entities in the database.
 func (ccb *CommentCreateBulk) Save(ctx context.Context) ([]*Comment, error) {
+	if ccb.err != nil {
+		return nil, ccb.err
+	}
 	specs := make([]*sqlgraph.CreateSpec, len(ccb.builders))
 	nodes := make([]*Comment, len(ccb.builders))
 	mutators := make([]Mutator, len(ccb.builders))
@@ -347,9 +379,9 @@ func (ccb *CommentCreateBulk) Save(ctx context.Context) ([]*Comment, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
+				if specs[i].ID.Value != nil {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = uint64(id)
+					nodes[i].ID = int(id)
 				}
 				mutation.done = true
 				return nodes[i], nil
