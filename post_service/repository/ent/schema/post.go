@@ -19,9 +19,9 @@ func (Post) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("author_id").Positive().Optional().Comment("The user that posted the message."),
 
-		field.String("title").NotEmpty().MaxLen(30).Comment("The title of the message."),
+		field.String("title").NotEmpty().MaxLen(100).Comment("The title of the message."),
 
-		field.String("content").NotEmpty().MaxLen(1024).Comment("The content of the message."),
+		field.String("content").NotEmpty().MaxLen(2048).Comment("The content of the message."),
 
 		field.Enum("status").
 			Values(StatusNormal, StatusBanned, StatusDeleted).

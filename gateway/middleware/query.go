@@ -3,13 +3,16 @@ package middleware
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"gateway/common"
 	"io"
 	"net/http"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/gin-gonic/gin"
 	log "github.com/shenjing023/llog"
 	"github.com/vektah/gqlparser/v2/ast"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/vektah/gqlparser/v2/parser"
 )
 
@@ -50,13 +53,16 @@ func QueryDeepMiddleware(queryDeep int) gin.HandlerFunc {
 					//检查查询的字段深度,待优化，还有directive
 					deep := getQueryFieldDeep(tmp.SelectionSet, 0)
 					if deep > queryDeep {
-						c.JSON(http.StatusBadRequest, []gqlError{{
-							Message: "请求字段深度超出限制",
-							Extensions: map[string]interface{}{
-								"code": common.InvalidArgument,
-							},
-							Path: []string{tmp.Name},
-						}})
+						c.JSON(http.StatusOK, map[string]any{
+							"data": nil,
+							"errors": []gqlerror.Error{{
+								Message: "请求字段深度超出限制",
+								Extensions: map[string]any{
+									"code": common.InvalidArgument,
+								},
+								Path: graphql.GetPath(c),
+							}},
+						})
 						c.Abort()
 						return
 					}
@@ -99,11 +105,12 @@ type postParams struct {
 }
 
 func systemError(ctx *gin.Context) {
-	ctx.JSON(http.StatusInternalServerError, []gqlError{{
+	ctx.JSON(http.StatusInternalServerError, gqlerror.Error{
 		Message: "service system error",
 		Extensions: map[string]interface{}{
 			"code": common.Internal,
 		},
-	}})
+		Err: errors.New("service system error"),
+	})
 	ctx.Abort()
 }

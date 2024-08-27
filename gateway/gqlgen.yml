@@ -32,6 +32,8 @@ models:
     fields:
       user:
         resolver: true
+      parent:
+        resolver: true
   User:
     fields:
       posts:

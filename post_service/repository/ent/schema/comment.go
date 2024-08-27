@@ -22,7 +22,7 @@ func (Comment) Fields() []ent.Field {
 
 		field.Int("post_id").Positive().Comment("The post that the message belongs to.").Optional(),
 
-		field.String("content").MaxLen(1024).NotEmpty().Comment("The content of the message."),
+		field.String("content").MaxLen(2048).NotEmpty().Comment("The content of the message."),
 
 		field.Enum("status").
 			Values(StatusNormal, StatusBanned, StatusDeleted).

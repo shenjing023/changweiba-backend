@@ -24,7 +24,7 @@ func (Reply) Fields() []ent.Field {
 
 		field.Int("parent_id").Positive().Comment("回复哪个回复的id").Optional(),
 
-		field.String("content").MaxLen(50).NotEmpty().Comment("The content of the message."),
+		field.String("content").MaxLen(200).NotEmpty().Comment("The content of the message."),
 
 		field.Enum("status").
 			Values(StatusNormal, StatusBanned, StatusDeleted).

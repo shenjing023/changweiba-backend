@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/cockroachdb/errors"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 
 	"gateway/conf"
 
@@ -35,23 +36,30 @@ func AuthMiddleware() gin.HandlerFunc {
 			if err != nil {
 				log.Error("parse token failed: ", err.Error())
 				if errors.Is(err, common.ErrTokenExpired) {
-					c.JSON(http.StatusBadRequest, []gqlError{{
-						Message: "授权已过期",
-						Extensions: map[string]interface{}{
-							"code": common.InvalidArgument,
-						},
-						Path: c.GetStringSlice(queryNameKey),
-					}})
+					c.JSON(http.StatusOK, map[string]any{
+						"data": nil,
+						"errors": []gqlerror.Error{{
+							Message: "授权已过期",
+							Extensions: map[string]any{
+								"code": common.TokenExpired,
+							},
+							Path: graphql.GetPath(c),
+						}},
+					})
 					c.Abort()
 					return
 				}
-				c.JSON(http.StatusBadRequest, []gqlError{{
-					Message: "授权无效",
-					Extensions: map[string]interface{}{
-						"code": common.InvalidArgument,
-					},
-					Path: c.GetStringSlice(queryNameKey),
-				}})
+
+				c.JSON(http.StatusOK, map[string]any{
+					"data": nil,
+					"errors": []gqlerror.Error{{
+						Message: "授权无效",
+						Extensions: map[string]any{
+							"code": common.TokenExpired,
+						},
+						Path: graphql.GetPath(c),
+					}},
+				})
 				c.Abort()
 				return
 			}
@@ -131,11 +139,11 @@ func IsAuthenticated(ctx context.Context, obj interface{}, next graphql.Resolver
 	return next(ctx)
 }
 
-type gqlError struct {
-	Message    string                 `json:"message"`
-	Path       []string               `json:"path"`
-	Extensions map[string]interface{} `json:"extensions"`
-}
+// type gqlError struct {
+// 	Message    string                 `json:"message"`
+// 	Path       []string               `json:"path"`
+// 	Extensions map[string]interface{} `json:"extensions"`
+// }
 
 func Cors() gin.HandlerFunc {
 	return func(c *gin.Context) {

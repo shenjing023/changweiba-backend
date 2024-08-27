@@ -146,6 +146,13 @@ func (r *replyResolver) User(ctx context.Context, obj *models.Reply) (*models.Us
 	return dataloader.Loader.UsersByIDs.Load(ctx, int64(obj.User.ID))
 }
 
+func (r *replyResolver) Parent(ctx context.Context, obj *models.Reply) (*models.Reply, error) {
+	// TODO: implemented
+	return &models.Reply{
+		User: &models.User{},
+	}, nil
+}
+
 func (r *userResolver) Posts(ctx context.Context, obj *models.User, page int, pageSize int) (*models.PostConnection, error) {
 	panic("not implemented")
 }

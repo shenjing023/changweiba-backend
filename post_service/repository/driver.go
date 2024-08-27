@@ -264,14 +264,27 @@ func increaseCommentReplyNum(commentID int64) {
 
 // InsertReply add new reply
 func InsertReply(ctx context.Context, userID, postID, commentID, parentID int64, content string) (int64, error) {
-	id, err := ent.InsertReply(ctx, entClient, int(userID), int(commentID),
-		int(parentID), content)
+	// id, err := ent.InsertReply(ctx, entClient, int(userID), int(commentID),
+	// 	int(parentID), content)
+	// if err != nil {
+	// 	return 0, err
+	// }
+
+	rc := entClient.Reply.Create().
+		SetAuthorID(int(userID)).
+		SetContent(content).
+		SetOwnerID(int(commentID))
+	if parentID > 0 {
+		rc.SetParentID(int(parentID))
+	}
+	r, err := rc.Save(ctx)
+
 	if err != nil {
 		return 0, err
 	}
 	go increasePostReplyNum(postID)
 	go increaseCommentReplyNum(commentID)
-	return id, nil
+	return int64(r.ID), nil
 }
 
 // FirstComment
