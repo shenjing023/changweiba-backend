@@ -10,8 +10,6 @@ type User{
     role: UserRole!
     """当前分数"""
     score: Int!
-    """被封原因"""
-    banned_reason: String!
     posts(
         page:Int!
         pageSize:Int!

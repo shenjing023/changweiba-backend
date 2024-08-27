@@ -180,12 +180,10 @@ type User struct {
 	// 用户角色
 	Role UserRole `json:"role"`
 	// 当前分数
-	Score int `json:"score"`
-	// 被封原因
-	BannedReason string             `json:"banned_reason"`
-	Posts        *PostConnection    `json:"posts,omitempty"`
-	Comments     *CommentConnection `json:"comments,omitempty"`
-	Replies      *ReplyConnection   `json:"replies,omitempty"`
+	Score    int                `json:"score"`
+	Posts    *PostConnection    `json:"posts,omitempty"`
+	Comments *CommentConnection `json:"comments,omitempty"`
+	Replies  *ReplyConnection   `json:"replies,omitempty"`
 }
 
 type WencaiStock struct {

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"gateway/common"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,12 +21,12 @@ func QueryDeepMiddleware(queryDeep int) gin.HandlerFunc {
 		if c.Request.Method == "GET" {
 			return
 		}
-		body, err := ioutil.ReadAll(c.Request.Body)
+		body, err := io.ReadAll(c.Request.Body)
 		if err != nil {
 			log.Errorf("read request body error: %+v", err)
 			systemError(c)
 		}
-		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body)) // 关键点,不能去掉
+		c.Request.Body = io.NopCloser(bytes.NewBuffer(body)) // 关键点,不能去掉
 
 		//解析query
 		var param postParams

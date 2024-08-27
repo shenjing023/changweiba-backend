@@ -111,13 +111,12 @@ func UsersByIDsLoaderFunc(ctx context.Context, keys []int64) (users []*models.Us
 
 	for _, v := range resp.Users {
 		users = append(users, &models.User{
-			ID:           int(v.Id),
-			Name:         v.Name,
-			Avatar:       v.Avatar,
-			Status:       models.UserStatus(v.Status.String()),
-			Role:         models.UserRole(v.Role.String()),
-			Score:        int(v.Score),
-			BannedReason: v.BannedReason,
+			ID:     int(v.Id),
+			Name:   v.Name,
+			Avatar: v.Avatar,
+			Status: models.UserStatus(v.Status.String()),
+			Role:   models.UserRole(v.Role.String()),
+			Score:  int(v.Score),
 		})
 	}
 	return
