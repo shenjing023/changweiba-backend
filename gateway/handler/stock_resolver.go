@@ -40,7 +40,7 @@ func SearchStock(ctx context.Context, symbolorname string) (*models.StockConnect
 }
 
 func SubscribeStock(ctx context.Context, symbol, name string) (bool, error) {
-	userID, err := common.GetUserIDFromContext(ctx)
+	user, err := common.GetUserIDFromContext(ctx)
 	if err != nil {
 		log.Errorf("subscribeStock get userID from context error: %+v", err)
 		return false, common.NewGQLError(common.Internal, common.ServiceError)
@@ -50,7 +50,7 @@ func SubscribeStock(ctx context.Context, symbol, name string) (bool, error) {
 	defer cancel()
 	request := pb.SubscribeStockRequest{
 		Symbol: symbol,
-		UserId: int64(userID),
+		UserId: int64(user.ID),
 		Name:   name,
 	}
 	_, err = client.SubscribeStock(ctx, &request)
@@ -65,7 +65,7 @@ func SubscribeStock(ctx context.Context, symbol, name string) (bool, error) {
 }
 
 func UnSubscribeStock(ctx context.Context, symbol string) (bool, error) {
-	userID, err := common.GetUserIDFromContext(ctx)
+	user, err := common.GetUserIDFromContext(ctx)
 	if err != nil {
 		log.Errorf("unscribeStock get userID from context error: %+v", err)
 		return false, common.NewGQLError(common.Internal, common.ServiceError)
@@ -75,7 +75,7 @@ func UnSubscribeStock(ctx context.Context, symbol string) (bool, error) {
 	defer cancel()
 	request := pb.UnSubscribeStockRequest{
 		Symbol: symbol,
-		UserId: int64(userID),
+		UserId: int64(user.ID),
 	}
 	_, err = client.UnSubscribeStock(ctx, &request)
 	if err != nil {
@@ -89,7 +89,7 @@ func UnSubscribeStock(ctx context.Context, symbol string) (bool, error) {
 }
 
 func SubscribedStocks(ctx context.Context) (*models.StockConnection, error) {
-	userID, err := common.GetUserIDFromContext(ctx)
+	user, err := common.GetUserIDFromContext(ctx)
 	if err != nil {
 		log.Errorf("subscribedStock get userID from context error: %+v", err)
 		return nil, common.NewGQLError(common.Internal, common.ServiceError)
@@ -98,7 +98,7 @@ func SubscribedStocks(ctx context.Context) (*models.StockConnection, error) {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 	request := pb.SubscribeStocksRequest{
-		UserId: int64(userID),
+		UserId: int64(user.ID),
 	}
 	resp, err := client.SubscribedStocks(ctx, &request)
 	if err != nil {

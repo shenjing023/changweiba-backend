@@ -10,6 +10,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+type UserInfo struct {
+	ID   int64  `json:"id"`
+	Role string `json:"role"`
+}
+
 // GinContextFromContext normal ctx covert to gin ctx
 func GinContextFromContext(ctx context.Context) (*gin.Context, error) {
 	ginContext := ctx.Value(GinContext)
@@ -65,16 +70,20 @@ func HTTPErrorConvert(err error, code int) error {
 }
 
 // GetUserIDFromContext get user_id from context
-func GetUserIDFromContext(ctx context.Context) (int64, error) {
+func GetUserIDFromContext(ctx context.Context) (*UserInfo, error) {
 	gctx, err := GinContextFromContext(ctx)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	userID, ok := gctx.Value("claims").(float64)
+	tmp, ok := gctx.Value("claims").(map[string]any)
 	if !ok {
-		return 0, errors.New("get user_id from request ctx error")
+		return nil, errors.New("get user_info from request ctx error")
 	}
-	return int64(userID), nil
+	user := UserInfo{
+		ID:   int64(tmp["id"].(float64)),
+		Role: tmp["role"].(string),
+	}
+	return &user, nil
 }
 
 // NewGQLError new graphql error return to front end

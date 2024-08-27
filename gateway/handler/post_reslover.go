@@ -14,7 +14,7 @@ import (
 
 // NewPost 新建post
 func NewPost(ctx context.Context, input models.NewPost) (int, error) {
-	userID, err := common.GetUserIDFromContext(ctx)
+	user, err := common.GetUserIDFromContext(ctx)
 	if err != nil {
 		log.Errorf("new post get userID from context error: %+v", err)
 		return 0, common.NewGQLError(common.Internal, common.ServiceError)
@@ -23,7 +23,7 @@ func NewPost(ctx context.Context, input models.NewPost) (int, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	request := pb.NewPostRequest{
-		UserId:  userID,
+		UserId:  user.ID,
 		Title:   input.Title,
 		Content: input.Content,
 	}
@@ -79,7 +79,7 @@ func AllPosts(ctx context.Context, page int, pageSize int) (*models.PostConnecti
 }
 
 func PinnedPosts(ctx context.Context) (*models.PostConnection, error) {
-	userID, err := common.GetUserIDFromContext(ctx)
+	user, err := common.GetUserIDFromContext(ctx)
 	if err != nil {
 		log.Errorf("posts get userID from context error: %+v", err)
 		return nil, common.NewGQLError(common.Internal, common.ServiceError)
@@ -88,7 +88,7 @@ func PinnedPosts(ctx context.Context) (*models.PostConnection, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	request := pb.PinPostsRequest{
-		UserId: userID,
+		UserId: user.ID,
 	}
 	r, err := client.GetPinPosts(ctx, &request)
 	if err != nil {
@@ -124,7 +124,7 @@ func PinnedPosts(ctx context.Context) (*models.PostConnection, error) {
 }
 
 func Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection, error) {
-	userID, err := common.GetUserIDFromContext(ctx)
+	user, err := common.GetUserIDFromContext(ctx)
 	if err != nil {
 		log.Errorf("posts get userID from context error: %+v", err)
 		return nil, common.NewGQLError(common.Internal, common.ServiceError)
@@ -135,7 +135,7 @@ func Posts(ctx context.Context, page int, pageSize int) (*models.PostConnection,
 	request := pb.PostsByUserIdRequest{
 		Page:     int64(page),
 		PageSize: int64(pageSize),
-		UserId:   userID,
+		UserId:   user.ID,
 	}
 	r, err := client.GetPostsByUserId(ctx, &request)
 	if err != nil {
@@ -229,7 +229,7 @@ func FirstCommentLoaderFunc(ctx context.Context, keys []int64) (comments []*mode
 }
 
 func NewComment(ctx context.Context, input models.NewComment) (int, error) {
-	userID, err := common.GetUserIDFromContext(ctx)
+	user, err := common.GetUserIDFromContext(ctx)
 	if err != nil {
 		log.Errorf("new comment get userID from context error: %+v", err)
 		return 0, common.NewGQLError(common.Internal, common.ServiceError)
@@ -238,7 +238,7 @@ func NewComment(ctx context.Context, input models.NewComment) (int, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	request := pb.NewCommentRequest{
-		UserId:  userID,
+		UserId:  user.ID,
 		PostId:  int64(input.PostID),
 		Content: input.Content,
 	}
@@ -253,7 +253,7 @@ func NewComment(ctx context.Context, input models.NewComment) (int, error) {
 }
 
 func NewReply(ctx context.Context, input models.NewReply) (int, error) {
-	userID, err := common.GetUserIDFromContext(ctx)
+	user, err := common.GetUserIDFromContext(ctx)
 	if err != nil {
 		log.Errorf("new reply get userID from context error: %+v", err)
 		return 0, common.NewGQLError(common.Internal, common.ServiceError)
@@ -262,7 +262,7 @@ func NewReply(ctx context.Context, input models.NewReply) (int, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	request := pb.NewReplyRequest{
-		UserId:    userID,
+		UserId:    user.ID,
 		PostId:    int64(input.PostID),
 		Content:   input.Content,
 		CommentId: int64(input.CommentID),

@@ -117,6 +117,7 @@ type PostStatusEnum_Status int32
 const (
 	PostStatusEnum_NORMAL PostStatusEnum_Status = 0
 	PostStatusEnum_DELETE PostStatusEnum_Status = 1
+	PostStatusEnum_BANNED PostStatusEnum_Status = 2
 )
 
 // Enum value maps for PostStatusEnum_Status.
@@ -124,10 +125,12 @@ var (
 	PostStatusEnum_Status_name = map[int32]string{
 		0: "NORMAL",
 		1: "DELETE",
+		2: "BANNED",
 	}
 	PostStatusEnum_Status_value = map[string]int32{
 		"NORMAL": 0,
 		"DELETE": 1,
+		"BANNED": 2,
 	}
 )
 
@@ -156,6 +159,104 @@ func (x PostStatusEnum_Status) Number() protoreflect.EnumNumber {
 // Deprecated: Use PostStatusEnum_Status.Descriptor instead.
 func (PostStatusEnum_Status) EnumDescriptor() ([]byte, []int) {
 	return file_enums_proto_rawDescGZIP(), []int{2, 0}
+}
+
+type CommentStatusEnum_Status int32
+
+const (
+	CommentStatusEnum_NORMAL CommentStatusEnum_Status = 0
+	CommentStatusEnum_DELETE CommentStatusEnum_Status = 1
+	CommentStatusEnum_BANNED CommentStatusEnum_Status = 2
+)
+
+// Enum value maps for CommentStatusEnum_Status.
+var (
+	CommentStatusEnum_Status_name = map[int32]string{
+		0: "NORMAL",
+		1: "DELETE",
+		2: "BANNED",
+	}
+	CommentStatusEnum_Status_value = map[string]int32{
+		"NORMAL": 0,
+		"DELETE": 1,
+		"BANNED": 2,
+	}
+)
+
+func (x CommentStatusEnum_Status) Enum() *CommentStatusEnum_Status {
+	p := new(CommentStatusEnum_Status)
+	*p = x
+	return p
+}
+
+func (x CommentStatusEnum_Status) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (CommentStatusEnum_Status) Descriptor() protoreflect.EnumDescriptor {
+	return file_enums_proto_enumTypes[3].Descriptor()
+}
+
+func (CommentStatusEnum_Status) Type() protoreflect.EnumType {
+	return &file_enums_proto_enumTypes[3]
+}
+
+func (x CommentStatusEnum_Status) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use CommentStatusEnum_Status.Descriptor instead.
+func (CommentStatusEnum_Status) EnumDescriptor() ([]byte, []int) {
+	return file_enums_proto_rawDescGZIP(), []int{3, 0}
+}
+
+type ReplyStatusEnum_Status int32
+
+const (
+	ReplyStatusEnum_NORMAL ReplyStatusEnum_Status = 0
+	ReplyStatusEnum_DELETE ReplyStatusEnum_Status = 1
+	ReplyStatusEnum_BANNED ReplyStatusEnum_Status = 2
+)
+
+// Enum value maps for ReplyStatusEnum_Status.
+var (
+	ReplyStatusEnum_Status_name = map[int32]string{
+		0: "NORMAL",
+		1: "DELETE",
+		2: "BANNED",
+	}
+	ReplyStatusEnum_Status_value = map[string]int32{
+		"NORMAL": 0,
+		"DELETE": 1,
+		"BANNED": 2,
+	}
+)
+
+func (x ReplyStatusEnum_Status) Enum() *ReplyStatusEnum_Status {
+	p := new(ReplyStatusEnum_Status)
+	*p = x
+	return p
+}
+
+func (x ReplyStatusEnum_Status) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ReplyStatusEnum_Status) Descriptor() protoreflect.EnumDescriptor {
+	return file_enums_proto_enumTypes[4].Descriptor()
+}
+
+func (ReplyStatusEnum_Status) Type() protoreflect.EnumType {
+	return &file_enums_proto_enumTypes[4]
+}
+
+func (x ReplyStatusEnum_Status) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ReplyStatusEnum_Status.Descriptor instead.
+func (ReplyStatusEnum_Status) EnumDescriptor() ([]byte, []int) {
+	return file_enums_proto_rawDescGZIP(), []int{4, 0}
 }
 
 type UserStatusEnum struct {
@@ -272,6 +373,82 @@ func (*PostStatusEnum) Descriptor() ([]byte, []int) {
 	return file_enums_proto_rawDescGZIP(), []int{2}
 }
 
+type CommentStatusEnum struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *CommentStatusEnum) Reset() {
+	*x = CommentStatusEnum{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_enums_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CommentStatusEnum) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CommentStatusEnum) ProtoMessage() {}
+
+func (x *CommentStatusEnum) ProtoReflect() protoreflect.Message {
+	mi := &file_enums_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CommentStatusEnum.ProtoReflect.Descriptor instead.
+func (*CommentStatusEnum) Descriptor() ([]byte, []int) {
+	return file_enums_proto_rawDescGZIP(), []int{3}
+}
+
+type ReplyStatusEnum struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *ReplyStatusEnum) Reset() {
+	*x = ReplyStatusEnum{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_enums_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ReplyStatusEnum) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReplyStatusEnum) ProtoMessage() {}
+
+func (x *ReplyStatusEnum) ProtoReflect() protoreflect.Message {
+	mi := &file_enums_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReplyStatusEnum.ProtoReflect.Descriptor instead.
+func (*ReplyStatusEnum) Descriptor() ([]byte, []int) {
+	return file_enums_proto_rawDescGZIP(), []int{4}
+}
+
 var File_enums_proto protoreflect.FileDescriptor
 
 var file_enums_proto_rawDesc = []byte{
@@ -282,10 +459,19 @@ var file_enums_proto_rawDesc = []byte{
 	0x42, 0x41, 0x4e, 0x4e, 0x45, 0x44, 0x10, 0x01, 0x22, 0x2d, 0x0a, 0x0c, 0x55, 0x73, 0x65, 0x72,
 	0x52, 0x6f, 0x6c, 0x65, 0x45, 0x6e, 0x75, 0x6d, 0x22, 0x1d, 0x0a, 0x04, 0x52, 0x6f, 0x6c, 0x65,
 	0x12, 0x0a, 0x0a, 0x06, 0x4e, 0x4f, 0x52, 0x4d, 0x41, 0x4c, 0x10, 0x00, 0x12, 0x09, 0x0a, 0x05,
-	0x41, 0x44, 0x4d, 0x49, 0x4e, 0x10, 0x01, 0x22, 0x32, 0x0a, 0x0e, 0x50, 0x6f, 0x73, 0x74, 0x53,
-	0x74, 0x61, 0x74, 0x75, 0x73, 0x45, 0x6e, 0x75, 0x6d, 0x22, 0x20, 0x0a, 0x06, 0x53, 0x74, 0x61,
+	0x41, 0x44, 0x4d, 0x49, 0x4e, 0x10, 0x01, 0x22, 0x3e, 0x0a, 0x0e, 0x50, 0x6f, 0x73, 0x74, 0x53,
+	0x74, 0x61, 0x74, 0x75, 0x73, 0x45, 0x6e, 0x75, 0x6d, 0x22, 0x2c, 0x0a, 0x06, 0x53, 0x74, 0x61,
 	0x74, 0x75, 0x73, 0x12, 0x0a, 0x0a, 0x06, 0x4e, 0x4f, 0x52, 0x4d, 0x41, 0x4c, 0x10, 0x00, 0x12,
-	0x0a, 0x0a, 0x06, 0x44, 0x45, 0x4c, 0x45, 0x54, 0x45, 0x10, 0x01, 0x42, 0x06, 0x5a, 0x04, 0x2e,
+	0x0a, 0x0a, 0x06, 0x44, 0x45, 0x4c, 0x45, 0x54, 0x45, 0x10, 0x01, 0x12, 0x0a, 0x0a, 0x06, 0x42,
+	0x41, 0x4e, 0x4e, 0x45, 0x44, 0x10, 0x02, 0x22, 0x41, 0x0a, 0x11, 0x43, 0x6f, 0x6d, 0x6d, 0x65,
+	0x6e, 0x74, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x45, 0x6e, 0x75, 0x6d, 0x22, 0x2c, 0x0a, 0x06,
+	0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x0a, 0x0a, 0x06, 0x4e, 0x4f, 0x52, 0x4d, 0x41, 0x4c,
+	0x10, 0x00, 0x12, 0x0a, 0x0a, 0x06, 0x44, 0x45, 0x4c, 0x45, 0x54, 0x45, 0x10, 0x01, 0x12, 0x0a,
+	0x0a, 0x06, 0x42, 0x41, 0x4e, 0x4e, 0x45, 0x44, 0x10, 0x02, 0x22, 0x3f, 0x0a, 0x0f, 0x52, 0x65,
+	0x70, 0x6c, 0x79, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x45, 0x6e, 0x75, 0x6d, 0x22, 0x2c, 0x0a,
+	0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x0a, 0x0a, 0x06, 0x4e, 0x4f, 0x52, 0x4d, 0x41,
+	0x4c, 0x10, 0x00, 0x12, 0x0a, 0x0a, 0x06, 0x44, 0x45, 0x4c, 0x45, 0x54, 0x45, 0x10, 0x01, 0x12,
+	0x0a, 0x0a, 0x06, 0x42, 0x41, 0x4e, 0x4e, 0x45, 0x44, 0x10, 0x02, 0x42, 0x06, 0x5a, 0x04, 0x2e,
 	0x3b, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
@@ -301,15 +487,19 @@ func file_enums_proto_rawDescGZIP() []byte {
 	return file_enums_proto_rawDescData
 }
 
-var file_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_enums_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
+var file_enums_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_enums_proto_goTypes = []any{
-	(UserStatusEnum_Status)(0), // 0: enums.UserStatusEnum.Status
-	(UserRoleEnum_Role)(0),     // 1: enums.UserRoleEnum.Role
-	(PostStatusEnum_Status)(0), // 2: enums.PostStatusEnum.Status
-	(*UserStatusEnum)(nil),     // 3: enums.UserStatusEnum
-	(*UserRoleEnum)(nil),       // 4: enums.UserRoleEnum
-	(*PostStatusEnum)(nil),     // 5: enums.PostStatusEnum
+	(UserStatusEnum_Status)(0),    // 0: enums.UserStatusEnum.Status
+	(UserRoleEnum_Role)(0),        // 1: enums.UserRoleEnum.Role
+	(PostStatusEnum_Status)(0),    // 2: enums.PostStatusEnum.Status
+	(CommentStatusEnum_Status)(0), // 3: enums.CommentStatusEnum.Status
+	(ReplyStatusEnum_Status)(0),   // 4: enums.ReplyStatusEnum.Status
+	(*UserStatusEnum)(nil),        // 5: enums.UserStatusEnum
+	(*UserRoleEnum)(nil),          // 6: enums.UserRoleEnum
+	(*PostStatusEnum)(nil),        // 7: enums.PostStatusEnum
+	(*CommentStatusEnum)(nil),     // 8: enums.CommentStatusEnum
+	(*ReplyStatusEnum)(nil),       // 9: enums.ReplyStatusEnum
 }
 var file_enums_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -361,14 +551,38 @@ func file_enums_proto_init() {
 				return nil
 			}
 		}
+		file_enums_proto_msgTypes[3].Exporter = func(v any, i int) any {
+			switch v := v.(*CommentStatusEnum); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_enums_proto_msgTypes[4].Exporter = func(v any, i int) any {
+			switch v := v.(*ReplyStatusEnum); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_enums_proto_rawDesc,
-			NumEnums:      3,
-			NumMessages:   3,
+			NumEnums:      5,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

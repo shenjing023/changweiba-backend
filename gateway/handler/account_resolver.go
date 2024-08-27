@@ -36,12 +36,18 @@ func SignUp(ctx context.Context, input models.NewUser) (*models.AuthToken, error
 	}
 
 	// 生成jwt token
-	accessToken, err := middleware.GenerateAccessToken(resp.Id)
+	accessToken, err := middleware.GenerateAccessToken(&common.UserInfo{
+		ID:   resp.Id,
+		Role: resp.Role.String(),
+	})
 	if err != nil {
 		log.Errorf("generate access_token error: %+v", err)
 		return nil, common.NewGQLError(common.Internal, common.ServiceError)
 	}
-	refreshToken, err := middleware.GenerateRefreshToken(resp.Id)
+	refreshToken, err := middleware.GenerateRefreshToken(&common.UserInfo{
+		ID:   resp.Id,
+		Role: resp.Role.String(),
+	})
 	if err != nil {
 		log.Errorf("generate refresh_token error: %+v", err)
 		return nil, common.NewGQLError(common.Internal, common.ServiceError)
@@ -74,12 +80,18 @@ func SignIn(ctx context.Context, input models.NewUser) (*models.AuthToken, error
 	}
 
 	// 生成jwt token
-	accessToken, err := middleware.GenerateAccessToken(resp.Id)
+	accessToken, err := middleware.GenerateAccessToken(&common.UserInfo{
+		ID:   resp.Id,
+		Role: resp.Role.String(),
+	})
 	if err != nil {
 		log.Errorf("generate access_token error: %+v", err)
 		return nil, common.NewGQLError(common.Internal, common.ServiceError)
 	}
-	refreshToken, err := middleware.GenerateRefreshToken(resp.Id)
+	refreshToken, err := middleware.GenerateRefreshToken(&common.UserInfo{
+		ID:   resp.Id,
+		Role: resp.Role.String(),
+	})
 	if err != nil {
 		log.Errorf("generate refresh_token error: %+v", err)
 		return nil, common.NewGQLError(common.Internal, common.ServiceError)

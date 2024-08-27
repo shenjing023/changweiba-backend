@@ -50,7 +50,8 @@ func (u *User) SignUp(ctx context.Context, sr *pb.SignUpRequest) (*pb.SignUpResp
 		return nil, er.NewInternalError()
 	}
 	resp := &pb.SignUpResponse{
-		Id: id,
+		Id:   id,
+		Role: pb.UserRoleEnum_NORMAL,
 	}
 	return resp, nil
 }
@@ -73,7 +74,8 @@ func (u *User) SignIn(ctx context.Context, sr *pb.SignInRequest) (*pb.SignInResp
 			errors.New("password incorrect"))
 	}
 	return &pb.SignInResponse{
-		Id: int64(dbUser.ID),
+		Id:   int64(dbUser.ID),
+		Role: convertUserRole(dbUser.Role),
 	}, nil
 }
 

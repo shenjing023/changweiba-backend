@@ -71,8 +71,8 @@ func AuthMiddleware() gin.HandlerFunc {
 }
 
 // GenerateAccessToken generate jwt access_token
-func GenerateAccessToken(userID int64) (string, error) {
-	token, err := accessTokenAuth.GenerateToken(userID)
+func GenerateAccessToken(user *common.UserInfo) (string, error) {
+	token, err := accessTokenAuth.GenerateToken(user)
 	if err != nil {
 		return "", err
 	}
@@ -85,8 +85,8 @@ func ParseAccessToken(token string) (interface{}, error) {
 }
 
 // GenerateRefreshToken generate jwt refresh_token
-func GenerateRefreshToken(userID int64) (string, error) {
-	token, err := refreshTokenAuth.GenerateToken(userID)
+func GenerateRefreshToken(user *common.UserInfo) (string, error) {
+	token, err := refreshTokenAuth.GenerateToken(user)
 	if err != nil {
 		return "", err
 	}
