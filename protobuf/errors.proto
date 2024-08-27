@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package errors;
+
+option go_package = ".;pb";
+
+enum ErrorCode{
+    UNKNOWN=0;
+    INVALID_REQUEST=10000;
+    UNAUTHORIZED=10002;
+    FORBIDDEN=10003;
+    NOT_FOUND=10004;
+    INTERNAL_ERROR=10005;
+    UNAVAILABLE=10006;
+}

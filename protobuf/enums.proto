@@ -23,5 +23,22 @@ message PostStatusEnum{
     enum Status{
         NORMAL=0;
         DELETE=1;
+        BANNED=2;
+    }
+}
+
+message CommentStatusEnum{
+    enum Status{
+        NORMAL=0;
+        DELETE=1;
+        BANNED=2;
+    }
+}
+
+message ReplyStatusEnum{
+    enum Status{
+        NORMAL=0;
+        DELETE=1;
+        BANNED=2;
     }
 }

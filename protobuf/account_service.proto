@@ -14,10 +14,10 @@ message User {
     string avatar = 4;
     enums.UserStatusEnum.Status status = 5;
     int64 score = 6;
-    string banned_reason = 7;
     int64 create_time = 8;
     int64 update_time=9;
     enums.UserRoleEnum.Role role=10;
+    string description=11;
 }
 
 message UserRequest {
