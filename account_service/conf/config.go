@@ -2,12 +2,10 @@ package conf
 
 import (
 	"fmt"
-	"io/ioutil"
+	"log/slog"
 	"os"
-	"path"
-	"time"
 
-	log "github.com/shenjing023/llog"
+	llog "github.com/shenjing023/vivy-polaris/log"
 	"gopkg.in/yaml.v3"
 )
 
@@ -44,7 +42,7 @@ var Cfg = new(YamlConf)
 // Init init global config
 func Init(configPath string) {
 	//加载配置文件
-	file, err := ioutil.ReadFile(configPath)
+	file, err := os.ReadFile(configPath)
 	if err != nil {
 		fmt.Println("Open config file error:", err.Error())
 		os.Exit(1)
@@ -54,25 +52,8 @@ func Init(configPath string) {
 		os.Exit(1)
 	}
 	if Cfg.Debug {
-		if len(Cfg.LogDir) > 0 {
-			// set file log
-			log.SetFileLogger(
-				path.Join(Cfg.LogDir, "service.log")+"-%Y%m%d%H%M",
-				log.WithCaller(true),
-				log.WithMaxAge(7*24*time.Hour),
-				log.WithRotationTime(24*time.Hour),
-				log.WithLevel(log.DebugLevel),
-			)
-		} else {
-			log.SetConsoleLogger(
-				log.WithCaller(true),
-				log.WithLevel(log.DebugLevel),
-			)
-		}
+		llog.Init(llog.WithLevel(slog.LevelDebug))
 	} else {
-		log.SetConsoleLogger(
-			log.WithColor(false),
-			log.WithJSON(true),
-		)
+		llog.Init()
 	}
 }

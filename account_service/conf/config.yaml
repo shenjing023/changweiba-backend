@@ -3,10 +3,10 @@ debug: true
 port: 8018
 db:
   host: "127.0.0.1"
-  port: 3306
-  user: "root"
+  port: 5432
+  user: "postgres"
   password: "123456"
-  dbname: "changweiba"
+  dbname: "postgres"
   max_idle_conns: 10
   max_open_conns: 10
 redis:

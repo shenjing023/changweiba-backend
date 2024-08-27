@@ -5,12 +5,14 @@ import (
 	"cw_account_service/conf"
 	pb "cw_account_service/pb"
 	"cw_account_service/repository"
+	user "cw_account_service/repository/ent/user"
 	"encoding/base64"
+	"log/slog"
 	"strings"
 
 	"github.com/cockroachdb/errors"
+	"google.golang.org/grpc/codes"
 
-	log "github.com/shenjing023/llog"
 	er "github.com/shenjing023/vivy-polaris/errors"
 	"golang.org/x/crypto/scrypt"
 )
@@ -27,25 +29,25 @@ type User struct {
 // SignUp 注册
 func (u *User) SignUp(ctx context.Context, sr *pb.SignUpRequest) (*pb.SignUpResponse, error) {
 	if err := checkNewUser(ctx, sr); err != nil {
-		log.Errorf("check new_user error: %+v", err)
+		slog.Error("check new_user", "error", err)
 		return nil, err
 	}
 
 	password, err := encryptPassword(sr.Password)
 	if err != nil {
-		log.Errorf("generate crypto password error: %+v", err)
-		return nil, er.NewServiceErr(er.Internal, err)
+		slog.Error("generate crypto password", "error", err)
+		return nil, er.NewInternalError()
 	}
 	//头像url
 	avatar, err := repository.GetRandomAvatar(ctx)
 	if err != nil {
-		log.Errorf("get random avatar error: %+v", err)
-		return nil, err
+		slog.Error("get random avatar", "error", err)
+		return nil, er.NewInternalError()
 	}
 	id, err := repository.InsertUser(ctx, sr.Name, password, avatar)
 	if err != nil {
-		log.Errorf("insert user error: %+v", err)
-		return nil, err
+		slog.Error("insert user", "error", err)
+		return nil, er.NewInternalError()
 	}
 	resp := &pb.SignUpResponse{
 		Id: id,
@@ -57,13 +59,17 @@ func (u *User) SignUp(ctx context.Context, sr *pb.SignUpRequest) (*pb.SignUpResp
 func (u *User) SignIn(ctx context.Context, sr *pb.SignInRequest) (*pb.SignInResponse, error) {
 	dbUser, err := repository.GetUserByName(ctx, sr.Name)
 	if err != nil {
-		log.Errorf("get user by name error: %+v", err)
-		return nil, err
+		slog.Error("get user by name", "error", err)
+		return nil, er.NewInternalError()
+	}
+	if dbUser == nil {
+		return nil, er.NewServiceErr(codes.InvalidArgument,
+			errors.New("user not exist"))
 	}
 	dbPassword := dbUser.Password
 	tmp, _ := encryptPassword(sr.Password)
 	if dbPassword != tmp {
-		return nil, er.NewServiceErr(er.InvalidArgument,
+		return nil, er.NewServiceErr(codes.InvalidArgument,
 			errors.New("password incorrect"))
 	}
 	return &pb.SignInResponse{
@@ -75,49 +81,61 @@ func (u *User) SignIn(ctx context.Context, sr *pb.SignInRequest) (*pb.SignInResp
 func (u *User) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 	dbUser, err := repository.GetUserByID(ctx, user.Id)
 	if err != nil {
-		log.Errorf("get user by id error: %+v", err)
-		return nil, err
+		slog.Error("get user by id", "error", err)
+		return nil, er.NewInternalError()
 	}
-	ban := ""
-	if dbUser.Status != 0 {
-		ban, _ = repository.GetBannedReason(ctx, int64(dbUser.Status))
+	if dbUser == nil {
+		return nil, er.NewServiceErr(codes.InvalidArgument,
+			errors.New("user not exist"))
 	}
 	return &pb.User{
-		Id:           int64(dbUser.ID),
-		Name:         dbUser.NickName,
-		Avatar:       dbUser.Avatar,
-		Status:       pb.UserStatusEnum_Status(dbUser.Status),
-		Score:        dbUser.Score,
-		BannedReason: ban,
-		Role:         pb.UserRoleEnum_Role(dbUser.Role),
+		Id:     int64(dbUser.ID),
+		Name:   dbUser.Name,
+		Avatar: dbUser.Avatar,
+		Status: convertUserStatus(dbUser.Status),
+		Score:  int64(dbUser.Score),
+		Role:   convertUserRole(dbUser.Role),
 	}, nil
+}
+
+func convertUserStatus(status user.Status) pb.UserStatusEnum_Status {
+	switch status {
+	case user.StatusNORMAL:
+		return pb.UserStatusEnum_NORMAL
+	case user.StatusBANNED:
+		return pb.UserStatusEnum_BANNED
+	default:
+		return pb.UserStatusEnum_NORMAL
+	}
+}
+
+func convertUserRole(role user.Role) pb.UserRoleEnum_Role {
+	switch role {
+	case user.RoleUSER:
+		return pb.UserRoleEnum_NORMAL
+	case user.RoleADMIN:
+		return pb.UserRoleEnum_ADMIN
+	default:
+		return pb.UserRoleEnum_NORMAL
+	}
 }
 
 // GetUsersByUserIds 通过用户id批量获取用户信息
 func (u *User) GetUsersByUserIds(ctx context.Context, ur *pb.UsersByUserIdsRequest) (*pb.UsersByUserIdsResponse, error) {
 	dbUsers, err := repository.GetUsers(ctx, ur.Ids)
 	if err != nil {
-		log.Errorf("get users by ids error: %+v", err)
-		return nil, err
+		slog.Error("get users by ids", "error", err)
+		return nil, er.NewInternalError()
 	}
 	var users []*pb.User
 	for _, v := range dbUsers {
-		role := pb.UserRoleEnum_Role(v.Role)
-		if v.Role == 1 {
-			role = pb.UserRoleEnum_ADMIN
-		}
-		ban := ""
-		if v.Status != 0 {
-			ban, _ = repository.GetBannedReason(ctx, int64(v.Status))
-		}
 		users = append(users, &pb.User{
-			Id:           int64(v.ID),
-			Name:         v.NickName,
-			Avatar:       v.Avatar,
-			Status:       pb.UserStatusEnum_Status(v.Status),
-			Score:        v.Score,
-			BannedReason: ban,
-			Role:         role,
+			Id:     int64(v.ID),
+			Name:   v.Name,
+			Avatar: v.Avatar,
+			Status: convertUserStatus(v.Status),
+			Score:  int64(v.Score),
+			Role:   convertUserRole(v.Role),
 		})
 	}
 	return &pb.UsersByUserIdsResponse{
@@ -127,13 +145,13 @@ func (u *User) GetUsersByUserIds(ctx context.Context, ur *pb.UsersByUserIdsReque
 
 func checkNewUser(ctx context.Context, sr *pb.SignUpRequest) error {
 	if len(strings.TrimSpace(sr.Name)) == 0 || len(strings.TrimSpace(sr.Password)) == 0 {
-		return er.NewServiceErr(er.InvalidArgument,
+		return er.NewServiceErr(codes.InvalidArgument,
 			errors.New("user name or password can not be empty"))
 	}
 	if exist, err := repository.CheckUserExistByName(ctx, sr.Name); err != nil {
 		return err
 	} else if exist {
-		return er.NewServiceErr(er.AlreadyExists,
+		return er.NewServiceErr(codes.AlreadyExists,
 			errors.Newf("user_name[%s] already exist", sr.Name))
 	}
 	return nil

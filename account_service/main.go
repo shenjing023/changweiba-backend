@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"cw_account_service/conf"
 	"cw_account_service/handler"
 	"cw_account_service/pb"
@@ -17,8 +16,6 @@ import (
 
 	log "github.com/shenjing023/llog"
 	"github.com/shenjing023/vivy-polaris/contrib/registry"
-	"github.com/shenjing023/vivy-polaris/contrib/tracing"
-	"github.com/shenjing023/vivy-polaris/options"
 	vp_server "github.com/shenjing023/vivy-polaris/server"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
@@ -56,7 +53,7 @@ func initServer() {
 func runServer() {
 	etcdConf := clientv3.Config{
 		Endpoints:   []string{fmt.Sprintf("%s:%d", conf.Cfg.Etcd.Host, conf.Cfg.Etcd.Port)},
-		DialTimeout: time.Second * 5,
+		DialTimeout: time.Second * 3,
 	}
 	r, err := registry.NewEtcdRegister(etcdConf, pb.AccountService_ServiceDesc, "127.0.0.1", fmt.Sprintf("%d", conf.Cfg.Port))
 	if err != nil {
@@ -65,22 +62,22 @@ func runServer() {
 	defer r.Deregister()
 	log.Info("etcd register success")
 
-	tp, err := tracing.NewJaegerTracerProvider(conf.Cfg.JaegerCollectURL, "account-server")
-	if err != nil {
-		log.Fatalf("new JaegerTracerProvider error: %+v", err)
-	}
-	defer func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
-			log.Fatalf("Error shutting down tracer provider: %v", err)
-		}
-	}()
-	log.Info("tracer provider start success")
+	// tp, err := tracing.NewJaegerTracerProvider(conf.Cfg.JaegerCollectURL, "account-server")
+	// if err != nil {
+	// 	log.Fatalf("new JaegerTracerProvider error: %+v", err)
+	// }
+	// defer func() {
+	// 	if err := tp.Shutdown(context.Background()); err != nil {
+	// 		log.Fatalf("Error shutting down tracer provider: %v", err)
+	// 	}
+	// }()
+	// log.Info("tracer provider start success")
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", conf.Cfg.Port))
 	if err != nil {
 		log.Fatalf("failed to listen: %+v", err)
 	}
-	s := vp_server.NewServer(options.WithDebug(conf.Cfg.Debug), options.WithServerTracing(tp))
+	s := vp_server.NewServer(vp_server.WithDebug(conf.Cfg.Debug) /*vp_server.WithServerTracing(tp)*/)
 	pb.RegisterAccountServiceServer(s, &handler.User{})
 	go func() {
 		if err := s.Serve(lis); err != nil {
