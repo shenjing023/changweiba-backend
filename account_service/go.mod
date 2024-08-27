@@ -8,7 +8,6 @@ require (
 	github.com/shenjing023/llog v0.1.4
 	github.com/shenjing023/vivy-polaris v0.0.5-0.20240823060053-85e026b56c32
 	golang.org/x/crypto v0.26.0
-	golang.org/x/net v0.28.0
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v3 v3.0.1
@@ -51,6 +50,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/mod v0.20.0 // indirect
+	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/time v0.6.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect

@@ -1,8 +1,8 @@
-go 1.20
+go 1.23.0
 
 use (
 	./account_service
+	./gateway
 	./post_service
 	./stock_service
-	./gateway
 )
