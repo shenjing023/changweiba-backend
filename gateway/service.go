@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
+	"gateway/common"
 	"gateway/conf"
 	"gateway/dataloader"
 	"gateway/generated"
@@ -21,6 +21,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gin-gonic/gin"
 	log "github.com/shenjing023/llog"
+	"github.com/vektah/gqlparser/gqlerror"
+	"google.golang.org/grpc/codes"
 )
 
 // runGatewayService create gateway service
@@ -90,7 +92,13 @@ func graphqlHandler() gin.HandlerFunc {
 	srv.SetRecoverFunc(func(ctx context.Context, err interface{}) error {
 		log.Errorf("service panic: %+v", err)
 		log.Error(string(debug.Stack()))
-		return errors.New("internal system error")
+		// return errors.New("internal system error")
+		return &gqlerror.Error{
+			Message: common.ServiceError,
+			Extensions: map[string]interface{}{
+				"code": codes.Internal,
+			},
+		}
 	})
 	// srv.Use(extension.FixedComplexityLimit(20))
 

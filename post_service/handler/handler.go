@@ -54,6 +54,10 @@ func (PostService) GetPost(ctx context.Context, pr *pb.PostRequest) (*pb.PostRes
 		log.Errorf("get post error: %+v", err)
 		return nil, err
 	}
+	if dbPost == nil {
+		return nil, er.NewServiceErr(codes.NotFound,
+			errors.New("post not found"))
+	}
 	return &pb.PostResponse{
 		Post: &pb.Post{
 			Id:         int64(dbPost.ID),
@@ -200,8 +204,9 @@ func (PostService) GetCommentsByPostId(ctx context.Context, pr *pb.CommentsReque
 			Content:    v.Content,
 			Status:     convertCommentStatus(v.Status),
 			UserId:     int64(v.AuthorID),
-			CreateTime: v.CreatedAt.Unix(),
+			CreateTime: v.CreatedAt.UnixMilli(),
 			Floor:      int64(v.Floor),
+			PostId:     pr.PostId,
 		})
 	}
 	totalCount, err := repository.GetPostCommentTotalCount(ctx, pr.PostId)
@@ -227,7 +232,7 @@ func (PostService) GetRepliesByCommentId(ctx context.Context, pr *pb.RepliesRequ
 			Id:         int64(v.ID),
 			Content:    v.Content,
 			Status:     convertReplyStatus(v.Status),
-			CreateTime: v.CreatedAt.Unix(),
+			CreateTime: v.CreatedAt.UnixMilli(),
 			ParentId:   int64(v.ParentID),
 			UserId:     int64(v.AuthorID),
 			CommentId:  pr.CommentId,

@@ -110,7 +110,7 @@ func RefreshTokenAuth(refreshToken string) (string, string, error) {
 		return "", "", err
 	}
 	claims, _ := refreshTokenAuth.ParseToken(rToken.Token)
-	aToken, _ := accessTokenAuth.GenerateToken(claims.(float64))
+	aToken, _ := accessTokenAuth.GenerateToken(claims.(map[string]any))
 	return rToken.Token, aToken.Token, nil
 }
 

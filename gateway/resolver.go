@@ -119,7 +119,7 @@ func (r *queryResolver) Reply(ctx context.Context, replyID int) (*models.Reply, 
 }
 
 func (r *queryResolver) Replies(ctx context.Context, commentID int, page int, pageSize int) (*models.ReplyConnection, error) {
-	panic("not implemented")
+	return handler.GetRepliesByCommentID(ctx, commentID, page, pageSize)
 }
 
 func (r *queryResolver) SearchStock(ctx context.Context, symbolorname string) (*models.StockConnection, error) {
