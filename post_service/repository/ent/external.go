@@ -28,7 +28,8 @@ func GetPosts(ctx context.Context, c *Client, page, pageSize int) ([]*Post, erro
 		WHERE status=$1 
 		ORDER BY updated_at DESC, id DESC 
 		LIMIT $2 OFFSET $3
-	) t2 ON t1.id = t2.id`
+	) t2 ON t1.id = t2.id 
+	ORDER BY t1.updated_at DESC, t1.id DESC;`
 	rows, err := db.QueryContext(ctx, sql, post.StatusNORMAL, pageSize, pageSize*(page-1))
 	if err != nil {
 		return nil, err
