@@ -139,31 +139,24 @@ func IsAuthenticated(ctx context.Context, obj interface{}, next graphql.Resolver
 	return next(ctx)
 }
 
-// type gqlError struct {
-// 	Message    string                 `json:"message"`
-// 	Path       []string               `json:"path"`
-// 	Extensions map[string]interface{} `json:"extensions"`
-// }
-
 func Cors() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// method := c.Request.Method
+		method := c.Request.Method
 		// origin := c.Request.Header.Get("Origin")
+
 		c.Header("Access-Control-Allow-Origin", "*") // 可将将 * 替换为指定的域名
 		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
-		c.Header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization")
-		c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Cache-Control, Content-Language, Content-Type")
+		c.Header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Origin,Authorization,Auth,sdhsd")
 		c.Header("Access-Control-Allow-Credentials", "true")
+
 		// if origin != "" {
-		// 	c.Header("Access-Control-Allow-Origin", "*") // 可将将 * 替换为指定的域名
-		// 	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
-		// 	c.Header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization")
-		// 	c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Cache-Control, Content-Language, Content-Type")
-		// 	c.Header("Access-Control-Allow-Credentials", "true")
+		// 	c.Header("Access-Control-Allow-Origin", origin) // 使用请求的Origin
 		// }
-		// if method == "OPTIONS" {
-		// 	c.AbortWithStatus(http.StatusNoContent)
-		// }
+
+		if method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusNoContent) // 返回204 No Content
+		}
+
 		c.Next()
 	}
 }
