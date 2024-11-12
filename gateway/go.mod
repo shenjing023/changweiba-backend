@@ -6,7 +6,7 @@ require (
 	github.com/99designs/gqlgen v0.17.49
 	github.com/cockroachdb/errors v1.11.3
 	github.com/gin-gonic/gin v1.10.0
-	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/shenjing023/llog v0.1.4
 	github.com/shenjing023/vivy-polaris v0.0.5-0.20240823060053-85e026b56c32
 	github.com/vektah/gqlparser/v2 v2.5.16
